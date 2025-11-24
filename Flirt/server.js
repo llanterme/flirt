@@ -50,6 +50,12 @@ if (USE_DATABASE) {
         console.log('✅ Using SQLite database at:', DATABASE_PATH);
     } catch (error) {
         console.error('❌ Failed to load database module:', error.message);
+        console.error('🔍 Error type:', error.constructor.name);
+        if (error.message.includes('invalid ELF header')) {
+            console.error('🔧 SQLite3 native bindings are compiled for wrong architecture');
+            console.error('💡 This usually happens when SQLite3 was compiled for different OS');
+            console.error('🚀 Railway deployment should rebuild SQLite3 during postinstall');
+        }
         console.log('📁 Falling back to JSON file storage');
     }
 }

@@ -1,0 +1,17 @@
+# Nixpacks configuration for Flirt Hair & Beauty
+# Ensures proper build environment for SQLite3 compilation
+
+[phases.setup]
+nixPkgs = ['nodejs_18', 'npm', 'python3', 'pkg-config', 'sqlite', 'gcc', 'gnumake']
+
+[phases.install]
+cmds = [
+    'npm ci',
+    'npm rebuild sqlite3 --build-from-source --sqlite=/nix/store/*/lib'
+]
+
+[phases.build]
+cmds = ['echo "Build complete with SQLite3 native bindings"']
+
+[start]
+cmd = 'npm start'

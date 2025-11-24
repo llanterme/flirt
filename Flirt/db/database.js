@@ -12,12 +12,18 @@ let db = null;
 // Initialize database connection
 function getDb() {
     if (!db) {
+        // Ensure directory exists
+        const dbDir = path.dirname(DB_PATH);
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true });
+        }
+
         db = new sqlite3.Database(DB_PATH, (err) => {
             if (err) {
                 console.error('Failed to connect to database:', err.message);
                 throw err;
             }
-            console.log('Connected to SQLite database');
+            console.log('Connected to SQLite database:', DB_PATH);
         });
 
         // Enable foreign keys
@@ -147,7 +153,7 @@ const UserRepository = {
     },
 
     async updateHairTracker(userId, data) {
-        const existing = await this.getHairTracker(userId);
+        const existing = this.getHairTracker(userId);
         if (existing) {
             await dbRun(
                 `UPDATE hair_tracker SET last_install_date = ?, extension_type = ?, updated_at = datetime('now') WHERE user_id = ?`,
@@ -446,7 +452,7 @@ const OrderRepository = {
     async findById(id) {
         const order = await dbGet('SELECT * FROM orders WHERE id = ?', [id]);
         if (order) {
-            order.items = await dbAll('SELECT * FROM order_items WHERE order_id = ?', [id]);
+            order.items = dbAll('SELECT * FROM order_items WHERE order_id = ?', [id]);
             if (order.delivery_address) {
                 try { order.deliveryAddress = JSON.parse(order.delivery_address); }
                 catch (e) { order.deliveryAddress = order.delivery_address; }
@@ -456,9 +462,9 @@ const OrderRepository = {
     },
 
     async findByUserId(userId) {
-        const orders = await dbAll('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC', [userId]);
+        const orders = dbAll('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC', [userId]);
         for (const order of orders) {
-            order.items = await dbAll('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
+            order.items = dbAll('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
         }
         return orders;
     },
@@ -478,10 +484,10 @@ const OrderRepository = {
         }
 
         sql += ' ORDER BY o.created_at DESC';
-        const orders = await dbAll(sql, params);
+        const orders = dbAll(sql, params);
 
         for (const order of orders) {
-            order.items = await dbAll('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
+            order.items = dbAll('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
         }
         return orders;
     },
@@ -581,7 +587,7 @@ const PromoRepository = {
 // ============================================
 const LoyaltyRepository = {
     async getSettings() {
-        const rows = await dbAll('SELECT * FROM loyalty_settings');
+        const rows = dbAll('SELECT * FROM loyalty_settings');
         const settings = {};
         for (const row of rows) {
             settings[row.key] = isNaN(row.value) ? row.value : parseFloat(row.value);
