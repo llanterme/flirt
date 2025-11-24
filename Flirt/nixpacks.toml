@@ -2,12 +2,12 @@
 # Ensures proper build environment for SQLite3 compilation
 
 [phases.setup]
-nixPkgs = ['nodejs_18', 'npm', 'python3', 'pkg-config', 'sqlite', 'gcc', 'gnumake']
+nixPkgs = ['nodejs_18', 'python3', 'pkg-config', 'sqlite', 'gcc', 'gnumake']
 
 [phases.install]
 cmds = [
     'npm ci',
-    'npm rebuild sqlite3 --build-from-source --sqlite=/nix/store/*/lib'
+    'npm rebuild sqlite3 --build-from-source'
 ]
 
 [phases.build]
