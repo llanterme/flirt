@@ -10,6 +10,9 @@ node_modules
 db/*.db
 db/*.db-journal
 
+# Keep JSON data files as fallback
+!data/*.json
+
 # Development files
 .git
 README.md
