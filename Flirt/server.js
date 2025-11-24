@@ -17,6 +17,43 @@ try {
 }
 const https = require('https');
 
+// Database imports - conditionally use SQLite if DATABASE_PATH is set
+let db = null;
+let UserRepository = null;
+let StylistRepository = null;
+let ServiceRepository = null;
+let BookingRepository = null;
+let ProductRepository = null;
+let OrderRepository = null;
+
+const DATABASE_PATH = process.env.DATABASE_PATH;
+const USE_DATABASE = !!DATABASE_PATH;
+
+if (USE_DATABASE) {
+    try {
+        const dbModule = require('./db/database');
+        db = dbModule;
+        UserRepository = dbModule.UserRepository;
+        StylistRepository = dbModule.StylistRepository;
+        ServiceRepository = dbModule.ServiceRepository;
+        BookingRepository = dbModule.BookingRepository;
+        ProductRepository = dbModule.ProductRepository;
+        OrderRepository = dbModule.OrderRepository;
+
+        // Ensure database directory exists
+        const dbDir = path.dirname(DATABASE_PATH);
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true });
+            console.log(`📁 Created database directory: ${dbDir}`);
+        }
+
+        console.log('✅ Using SQLite database at:', DATABASE_PATH);
+    } catch (error) {
+        console.error('❌ Failed to load database module:', error.message);
+        console.log('📁 Falling back to JSON file storage');
+    }
+}
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -97,30 +134,61 @@ app.use(express.static(__dirname));
 // SEED ADMIN USER
 // ============================================
 async function seedAdminUser() {
-    const usersData = loadJSON(USERS_FILE);
-    if (!usersData) return;
+    if (USE_DATABASE && UserRepository) {
+        try {
+            // Initialize database first
+            await db.initializeDatabase();
 
-    const adminExists = usersData.users.find(u => u.role === 'admin');
-    if (!adminExists) {
-        const passwordHash = await bcrypt.hash(ADMIN_SEED_PASSWORD, 10);
-        usersData.users.push({
-            id: 'admin-001',
-            email: 'admin@flirthair.co.za',
-            passwordHash,
-            name: 'Flirt Admin',
-            phone: '+27 11 123 4567',
-            role: 'admin',
-            mustChangePassword: true, // Force password change on first login
-            points: 0,
-            tier: 'platinum',
-            referralCode: 'FLIRTADMIN',
-            referredBy: null,
-            hairTracker: { lastInstallDate: null, extensionType: null },
-            createdAt: new Date().toISOString()
-        });
-        saveJSON(USERS_FILE, usersData);
-        console.log(`Admin user created: admin@flirthair.co.za (password from ADMIN_SEED_PASSWORD env or default)`);
-        console.log('⚠️  Admin must change password on first login');
+            // Check if admin already exists
+            const adminExists = await UserRepository.findByRole('admin');
+            if (!adminExists || adminExists.length === 0) {
+                const passwordHash = await bcrypt.hash(ADMIN_SEED_PASSWORD, 10);
+                await UserRepository.create({
+                    id: 'admin-001',
+                    email: 'admin@flirthair.co.za',
+                    passwordHash,
+                    name: 'Flirt Admin',
+                    phone: '+27 11 123 4567',
+                    role: 'admin',
+                    mustChangePassword: true,
+                    points: 0,
+                    tier: 'platinum',
+                    referralCode: 'FLIRTADMIN',
+                    referredBy: null
+                });
+                console.log(`✅ Admin user created in SQLite: admin@flirthair.co.za`);
+                console.log('⚠️  Admin must change password on first login');
+            }
+        } catch (error) {
+            console.error('❌ Failed to seed admin user in database:', error.message);
+        }
+    } else {
+        // Fallback to JSON files
+        const usersData = loadJSON(USERS_FILE);
+        if (!usersData) return;
+
+        const adminExists = usersData.users.find(u => u.role === 'admin');
+        if (!adminExists) {
+            const passwordHash = await bcrypt.hash(ADMIN_SEED_PASSWORD, 10);
+            usersData.users.push({
+                id: 'admin-001',
+                email: 'admin@flirthair.co.za',
+                passwordHash,
+                name: 'Flirt Admin',
+                phone: '+27 11 123 4567',
+                role: 'admin',
+                mustChangePassword: true,
+                points: 0,
+                tier: 'platinum',
+                referralCode: 'FLIRTADMIN',
+                referredBy: null,
+                hairTracker: { lastInstallDate: null, extensionType: null },
+                createdAt: new Date().toISOString()
+            });
+            saveJSON(USERS_FILE, usersData);
+            console.log(`✅ Admin user created in JSON: admin@flirthair.co.za`);
+            console.log('⚠️  Admin must change password on first login');
+        }
     }
 }
 
@@ -263,10 +331,21 @@ app.post('/api/auth/signup', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Email, password, and name are required' });
     }
 
-    const usersData = loadJSON(USERS_FILE);
-
     // Check if email exists
-    if (usersData.users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
+    let existingUser = null;
+    if (USE_DATABASE && UserRepository) {
+        try {
+            existingUser = await UserRepository.findByEmail(email);
+        } catch (error) {
+            console.error('Database error during signup:', error.message);
+            return res.status(500).json({ success: false, message: 'Server error' });
+        }
+    } else {
+        const usersData = loadJSON(USERS_FILE);
+        existingUser = usersData.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    }
+
+    if (existingUser) {
         return res.status(409).json({ success: false, message: 'Email already registered' });
     }
 
@@ -274,7 +353,7 @@ app.post('/api/auth/signup', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Create new user
-    const newUser = {
+    const userData = {
         id: uuidv4(),
         email: email.toLowerCase().trim(),
         passwordHash,
@@ -284,16 +363,27 @@ app.post('/api/auth/signup', async (req, res) => {
         points: 0,
         tier: 'bronze',
         referralCode: generateReferralCode(name),
-        referredBy: null,
-        hairTracker: {
-            lastInstallDate: null,
-            extensionType: null
-        },
-        createdAt: new Date().toISOString()
+        referredBy: null
     };
 
-    usersData.users.push(newUser);
-    saveJSON(USERS_FILE, usersData);
+    let newUser;
+    if (USE_DATABASE && UserRepository) {
+        try {
+            newUser = await UserRepository.create(userData);
+        } catch (error) {
+            console.error('Database error creating user:', error.message);
+            return res.status(500).json({ success: false, message: 'Failed to create account' });
+        }
+    } else {
+        const usersData = loadJSON(USERS_FILE);
+        newUser = {
+            ...userData,
+            hairTracker: { lastInstallDate: null, extensionType: null },
+            createdAt: new Date().toISOString()
+        };
+        usersData.users.push(newUser);
+        saveJSON(USERS_FILE, usersData);
+    }
 
     // Generate token
     const token = jwt.sign(
@@ -302,8 +392,8 @@ app.post('/api/auth/signup', async (req, res) => {
         { expiresIn: '7d' }
     );
 
-    // Return user without password
-    const { passwordHash: _, ...userResponse } = newUser;
+    // Return user without password (handle both SQLite snake_case and JSON camelCase)
+    const { passwordHash: _, password_hash: __, ...userResponse } = newUser;
 
     res.status(201).json({
         success: true,
@@ -331,8 +421,19 @@ app.post('/api/auth/login', async (req, res) => {
         });
     }
 
-    const usersData = loadJSON(USERS_FILE);
-    const user = usersData.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    let user = null;
+
+    if (USE_DATABASE && UserRepository) {
+        try {
+            user = await UserRepository.findByEmail(email);
+        } catch (error) {
+            console.error('Database error during login:', error.message);
+            return res.status(500).json({ success: false, message: 'Server error' });
+        }
+    } else {
+        const usersData = loadJSON(USERS_FILE);
+        user = usersData.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    }
 
     if (!user) {
         recordLoginAttempt(email.toLowerCase(), false);
@@ -340,7 +441,7 @@ app.post('/api/auth/login', async (req, res) => {
         return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
-    const validPassword = await bcrypt.compare(password, user.passwordHash);
+    const validPassword = await bcrypt.compare(password, user.password_hash || user.passwordHash);
     if (!validPassword) {
         recordLoginAttempt(email.toLowerCase(), false);
         console.log(`Failed login attempt for: ${email}`);
@@ -357,15 +458,15 @@ app.post('/api/auth/login', async (req, res) => {
         { expiresIn: '7d' }
     );
 
-    // Return user without password
-    const { passwordHash: _, ...userResponse } = user;
+    // Return user without password (handle both SQLite snake_case and JSON camelCase)
+    const { passwordHash: _, password_hash: __, ...userResponse } = user;
 
     res.json({
         success: true,
         message: 'Login successful',
         token,
         user: userResponse,
-        mustChangePassword: user.mustChangePassword || false
+        mustChangePassword: user.must_change_password || user.mustChangePassword || false
     });
 });
 
