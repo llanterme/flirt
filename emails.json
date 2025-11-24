@@ -1,0 +1,11 @@
+{
+  "subscribers": [
+    {
+      "email": "test@example.com",
+      "source": "test",
+      "subscribedAt": "2025-11-17T21:25:57.242Z",
+      "ipAddress": "::1",
+      "userAgent": "curl/8.16.0"
+    }
+  ]
+}

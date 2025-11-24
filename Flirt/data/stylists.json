@@ -1,0 +1,60 @@
+{
+  "stylists": [
+    {
+      "id": "lisa",
+      "name": "Lisa Thompson",
+      "specialty": "Tape Extensions Specialist",
+      "tagline": "Making dreams come true, one tape at a time ✨",
+      "rating": 4.9,
+      "reviewCount": 127,
+      "clientsCount": 156,
+      "yearsExperience": 8,
+      "instagram": "@lisa.flirthair",
+      "color": "#FF6B9D",
+      "available": true,
+      "imageUrl": "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400"
+    },
+    {
+      "id": "emma",
+      "name": "Emma Williams",
+      "specialty": "Color Matching Expert",
+      "tagline": "Your perfect shade is my obsession 🎨",
+      "rating": 4.8,
+      "reviewCount": 98,
+      "clientsCount": 134,
+      "yearsExperience": 6,
+      "instagram": "@emma.colorqueen",
+      "color": "#9B59B6",
+      "available": true,
+      "imageUrl": "https://images.unsplash.com/photo-1595959183082-7b570b7e1dfa?w=400"
+    },
+    {
+      "id": "sarah",
+      "name": "Sarah Martinez",
+      "specialty": "Weft Installation Pro",
+      "tagline": "Volume queen at your service 👑",
+      "rating": 5.0,
+      "reviewCount": 203,
+      "clientsCount": 189,
+      "yearsExperience": 10,
+      "instagram": "@sarah.weftmaster",
+      "color": "#D4AF37",
+      "available": true,
+      "imageUrl": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400"
+    },
+    {
+      "id": "maya",
+      "name": "Maya Johnson",
+      "specialty": "Keratin & Maintenance",
+      "tagline": "Keeping your extensions flawless 💕",
+      "rating": 4.7,
+      "reviewCount": 76,
+      "clientsCount": 98,
+      "yearsExperience": 4,
+      "instagram": "@maya.haircare",
+      "color": "#3498DB",
+      "available": true,
+      "imageUrl": "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400"
+    }
+  ]
+}

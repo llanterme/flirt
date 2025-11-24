@@ -1,0 +1,247 @@
+{
+  "users": [
+    {
+      "id": "user-001",
+      "email": "jessica@email.com",
+      "password": "hashed_password_123",
+      "name": "Jessica van der Berg",
+      "phone": "+27 82 123 4567",
+      "createdAt": "2025-09-15T10:00:00.000Z",
+      "loyaltyPoints": 450,
+      "tier": "bronze",
+      "referralCode": "JESSICA10",
+      "referredBy": null,
+      "hairTracker": {
+        "installDate": "2025-11-10",
+        "extensionType": "tapes",
+        "lastWash": "2025-11-22",
+        "lastDeepCondition": "2025-11-15",
+        "maintenanceIntervalDays": 42,
+        "washHistory": [
+          "2025-11-22",
+          "2025-11-19",
+          "2025-11-16",
+          "2025-11-13"
+        ],
+        "productsUsed": [
+          {
+            "id": "prod-1",
+            "name": "Sulfate-Free Shampoo",
+            "addedAt": "2025-11-10"
+          },
+          {
+            "id": "prod-2",
+            "name": "Leave-In Conditioner",
+            "addedAt": "2025-11-10"
+          }
+        ]
+      },
+      "preferences": {
+        "preferredStylist": "lisa",
+        "notifications": true,
+        "marketingEmails": true
+      },
+      "hairProfile": {
+        "hairType": "straight",
+        "extensionType": "tape",
+        "preferredStylist": "lisa",
+        "notes": "Sensitive scalp, prefers gentle products"
+      },
+      "notificationPrefs": {
+        "promotions": true,
+        "appointmentReminders": true,
+        "loyaltyUpdates": true
+      }
+    },
+    {
+      "id": "user-002",
+      "email": "thandi.n@gmail.com",
+      "password": "hashed_password_456",
+      "name": "Thandi Nkosi",
+      "phone": "+27 83 234 5678",
+      "createdAt": "2025-08-20T14:30:00.000Z",
+      "loyaltyPoints": 1250,
+      "tier": "silver",
+      "referralCode": "THANDI15",
+      "referredBy": null,
+      "hairTracker": {
+        "installDate": "2025-10-28",
+        "extensionType": "wefts",
+        "lastWash": "2025-11-23",
+        "lastDeepCondition": "2025-11-20",
+        "maintenanceIntervalDays": 56,
+        "washHistory": [
+          "2025-11-23",
+          "2025-11-20",
+          "2025-11-17"
+        ],
+        "productsUsed": [
+          {
+            "id": "prod-3",
+            "name": "Extension Detangler",
+            "addedAt": "2025-10-28"
+          }
+        ]
+      },
+      "preferences": {
+        "preferredStylist": "sarah",
+        "notifications": true,
+        "marketingEmails": false
+      }
+    },
+    {
+      "id": "user-003",
+      "email": "chloe.smith@outlook.com",
+      "password": "hashed_password_789",
+      "name": "Chloe Smith",
+      "phone": "+27 84 345 6789",
+      "createdAt": "2025-10-05T09:15:00.000Z",
+      "loyaltyPoints": 275,
+      "tier": "bronze",
+      "referralCode": "CHLOE20",
+      "referredBy": "THANDI15",
+      "hairTracker": {
+        "installDate": "2025-10-12",
+        "extensionType": "tapes",
+        "lastWash": "2025-11-21",
+        "lastDeepCondition": "2025-11-18",
+        "maintenanceIntervalDays": 42,
+        "washHistory": [
+          "2025-11-21",
+          "2025-11-18",
+          "2025-11-15",
+          "2025-11-12"
+        ],
+        "productsUsed": []
+      },
+      "preferences": {
+        "preferredStylist": "maya",
+        "notifications": true,
+        "marketingEmails": true
+      }
+    },
+    {
+      "id": "user-004",
+      "email": "priya.g@hotmail.com",
+      "password": "hashed_password_abc",
+      "name": "Priya Govender",
+      "phone": "+27 82 901 2345",
+      "createdAt": "2025-06-10T11:00:00.000Z",
+      "loyaltyPoints": 5200,
+      "tier": "platinum",
+      "referralCode": "PRIYA25",
+      "referredBy": null,
+      "hairTracker": {
+        "installDate": "2025-11-18",
+        "extensionType": "tapes",
+        "lastWash": "2025-11-24",
+        "lastDeepCondition": "2025-11-22",
+        "maintenanceIntervalDays": 42,
+        "washHistory": [
+          "2025-11-24",
+          "2025-11-21"
+        ],
+        "productsUsed": [
+          {
+            "id": "prod-4",
+            "name": "Silk Serum",
+            "addedAt": "2025-11-18"
+          },
+          {
+            "id": "prod-5",
+            "name": "Heat Protectant",
+            "addedAt": "2025-11-18"
+          },
+          {
+            "id": "prod-6",
+            "name": "Bond Repair Treatment",
+            "addedAt": "2025-11-20"
+          }
+        ]
+      },
+      "preferences": {
+        "preferredStylist": "lisa",
+        "notifications": true,
+        "marketingEmails": true
+      }
+    },
+    {
+      "id": "user-005",
+      "email": "nicole.dp@icloud.com",
+      "password": "hashed_password_def",
+      "name": "Nicole du Plessis",
+      "phone": "+27 83 678 9012",
+      "createdAt": "2025-07-22T16:45:00.000Z",
+      "loyaltyPoints": 1850,
+      "tier": "gold",
+      "referralCode": "NICOLE30",
+      "referredBy": null,
+      "hairTracker": {
+        "installDate": "2025-10-15",
+        "extensionType": "wefts",
+        "lastWash": "2025-11-22",
+        "lastDeepCondition": "2025-11-19",
+        "maintenanceIntervalDays": 56,
+        "washHistory": [
+          "2025-11-22",
+          "2025-11-19",
+          "2025-11-16",
+          "2025-11-13",
+          "2025-11-10"
+        ],
+        "productsUsed": [
+          {
+            "id": "prod-7",
+            "name": "Volume Mousse",
+            "addedAt": "2025-10-15"
+          },
+          {
+            "id": "prod-8",
+            "name": "Argan Oil",
+            "addedAt": "2025-10-20"
+          }
+        ]
+      },
+      "preferences": {
+        "preferredStylist": "sarah",
+        "notifications": true,
+        "marketingEmails": false
+      }
+    },
+    {
+      "id": "admin-001",
+      "email": "admin@flirthair.co.za",
+      "passwordHash": "$2a$10$ADZPJj9EWeaH00COlVqXyeJfRxdY3U/NIBLbeDT1dePla1Pp6RLNu",
+      "name": "Flirt Admin",
+      "phone": "+27 11 123 4567",
+      "role": "admin",
+      "mustChangePassword": true,
+      "points": 0,
+      "tier": "platinum",
+      "referralCode": "FLIRTADMIN",
+      "referredBy": null,
+      "hairTracker": {
+        "lastInstallDate": null,
+        "extensionType": null
+      },
+      "createdAt": "2025-11-24T07:58:48.256Z"
+    },
+    {
+      "id": "927db6d2-93a7-4e30-9c4d-4c6c898fb9c2",
+      "email": "llanterme@gmail.com",
+      "passwordHash": "$2a$10$zdiEGn3bk3CVg1SfvmzOeuI8I.mwGfLeZ/8dnSlQv/7L83UzYU5zW",
+      "name": "Luke Lanterme",
+      "phone": "+27792409463",
+      "role": "customer",
+      "points": 0,
+      "tier": "bronze",
+      "referralCode": "LUKTYXV",
+      "referredBy": null,
+      "hairTracker": {
+        "lastInstallDate": null,
+        "extensionType": null
+      },
+      "createdAt": "2025-11-24T08:07:20.548Z"
+    }
+  ]
+}

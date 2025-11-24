@@ -1,0 +1,390 @@
+{
+  "conversations": [
+    {
+      "id": "conv-001",
+      "oderId": "user-001",
+      "userName": "Jessica van der Berg",
+      "userEmail": "jessica@email.com",
+      "status": "active",
+      "unreadCount": 1,
+      "lastMessageAt": "2025-11-24T14:30:00.000Z",
+      "createdAt": "2025-11-20T09:00:00.000Z",
+      "messages": [
+        {
+          "id": "msg-001-1",
+          "sender": "user",
+          "content": "Hi! I have a booking for tape extensions on the 25th. Can I change it to the 26th instead?",
+          "timestamp": "2025-11-20T09:00:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-001-2",
+          "sender": "admin",
+          "content": "Hi Jessica! Let me check availability for the 26th. Which time slot works best for you?",
+          "timestamp": "2025-11-20T09:15:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-001-3",
+          "sender": "user",
+          "content": "Morning would be perfect, around 10am if possible?",
+          "timestamp": "2025-11-20T09:20:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-001-4",
+          "sender": "admin",
+          "content": "Great news! Lisa has an opening at 10:00 on the 26th. I've updated your booking. See you then!",
+          "timestamp": "2025-11-20T09:30:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-001-5",
+          "sender": "user",
+          "content": "Thank you so much! Quick question - should I wash my hair before I come in?",
+          "timestamp": "2025-11-24T14:30:00.000Z",
+          "read": false
+        }
+      ]
+    },
+    {
+      "id": "conv-002",
+      "userId": "user-002",
+      "userName": "Thandi Nkosi",
+      "userEmail": "thandi.n@gmail.com",
+      "status": "active",
+      "unreadCount": 0,
+      "lastMessageAt": "2025-11-23T16:45:00.000Z",
+      "createdAt": "2025-11-22T11:00:00.000Z",
+      "messages": [
+        {
+          "id": "msg-002-1",
+          "sender": "user",
+          "content": "Hello! I'm interested in weft extensions. How long do they typically last?",
+          "timestamp": "2025-11-22T11:00:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-002-2",
+          "sender": "admin",
+          "content": "Hi Thandi! Weft extensions typically last 8-12 weeks with proper care. We recommend maintenance every 6-8 weeks to keep them looking their best.",
+          "timestamp": "2025-11-22T11:30:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-002-3",
+          "sender": "user",
+          "content": "That sounds great! And what's the price range?",
+          "timestamp": "2025-11-22T11:35:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-002-4",
+          "sender": "admin",
+          "content": "Weft installation starts at R3,200 which includes the service. Hair quality varies - we have options from R1,500 to R4,000 depending on length and quality. Would you like to book a free consultation?",
+          "timestamp": "2025-11-22T11:45:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-002-5",
+          "sender": "user",
+          "content": "Yes please! I've just booked for the 25th with Sarah. Thank you!",
+          "timestamp": "2025-11-23T16:45:00.000Z",
+          "read": true
+        }
+      ]
+    },
+    {
+      "id": "conv-003",
+      "userId": "user-003",
+      "userName": "Chloe Smith",
+      "userEmail": "chloe.smith@outlook.com",
+      "status": "active",
+      "unreadCount": 2,
+      "lastMessageAt": "2025-11-24T10:15:00.000Z",
+      "createdAt": "2025-11-23T14:00:00.000Z",
+      "messages": [
+        {
+          "id": "msg-003-1",
+          "sender": "user",
+          "content": "Hi, I think I'm due for maintenance on my tape extensions. They're starting to slip a bit near the front.",
+          "timestamp": "2025-11-23T14:00:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-003-2",
+          "sender": "admin",
+          "content": "Hi Chloe! Thanks for reaching out. When did you last have them installed? Slipping can happen if they're past the 6-week mark or if there's product buildup.",
+          "timestamp": "2025-11-23T14:20:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-003-3",
+          "sender": "user",
+          "content": "It's been about 7 weeks now. I try to avoid oils near the roots but maybe I missed some spots.",
+          "timestamp": "2025-11-23T14:25:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-003-4",
+          "sender": "admin",
+          "content": "7 weeks is definitely time for maintenance! I'd recommend coming in soon. Maya has availability tomorrow at 2pm - would that work?",
+          "timestamp": "2025-11-23T14:35:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-003-5",
+          "sender": "user",
+          "content": "Perfect! I've just booked it. Also, do you sell the extension-safe shampoo in store?",
+          "timestamp": "2025-11-24T10:00:00.000Z",
+          "read": false
+        },
+        {
+          "id": "msg-003-6",
+          "sender": "user",
+          "content": "And the leave-in conditioner you recommended last time?",
+          "timestamp": "2025-11-24T10:15:00.000Z",
+          "read": false
+        }
+      ]
+    },
+    {
+      "id": "conv-004",
+      "userId": "user-009",
+      "userName": "Priya Govender",
+      "userEmail": "priya.g@hotmail.com",
+      "status": "resolved",
+      "unreadCount": 0,
+      "lastMessageAt": "2025-11-19T12:00:00.000Z",
+      "createdAt": "2025-11-18T15:30:00.000Z",
+      "messages": [
+        {
+          "id": "msg-004-1",
+          "sender": "user",
+          "content": "Just wanted to say thank you for the amazing tape extensions! Lisa did such a beautiful job!",
+          "timestamp": "2025-11-18T15:30:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-004-2",
+          "sender": "admin",
+          "content": "Thank you so much for the kind words, Priya! We're thrilled you love your new extensions! Don't forget to leave us a review - you'll earn 25 loyalty points!",
+          "timestamp": "2025-11-18T16:00:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-004-3",
+          "sender": "user",
+          "content": "Just left a 5-star review! The whole experience was wonderful. I'll definitely be back for maintenance!",
+          "timestamp": "2025-11-19T12:00:00.000Z",
+          "read": true
+        }
+      ]
+    },
+    {
+      "id": "conv-005",
+      "userId": "user-012",
+      "userName": "Samantha Reed",
+      "userEmail": "sam.reed@outlook.com",
+      "status": "active",
+      "unreadCount": 1,
+      "lastMessageAt": "2025-11-24T09:30:00.000Z",
+      "createdAt": "2025-11-23T18:00:00.000Z",
+      "messages": [
+        {
+          "id": "msg-005-1",
+          "sender": "user",
+          "content": "Hi! I'm getting married in December and I booked tape extensions for the 29th. Can we do a trial run first to make sure the color matches perfectly?",
+          "timestamp": "2025-11-23T18:00:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-005-2",
+          "sender": "admin",
+          "content": "Congratulations on your upcoming wedding, Samantha! A color consultation is a great idea. Emma is our color matching expert - I can book you a free 30-minute consultation before your extension appointment. Would the 27th work?",
+          "timestamp": "2025-11-23T18:30:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-005-3",
+          "sender": "user",
+          "content": "The 27th is perfect! What time is available?",
+          "timestamp": "2025-11-24T09:00:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-005-4",
+          "sender": "user",
+          "content": "Also, do you have experience with bridal hair styling? I might need help on the wedding day too.",
+          "timestamp": "2025-11-24T09:30:00.000Z",
+          "read": false
+        }
+      ]
+    },
+    {
+      "id": "conv-006",
+      "userId": "user-006",
+      "userName": "Nicole du Plessis",
+      "userEmail": "nicole.dp@icloud.com",
+      "status": "active",
+      "unreadCount": 0,
+      "lastMessageAt": "2025-11-22T14:20:00.000Z",
+      "createdAt": "2025-11-21T10:00:00.000Z",
+      "messages": [
+        {
+          "id": "msg-006-1",
+          "sender": "user",
+          "content": "Hi there! I've been coming for wefts but I'm thinking of trying tape extensions instead. What's the difference in terms of maintenance?",
+          "timestamp": "2025-11-21T10:00:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-006-2",
+          "sender": "admin",
+          "content": "Great question Nicole! Tapes are lighter and quicker to install (about 2 hours vs 3.5 for wefts). They need repositioning every 6-8 weeks. Wefts give more volume but take longer. Both need similar care - avoiding oils at the roots and using sulfate-free products.",
+          "timestamp": "2025-11-21T10:30:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-006-3",
+          "sender": "user",
+          "content": "Interesting! I think I'll stick with wefts for now since I love the volume, but maybe try tapes next time. Booked for the 27th!",
+          "timestamp": "2025-11-22T14:20:00.000Z",
+          "read": true
+        }
+      ]
+    },
+    {
+      "id": "conv-007",
+      "userId": "user-007",
+      "userName": "Zinhle Dlamini",
+      "userEmail": "zinhle.d@email.co.za",
+      "status": "active",
+      "unreadCount": 0,
+      "lastMessageAt": "2025-11-21T11:00:00.000Z",
+      "createdAt": "2025-11-20T16:00:00.000Z",
+      "messages": [
+        {
+          "id": "msg-007-1",
+          "sender": "user",
+          "content": "Hello! I booked a facial for the 27th. I have very sensitive skin - is there anything I should know beforehand?",
+          "timestamp": "2025-11-20T16:00:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-007-2",
+          "sender": "admin",
+          "content": "Hi Zinhle! Thanks for letting us know. Maya will be doing your facial and she's amazing with sensitive skin. She'll do a patch test first and use our hypoallergenic products. Please arrive without makeup if possible, and let her know about any specific allergies or products that have caused reactions before.",
+          "timestamp": "2025-11-20T16:30:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-007-3",
+          "sender": "user",
+          "content": "Perfect, thank you! I'll add a note about my rosacea when I check in. Looking forward to it!",
+          "timestamp": "2025-11-21T11:00:00.000Z",
+          "read": true
+        }
+      ]
+    },
+    {
+      "id": "conv-008",
+      "userId": "user-014",
+      "userName": "Busisiwe Ndaba",
+      "userEmail": "busi.ndaba@email.co.za",
+      "status": "resolved",
+      "unreadCount": 0,
+      "lastMessageAt": "2025-11-20T09:45:00.000Z",
+      "createdAt": "2025-11-19T14:00:00.000Z",
+      "messages": [
+        {
+          "id": "msg-008-1",
+          "sender": "user",
+          "content": "Hi, I'm a VIP member and I wanted to check if my 20% discount will be applied to my booking on the 30th?",
+          "timestamp": "2025-11-19T14:00:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-008-2",
+          "sender": "admin",
+          "content": "Hi Busisiwe! Yes absolutely - as a Platinum member, your 20% discount is automatically applied to all services. Your weft installation will be R2,560 instead of R3,200. We've also got a special VIP gift waiting for you!",
+          "timestamp": "2025-11-19T14:30:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-008-3",
+          "sender": "user",
+          "content": "Amazing! You guys always take such good care of me. See you on the 30th!",
+          "timestamp": "2025-11-20T09:45:00.000Z",
+          "read": true
+        }
+      ]
+    },
+    {
+      "id": "conv-009",
+      "userId": "user-018",
+      "userName": "Nomsa Khumalo",
+      "userEmail": "nomsa.k@email.com",
+      "status": "active",
+      "unreadCount": 3,
+      "lastMessageAt": "2025-11-24T16:00:00.000Z",
+      "createdAt": "2025-11-24T15:00:00.000Z",
+      "messages": [
+        {
+          "id": "msg-009-1",
+          "sender": "user",
+          "content": "Hi! I just booked weft extensions for December 2nd as a birthday treat to myself! So excited!",
+          "timestamp": "2025-11-24T15:00:00.000Z",
+          "read": false
+        },
+        {
+          "id": "msg-009-2",
+          "sender": "user",
+          "content": "I was wondering - do you have any birthday specials or discounts?",
+          "timestamp": "2025-11-24T15:30:00.000Z",
+          "read": false
+        },
+        {
+          "id": "msg-009-3",
+          "sender": "user",
+          "content": "Also, I've never had extensions before. Is there anything I should do to prepare?",
+          "timestamp": "2025-11-24T16:00:00.000Z",
+          "read": false
+        }
+      ]
+    },
+    {
+      "id": "conv-010",
+      "userId": "user-010",
+      "userName": "Chantel Botha",
+      "userEmail": "chantel.b@gmail.com",
+      "status": "resolved",
+      "unreadCount": 0,
+      "lastMessageAt": "2025-11-16T10:00:00.000Z",
+      "createdAt": "2025-11-15T11:00:00.000Z",
+      "messages": [
+        {
+          "id": "msg-010-1",
+          "sender": "user",
+          "content": "Absolutely love my new wefts! Sarah is incredible - the blending is perfect!",
+          "timestamp": "2025-11-15T11:00:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-010-2",
+          "sender": "admin",
+          "content": "So happy to hear that Chantel! Sarah really is talented. Remember to use the silk pillowcase we recommended - it'll help keep those wefts tangle-free while you sleep!",
+          "timestamp": "2025-11-15T11:30:00.000Z",
+          "read": true
+        },
+        {
+          "id": "msg-010-3",
+          "sender": "user",
+          "content": "Already ordered one! Thanks for the tip. See you in 6 weeks for maintenance!",
+          "timestamp": "2025-11-16T10:00:00.000Z",
+          "read": true
+        }
+      ]
+    }
+  ]
+}

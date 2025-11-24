@@ -1,0 +1,264 @@
+-- Flirt Hair & Beauty Database Schema
+-- SQLite3 Database
+
+-- Enable foreign keys
+PRAGMA foreign_keys = ON;
+
+-- ============================================
+-- USERS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT NOT NULL,
+    phone TEXT,
+    role TEXT DEFAULT 'customer' CHECK(role IN ('customer', 'admin', 'staff')),
+    points INTEGER DEFAULT 0,
+    tier TEXT DEFAULT 'bronze' CHECK(tier IN ('bronze', 'silver', 'gold', 'platinum')),
+    referral_code TEXT UNIQUE,
+    referred_by TEXT REFERENCES users(id),
+    must_change_password INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT
+);
+
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_referral_code ON users(referral_code);
+
+-- ============================================
+-- HAIR TRACKER TABLE (normalized from users)
+-- ============================================
+CREATE TABLE IF NOT EXISTS hair_tracker (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    last_install_date TEXT,
+    extension_type TEXT,
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- ============================================
+-- STYLISTS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS stylists (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    specialty TEXT NOT NULL,
+    tagline TEXT,
+    rating REAL DEFAULT 5.0,
+    review_count INTEGER DEFAULT 0,
+    clients_count INTEGER DEFAULT 0,
+    years_experience INTEGER DEFAULT 0,
+    instagram TEXT,
+    color TEXT DEFAULT '#FF6B9D',
+    available INTEGER DEFAULT 1,
+    image_url TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- ============================================
+-- SERVICES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS services (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    price REAL NOT NULL,
+    duration INTEGER, -- in minutes
+    service_type TEXT NOT NULL CHECK(service_type IN ('hair', 'beauty')),
+    category TEXT,
+    active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX idx_services_type ON services(service_type);
+
+-- ============================================
+-- BOOKINGS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS bookings (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    booking_type TEXT NOT NULL CHECK(booking_type IN ('hair', 'beauty')),
+    stylist_id TEXT REFERENCES stylists(id),
+    service_id TEXT NOT NULL REFERENCES services(id),
+    service_name TEXT NOT NULL,
+    service_price REAL NOT NULL,
+    date TEXT NOT NULL,
+    preferred_time_of_day TEXT,
+    time TEXT,
+    confirmed_time TEXT,
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'confirmed', 'completed', 'cancelled')),
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT
+);
+
+CREATE INDEX idx_bookings_user ON bookings(user_id);
+CREATE INDEX idx_bookings_date ON bookings(date);
+CREATE INDEX idx_bookings_stylist ON bookings(stylist_id);
+CREATE INDEX idx_bookings_status ON bookings(status);
+
+-- ============================================
+-- PRODUCTS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS products (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    description TEXT,
+    price REAL NOT NULL,
+    sale_price REAL,
+    on_sale INTEGER DEFAULT 0,
+    stock INTEGER DEFAULT 0,
+    image_url TEXT,
+    active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX idx_products_category ON products(category);
+CREATE INDEX idx_products_on_sale ON products(on_sale);
+
+-- ============================================
+-- ORDERS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS orders (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    subtotal REAL NOT NULL,
+    delivery_method TEXT DEFAULT 'pickup',
+    delivery_fee REAL DEFAULT 0,
+    delivery_address TEXT, -- JSON string for address details
+    promo_code TEXT,
+    discount REAL DEFAULT 0,
+    total REAL NOT NULL,
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled')),
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT
+);
+
+CREATE INDEX idx_orders_user ON orders(user_id);
+CREATE INDEX idx_orders_status ON orders(status);
+
+-- ============================================
+-- ORDER ITEMS TABLE (normalized from orders)
+-- ============================================
+CREATE TABLE IF NOT EXISTS order_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id TEXT NOT NULL REFERENCES products(id),
+    product_name TEXT NOT NULL,
+    quantity INTEGER NOT NULL,
+    unit_price REAL NOT NULL
+);
+
+CREATE INDEX idx_order_items_order ON order_items(order_id);
+
+-- ============================================
+-- PROMOS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS promos (
+    id TEXT PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    description TEXT,
+    discount_type TEXT NOT NULL CHECK(discount_type IN ('percentage', 'fixed')),
+    discount_value REAL NOT NULL,
+    min_order REAL DEFAULT 0,
+    expires_at TEXT,
+    usage_limit INTEGER,
+    times_used INTEGER DEFAULT 0,
+    active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX idx_promos_code ON promos(code);
+CREATE INDEX idx_promos_active ON promos(active);
+
+-- ============================================
+-- LOYALTY TRANSACTIONS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS loyalty_transactions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    points INTEGER NOT NULL,
+    transaction_type TEXT NOT NULL CHECK(transaction_type IN ('earned', 'redeemed', 'expired', 'adjusted')),
+    description TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX idx_loyalty_user ON loyalty_transactions(user_id);
+
+-- ============================================
+-- LOYALTY SETTINGS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS loyalty_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+-- Insert default loyalty settings
+INSERT OR IGNORE INTO loyalty_settings (key, value) VALUES
+    ('tier_bronze', '0'),
+    ('tier_silver', '500'),
+    ('tier_gold', '1500'),
+    ('tier_platinum', '5000'),
+    ('spend_rand', '10'),
+    ('booking_points', '50'),
+    ('review_points', '25'),
+    ('referral_points', '100');
+
+-- ============================================
+-- NOTIFICATIONS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    type TEXT DEFAULT 'promo',
+    action TEXT,
+    action_text TEXT DEFAULT 'View',
+    active INTEGER DEFAULT 1,
+    starts_at TEXT DEFAULT (datetime('now')),
+    expires_at TEXT,
+    created_by TEXT REFERENCES users(id),
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT
+);
+
+CREATE INDEX idx_notifications_active ON notifications(active);
+
+-- ============================================
+-- PUSH SUBSCRIPTIONS TABLE (for Web Push)
+-- ============================================
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint TEXT UNIQUE NOT NULL,
+    p256dh_key TEXT NOT NULL,
+    auth_key TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX idx_push_subs_user ON push_subscriptions(user_id);
+
+-- ============================================
+-- PAYMENT TRANSACTIONS TABLE (for PayFast/Yoco)
+-- ============================================
+CREATE TABLE IF NOT EXISTS payment_transactions (
+    id TEXT PRIMARY KEY,
+    order_id TEXT REFERENCES orders(id),
+    booking_id TEXT REFERENCES bookings(id),
+    user_id TEXT NOT NULL REFERENCES users(id),
+    amount REAL NOT NULL,
+    currency TEXT DEFAULT 'ZAR',
+    payment_provider TEXT NOT NULL CHECK(payment_provider IN ('payfast', 'yoco', 'cash', 'card_on_site')),
+    provider_transaction_id TEXT,
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'completed', 'failed', 'refunded')),
+    metadata TEXT, -- JSON string for provider-specific data
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT
+);
+
+CREATE INDEX idx_payments_order ON payment_transactions(order_id);
+CREATE INDEX idx_payments_user ON payment_transactions(user_id);
+CREATE INDEX idx_payments_status ON payment_transactions(status);

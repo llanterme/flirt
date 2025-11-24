@@ -1,0 +1,103 @@
+{
+  "products": [
+    {
+      "id": "prod_001",
+      "name": "Silk Tape Extensions",
+      "category": "extensions",
+      "description": "Premium silk tape extensions, 20 pieces per pack",
+      "price": 1299,
+      "salePrice": 999,
+      "onSale": true,
+      "stock": 25,
+      "imageUrl": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=300"
+    },
+    {
+      "id": "prod_002",
+      "name": "Hydrating Hair Mask",
+      "category": "care",
+      "description": "Deep conditioning mask for extensions",
+      "price": 349,
+      "salePrice": 279,
+      "onSale": true,
+      "stock": 50,
+      "imageUrl": "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=300"
+    },
+    {
+      "id": "prod_003",
+      "name": "Extension Brush",
+      "category": "accessories",
+      "description": "Gentle detangling brush for extensions",
+      "price": 199,
+      "salePrice": 149,
+      "onSale": true,
+      "stock": 100,
+      "imageUrl": "https://images.unsplash.com/photo-1590439471364-192aa70c0b53?w=300"
+    },
+    {
+      "id": "prod_004",
+      "name": "Leave-in Conditioner",
+      "category": "care",
+      "description": "Lightweight leave-in spray for daily use",
+      "price": 279,
+      "salePrice": null,
+      "onSale": false,
+      "stock": 75,
+      "imageUrl": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300"
+    },
+    {
+      "id": "prod_005",
+      "name": "Weft Extensions Bundle",
+      "category": "extensions",
+      "description": "100g premium weft bundle, natural colors",
+      "price": 1899,
+      "salePrice": 1499,
+      "onSale": true,
+      "stock": 15,
+      "imageUrl": "https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=300"
+    },
+    {
+      "id": "prod_006",
+      "name": "Heat Protectant Spray",
+      "category": "care",
+      "description": "Thermal protection up to 230°C",
+      "price": 229,
+      "salePrice": null,
+      "onSale": false,
+      "stock": 60,
+      "imageUrl": "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=300"
+    },
+    {
+      "id": "prod_007",
+      "name": "Silk Pillowcase",
+      "category": "accessories",
+      "description": "Pure silk pillowcase to protect extensions while sleeping",
+      "price": 399,
+      "salePrice": 299,
+      "onSale": true,
+      "stock": 40,
+      "imageUrl": "https://images.unsplash.com/photo-1631679706909-1844bbd07221?w=300"
+    },
+    {
+      "id": "prod_008",
+      "name": "Extension Clips Set",
+      "category": "accessories",
+      "description": "Set of 10 professional sectioning clips",
+      "price": 129,
+      "salePrice": null,
+      "onSale": false,
+      "stock": 80,
+      "imageUrl": "https://images.unsplash.com/photo-1522337094846-8a818192de1f?w=300"
+    },
+    {
+      "id": "prod_009",
+      "name": "Keratin Bond Remover",
+      "category": "care",
+      "description": "Gentle keratin bond removal solution",
+      "price": 189,
+      "salePrice": 149,
+      "onSale": true,
+      "stock": 35,
+      "imageUrl": "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=300"
+    }
+  ]
+}

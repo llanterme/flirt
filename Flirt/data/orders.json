@@ -1,0 +1,207 @@
+{
+  "orders": [
+    {
+      "id": "order-001",
+      "userId": "user-001",
+      "userName": "Jessica van der Berg",
+      "userEmail": "jessica@email.com",
+      "items": [
+        {
+          "productId": "prod-shampoo-01",
+          "name": "Sulfate-Free Extension Shampoo",
+          "quantity": 1,
+          "price": 285,
+          "image": "https://images.unsplash.com/photo-1556227702-d1e4e7b5c232?w=200"
+        },
+        {
+          "productId": "prod-conditioner-01",
+          "name": "Hydrating Leave-In Conditioner",
+          "quantity": 1,
+          "price": 320,
+          "image": "https://images.unsplash.com/photo-1526947425960-945c6e72858f?w=200"
+        }
+      ],
+      "subtotal": 605,
+      "discount": 0,
+      "shipping": 75,
+      "total": 680,
+      "status": "delivered",
+      "paymentMethod": "card",
+      "paymentStatus": "paid",
+      "shippingAddress": {
+        "street": "123 Main Road",
+        "city": "Cape Town",
+        "province": "Western Cape",
+        "postalCode": "8001"
+      },
+      "trackingNumber": "ZA123456789",
+      "createdAt": "2025-11-10T14:30:00.000Z",
+      "updatedAt": "2025-11-14T10:00:00.000Z",
+      "deliveredAt": "2025-11-14T10:00:00.000Z"
+    },
+    {
+      "id": "order-002",
+      "userId": "user-002",
+      "userName": "Thandi Nkosi",
+      "userEmail": "thandi.n@gmail.com",
+      "items": [
+        {
+          "productId": "prod-brush-01",
+          "name": "Loop Extension Brush",
+          "quantity": 1,
+          "price": 195,
+          "image": "https://images.unsplash.com/photo-1590159763121-7c9fd312190d?w=200"
+        },
+        {
+          "productId": "prod-serum-01",
+          "name": "Silk Shine Serum",
+          "quantity": 2,
+          "price": 250,
+          "image": "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=200"
+        },
+        {
+          "productId": "prod-pillowcase-01",
+          "name": "Silk Pillowcase - Blush Pink",
+          "quantity": 1,
+          "price": 450,
+          "image": "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=200"
+        }
+      ],
+      "subtotal": 1145,
+      "discount": 114.50,
+      "discountCode": "SILVER10",
+      "shipping": 0,
+      "total": 1030.50,
+      "status": "shipped",
+      "paymentMethod": "card",
+      "paymentStatus": "paid",
+      "shippingAddress": {
+        "street": "456 Oak Avenue",
+        "city": "Johannesburg",
+        "province": "Gauteng",
+        "postalCode": "2001"
+      },
+      "trackingNumber": "ZA987654321",
+      "createdAt": "2025-11-20T09:15:00.000Z",
+      "updatedAt": "2025-11-22T14:00:00.000Z",
+      "shippedAt": "2025-11-22T14:00:00.000Z"
+    },
+    {
+      "id": "order-003",
+      "userId": "user-004",
+      "userName": "Priya Govender",
+      "userEmail": "priya.g@hotmail.com",
+      "items": [
+        {
+          "productId": "prod-tape-01",
+          "name": "Replacement Tape Tabs (40 pack)",
+          "quantity": 2,
+          "price": 180,
+          "image": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=200"
+        },
+        {
+          "productId": "prod-oil-01",
+          "name": "Argan Bond Repair Oil",
+          "quantity": 1,
+          "price": 395,
+          "image": "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=200"
+        }
+      ],
+      "subtotal": 755,
+      "discount": 151,
+      "discountCode": "VIP20",
+      "shipping": 0,
+      "total": 604,
+      "status": "processing",
+      "paymentMethod": "eft",
+      "paymentStatus": "paid",
+      "shippingAddress": {
+        "street": "789 Beach Road",
+        "city": "Durban",
+        "province": "KwaZulu-Natal",
+        "postalCode": "4001"
+      },
+      "trackingNumber": null,
+      "createdAt": "2025-11-23T16:45:00.000Z",
+      "updatedAt": "2025-11-23T16:45:00.000Z"
+    },
+    {
+      "id": "order-004",
+      "userId": "user-005",
+      "userName": "Nicole du Plessis",
+      "userEmail": "nicole.dp@icloud.com",
+      "items": [
+        {
+          "productId": "prod-heatspray-01",
+          "name": "Heat Protection Spray",
+          "quantity": 1,
+          "price": 275,
+          "image": "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=200"
+        }
+      ],
+      "subtotal": 275,
+      "discount": 0,
+      "shipping": 75,
+      "total": 350,
+      "status": "pending",
+      "paymentMethod": "card",
+      "paymentStatus": "pending",
+      "shippingAddress": {
+        "street": "22 Vineyard Lane",
+        "city": "Stellenbosch",
+        "province": "Western Cape",
+        "postalCode": "7600"
+      },
+      "trackingNumber": null,
+      "createdAt": "2025-11-24T11:30:00.000Z",
+      "updatedAt": "2025-11-24T11:30:00.000Z"
+    },
+    {
+      "id": "order-005",
+      "userId": "user-003",
+      "userName": "Chloe Smith",
+      "userEmail": "chloe.smith@outlook.com",
+      "items": [
+        {
+          "productId": "prod-shampoo-01",
+          "name": "Sulfate-Free Extension Shampoo",
+          "quantity": 1,
+          "price": 285,
+          "image": "https://images.unsplash.com/photo-1556227702-d1e4e7b5c232?w=200"
+        },
+        {
+          "productId": "prod-mask-01",
+          "name": "Deep Conditioning Hair Mask",
+          "quantity": 1,
+          "price": 350,
+          "image": "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=200"
+        },
+        {
+          "productId": "prod-clips-01",
+          "name": "Sectioning Clips (10 pack)",
+          "quantity": 1,
+          "price": 85,
+          "image": "https://images.unsplash.com/photo-1522337094846-8a818192de1f?w=200"
+        }
+      ],
+      "subtotal": 720,
+      "discount": 72,
+      "discountCode": "WELCOME10",
+      "shipping": 0,
+      "total": 648,
+      "status": "delivered",
+      "paymentMethod": "card",
+      "paymentStatus": "paid",
+      "shippingAddress": {
+        "street": "88 Garden Street",
+        "city": "Pretoria",
+        "province": "Gauteng",
+        "postalCode": "0002"
+      },
+      "trackingNumber": "ZA555666777",
+      "createdAt": "2025-11-15T08:00:00.000Z",
+      "updatedAt": "2025-11-19T12:30:00.000Z",
+      "deliveredAt": "2025-11-19T12:30:00.000Z"
+    }
+  ]
+}

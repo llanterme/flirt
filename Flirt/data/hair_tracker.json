@@ -1,0 +1,44 @@
+{
+  "defaultMaintenanceIntervalDays": 42,
+  "washFrequencyDays": 3,
+  "deepConditionFrequencyDays": 14,
+  "extensionTypeIntervals": {
+    "tapes": 42,
+    "wefts": 56,
+    "keratin_bonds": 90,
+    "clip_ins": 0,
+    "ponytails": 0
+  },
+  "extensionTypes": [
+    { "id": "tapes", "label": "Tape Extensions", "maintenanceDays": 42 },
+    { "id": "wefts", "label": "Weft Extensions", "maintenanceDays": 56 },
+    { "id": "keratin_bonds", "label": "Keratin Bonds", "maintenanceDays": 90 },
+    { "id": "clip_ins", "label": "Clip-In Extensions", "maintenanceDays": 0 },
+    { "id": "ponytails", "label": "Ponytails", "maintenanceDays": 0 }
+  ],
+  "healthScore": {
+    "base": 100,
+    "penalties": {
+      "overMaintenanceByDay": 0.5,
+      "noDeepConditionOverDays": 0.3,
+      "tooManyWashesPerWeek": 1.0,
+      "missedWashDay": 0.2
+    }
+  },
+  "copy": {
+    "trackerTitle": "Hair Care Journey",
+    "trackerSubtitle": "Keep your extensions healthy and on track",
+    "nextWashLabel": "Next Wash Day",
+    "maintenanceLabel": "Maintenance Due",
+    "deepConditionLabel": "Deep Condition",
+    "noInstallMessage": "Set up your hair tracker to get personalized care recommendations!",
+    "setupButtonText": "Set Up Tracker"
+  },
+  "tips": [
+    "Your extensions are at optimal health! Keep up the great care routine.",
+    "Consider booking maintenance in the next 2 weeks for best results.",
+    "You're due for a deep conditioning treatment this week.",
+    "Use a silk pillowcase to reduce friction and tangling while you sleep.",
+    "Avoid applying heat directly to the bonds or tape areas."
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "hairServices": [
+    {
+      "id": "tape",
+      "name": "Tape Extensions",
+      "description": "Seamless tape-in extensions for natural volume and length",
+      "price": 2500,
+      "durationHours": 2.5,
+      "icon": "✨"
+    },
+    {
+      "id": "weft",
+      "name": "Weft Installation",
+      "description": "Full weft installation for maximum volume",
+      "price": 3200,
+      "durationHours": 3.5,
+      "icon": "💫"
+    },
+    {
+      "id": "color",
+      "name": "Color Matching",
+      "description": "Professional color matching consultation",
+      "price": 0,
+      "durationHours": 0.5,
+      "icon": "🎨"
+    },
+    {
+      "id": "maintenance",
+      "name": "Maintenance",
+      "description": "Extension maintenance and repositioning",
+      "price": 800,
+      "durationHours": 1.5,
+      "icon": "🔧"
+    }
+  ],
+  "beautyServices": [
+    {
+      "id": "facial",
+      "name": "Signature Facial",
+      "description": "Deep cleansing facial with hydration treatment",
+      "price": 450,
+      "durationMinutes": 60,
+      "icon": "✨"
+    },
+    {
+      "id": "manicure",
+      "name": "Gel Manicure",
+      "description": "Long-lasting gel polish manicure",
+      "price": 250,
+      "durationMinutes": 45,
+      "icon": "💅"
+    },
+    {
+      "id": "pedicure",
+      "name": "Luxury Pedicure",
+      "description": "Relaxing pedicure with massage",
+      "price": 300,
+      "durationMinutes": 50,
+      "icon": "🦶"
+    },
+    {
+      "id": "waxing",
+      "name": "Waxing",
+      "description": "Professional waxing services",
+      "price": 150,
+      "durationMinutes": 30,
+      "icon": "🌸"
+    },
+    {
+      "id": "threading",
+      "name": "Threading",
+      "description": "Precise eyebrow threading",
+      "price": 80,
+      "durationMinutes": 15,
+      "icon": "👁️"
+    },
+    {
+      "id": "massage",
+      "name": "Relaxation Massage",
+      "description": "Full body relaxation massage",
+      "price": 500,
+      "durationMinutes": 60,
+      "icon": "💆"
+    }
+  ]
+}

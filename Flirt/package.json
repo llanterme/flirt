@@ -1,0 +1,40 @@
+{
+  "name": "flirt-hair-beauty-backend",
+  "version": "2.0.0",
+  "description": "Backend for Flirt Hair & Beauty booking and shop platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "db:init": "node db/migrate-from-json.js",
+    "db:migrate": "node db/migrate-from-json.js",
+    "vapid:generate": "npx web-push generate-vapid-keys"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "nodemailer": "^6.9.7",
+    "sqlite3": "^5.1.6",
+    "uuid": "^9.0.0",
+    "web-push": "^3.6.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "hair",
+    "beauty",
+    "salon",
+    "booking",
+    "extensions",
+    "pwa"
+  ],
+  "author": "Flirt Hair & Beauty",
+  "license": "ISC"
+}

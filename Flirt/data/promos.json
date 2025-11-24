@@ -1,0 +1,68 @@
+{
+  "promos": [
+    {
+      "id": "promo_001",
+      "code": "WELCOME20",
+      "description": "20% off for new customers",
+      "discountType": "percentage",
+      "discountValue": 20,
+      "minOrder": 0,
+      "expiresAt": "2025-12-31T23:59:59Z",
+      "usageLimit": 1000,
+      "timesUsed": 0,
+      "active": true,
+      "highlighted": true,
+      "badge": "NEW CUSTOMER",
+      "title": "Welcome to Flirt! 💕",
+      "subtitle": "Get 20% off your first order - no minimum spend required",
+      "priority": 1
+    },
+    {
+      "id": "promo_002",
+      "code": "FLASH50",
+      "description": "R50 off orders over R500",
+      "discountType": "fixed",
+      "discountValue": 50,
+      "minOrder": 500,
+      "expiresAt": "2025-06-30T23:59:59Z",
+      "usageLimit": 500,
+      "timesUsed": 0,
+      "active": true,
+      "highlighted": false
+    },
+    {
+      "id": "promo_003",
+      "code": "HAIRLOVE",
+      "description": "15% off all extensions",
+      "discountType": "percentage",
+      "discountValue": 15,
+      "minOrder": 0,
+      "expiresAt": "2025-12-31T23:59:59Z",
+      "usageLimit": null,
+      "timesUsed": 0,
+      "active": true,
+      "highlighted": true,
+      "badge": "EXTENSION SPECIAL",
+      "title": "Hair Love Package 🌟",
+      "subtitle": "15% off all hair extensions - look fabulous for less!",
+      "priority": 2
+    },
+    {
+      "id": "promo_004",
+      "code": "BIRTHDAY",
+      "description": "Birthday month special - R200 off",
+      "discountType": "fixed",
+      "discountValue": 200,
+      "minOrder": 300,
+      "expiresAt": "2025-12-31T23:59:59Z",
+      "usageLimit": null,
+      "timesUsed": 0,
+      "active": true,
+      "highlighted": true,
+      "badge": "BIRTHDAY SPECIAL",
+      "title": "Your Birthday Month! 🎂",
+      "subtitle": "R200 off when you spend R300+ during your birthday month",
+      "priority": 3
+    }
+  ]
+}
