@@ -8,8 +8,7 @@
     "dev": "node server.js",
     "db:init": "node db/migrate-from-json.js",
     "db:migrate": "node db/migrate-from-json.js",
-    "vapid:generate": "npx web-push generate-vapid-keys",
-    "postinstall": "npm rebuild sqlite3 --build-from-source || echo 'SQLite3 rebuild failed - will use JSON fallback'"
+    "vapid:generate": "npx web-push generate-vapid-keys"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

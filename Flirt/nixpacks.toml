@@ -2,13 +2,20 @@
 # Provides build environment, SQLite3 compilation handled by postinstall script
 
 [phases.setup]
-nixPkgs = ['nodejs_18', 'python3', 'pkg-config', 'sqlite', 'gcc', 'gnumake']
+nixPkgs = ['nodejs_22', 'python3', 'pkg-config', 'sqlite', 'gcc', 'gnumake']
 
 [phases.install]
 cmds = ['npm ci']
 
 [phases.build]
-cmds = ['echo "Build complete - SQLite3 handled by postinstall with JSON fallback"']
+cmds = [
+  'echo "=== Build Phase Diagnostics ==="',
+  'ls -la data/ || echo "❌ Data directory not found"',
+  'ls -la data/*.json 2>/dev/null | wc -l | xargs -I {} echo "📁 Found {} JSON files"',
+  'echo "🔧 Rebuilding SQLite3 for Linux platform..."',
+  'npm rebuild sqlite3 --build-from-source || echo "⚠️ SQLite3 rebuild failed - will use JSON fallback"',
+  'echo "✅ Build complete"'
+]
 
 [start]
 cmd = 'npm start'
