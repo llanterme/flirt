@@ -438,6 +438,13 @@ app.post('/api/auth/login', async (req, res) => {
         }
     } else {
         const usersData = loadJSON(USERS_FILE);
+        if (!usersData || !usersData.users) {
+            console.error('❌ No user data available - cannot authenticate');
+            return res.status(500).json({
+                success: false,
+                message: 'Database not available - please try again later'
+            });
+        }
         user = usersData.users.find(u => u.email.toLowerCase() === email.toLowerCase());
     }
 
