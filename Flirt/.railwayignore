@@ -1,21 +1,20 @@
 # Dependencies
 node_modules
-npm-debug.log*
 
-# Environment files
+# Environment files (use Railway environment variables instead)
 .env
 .env.local
 .env.production
 
-# Database (will be created fresh)
+# Database files (will be created fresh on Railway volume)
 db/*.db
 db/*.db-journal
 
 # Development files
 .git
-.gitignore
 README.md
 CLAUDE.md
+*.md
 
 # OS generated files
 .DS_Store
@@ -23,7 +22,6 @@ CLAUDE.md
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
 Thumbs.db
 
 # IDE files
@@ -35,14 +33,12 @@ Thumbs.db
 # Logs
 logs
 *.log
-
-# Build artifacts
-dist
-build
+npm-debug.log*
 
 # Test files
 coverage
 .nyc_output
+test/
 
 # Temporary files
 *.tmp

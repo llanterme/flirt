@@ -157,9 +157,9 @@ curl https://your-app.railway.app/api/health
 - Email: `admin@flirthair.co.za`
 - Password: Your `ADMIN_SEED_PASSWORD`
 
-## 📊 Railway Configuration Files Created
+## 📊 Railway Configuration Files
 
-### **railway.json**
+### **railway.json** - Nixpacks Configuration
 ```json
 {
   "$schema": "https://railway.app/railway.schema.json",
@@ -174,10 +174,17 @@ curl https://your-app.railway.app/api/health
 }
 ```
 
-### **Dockerfile** (Alternative to Nixpacks)
-- Created for custom build requirements
-- Includes SQLite3 and production optimizations
-- Non-root user for security
+### **.railwayignore** - Deployment Optimization
+- Excludes unnecessary files from deployment
+- Speeds up build process
+- Reduces deployment size
+
+### **Why Nixpacks + SQLite is Perfect:**
+- ✅ **Zero Config**: Railway auto-detects Node.js and SQLite
+- ✅ **Built-in SQLite3**: Native support, no setup required
+- ✅ **Fast Builds**: Optimized for Node.js applications
+- ✅ **Automatic Dependencies**: `npm install` runs automatically
+- ✅ **Production Ready**: Optimized runtime environment
 
 ## 💾 Data Persistence & Backup
 
