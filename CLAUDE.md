@@ -333,3 +333,11 @@ For technical support or questions about this implementation:
 ---
 
 **Note:** This is a feature-rich PWA specifically designed for the South African hair and beauty market, with integrated local payment gateways and business practices.
+
+## Recent Changes (2025-11-25)
+- Payments: Added runtime-configurable PayFast/Yoco settings (admin PUT `/api/admin/payment-config`), payment initiation + webhook endpoints, and frontend checkout redirect flow. APP/API base URLs, WhatsApp, and media bases are now configurable via meta tags.
+- Gallery/Media: Auto-seed gallery items when empty; added Instagram feed support (admin sets handle/embed, client renders embed when configured); fixed hardcoded media URLs; added placeholder PWA icons to stop 404s.
+- Content seeding: Auto-seed 20 hair care tips and default stylists on startup/empty datasets.
+- UI fixes: Corrected cart checkout alert escape, replaced missing team photo, ensured gallery/admin Instagram status rendering, and payment provider selection logic in checkout.
+- Dev UX: Added dev auto-login endpoint and client auto-login on localhost when no token is present (helps while social logins are unconfigured).
+- Instagram UX: Swapped between tiles/embed options, lengthened embed to show more of the feed.

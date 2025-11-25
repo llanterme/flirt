@@ -2694,7 +2694,7 @@
             </div>
 
             <div class="quick-actions">
-                <div class="action-card" onclick="switchTab('booking')">
+                <div class="action-card" onclick="navigateToSection('book')">
                     <div class="action-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="color: var(--brand-pink);">
                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -2934,7 +2934,7 @@
                 </div>
 
                 <div class="service-grid">
-                    <div class="service-card" onclick="selectService('tape')">
+                    <div class="service-card" onclick="selectService('tape', this)">
                         <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Tape Extensions" class="service-image">
                         <div class="service-content">
                             <div class="service-name">Tape Extensions</div>
@@ -2942,7 +2942,7 @@
                             <div class="service-price">R2,500</div>
                         </div>
                     </div>
-                    <div class="service-card" onclick="selectService('weft')">
+                    <div class="service-card" onclick="selectService('weft', this)">
                         <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg" alt="Weft Installation" class="service-image">
                         <div class="service-content">
                             <div class="service-name">Weft Installation</div>
@@ -2950,7 +2950,7 @@
                             <div class="service-price">R3,200</div>
                         </div>
                     </div>
-                    <div class="service-card" onclick="selectService('color')">
+                    <div class="service-card" onclick="selectService('color', this)">
                         <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg" alt="Color Matching" class="service-image">
                         <div class="service-content">
                             <div class="service-name">Color Matching</div>
@@ -2958,7 +2958,7 @@
                             <div class="service-price">Free</div>
                         </div>
                     </div>
-                    <div class="service-card" onclick="selectService('maintenance')">
+                    <div class="service-card" onclick="selectService('maintenance', this)">
                         <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories7.jpg" alt="Maintenance" class="service-image">
                         <div class="service-content">
                             <div class="service-name">Maintenance</div>
@@ -5090,12 +5090,24 @@
             }
         }
 
+        // Simple section navigator to booking tab or other anchors
+        function navigateToSection(section) {
+            if (section === 'book') {
+            switchTab('booking');
+            document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
+            } else if (section === 'my-bookings') {
+                switchTab('booking');
+                document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
         // ============================================
         // BOOKING STATE & DATA
         // ============================================
         let bookingType = null;
         let selectedStylist = null;
         let selectedService = null;
+        let selectedServiceId = null;
         let selectedDate = null;
         let selectedTime = null;
 
@@ -5103,6 +5115,7 @@
         let stylists = {};
         let services = {};
         let beautyServices = {};
+        let bookingDataLoaded = false;
 
         // Load data from API on init
         async function loadBookingData() {
@@ -5110,32 +5123,46 @@
                 // Load stylists
                 const stylistsData = await apiCall('/stylists');
                 stylistsData.stylists.forEach(s => {
-                    stylists[s.id] = {
+                    const entry = {
                         name: s.name,
                         specialty: s.specialty,
                         avatar: s.name.charAt(0),
                         color: `linear-gradient(135deg, ${s.color} 0%, ${s.color}99 100%)`
                     };
+                    // Store by full id and simple id (for legacy hardcoded cards like "lisa", "emma")
+                    stylists[s.id] = entry;
+                    const simpleId = s.id.replace(/^stylist_/, '').toLowerCase();
+                    stylists[simpleId] = entry;
                 });
 
                 // Load hair services
                 const hairData = await apiCall('/services/hair');
                 hairData.services.forEach(s => {
-                    services[s.id] = {
+                    const entry = {
+                        id: s.id,
                         name: s.name,
                         price: s.price === 0 ? 'Free' : `R${s.price.toLocaleString()}`
                     };
+                    services[s.id] = entry;
+                    const slug = s.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    services[slug] = entry;
+                    if (slug.includes('tape')) services['tape'] = entry;
+                    if (slug.includes('weft')) services['weft'] = entry;
+                    if (slug.includes('color')) services['color'] = entry;
+                    if (slug.includes('maint')) services['maintenance'] = entry;
                 });
 
                 // Load beauty services
                 const beautyData = await apiCall('/services/beauty');
                 beautyData.services.forEach(s => {
                     beautyServices[s.id] = {
+                        id: s.id,
                         name: s.name,
                         duration: `${s.durationMinutes} min`,
                         price: `R${s.price}`
                     };
                 });
+                bookingDataLoaded = true;
             } catch (error) {
                 console.log('Using fallback data:', error);
                 // Fallback to hardcoded data if API fails
@@ -5231,13 +5258,38 @@
         }
 
         // Service Selection
-        function selectService(serviceType) {
+        async function ensureBookingData() {
+            if (bookingDataLoaded) return;
+            try {
+                await loadBookingData();
+            } catch (e) {
+                console.error('Failed to refresh booking data:', e);
+            }
+        }
+
+        async function selectService(serviceType, el) {
+            await ensureBookingData();
+            // Find service from cache; if missing, build from the card DOM
+            let service = services[serviceType];
+            const targetCard = el ? el.closest('.service-card') : null;
+            if (!service && targetCard) {
+                const name = targetCard.querySelector('.service-name')?.textContent?.trim() || 'Selected Service';
+                const price = targetCard.querySelector('.service-price')?.textContent?.trim() || '';
+                service = { id: serviceType, name, price };
+                services[serviceType] = service;
+            }
+
+            if (!service) {
+                showToast({ type: 'error', title: 'Service unavailable', message: 'Please reload and try again.' });
+                return;
+            }
+
             selectedService = serviceType;
-            const service = services[serviceType];
+            selectedServiceId = service.id || serviceType;
 
             const cards = document.querySelectorAll('#serviceSelection .service-card');
             cards.forEach(card => card.classList.remove('selected'));
-            event.target.closest('.service-card').classList.add('selected');
+            if (targetCard) targetCard.classList.add('selected');
 
             // Update service name display
             document.getElementById('selectedServiceName').textContent = `${service.name} - ${service.price}`;
@@ -5265,17 +5317,24 @@
         }
 
         // Beauty Service Selection
-        function selectBeautyService(serviceType) {
+        async function selectBeautyService(serviceType, el) {
+            await ensureBookingData();
             selectedService = serviceType;
             const service = beautyServices[serviceType];
 
             const cards = document.querySelectorAll('#beautyBooking .service-card');
             cards.forEach(card => card.classList.remove('selected'));
-            event.target.closest('.service-card').classList.add('selected');
+            const targetCard = el ? el.closest('.service-card') : null;
+            if (targetCard) targetCard.classList.add('selected');
 
-            // Update service name display
-            document.getElementById('selectedBeautyServiceName').textContent = service.name;
-            document.getElementById('selectedBeautyServiceDetails').textContent = `${service.duration} - ${service.price}`;
+            if (service) {
+                selectedServiceId = service.id || serviceType;
+                // Update service name display
+                document.getElementById('selectedBeautyServiceName').textContent = service.name;
+                document.getElementById('selectedBeautyServiceDetails').textContent = `${service.duration} - ${service.price}`;
+            } else {
+                selectedServiceId = serviceType;
+            }
 
             // Show booking calendar
             setTimeout(() => {
@@ -5417,6 +5476,7 @@
 
         // Confirm Beauty Booking
         async function confirmBeautyBooking() {
+            await ensureBookingData();
             if (!selectedService || !selectedDateStr || !selectedTime) {
                 showToast({ type: 'error', title: 'Incomplete Booking', message: 'Please complete all booking steps' });
                 return;
@@ -5436,7 +5496,7 @@
                     method: 'POST',
                     body: JSON.stringify({
                         type: 'beauty',
-                        serviceId: selectedService,
+                        serviceId: selectedServiceId || selectedService,
                         date: selectedDateStr,
                         time: selectedTime
                     })
@@ -5452,6 +5512,7 @@
                 // Reset booking state
                 bookingType = null;
                 selectedService = null;
+                selectedServiceId = null;
                 selectedDate = null;
                 selectedDateStr = null;
                 selectedTime = null;
@@ -5487,6 +5548,7 @@
 
         // Booking Confirmation
         async function confirmBooking() {
+            await ensureBookingData();
             if (!selectedStylist || !selectedService || !selectedDateStr) {
                 showToast({ type: 'error', title: 'Incomplete Booking', message: 'Please select a stylist, service, and preferred date' });
                 return;
@@ -5516,7 +5578,7 @@
                     body: JSON.stringify({
                         type: 'hair',
                         stylistId: selectedStylist,
-                        serviceId: selectedService,
+                        serviceId: selectedServiceId || selectedService,
                         date: selectedDateStr,
                         preferredTimeOfDay: preferredTime || null,
                         notes
@@ -5533,6 +5595,7 @@
                 // Reset booking state
                 selectedStylist = null;
                 selectedService = null;
+                selectedServiceId = null;
                 selectedDate = null;
                 selectedDateStr = null;
                 selectedTime = null;

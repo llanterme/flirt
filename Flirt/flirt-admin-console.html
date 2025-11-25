@@ -3283,6 +3283,7 @@
             const token = getToken();
             const headers = {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 ...(token && { 'Authorization': `Bearer ${token}` })
             };
 
@@ -3291,7 +3292,13 @@
                     ...options,
                     headers: { ...headers, ...options.headers }
                 });
-                const data = await response.json();
+                const raw = await response.text();
+                let data;
+                try {
+                    data = raw ? JSON.parse(raw) : {};
+                } catch (e) {
+                    throw new Error(raw || 'API request failed (non-JSON response)');
+                }
                 if (!response.ok) throw new Error(data.message || 'API request failed');
                 apiConnected = true;
                 return data;

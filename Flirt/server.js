@@ -136,6 +136,8 @@ async function seedAdminUser() {
 
         // Seed stylists into DB if missing
         await seedStylistsDefaults();
+        // Seed services into DB if missing
+        await seedServicesDefaults();
 
         // Load persisted payment configuration into runtime (if any)
         try {
@@ -3165,6 +3167,91 @@ app.patch('/api/notifications/:id/toggle', authenticateAdmin, async (req, res) =
 let chatStore = { conversations: [] };
 let galleryStore = { items: [], instagram: null };
 let hairTipsStore = { tips: [] };
+
+// Seed default services into DB if none exist
+async function seedServicesDefaults() {
+    try {
+        const existingHair = await ServiceRepository.findByType('hair');
+        const existingBeauty = await ServiceRepository.findByType('beauty');
+        if (existingHair.length > 0 && existingBeauty.length > 0) return;
+
+        const defaults = [
+            // Hair services
+            {
+                id: 'service_tape',
+                name: 'Tape Extensions',
+                description: 'Tape-in hair extension installation',
+                price: 2500,
+                duration: 150,
+                serviceType: 'hair',
+                category: 'extensions'
+            },
+            {
+                id: 'service_weft',
+                name: 'Weft Installation',
+                description: 'Weft extension installation',
+                price: 3200,
+                duration: 180,
+                serviceType: 'hair',
+                category: 'extensions'
+            },
+            {
+                id: 'service_color',
+                name: 'Color Matching',
+                description: 'Color match consultation',
+                price: 0,
+                duration: 30,
+                serviceType: 'hair',
+                category: 'consultation'
+            },
+            {
+                id: 'service_maintenance',
+                name: 'Maintenance',
+                description: 'Extension maintenance',
+                price: 800,
+                duration: 90,
+                serviceType: 'hair',
+                category: 'maintenance'
+            },
+            // Beauty (minimal seed)
+            {
+                id: 'service_manicure',
+                name: 'Manicure',
+                description: 'Manicure treatment',
+                price: 250,
+                duration: 45,
+                serviceType: 'beauty',
+                category: 'nails'
+            },
+            {
+                id: 'service_pedicure',
+                name: 'Pedicure',
+                description: 'Pedicure treatment',
+                price: 300,
+                duration: 60,
+                serviceType: 'beauty',
+                category: 'nails'
+            }
+        ];
+
+        for (const svc of defaults) {
+            const exists = await ServiceRepository.findById(svc.id);
+            if (exists) continue;
+            await ServiceRepository.create({
+                id: svc.id,
+                name: svc.name,
+                description: svc.description,
+                price: svc.price,
+                duration: svc.duration,
+                serviceType: svc.serviceType,
+                category: svc.category
+            });
+        }
+        console.log('Seeded default services');
+    } catch (err) {
+        console.error('Failed to seed services:', err.message);
+    }
+}
 
 // Seed default stylists into DB if none exist
 async function seedStylistsDefaults() {
