@@ -7579,6 +7579,9 @@
         }
 
         async function initApp() {
+            console.log('🚀 Initializing Flirt Hair & Beauty App...');
+            console.log('API_BASE:', API_BASE);
+
             // Register service worker
             registerServiceWorker();
             // Wire support WhatsApp link
@@ -7594,35 +7597,44 @@
             updateUserUI();
 
             // Check if user is already logged in (will update UI if logged in)
+            console.log('Checking auth status...');
             await checkAuthStatus();
 
             // Load all data independently - errors in one section won't block others
+            console.log('Loading booking data...');
             try {
                 await loadBookingData();
             } catch (e) {
                 console.error('Booking data load failed:', e);
             }
 
+            console.log('Loading special offers...');
             try {
                 await loadSpecialOffers();
             } catch (e) {
                 console.error('Special offers load failed:', e);
             }
 
+            console.log('Loading gallery...');
             try {
                 await loadGallery();
+                console.log('✅ Gallery loaded');
             } catch (e) {
                 console.error('Gallery load failed:', e);
             }
 
+            console.log('Loading hair tip...');
             try {
                 await loadHairTip();
+                console.log('✅ Hair tip loaded');
             } catch (e) {
                 console.error('Hair tip load failed:', e);
             }
 
+            console.log('Loading upcoming appointments...');
             try {
                 await loadUpcomingAppointment();
+                console.log('✅ Upcoming appointments loaded');
             } catch (e) {
                 console.error('Upcoming appointments load failed:', e);
             }
