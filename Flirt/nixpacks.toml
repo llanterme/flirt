@@ -13,9 +13,7 @@ cmds = [
   'echo "🐍 Verifying Python 3.11 distutils availability..."',
   'python3.11 -c "import distutils; print(\"✅ distutils available\")"',
   'echo "🔧 Rebuilding SQLite3 for Linux platform..."',
-  'export PYTHON=python3.11',
-  'npm config set python python3.11',
-  'npm rebuild sqlite3 --build-from-source',
+  'PYTHON=python3.11 npm rebuild sqlite3 --build-from-source',
   'echo "✅ SQLite3 build complete - SQLite-only configuration"'
 ]
 
