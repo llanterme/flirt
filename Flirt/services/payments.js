@@ -4,26 +4,61 @@
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 
-// Payment provider configuration
-const PAYFAST_CONFIG = {
-    merchantId: process.env.PAYFAST_MERCHANT_ID || '',
-    merchantKey: process.env.PAYFAST_MERCHANT_KEY || '',
-    passphrase: process.env.PAYFAST_PASSPHRASE || '',
-    sandbox: process.env.PAYFAST_SANDBOX === 'true',
-    get baseUrl() {
-        return this.sandbox ? 'https://sandbox.payfast.co.za' : 'https://www.payfast.co.za';
-    }
+// Runtime overrides set from admin console (persisted in DB)
+let runtimeConfig = {
+    appUrl: null,
+    apiBaseUrl: null,
+    payfast: {},
+    yoco: {}
 };
 
-const YOCO_CONFIG = {
-    secretKey: process.env.YOCO_SECRET_KEY || '',
-    publicKey: process.env.YOCO_PUBLIC_KEY || '',
-    webhookSecret: process.env.YOCO_WEBHOOK_SECRET || '',
-    baseUrl: 'https://payments.yoco.com/api'
-};
+// Compute effective configuration (env vars as baseline, runtime overrides layered on)
+function getEffectiveConfig() {
+    const envConfig = {
+        appUrl: process.env.APP_URL || 'https://flirthair.co.za',
+        apiBaseUrl: process.env.API_BASE_URL || process.env.APP_URL || 'https://flirthair.co.za',
+        payfast: {
+            merchantId: process.env.PAYFAST_MERCHANT_ID || '',
+            merchantKey: process.env.PAYFAST_MERCHANT_KEY || '',
+            passphrase: process.env.PAYFAST_PASSPHRASE || '',
+            sandbox: process.env.PAYFAST_SANDBOX === 'true'
+        },
+        yoco: {
+            secretKey: process.env.YOCO_SECRET_KEY || '',
+            publicKey: process.env.YOCO_PUBLIC_KEY || '',
+            webhookSecret: process.env.YOCO_WEBHOOK_SECRET || ''
+        }
+    };
 
-const RETURN_URL = process.env.APP_URL || 'https://flirthair.co.za';
-const NOTIFY_URL = `${RETURN_URL}/api/payments/webhook`;
+    const merged = {
+        appUrl: runtimeConfig.appUrl || envConfig.appUrl,
+        apiBaseUrl: runtimeConfig.apiBaseUrl || envConfig.apiBaseUrl,
+        payfast: {
+            ...envConfig.payfast,
+            ...runtimeConfig.payfast
+        },
+        yoco: {
+            ...envConfig.yoco,
+            ...runtimeConfig.yoco,
+            baseUrl: 'https://payments.yoco.com/api'
+        }
+    };
+
+    merged.payfast.baseUrl = merged.payfast.sandbox
+        ? 'https://sandbox.payfast.co.za'
+        : 'https://www.payfast.co.za';
+
+    return merged;
+}
+
+function setRuntimeConfig(config) {
+    runtimeConfig = {
+        appUrl: config.appUrl || runtimeConfig.appUrl || null,
+        apiBaseUrl: config.apiBaseUrl || runtimeConfig.apiBaseUrl || null,
+        payfast: { ...runtimeConfig.payfast, ...(config.payfast || {}) },
+        yoco: { ...runtimeConfig.yoco, ...(config.yoco || {}) }
+    };
+}
 
 // NOTE: Webhook endpoints must be implemented in server.js:
 // - POST /api/payments/webhook/payfast - PayFast ITN handler
@@ -41,15 +76,16 @@ const NOTIFY_URL = `${RETURN_URL}/api/payments/webhook`;
  * @returns {Object} Form data for PayFast redirect
  */
 function generatePayFastPayment(order, customer) {
+    const config = getEffectiveConfig();
     const paymentId = `FLT-${uuidv4().substring(0, 8).toUpperCase()}`;
 
     const data = {
         // Merchant details
-        merchant_id: PAYFAST_CONFIG.merchantId,
-        merchant_key: PAYFAST_CONFIG.merchantKey,
-        return_url: `${RETURN_URL}/payment/success?ref=${paymentId}`,
-        cancel_url: `${RETURN_URL}/payment/cancel?ref=${paymentId}`,
-        notify_url: `${NOTIFY_URL}/payfast`,
+        merchant_id: config.payfast.merchantId,
+        merchant_key: config.payfast.merchantKey,
+        return_url: `${config.appUrl}/payment/success?ref=${paymentId}`,
+        cancel_url: `${config.appUrl}/payment/cancel?ref=${paymentId}`,
+        notify_url: `${config.apiBaseUrl}/api/payments/webhook/payfast`,
 
         // Customer details
         name_first: customer.name.split(' ')[0],
@@ -73,7 +109,7 @@ function generatePayFastPayment(order, customer) {
 
     return {
         paymentId,
-        formAction: `${PAYFAST_CONFIG.baseUrl}/eng/process`,
+        formAction: `${config.payfast.baseUrl}/eng/process`,
         formData: data
     };
 }
@@ -82,6 +118,7 @@ function generatePayFastPayment(order, customer) {
  * Generate PayFast MD5 signature
  */
 function generatePayFastSignature(data) {
+    const config = getEffectiveConfig();
     // Create parameter string (sorted alphabetically)
     const orderedData = {};
     Object.keys(data).sort().forEach(key => {
@@ -95,8 +132,8 @@ function generatePayFastSignature(data) {
         .join('&');
 
     // Add passphrase if configured
-    if (PAYFAST_CONFIG.passphrase) {
-        paramString += `&passphrase=${encodeURIComponent(PAYFAST_CONFIG.passphrase)}`;
+    if (config.payfast.passphrase) {
+        paramString += `&passphrase=${encodeURIComponent(config.payfast.passphrase)}`;
     }
 
     return crypto.createHash('md5').update(paramString).digest('hex');
@@ -106,6 +143,7 @@ function generatePayFastSignature(data) {
  * Verify PayFast ITN (Instant Transaction Notification)
  */
 function verifyPayFastNotification(postData, requestIp) {
+    const config = getEffectiveConfig();
     // Valid PayFast IP addresses
     const validIps = [
         '197.97.145.144', '197.97.145.145', '197.97.145.146', '197.97.145.147',
@@ -113,7 +151,7 @@ function verifyPayFastNotification(postData, requestIp) {
     ];
 
     // Sandbox IPs
-    if (PAYFAST_CONFIG.sandbox) {
+    if (config.payfast.sandbox) {
         validIps.push('127.0.0.1', '::1');
     }
 
@@ -161,14 +199,15 @@ function verifyPayFastNotification(postData, requestIp) {
  * @returns {Promise<Object>} Checkout session details
  */
 async function createYocoCheckout(order, customer) {
+    const config = getEffectiveConfig();
     const paymentId = `FLT-${uuidv4().substring(0, 8).toUpperCase()}`;
 
     const payload = {
         amount: Math.round(order.total * 100), // Amount in cents
         currency: 'ZAR',
-        successUrl: `${RETURN_URL}/payment/success?ref=${paymentId}`,
-        cancelUrl: `${RETURN_URL}/payment/cancel?ref=${paymentId}`,
-        failureUrl: `${RETURN_URL}/payment/failed?ref=${paymentId}`,
+        successUrl: `${config.appUrl}/payment/success?ref=${paymentId}`,
+        cancelUrl: `${config.appUrl}/payment/cancel?ref=${paymentId}`,
+        failureUrl: `${config.appUrl}/payment/failed?ref=${paymentId}`,
         metadata: {
             orderId: order.id,
             customerId: customer.id,
@@ -185,11 +224,11 @@ async function createYocoCheckout(order, customer) {
     };
 
     try {
-        const response = await fetch(`${YOCO_CONFIG.baseUrl}/checkouts`, {
+        const response = await fetch(`${config.yoco.baseUrl}/checkouts`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${YOCO_CONFIG.secretKey}`
+                'Authorization': `Bearer ${config.yoco.secretKey}`
             },
             body: JSON.stringify(payload)
         });
@@ -217,13 +256,14 @@ async function createYocoCheckout(order, customer) {
  * Verify Yoco webhook signature
  */
 function verifyYocoWebhook(payload, signature) {
-    if (!YOCO_CONFIG.webhookSecret) {
+    const config = getEffectiveConfig();
+    if (!config.yoco.webhookSecret) {
         console.warn('Yoco webhook secret not configured');
         return false;
     }
 
     const expectedSignature = crypto
-        .createHmac('sha256', YOCO_CONFIG.webhookSecret)
+        .createHmac('sha256', config.yoco.webhookSecret)
         .update(JSON.stringify(payload))
         .digest('hex');
 
@@ -383,42 +423,43 @@ const PaymentStatus = {
  * Returns provider readiness without exposing secrets
  */
 function getPaymentConfigStatus() {
-    const appUrl = process.env.APP_URL || 'https://flirthair.co.za';
+    const config = getEffectiveConfig();
 
     // PayFast configuration status
     const payfastMissing = [];
-    if (!PAYFAST_CONFIG.merchantId) payfastMissing.push('PAYFAST_MERCHANT_ID');
-    if (!PAYFAST_CONFIG.merchantKey) payfastMissing.push('PAYFAST_MERCHANT_KEY');
+    if (!config.payfast.merchantId) payfastMissing.push('PAYFAST_MERCHANT_ID');
+    if (!config.payfast.merchantKey) payfastMissing.push('PAYFAST_MERCHANT_KEY');
 
     const payfastConfigured = payfastMissing.length === 0;
-    const payfastMode = PAYFAST_CONFIG.sandbox ? 'sandbox' : 'live';
+    const payfastMode = config.payfast.sandbox ? 'sandbox' : 'live';
 
     // Yoco configuration status
     const yocoMissing = [];
-    if (!YOCO_CONFIG.secretKey) yocoMissing.push('YOCO_SECRET_KEY');
-    if (!YOCO_CONFIG.publicKey) yocoMissing.push('YOCO_PUBLIC_KEY');
+    if (!config.yoco.secretKey) yocoMissing.push('YOCO_SECRET_KEY');
+    if (!config.yoco.publicKey) yocoMissing.push('YOCO_PUBLIC_KEY');
 
     const yocoConfigured = yocoMissing.length === 0;
 
     return {
-        appUrl,
+        appUrl: config.appUrl,
+        apiBaseUrl: config.apiBaseUrl,
         payfast: {
             configured: payfastConfigured,
             mode: payfastMode,
-            baseUrl: PAYFAST_CONFIG.baseUrl,
-            notifyUrl: `${appUrl}/api/payments/webhook/payfast`,
-            returnUrl: `${appUrl}/payment/success`,
-            cancelUrl: `${appUrl}/payment/cancel`,
-            hasPassphrase: !!PAYFAST_CONFIG.passphrase,
+            baseUrl: config.payfast.baseUrl,
+            notifyUrl: `${config.apiBaseUrl}/api/payments/webhook/payfast`,
+            returnUrl: `${config.appUrl}/payment/success`,
+            cancelUrl: `${config.appUrl}/payment/cancel`,
+            hasPassphrase: !!config.payfast.passphrase,
             missingEnvVars: payfastMissing
         },
         yoco: {
             configured: yocoConfigured,
-            baseUrl: YOCO_CONFIG.baseUrl,
-            webhookUrl: `${appUrl}/api/payments/webhook/yoco`,
-            hasWebhookSecret: !!YOCO_CONFIG.webhookSecret,
-            hasPublicKey: !!YOCO_CONFIG.publicKey,
-            publicKey: YOCO_CONFIG.publicKey ? `${YOCO_CONFIG.publicKey.substring(0, 20)}...` : null,
+            baseUrl: config.yoco.baseUrl,
+            webhookUrl: `${config.apiBaseUrl}/api/payments/webhook/yoco`,
+            hasWebhookSecret: !!config.yoco.webhookSecret,
+            hasPublicKey: !!config.yoco.publicKey,
+            publicKey: config.yoco.publicKey ? `${config.yoco.publicKey.substring(0, 20)}...` : null,
             missingEnvVars: yocoMissing
         }
     };
@@ -441,9 +482,9 @@ module.exports = {
 
     // Config & diagnostics
     getPaymentConfigStatus,
+    setRuntimeConfig,
+    getEffectiveConfig,
 
     // Constants
-    PaymentStatus,
-    PAYFAST_CONFIG,
-    YOCO_CONFIG
+    PaymentStatus
 };

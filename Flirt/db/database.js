@@ -65,7 +65,7 @@ async function initializeDatabase() {
     const schemaPath = path.join(__dirname, 'schema.sql');
     const schema = fs.readFileSync(schemaPath, 'utf8');
 
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
         getDb().exec(schema, (err) => {
             if (err) {
                 console.error('Failed to initialize database schema:', err.message);
@@ -76,6 +76,23 @@ async function initializeDatabase() {
             }
         });
     });
+
+    // Lightweight migrations for existing databases
+    await ensureColumn(
+        'orders',
+        'payment_status',
+        "TEXT DEFAULT 'unpaid' CHECK(payment_status IN ('unpaid', 'pending', 'paid', 'failed', 'refunded'))"
+    );
+}
+
+// Utilities for lightweight migrations (add missing columns safely)
+async function ensureColumn(table, column, definition) {
+    const info = await dbAll(`PRAGMA table_info(${table})`);
+    const hasColumn = info.some(col => col.name === column);
+    if (!hasColumn) {
+        await dbRun(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+        console.log(`Added missing column ${column} to ${table}`);
+    }
 }
 
 // Close database connection
@@ -457,6 +474,7 @@ const OrderRepository = {
                 try { order.deliveryAddress = JSON.parse(order.delivery_address); }
                 catch (e) { order.deliveryAddress = order.delivery_address; }
             }
+            order.paymentStatus = order.payment_status || order.paymentStatus || 'unpaid';
         }
         return order;
     },
@@ -465,6 +483,7 @@ const OrderRepository = {
         const orders = await dbAll('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC', [userId]);
         for (const order of orders) {
             order.items = await dbAll('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
+            order.paymentStatus = order.payment_status || order.paymentStatus || 'unpaid';
         }
         return orders;
     },
@@ -488,6 +507,7 @@ const OrderRepository = {
 
         for (const order of orders) {
             order.items = await dbAll('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
+            order.paymentStatus = order.payment_status || order.paymentStatus || 'unpaid';
         }
         return orders;
     },
@@ -516,6 +536,11 @@ const OrderRepository = {
 
     async updateStatus(id, status) {
         await dbRun(`UPDATE orders SET status = ?, updated_at = datetime('now') WHERE id = ?`, [status, id]);
+        return this.findById(id);
+    },
+
+    async updatePaymentStatus(id, paymentStatus) {
+        await dbRun(`UPDATE orders SET payment_status = ?, updated_at = datetime('now') WHERE id = ?`, [paymentStatus, id]);
         return this.findById(id);
     }
 };
@@ -768,6 +793,67 @@ const PushSubscriptionRepository = {
 };
 
 // ============================================
+// PAYMENT SETTINGS REPOSITORY
+// ============================================
+const PaymentSettingsRepository = {
+    async getConfig() {
+        const rows = await dbAll('SELECT key, value FROM payment_settings');
+        if (!rows || rows.length === 0) return null;
+
+        const config = {
+            appUrl: null,
+            apiBaseUrl: null,
+            payfast: {},
+            yoco: {}
+        };
+
+        for (const row of rows) {
+            switch (row.key) {
+                case 'app_url': config.appUrl = row.value; break;
+                case 'api_base_url': config.apiBaseUrl = row.value; break;
+                case 'payfast_merchant_id': config.payfast.merchantId = row.value; break;
+                case 'payfast_merchant_key': config.payfast.merchantKey = row.value; break;
+                case 'payfast_passphrase': config.payfast.passphrase = row.value; break;
+                case 'payfast_sandbox': config.payfast.sandbox = row.value === 'true'; break;
+                case 'yoco_secret_key': config.yoco.secretKey = row.value; break;
+                case 'yoco_public_key': config.yoco.publicKey = row.value; break;
+                case 'yoco_webhook_secret': config.yoco.webhookSecret = row.value; break;
+                default: break;
+            }
+        }
+        return config;
+    },
+
+    async saveConfig(config) {
+        const entries = [];
+        if (config.appUrl !== undefined) entries.push(['app_url', config.appUrl]);
+        if (config.apiBaseUrl !== undefined) entries.push(['api_base_url', config.apiBaseUrl]);
+
+        if (config.payfast) {
+            if (config.payfast.merchantId !== undefined) entries.push(['payfast_merchant_id', config.payfast.merchantId]);
+            if (config.payfast.merchantKey !== undefined) entries.push(['payfast_merchant_key', config.payfast.merchantKey]);
+            if (config.payfast.passphrase !== undefined) entries.push(['payfast_passphrase', config.payfast.passphrase]);
+            if (config.payfast.sandbox !== undefined) entries.push(['payfast_sandbox', String(!!config.payfast.sandbox)]);
+        }
+
+        if (config.yoco) {
+            if (config.yoco.secretKey !== undefined) entries.push(['yoco_secret_key', config.yoco.secretKey]);
+            if (config.yoco.publicKey !== undefined) entries.push(['yoco_public_key', config.yoco.publicKey]);
+            if (config.yoco.webhookSecret !== undefined) entries.push(['yoco_webhook_secret', config.yoco.webhookSecret]);
+        }
+
+        for (const [key, value] of entries) {
+            await dbRun(
+                'INSERT OR REPLACE INTO payment_settings (key, value) VALUES (?, ?)',
+                [key, value == null ? '' : String(value)]
+            );
+        }
+
+        return this.getConfig();
+    }
+};
+
+// ============================================
 // PAYMENT REPOSITORY
 // ============================================
 const PaymentRepository = {
@@ -797,13 +883,18 @@ const PaymentRepository = {
         return this.findById(payment.id);
     },
 
-    async updateStatus(id, status, providerTransactionId = null) {
+    async updateStatus(id, status, providerTransactionId = null, metadata = null) {
         let sql = `UPDATE payment_transactions SET status = ?, updated_at = datetime('now')`;
         const params = [status];
 
         if (providerTransactionId) {
             sql += ', provider_transaction_id = ?';
             params.push(providerTransactionId);
+        }
+
+        if (metadata !== null) {
+            sql += ', metadata = ?';
+            params.push(JSON.stringify(metadata));
         }
 
         sql += ' WHERE id = ?';
@@ -831,5 +922,6 @@ module.exports = {
     LoyaltyRepository,
     NotificationRepository,
     PushSubscriptionRepository,
-    PaymentRepository
+    PaymentRepository,
+    PaymentSettingsRepository
 };

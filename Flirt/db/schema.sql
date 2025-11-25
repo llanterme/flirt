@@ -132,7 +132,8 @@ CREATE TABLE IF NOT EXISTS orders (
     promo_code TEXT,
     discount REAL DEFAULT 0,
     total REAL NOT NULL,
-    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled')),
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled', 'paid')),
+    payment_status TEXT DEFAULT 'unpaid' CHECK(payment_status IN ('unpaid', 'pending', 'paid', 'failed', 'refunded')),
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT
 );
@@ -240,6 +241,14 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_push_subs_user ON push_subscriptions(user_id);
+
+-- ============================================
+-- PAYMENT SETTINGS TABLE (for admin-managed gateway keys)
+-- ============================================
+CREATE TABLE IF NOT EXISTS payment_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 
 -- ============================================
 -- PAYMENT TRANSACTIONS TABLE (for PayFast/Yoco)

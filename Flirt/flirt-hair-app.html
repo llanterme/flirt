@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Runtime-configurable client settings (override by replacing content) -->
+    <meta name="flirt-api-base" content="/api">
+    <meta name="flirt-support-whatsapp" content="27821234567">
+    <meta name="flirt-media-base" content="https://www.flirthair.co.za">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FL!RT - Premium Hair Extensions</title>
@@ -2797,7 +2801,7 @@
             <div id="bookingTypeSelection">
                 <div class="booking-type-cards">
                     <div class="booking-type-card" onclick="selectBookingType('hair')">
-                        <div class="booking-type-image" style="background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images3.jpg');">
+                        <div class="booking-type-image" style="background-image: url('${MEDIA_BASE}/wp-content/uploads/2022/03/home-footer-images3.jpg');">
                             <div class="booking-type-overlay"></div>
                         </div>
                         <div class="booking-type-content">
@@ -2812,7 +2816,7 @@
                     </div>
 
                     <div class="booking-type-card" onclick="selectBookingType('beauty')">
-                        <div class="booking-type-image" style="background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg');">
+                        <div class="booking-type-image" style="background-image: url('${MEDIA_BASE}/wp-content/uploads/2022/03/home-footer-images2.jpg');">
                             <div class="booking-type-overlay"></div>
                         </div>
                         <div class="booking-type-content">
@@ -2920,7 +2924,7 @@
 
                 <div class="service-grid">
                     <div class="service-card" onclick="selectService('tape')">
-                        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Tape Extensions" class="service-image">
+                        <img src="${MEDIA_BASE}/wp-content/uploads/2022/03/categories1.jpg" alt="Tape Extensions" class="service-image">
                         <div class="service-content">
                             <div class="service-name">Tape Extensions</div>
                             <div class="service-duration">2-3 hours</div>
@@ -2928,7 +2932,7 @@
                         </div>
                     </div>
                     <div class="service-card" onclick="selectService('weft')">
-                        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg" alt="Weft Installation" class="service-image">
+                        <img src="${MEDIA_BASE}/wp-content/uploads/2022/03/categories3.jpg" alt="Weft Installation" class="service-image">
                         <div class="service-content">
                             <div class="service-name">Weft Installation</div>
                             <div class="service-duration">3-4 hours</div>
@@ -2936,7 +2940,7 @@
                         </div>
                     </div>
                     <div class="service-card" onclick="selectService('color')">
-                        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg" alt="Color Matching" class="service-image">
+                        <img src="${MEDIA_BASE}/wp-content/uploads/2022/03/categories5.jpg" alt="Color Matching" class="service-image">
                         <div class="service-content">
                             <div class="service-name">Color Matching</div>
                             <div class="service-duration">30 min</div>
@@ -2944,7 +2948,7 @@
                         </div>
                     </div>
                     <div class="service-card" onclick="selectService('maintenance')">
-                        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories7.jpg" alt="Maintenance" class="service-image">
+                        <img src="${MEDIA_BASE}/wp-content/uploads/2022/03/categories7.jpg" alt="Maintenance" class="service-image">
                         <div class="service-content">
                             <div class="service-name">Maintenance</div>
                             <div class="service-duration">1-2 hours</div>
@@ -3218,7 +3222,7 @@
             <div class="product-grid" style="margin-bottom: 30px;">
                 <div class="product-card" onclick="addToCart('repair-me', 'Repair-Me.Wash', 231, 385)" style="position: relative;">
                     <span class="sale-badge">-40%</span>
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-Angel-300x300.png" alt="Repair Me Wash" class="product-image">
+                    <img src="${MEDIA_BASE}/wp-content/uploads/2022/03/KEVIN-MURPHY-Angel-300x300.png" alt="Repair Me Wash" class="product-image">
                     <div class="product-info">
                         <div class="product-name">Repair-Me.Wash</div>
                         <div class="product-description">Reconstructing shampoo</div>
@@ -3233,7 +3237,7 @@
 
                 <div class="product-card" onclick="addToCart('hydrate-me', 'Hydrate-Me.Masque', 288, 480)" style="position: relative;">
                     <span class="sale-badge">-40%</span>
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-01-300x300.png" alt="Hydrate Me Masque" class="product-image">
+                    <img src="${MEDIA_BASE}/wp-content/uploads/2022/03/KEVIN-MURPHY-01-300x300.png" alt="Hydrate Me Masque" class="product-image">
                     <div class="product-info">
                         <div class="product-name">Hydrate-Me.Masque</div>
                         <div class="product-description">Intense hydrating mask</div>
@@ -3253,7 +3257,7 @@
 
             <div class="product-grid">
                 <div class="product-card" onclick="showProductDetails('angel-wash')">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-Angel-300x300.png" alt="Angel Wash" class="product-image">
+                    <img src="${MEDIA_BASE}/wp-content/uploads/2022/03/KEVIN-MURPHY-Angel-300x300.png" alt="Angel Wash" class="product-image">
                     <div class="product-info">
                         <div class="product-name">Angel.Wash</div>
                         <div class="product-description">Fine, dry & colored hair</div>
@@ -3264,7 +3268,7 @@
                 </div>
 
                 <div class="product-card" onclick="showProductDetails('angel-rinse')">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-01-300x300.png" alt="Angel Rinse" class="product-image">
+                    <img src="${MEDIA_BASE}/wp-content/uploads/2022/03/KEVIN-MURPHY-01-300x300.png" alt="Angel Rinse" class="product-image">
                     <div class="product-info">
                         <div class="product-name">Angel.Rinse</div>
                         <div class="product-description">Volumizing conditioner</div>
@@ -3275,7 +3279,7 @@
                 </div>
 
                 <div class="product-card" onclick="showProductDetails('bedroom-hair')">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-09-300x300.png" alt="Bedroom Hair" class="product-image">
+                    <img src="${MEDIA_BASE}/wp-content/uploads/2022/03/KEVIN-MURPHY-09-300x300.png" alt="Bedroom Hair" class="product-image">
                     <div class="product-info">
                         <div class="product-name">Bedroom.Hair</div>
                         <div class="product-description">Flexible texturizing spray</div>
@@ -3286,7 +3290,7 @@
                 </div>
 
                 <div class="product-card" onclick="showProductDetails('plumping-wash')">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU249_PLUMPING.WASH_250ml-03-300x300.png" alt="Plumping Wash" class="product-image">
+                    <img src="${MEDIA_BASE}/wp-content/uploads/2023/03/KMU249_PLUMPING.WASH_250ml-03-300x300.png" alt="Plumping Wash" class="product-image">
                     <div class="product-info">
                         <div class="product-name">Plumping.Wash</div>
                         <div class="product-description">Densifying shampoo</div>
@@ -3297,7 +3301,7 @@
                 </div>
 
                 <div class="product-card" onclick="showProductDetails('session-spray')">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU491_SESSION.SPRAY_FLEX_400ML_EU-02-300x300.png" alt="Session Spray" class="product-image">
+                    <img src="${MEDIA_BASE}/wp-content/uploads/2023/03/KMU491_SESSION.SPRAY_FLEX_400ML_EU-02-300x300.png" alt="Session Spray" class="product-image">
                     <div class="product-info">
                         <div class="product-name">Session.Spray Flex</div>
                         <div class="product-description">Flexible hold spray</div>
@@ -3308,7 +3312,7 @@
                 </div>
 
                 <div class="product-card" onclick="showProductDetails('stimulate-wash')">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU291_STIMULATE-ME.WASH_250ml-03-300x300.png" alt="Stimulate Me Wash" class="product-image">
+                    <img src="${MEDIA_BASE}/wp-content/uploads/2023/03/KMU291_STIMULATE-ME.WASH_250ml-03-300x300.png" alt="Stimulate Me Wash" class="product-image">
                     <div class="product-info">
                         <div class="product-name">Stimulate-Me.Wash</div>
                         <div class="product-description">Stimulating shampoo</div>
@@ -3557,19 +3561,19 @@
 
             <div class="inspo-gallery" id="inspoGallery">
                 <div class="inspo-item">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg" alt="Inspo 1">
+                        <img src="${MEDIA_BASE}/wp-content/uploads/2022/03/home-footer-images1.jpg" alt="Inspo 1">
                     <div class="inspo-item-overlay">
                         <span class="inspo-label">Dream Length</span>
                     </div>
                 </div>
                 <div class="inspo-item">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg" alt="Inspo 2">
+                        <img src="${MEDIA_BASE}/wp-content/uploads/2022/03/home-footer-images2.jpg" alt="Inspo 2">
                     <div class="inspo-item-overlay">
                         <span class="inspo-label">Color Goals</span>
                     </div>
                 </div>
                 <div class="inspo-item">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Inspo 3">
+                        <img src="${MEDIA_BASE}/wp-content/uploads/2022/03/categories1.jpg" alt="Inspo 3">
                     <div class="inspo-item-overlay">
                         <span class="inspo-label">Volume Vibes</span>
                     </div>
@@ -4236,6 +4240,10 @@
             </div>
             <div class="modal-body" style="padding: 20px;">
                 <p style="color: #666; margin-bottom: 20px; font-size: 14px;">Help us personalize your experience by telling us about your hair.</p>
+                <div id="hairProfileLoading" style="display: none; align-items: center; gap: 10px; color: var(--gray-medium); font-size: 14px; margin-bottom: 15px;">
+                    <span class="loading-spinner"></span>
+                    <span>Loading your hair profile...</span>
+                </div>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--gray-dark);">Hair Type</label>
                     <select id="hairProfileType" class="form-input" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px;">
@@ -4272,7 +4280,7 @@
                 <div id="hairProfileError" style="color: #e74c3c; font-size: 14px; margin-bottom: 15px; display: none;"></div>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn btn-outline" onclick="closeHairProfileModal()" style="flex: 1;">Cancel</button>
-                    <button class="btn btn-primary" onclick="saveHairProfile()" style="flex: 1; background: var(--brand-pink);">Save</button>
+                    <button id="hairProfileSaveBtn" class="btn btn-primary" onclick="saveHairProfile()" style="flex: 1; background: var(--brand-pink);">Save</button>
                 </div>
             </div>
         </div>
@@ -4346,7 +4354,7 @@
             <div class="modal-body" style="padding: 20px;">
                 <p style="color: #666; margin-bottom: 20px; font-size: 14px;">Need help? We're here for you!</p>
                 <div style="display: flex; flex-direction: column; gap: 15px;">
-                    <a href="https://wa.me/27821234567" target="_blank" style="display: flex; align-items: center; gap: 12px; padding: 15px; background: #f9f9f9; border-radius: 12px; text-decoration: none; color: inherit;">
+                    <a id="supportWhatsappLink" href="#" target="_blank" style="display: flex; align-items: center; gap: 12px; padding: 15px; background: #f9f9f9; border-radius: 12px; text-decoration: none; color: inherit;">
                         <div style="width: 40px; height: 40px; background: #25D366; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">💬</div>
                         <div>
                             <div style="font-weight: 500;">WhatsApp</div>
@@ -4571,18 +4579,29 @@
         // ============================================
         // API CONFIGURATION
         // ============================================
-        // Use relative URL for production compatibility
-        // Falls back to localhost only in development when origin is file:// or Live Server
+        // Prefer meta-injected base; fallback to relative /api or localhost for dev
         const API_BASE = (() => {
+            const meta = document.querySelector('meta[name="flirt-api-base"]');
+            if (meta && meta.content) return meta.content;
             const origin = window.location.origin;
             const port = window.location.port;
-            // If opened as a file or in dev environment without a server, or using Live Server (not port 3001)
             if (origin === 'null' || origin.startsWith('file://') || (port && port !== '3001')) {
                 console.warn('Running in dev mode - using localhost:3001 for API.');
                 return 'http://localhost:3001/api';
             }
-            // In production/staging, use relative path
             return '/api';
+        })();
+
+        // Client contact configuration (override via meta)
+        const SUPPORT_WHATSAPP = (() => {
+            const meta = document.querySelector('meta[name="flirt-support-whatsapp"]');
+            return meta && meta.content ? meta.content : '27821234567';
+        })();
+
+        // Media base URL for static assets (override via meta if CDN changes)
+        const MEDIA_BASE = (() => {
+            const meta = document.querySelector('meta[name="flirt-media-base"]');
+            return meta && meta.content ? meta.content.replace(/\/$/, '') : 'https://www.flirthair.co.za';
         })();
 
         // Get auth token from storage
@@ -4886,6 +4905,7 @@
                 currentUser = data.user;
                 document.body.classList.add('logged-in');
                 updateUserUI();
+                await loadUserData();
             } catch (error) {
                 // Token was present but invalid/expired - clear it and notify user
                 localStorage.removeItem('flirt_token');
@@ -6211,7 +6231,26 @@
             if (!currentUser) { showAuthModal(); return; }
 
             const modal = document.getElementById('hairProfileModal');
-            document.getElementById('hairProfileError').style.display = 'none';
+            const errorEl = document.getElementById('hairProfileError');
+            const loadingEl = document.getElementById('hairProfileLoading');
+            const saveBtn = document.getElementById('hairProfileSaveBtn');
+            const formFields = [
+                document.getElementById('hairProfileType'),
+                document.getElementById('hairProfileExtension'),
+                document.getElementById('hairProfileStylist'),
+                document.getElementById('hairProfileNotes')
+            ];
+
+            const setLoadingState = (isLoading) => {
+                formFields.forEach(field => { if (field) field.disabled = isLoading; });
+                if (saveBtn) saveBtn.disabled = isLoading;
+                if (loadingEl) loadingEl.style.display = isLoading ? 'flex' : 'none';
+            };
+
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+            setLoadingState(true);
+            modal.classList.add('show');
 
             // Load stylists into dropdown
             try {
@@ -6224,7 +6263,16 @@
                     });
                 }
             } catch (e) {
-                console.log('Could not load stylists:', e);
+                const select = document.getElementById('hairProfileStylist');
+                if (select) {
+                    select.innerHTML = '<option value="">No preference</option>';
+                }
+                errorEl.textContent = e.message || 'Unable to load stylists right now. Please try again.';
+                errorEl.style.display = 'block';
+                formFields.forEach(field => { if (field) field.disabled = true; });
+                if (saveBtn) saveBtn.disabled = true;
+                if (loadingEl) loadingEl.style.display = 'none';
+                return;
             }
 
             // Load current hair profile
@@ -6236,10 +6284,15 @@
                 document.getElementById('hairProfileStylist').value = hp.preferredStylist || '';
                 document.getElementById('hairProfileNotes').value = hp.notes || '';
             } catch (e) {
-                console.log('Could not load hair profile:', e);
+                errorEl.textContent = e.message || 'Unable to load your hair profile right now. Please try again.';
+                errorEl.style.display = 'block';
+                formFields.forEach(field => { if (field) field.disabled = true; });
+                if (saveBtn) saveBtn.disabled = true;
+                if (loadingEl) loadingEl.style.display = 'none';
+                return;
             }
 
-            modal.classList.add('show');
+            setLoadingState(false);
         }
         function closeHairProfileModal() {
             document.getElementById('hairProfileModal').classList.remove('show');
@@ -6251,10 +6304,27 @@
             const preferredStylist = document.getElementById('hairProfileStylist').value;
             const notes = document.getElementById('hairProfileNotes').value.trim();
 
+            errorEl.style.display = 'none';
+
             try {
                 await apiCall('/hair-profile', {
                     method: 'PATCH',
                     body: JSON.stringify({ hairType, extensionType, preferredStylist, notes })
+                });
+
+                if (!currentUser) {
+                    currentUser = {};
+                }
+
+                if (!currentUser.hairProfile) {
+                    currentUser.hairProfile = {};
+                }
+
+                Object.assign(currentUser.hairProfile, {
+                    hairType,
+                    extensionType,
+                    preferredStylist,
+                    notes
                 });
                 closeHairProfileModal();
                 showToast({ type: 'success', title: 'Saved', message: 'Your hair profile has been updated.' });
@@ -6869,7 +6939,7 @@
                     price: price,
                     originalPrice: originalPrice,
                     qty: 1,
-                    image: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-Angel-300x300.png'
+                image: `${MEDIA_BASE}/wp-content/uploads/2022/03/KEVIN-MURPHY-Angel-300x300.png`
                 });
             }
             saveCartToStorage(); // Persist cart
@@ -7059,7 +7129,10 @@
             if (deliveryMethod !== 'pickup') {
                 const addressErrors = validateDeliveryAddress();
                 if (addressErrors.length > 0) {
-                    alert('Please complete your delivery address:\n\n' + addressErrors.join('\n'));
+                    alert('Please complete your delivery address:
+
+' + addressErrors.join('
+'));
                     return;
                 }
                 deliveryAddress = getDeliveryAddress();
@@ -7086,21 +7159,50 @@
                     body: JSON.stringify(orderData)
                 });
 
-                const pointsEarned = Math.floor(data.order.total / 10);
-                alert(`🎉 Payment Successful!\n\nOrder Total: R${data.order.total}\n\nThank you for your purchase! You'll receive a confirmation email shortly.\n\n+${pointsEarned} loyalty points earned!`);
+                // Choose provider: prefer PayFast if configured, else Yoco
+                const preferredProvider = window.paymentConfig?.payfast?.configured ? 'payfast' : 'yoco';
 
+                const paymentInit = await apiCall('/payments/initiate', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        provider: preferredProvider,
+                        orderId: data.order.id
+                    })
+                });
+
+                if (paymentInit.payment?.provider === 'payfast') {
+                    const form = document.createElement('form');
+                    form.action = paymentInit.payment.formAction;
+                    form.method = 'POST';
+                    form.style.display = 'none';
+
+                    Object.entries(paymentInit.payment.formData || {}).forEach(([name, value]) => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = name;
+                        input.value = value;
+                        form.appendChild(input);
+                    });
+
+                    document.body.appendChild(form);
+                    form.submit();
+                } else if (paymentInit.payment?.provider === 'yoco' && paymentInit.payment.redirectUrl) {
+                    window.location.href = paymentInit.payment.redirectUrl;
+                } else {
+                    alert('Payment created, but no redirect URL returned. Please contact support.');
+                }
+
+                // Clear cart after redirect is triggered
                 closeModal('checkoutModal');
                 cart = [];
                 clearCartStorage(); // Clear persisted cart
                 discount = 0;
                 appliedPromoCode = null;
                 updateCartCount();
-                loadUserData(); // Refresh points
             } catch (error) {
                 alert('Error processing order: ' + error.message);
             }
         }
-
         // ========== CHAT FUNCTIONALITY ==========
         let chatOpen = false;
 
@@ -7426,6 +7528,11 @@
         async function initApp() {
             // Register service worker
             registerServiceWorker();
+            // Wire support WhatsApp link
+            const whatsappLink = document.getElementById('supportWhatsappLink');
+            if (whatsappLink) {
+                whatsappLink.href = `https://wa.me/${SUPPORT_WHATSAPP}`;
+            }
 
             // Setup auth input listeners for clearing errors
             setupAuthInputListeners();
@@ -7435,6 +7542,14 @@
 
             // Check if user is already logged in (will update UI if logged in)
             await checkAuthStatus();
+
+            // Preload payment config for provider selection
+            try {
+                window.paymentConfig = await apiCall('/admin/payment-config', { method: 'GET' }).then(r => r.config);
+            } catch (e) {
+                console.warn('Payment config preload failed (non-blocking):', e.message);
+                window.paymentConfig = null;
+            }
 
             // Load booking data from API
             await loadBookingData();

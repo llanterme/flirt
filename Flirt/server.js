@@ -20,7 +20,7 @@ const https = require('https');
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
-let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository;
+let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, PaymentRepository, PaymentSettingsRepository;
 
 try {
     const dbModule = require('./db/database');
@@ -34,6 +34,8 @@ try {
     ProductRepository = dbModule.ProductRepository;
     OrderRepository = dbModule.OrderRepository;
     PromoRepository = dbModule.PromoRepository;
+    PaymentRepository = dbModule.PaymentRepository;
+    PaymentSettingsRepository = dbModule.PaymentSettingsRepository;
 
     // Ensure database directory exists
     const dbDir = path.dirname(DATABASE_PATH);
@@ -118,6 +120,7 @@ function recordLoginAttempt(identifier, success) {
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Needed for PayFast form callbacks
 app.use(express.static(__dirname));
 
 // ============================================
@@ -127,6 +130,17 @@ async function seedAdminUser() {
     try {
         // Initialize database first
         await db.initializeDatabase();
+
+        // Load persisted payment configuration into runtime (if any)
+        try {
+            const storedPaymentConfig = await PaymentSettingsRepository.getConfig();
+            if (storedPaymentConfig) {
+                PaymentService.setRuntimeConfig(storedPaymentConfig);
+                console.log('Loaded payment configuration from database');
+            }
+        } catch (err) {
+            console.error('Warning: failed to load payment config from DB:', err.message);
+        }
 
         // Check if admin already exists
         const adminExists = await UserRepository.findByRole('admin');
@@ -1230,6 +1244,136 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
 });
 
 // ============================================
+// PAYMENT ROUTES
+// ============================================
+
+// Initiate a payment for an order
+app.post('/api/payments/initiate', authenticateToken, async (req, res) => {
+    const { provider = 'payfast', orderId } = req.body;
+
+    if (!orderId) {
+        return res.status(400).json({ success: false, message: 'orderId is required' });
+    }
+
+    try {
+        const order = await OrderRepository.findById(orderId);
+        if (!order || order.user_id !== req.user.id) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        if (order.payment_status === 'paid') {
+            return res.status(400).json({ success: false, message: 'Order already paid' });
+        }
+
+        const customer = await UserRepository.findById(req.user.id);
+
+        const configStatus = PaymentService.getPaymentConfigStatus();
+        if (provider === 'payfast' && !configStatus.payfast.configured) {
+            return res.status(400).json({ success: false, message: 'PayFast is not configured' });
+        }
+        if (provider === 'yoco' && !configStatus.yoco.configured) {
+            return res.status(400).json({ success: false, message: 'Yoco is not configured' });
+        }
+
+        const paymentInit = await PaymentService.initializePayment(
+            provider,
+            { id: order.id, total: order.total, items: order.items || [] },
+            { id: customer.id, name: customer.name || customer.email, email: customer.email }
+        );
+
+        await PaymentRepository.create({
+            id: paymentInit.paymentId,
+            orderId: order.id,
+            userId: customer.id,
+            amount: order.total,
+            currency: 'ZAR',
+            provider,
+            status: 'pending',
+            metadata: { providerResponse: paymentInit }
+        });
+
+        await OrderRepository.updatePaymentStatus(order.id, 'pending');
+
+        res.json({ success: true, payment: paymentInit });
+    } catch (error) {
+        console.error('Error initiating payment:', error);
+        res.status(500).json({ success: false, message: error.message || 'Failed to start payment' });
+    }
+});
+
+// Check payment status
+app.get('/api/payments/:id/status', authenticateToken, async (req, res) => {
+    try {
+        const payment = await PaymentRepository.findById(req.params.id);
+        if (!payment || payment.user_id !== req.user.id) {
+            return res.status(404).json({ success: false, message: 'Payment not found' });
+        }
+        res.json({ success: true, payment });
+    } catch (error) {
+        console.error('Error fetching payment status:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch payment status' });
+    }
+});
+
+// PayFast ITN webhook
+app.post('/api/payments/webhook/payfast', async (req, res) => {
+    try {
+        const result = PaymentService.processWebhook('payfast', req.body, req.headers);
+
+        if (!result.valid) {
+            return res.status(400).json({ success: false, message: result.reason || 'Invalid ITN' });
+        }
+
+        const paymentStatus = result.completed ? 'paid' : (result.status || 'pending').toLowerCase();
+        const providerStatus = result.completed ? 'completed' : (result.status || 'processing').toLowerCase();
+
+        if (result.paymentId) {
+            await PaymentRepository.updateStatus(result.paymentId, providerStatus, result.pfPaymentId, { itn: result });
+        }
+        if (result.orderId) {
+            await OrderRepository.updatePaymentStatus(result.orderId, paymentStatus);
+            if (paymentStatus === 'paid') {
+                await OrderRepository.updateStatus(result.orderId, 'paid');
+            }
+        }
+
+        return res.send('OK');
+    } catch (error) {
+        console.error('PayFast webhook error:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// Yoco webhook
+app.post('/api/payments/webhook/yoco', async (req, res) => {
+    try {
+        const result = PaymentService.processWebhook('yoco', req.body, req.headers);
+
+        if (result.valid === false) {
+            return res.status(400).json({ success: false, message: result.reason || 'Invalid webhook' });
+        }
+
+        const paymentStatus = result.completed ? 'paid' : (result.status || 'pending').toLowerCase();
+        const providerStatus = result.completed ? 'completed' : (result.status || result.type || 'processing').toLowerCase();
+
+        if (result.paymentId) {
+            await PaymentRepository.updateStatus(result.paymentId, providerStatus, result.yocoPaymentId, { event: result });
+        }
+        if (result.orderId) {
+            await OrderRepository.updatePaymentStatus(result.orderId, paymentStatus);
+            if (paymentStatus === 'paid') {
+                await OrderRepository.updateStatus(result.orderId, 'paid');
+            }
+        }
+
+        return res.send('OK');
+    } catch (error) {
+        console.error('Yoco webhook error:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// ============================================
 // PROMO ROUTES
 // ============================================
 
@@ -2057,15 +2201,57 @@ app.get('/api/admin/popular-services', authenticateAdmin, async (req, res) => {
 app.get('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
     try {
         const configStatus = PaymentService.getPaymentConfigStatus();
+        const storedConfig = await PaymentSettingsRepository.getConfig();
         res.json({
             success: true,
-            config: configStatus
+            config: configStatus,
+            storedConfig
         });
     } catch (error) {
         console.error('Error fetching payment config:', error.message);
         return res.status(500).json({
             success: false,
             message: 'Failed to fetch payment configuration'
+        });
+    }
+});
+
+// Update payment configuration (admin)
+app.put('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
+    try {
+        const { appUrl, apiBaseUrl, payfast = {}, yoco = {} } = req.body;
+
+        const newConfig = {
+            appUrl,
+            apiBaseUrl,
+            payfast: {
+                merchantId: payfast.merchantId,
+                merchantKey: payfast.merchantKey,
+                passphrase: payfast.passphrase,
+                sandbox: payfast.sandbox
+            },
+            yoco: {
+                secretKey: yoco.secretKey,
+                publicKey: yoco.publicKey,
+                webhookSecret: yoco.webhookSecret
+            }
+        };
+
+        await PaymentSettingsRepository.saveConfig(newConfig);
+        PaymentService.setRuntimeConfig(newConfig);
+
+        const configStatus = PaymentService.getPaymentConfigStatus();
+
+        res.json({
+            success: true,
+            message: 'Payment configuration updated',
+            config: configStatus
+        });
+    } catch (error) {
+        console.error('Error updating payment config:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to update payment configuration'
         });
     }
 });

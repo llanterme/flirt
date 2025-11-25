@@ -2642,6 +2642,68 @@
                         </button>
                     </div>
 
+                    <!-- Editable Payment Settings -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Editable Settings</h3>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">App URL (used for return/cancel pages)</label>
+                                    <input type="text" id="paymentAppUrl" class="form-input" placeholder="https://flirthair.co.za">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">API Base URL (used for webhooks)</label>
+                                    <input type="text" id="paymentApiBaseUrl" class="form-input" placeholder="https://api.flirthair.co.za">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">PayFast Merchant ID</label>
+                                    <input type="text" id="payfastMerchantId" class="form-input" placeholder="e.g. 10000100">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">PayFast Merchant Key</label>
+                                    <input type="text" id="payfastMerchantKey" class="form-input" placeholder="e.g. 46f0cd694581a">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">PayFast Passphrase (recommended)</label>
+                                    <input type="text" id="payfastPassphrase" class="form-input" placeholder="Optional but recommended">
+                                </div>
+                                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 28px;">
+                                    <input type="checkbox" id="payfastSandbox" style="width: 18px; height: 18px;">
+                                    <label for="payfastSandbox" class="form-label" style="margin: 0;">Use Sandbox Mode</label>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Yoco Secret Key</label>
+                                    <input type="text" id="yocoSecretKey" class="form-input" placeholder="sk_test_xxx or sk_live_xxx">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Yoco Public Key</label>
+                                    <input type="text" id="yocoPublicKey" class="form-input" placeholder="pk_test_xxx or pk_live_xxx">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Yoco Webhook Secret</label>
+                                <input type="text" id="yocoWebhookSecret" class="form-input" placeholder="Webhook signing secret">
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                                <button class="btn btn-primary" onclick="savePaymentSettings()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                                    Save Payment Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- App URL Display -->
                     <div class="data-card">
                         <div class="data-card-header">
@@ -2650,7 +2712,7 @@
                         <div style="padding: 25px;">
                             <div class="form-group">
                                 <label class="form-label">Base URL (APP_URL)</label>
-                                <input type="text" id="paymentAppUrl" class="form-input" readonly style="background: var(--gray-light); cursor: not-allowed;">
+                                <input type="text" id="paymentAppUrlDisplay" class="form-input" readonly style="background: var(--gray-light); cursor: not-allowed;">
                                 <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Set via APP_URL environment variable</p>
                             </div>
                         </div>
@@ -5903,9 +5965,12 @@
             try {
                 const data = await apiCall('/admin/payment-config');
                 const config = data.config;
+                const stored = data.storedConfig || {};
 
                 // Update App URL
-                document.getElementById('paymentAppUrl').value = config.appUrl;
+                document.getElementById('paymentAppUrlDisplay').value = config.appUrl;
+
+                populatePaymentForm(config, stored);
 
                 // Update PayFast configuration
                 updatePayFastUI(config.payfast);
@@ -5916,6 +5981,51 @@
             } catch (error) {
                 console.error('Error loading payment config:', error);
                 alert('Failed to load payment configuration: ' + error.message);
+            }
+        }
+
+        function populatePaymentForm(config, stored) {
+            document.getElementById('paymentAppUrl').value = stored.appUrl || config.appUrl || '';
+            document.getElementById('paymentApiBaseUrl').value = stored.apiBaseUrl || config.apiBaseUrl || '';
+
+            document.getElementById('payfastMerchantId').value = stored.payfast?.merchantId || '';
+            document.getElementById('payfastMerchantKey').value = stored.payfast?.merchantKey || '';
+            document.getElementById('payfastPassphrase').value = stored.payfast?.passphrase || '';
+            const sandboxDefault = config.payfast.mode === 'sandbox';
+            document.getElementById('payfastSandbox').checked = stored.payfast?.sandbox ?? sandboxDefault;
+
+            document.getElementById('yocoSecretKey').value = stored.yoco?.secretKey || '';
+            document.getElementById('yocoPublicKey').value = stored.yoco?.publicKey || '';
+            document.getElementById('yocoWebhookSecret').value = stored.yoco?.webhookSecret || '';
+        }
+
+        async function savePaymentSettings() {
+            const payload = {
+                appUrl: document.getElementById('paymentAppUrl').value.trim(),
+                apiBaseUrl: document.getElementById('paymentApiBaseUrl').value.trim(),
+                payfast: {
+                    merchantId: document.getElementById('payfastMerchantId').value.trim(),
+                    merchantKey: document.getElementById('payfastMerchantKey').value.trim(),
+                    passphrase: document.getElementById('payfastPassphrase').value.trim(),
+                    sandbox: document.getElementById('payfastSandbox').checked
+                },
+                yoco: {
+                    secretKey: document.getElementById('yocoSecretKey').value.trim(),
+                    publicKey: document.getElementById('yocoPublicKey').value.trim(),
+                    webhookSecret: document.getElementById('yocoWebhookSecret').value.trim()
+                }
+            };
+
+            try {
+                await apiCall('/admin/payment-config', {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+                alert('Payment settings saved');
+                await refreshPaymentConfig();
+            } catch (error) {
+                console.error('Error saving payment settings:', error);
+                alert('Failed to save payment settings: ' + error.message);
             }
         }
 
