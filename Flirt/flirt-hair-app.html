@@ -7596,28 +7596,36 @@
             // Check if user is already logged in (will update UI if logged in)
             await checkAuthStatus();
 
-            // Preload payment config for provider selection
+            // Load all data independently - errors in one section won't block others
             try {
-                window.paymentConfig = await apiCall('/admin/payment-config', { method: 'GET' }).then(r => r.config);
+                await loadBookingData();
             } catch (e) {
-                console.warn('Payment config preload failed (non-blocking):', e.message);
-                window.paymentConfig = null;
+                console.error('Booking data load failed:', e);
             }
 
-            // Load booking data from API
-            await loadBookingData();
+            try {
+                await loadSpecialOffers();
+            } catch (e) {
+                console.error('Special offers load failed:', e);
+            }
 
-            // Load special offers dynamically
-            await loadSpecialOffers();
+            try {
+                await loadGallery();
+            } catch (e) {
+                console.error('Gallery load failed:', e);
+            }
 
-            // Load gallery dynamically
-            await loadGallery();
+            try {
+                await loadHairTip();
+            } catch (e) {
+                console.error('Hair tip load failed:', e);
+            }
 
-            // Load random hair tip
-            await loadHairTip();
-
-            // Load upcoming appointments
-            await loadUpcomingAppointment();
+            try {
+                await loadUpcomingAppointment();
+            } catch (e) {
+                console.error('Upcoming appointments load failed:', e);
+            }
 
             // Initialize cart from localStorage (cart is already loaded at declaration)
             // Just update the display
