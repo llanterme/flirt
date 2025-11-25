@@ -1167,6 +1167,13 @@
                     </svg>
                     Hair Tracker Settings
                 </a>
+                <a class="nav-item" onclick="showSection('payment-settings')">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    Payment Settings
+                </a>
                 <a class="nav-item" onclick="showSection('settings')">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
@@ -1196,7 +1203,7 @@
                     </button>
                     <div class="admin-profile">
                         <div class="admin-avatar">A</div>
-                        <span style="font-weight: 500;">Admin</span>
+                        <span id="adminName" style="font-weight: 500;">Admin</span>
                     </div>
                 </div>
             </header>
@@ -2623,6 +2630,142 @@
                         <strong style="color: var(--success);">Settings saved successfully!</strong>
                     </div>
                 </section>
+
+                <!-- Payment Settings Section -->
+                <section id="payment-settings" class="page-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Payment Configuration</h2>
+                        <p style="color: var(--gray-medium); margin-top: 5px;">Manage PayFast and Yoco payment gateway settings</p>
+                        <button class="btn btn-primary" onclick="refreshPaymentConfig()" style="margin-top: 15px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                            Refresh Status
+                        </button>
+                    </div>
+
+                    <!-- App URL Display -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Application URL</h3>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-group">
+                                <label class="form-label">Base URL (APP_URL)</label>
+                                <input type="text" id="paymentAppUrl" class="form-input" readonly style="background: var(--gray-light); cursor: not-allowed;">
+                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Set via APP_URL environment variable</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PayFast Configuration -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <h3 class="data-card-title">PayFast Configuration</h3>
+                                <span id="payfastStatusBadge" class="status-badge" style="display: none;"></span>
+                            </div>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Mode</label>
+                                    <input type="text" id="payfastMode" class="form-input" readonly style="background: var(--gray-light);">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Base URL</label>
+                                    <input type="text" id="payfastBaseUrl" class="form-input" readonly style="background: var(--gray-light);">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Notify URL (ITN Endpoint)</label>
+                                <input type="text" id="payfastNotifyUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Configure this URL in your PayFast account under Settings → Integration</p>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Return URL</label>
+                                    <input type="text" id="payfastReturnUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Cancel URL</label>
+                                    <input type="text" id="payfastCancelUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                                    Passphrase Configured
+                                    <span id="payfastPassphraseIcon"></span>
+                                </label>
+                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Set via PAYFAST_PASSPHRASE environment variable (recommended for production)</p>
+                            </div>
+                            <div id="payfastMissingVars" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255,152,0,0.1); border-radius: 8px; border-left: 4px solid var(--warning);">
+                                <strong style="color: var(--warning);">Missing Configuration:</strong>
+                                <ul id="payfastMissingVarsList" style="margin: 10px 0 0 20px; color: var(--gray-dark);"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Yoco Configuration -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <h3 class="data-card-title">Yoco Configuration</h3>
+                                <span id="yocoStatusBadge" class="status-badge" style="display: none;"></span>
+                            </div>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-group">
+                                <label class="form-label">Base URL</label>
+                                <input type="text" id="yocoBaseUrl" class="form-input" readonly style="background: var(--gray-light);">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Webhook URL</label>
+                                <input type="text" id="yocoWebhookUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Configure this URL in your Yoco Dashboard under Developers → Webhooks</p>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                                        Public Key
+                                        <span id="yocoPublicKeyIcon"></span>
+                                    </label>
+                                    <input type="text" id="yocoPublicKey" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                    <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Set via YOCO_PUBLIC_KEY environment variable</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                                        Webhook Secret Configured
+                                        <span id="yocoWebhookSecretIcon"></span>
+                                    </label>
+                                    <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Set via YOCO_WEBHOOK_SECRET environment variable (required for webhook verification)</p>
+                                </div>
+                            </div>
+                            <div id="yocoMissingVars" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255,152,0,0.1); border-radius: 8px; border-left: 4px solid var(--warning);">
+                                <strong style="color: var(--warning);">Missing Configuration:</strong>
+                                <ul id="yocoMissingVarsList" style="margin: 10px 0 0 20px; color: var(--gray-dark);"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuration Guide -->
+                    <div class="data-card" style="background: var(--primary-light); border: 1px solid var(--primary);">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title" style="color: var(--primary);">Configuration Guide</h3>
+                        </div>
+                        <div style="padding: 25px; color: var(--gray-dark);">
+                            <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">Environment Variables Required:</h4>
+                            <ul style="margin-left: 20px; line-height: 1.8;">
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">APP_URL</code> - Your application's base URL (e.g., https://flirthair.co.za)</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">PAYFAST_MERCHANT_ID</code> - Your PayFast merchant ID</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">PAYFAST_MERCHANT_KEY</code> - Your PayFast merchant key</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">PAYFAST_PASSPHRASE</code> - (Optional) PayFast security passphrase</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">PAYFAST_SANDBOX</code> - Set to 'true' for sandbox mode</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">YOCO_SECRET_KEY</code> - Your Yoco secret key</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">YOCO_PUBLIC_KEY</code> - Your Yoco public key</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">YOCO_WEBHOOK_SECRET</code> - Your Yoco webhook secret</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
             </div>
         </main>
     </div>
@@ -3114,7 +3257,10 @@
                     return false;
                 }
                 adminUser = data.user;
-                document.getElementById('adminName').textContent = data.user.name;
+                const adminNameEl = document.getElementById('adminName');
+                if (adminNameEl) {
+                    adminNameEl.textContent = data.user.name;
+                }
                 return true;
             } catch (error) {
                 showLoginPrompt();
@@ -3304,6 +3450,7 @@
                 case 'gallery': loadGallery(); break;
                 case 'loyalty-settings': loadLoyaltySettings(); break;
                 case 'hair-tracker-settings': loadHairTrackerSettings(); break;
+                case 'payment-settings': loadPaymentSettings(); break;
                 case 'chat': loadAdminConversations(); break;
                 case 'hair-tips': loadHairTips(); break;
             }
@@ -5742,6 +5889,124 @@
                 loadGallery();
             } catch (error) {
                 alert('Error: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // PAYMENT SETTINGS
+        // ============================================
+        async function loadPaymentSettings() {
+            await refreshPaymentConfig();
+        }
+
+        async function refreshPaymentConfig() {
+            try {
+                const data = await apiCall('/admin/payment-config');
+                const config = data.config;
+
+                // Update App URL
+                document.getElementById('paymentAppUrl').value = config.appUrl;
+
+                // Update PayFast configuration
+                updatePayFastUI(config.payfast);
+
+                // Update Yoco configuration
+                updateYocoUI(config.yoco);
+
+            } catch (error) {
+                console.error('Error loading payment config:', error);
+                alert('Failed to load payment configuration: ' + error.message);
+            }
+        }
+
+        function updatePayFastUI(payfast) {
+            // Status badge
+            const statusBadge = document.getElementById('payfastStatusBadge');
+            if (payfast.configured) {
+                statusBadge.textContent = '✓ Configured';
+                statusBadge.style.background = 'var(--success)';
+                statusBadge.style.display = 'inline-block';
+            } else {
+                statusBadge.textContent = '⚠ Not Configured';
+                statusBadge.style.background = 'var(--warning)';
+                statusBadge.style.display = 'inline-block';
+            }
+
+            // Mode and URLs
+            document.getElementById('payfastMode').value = payfast.mode;
+            document.getElementById('payfastBaseUrl').value = payfast.baseUrl;
+            document.getElementById('payfastNotifyUrl').value = payfast.notifyUrl;
+            document.getElementById('payfastReturnUrl').value = payfast.returnUrl;
+            document.getElementById('payfastCancelUrl').value = payfast.cancelUrl;
+
+            // Passphrase indicator
+            const passphraseIcon = document.getElementById('payfastPassphraseIcon');
+            if (payfast.hasPassphrase) {
+                passphraseIcon.innerHTML = '<span style="color: var(--success);">✓</span>';
+            } else {
+                passphraseIcon.innerHTML = '<span style="color: var(--gray-medium);">✗</span>';
+            }
+
+            // Missing vars
+            const missingVarsDiv = document.getElementById('payfastMissingVars');
+            const missingVarsList = document.getElementById('payfastMissingVarsList');
+
+            if (payfast.missingEnvVars && payfast.missingEnvVars.length > 0) {
+                missingVarsDiv.style.display = 'block';
+                missingVarsList.innerHTML = payfast.missingEnvVars
+                    .map(v => `<li><code style="background: white; padding: 2px 6px; border-radius: 4px;">${v}</code></li>`)
+                    .join('');
+            } else {
+                missingVarsDiv.style.display = 'none';
+            }
+        }
+
+        function updateYocoUI(yoco) {
+            // Status badge
+            const statusBadge = document.getElementById('yocoStatusBadge');
+            if (yoco.configured) {
+                statusBadge.textContent = '✓ Configured';
+                statusBadge.style.background = 'var(--success)';
+                statusBadge.style.display = 'inline-block';
+            } else {
+                statusBadge.textContent = '⚠ Not Configured';
+                statusBadge.style.background = 'var(--warning)';
+                statusBadge.style.display = 'inline-block';
+            }
+
+            // Base URL and webhook
+            document.getElementById('yocoBaseUrl').value = yoco.baseUrl;
+            document.getElementById('yocoWebhookUrl').value = yoco.webhookUrl;
+
+            // Public key (truncated for security)
+            document.getElementById('yocoPublicKey').value = yoco.publicKey || 'Not configured';
+
+            // Icons for configured items
+            const publicKeyIcon = document.getElementById('yocoPublicKeyIcon');
+            if (yoco.hasPublicKey) {
+                publicKeyIcon.innerHTML = '<span style="color: var(--success);">✓</span>';
+            } else {
+                publicKeyIcon.innerHTML = '<span style="color: var(--gray-medium);">✗</span>';
+            }
+
+            const webhookSecretIcon = document.getElementById('yocoWebhookSecretIcon');
+            if (yoco.hasWebhookSecret) {
+                webhookSecretIcon.innerHTML = '<span style="color: var(--success);">✓</span>';
+            } else {
+                webhookSecretIcon.innerHTML = '<span style="color: var(--warning);">⚠</span>';
+            }
+
+            // Missing vars
+            const missingVarsDiv = document.getElementById('yocoMissingVars');
+            const missingVarsList = document.getElementById('yocoMissingVarsList');
+
+            if (yoco.missingEnvVars && yoco.missingEnvVars.length > 0) {
+                missingVarsDiv.style.display = 'block';
+                missingVarsList.innerHTML = yoco.missingEnvVars
+                    .map(v => `<li><code style="background: white; padding: 2px 6px; border-radius: 4px;">${v}</code></li>`)
+                    .join('');
+            } else {
+                missingVarsDiv.style.display = 'none';
             }
         }
 

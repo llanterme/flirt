@@ -56,6 +56,9 @@ try {
     process.exit(1);
 }
 
+// Payment services import
+const PaymentService = require('./services/payments');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -2047,6 +2050,23 @@ app.get('/api/admin/popular-services', authenticateAdmin, async (req, res) => {
     } catch (error) {
         console.error('Database error in popular services:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
+});
+
+// Get payment configuration status (admin)
+app.get('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
+    try {
+        const configStatus = PaymentService.getPaymentConfigStatus();
+        res.json({
+            success: true,
+            config: configStatus
+        });
+    } catch (error) {
+        console.error('Error fetching payment config:', error.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch payment configuration'
+        });
     }
 });
 

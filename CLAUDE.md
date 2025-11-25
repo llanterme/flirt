@@ -110,7 +110,7 @@ VAPID_PRIVATE_KEY=
 
 #### 4. Database Setup
 ```bash
-# Initialize SQLite database (migration from JSON is complete)
+# Initialize SQLite database (migration from JSON is complete) fdfdfd
 npm run db:init
 ```
 

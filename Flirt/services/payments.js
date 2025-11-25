@@ -25,6 +25,11 @@ const YOCO_CONFIG = {
 const RETURN_URL = process.env.APP_URL || 'https://flirthair.co.za';
 const NOTIFY_URL = `${RETURN_URL}/api/payments/webhook`;
 
+// NOTE: Webhook endpoints must be implemented in server.js:
+// - POST /api/payments/webhook/payfast - PayFast ITN handler
+// - POST /api/payments/webhook/yoco - Yoco webhook handler
+// These endpoints should use processWebhook() function to verify and process payments
+
 // ============================================
 // PAYFAST INTEGRATION
 // ============================================
@@ -373,6 +378,52 @@ const PaymentStatus = {
     CANCELLED: 'cancelled'
 };
 
+/**
+ * Get payment configuration status for admin diagnostics
+ * Returns provider readiness without exposing secrets
+ */
+function getPaymentConfigStatus() {
+    const appUrl = process.env.APP_URL || 'https://flirthair.co.za';
+
+    // PayFast configuration status
+    const payfastMissing = [];
+    if (!PAYFAST_CONFIG.merchantId) payfastMissing.push('PAYFAST_MERCHANT_ID');
+    if (!PAYFAST_CONFIG.merchantKey) payfastMissing.push('PAYFAST_MERCHANT_KEY');
+
+    const payfastConfigured = payfastMissing.length === 0;
+    const payfastMode = PAYFAST_CONFIG.sandbox ? 'sandbox' : 'live';
+
+    // Yoco configuration status
+    const yocoMissing = [];
+    if (!YOCO_CONFIG.secretKey) yocoMissing.push('YOCO_SECRET_KEY');
+    if (!YOCO_CONFIG.publicKey) yocoMissing.push('YOCO_PUBLIC_KEY');
+
+    const yocoConfigured = yocoMissing.length === 0;
+
+    return {
+        appUrl,
+        payfast: {
+            configured: payfastConfigured,
+            mode: payfastMode,
+            baseUrl: PAYFAST_CONFIG.baseUrl,
+            notifyUrl: `${appUrl}/api/payments/webhook/payfast`,
+            returnUrl: `${appUrl}/payment/success`,
+            cancelUrl: `${appUrl}/payment/cancel`,
+            hasPassphrase: !!PAYFAST_CONFIG.passphrase,
+            missingEnvVars: payfastMissing
+        },
+        yoco: {
+            configured: yocoConfigured,
+            baseUrl: YOCO_CONFIG.baseUrl,
+            webhookUrl: `${appUrl}/api/payments/webhook/yoco`,
+            hasWebhookSecret: !!YOCO_CONFIG.webhookSecret,
+            hasPublicKey: !!YOCO_CONFIG.publicKey,
+            publicKey: YOCO_CONFIG.publicKey ? `${YOCO_CONFIG.publicKey.substring(0, 20)}...` : null,
+            missingEnvVars: yocoMissing
+        }
+    };
+}
+
 module.exports = {
     // PayFast
     generatePayFastPayment,
@@ -387,6 +438,9 @@ module.exports = {
     // Unified interface
     initializePayment,
     processWebhook,
+
+    // Config & diagnostics
+    getPaymentConfigStatus,
 
     // Constants
     PaymentStatus,
