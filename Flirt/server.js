@@ -132,6 +132,9 @@ async function seedAdminUser() {
         // Initialize database first
         await db.initializeDatabase();
 
+        // Seed stylists into DB if missing
+        await seedStylistsDefaults();
+
         // Load persisted payment configuration into runtime (if any)
         try {
             const storedPaymentConfig = await PaymentSettingsRepository.getConfig();
@@ -870,6 +873,7 @@ app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
 
 app.get('/api/stylists', async (req, res) => {
     try {
+        await seedStylistsDefaults();
         const stylists = await StylistRepository.findAll();
         res.json({ success: true, stylists });
     } catch (error) {
@@ -2455,6 +2459,7 @@ app.get('/api/admin/customers', authenticateAdmin, async (req, res) => {
 // Staff management (admin)
 app.get('/api/admin/staff', authenticateAdmin, async (req, res) => {
     try {
+        await seedStylistsDefaults();
         const stylists = await StylistRepository.findAll();
         res.json({ success: true, staff: stylists });
     } catch (error) {
@@ -3158,6 +3163,80 @@ app.patch('/api/notifications/:id/toggle', authenticateAdmin, async (req, res) =
 let chatStore = { conversations: [] };
 let galleryStore = { items: [] };
 let hairTipsStore = { tips: [] };
+
+// Seed default stylists into DB if none exist
+async function seedStylistsDefaults() {
+    try {
+        const existing = await StylistRepository.findAll();
+        if (existing && existing.length > 0) return;
+
+        const defaults = [
+            {
+                id: 'stylist_lisa',
+                name: 'Lisa Thompson',
+                specialty: 'Senior Stylist',
+                tagline: '8 years experience',
+                rating: 4.9,
+                reviewCount: 127,
+                clientsCount: 350,
+                yearsExperience: 8,
+                instagram: '@lisathompson',
+                color: '#F67599',
+                available: true,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg'
+            },
+            {
+                id: 'stylist_emma',
+                name: 'Emma Williams',
+                specialty: 'Extension Specialist',
+                tagline: 'Keratin Bonds, Volume',
+                rating: 4.8,
+                reviewCount: 94,
+                clientsCount: 280,
+                yearsExperience: 6,
+                instagram: '@emmaextensions',
+                color: '#414042',
+                available: true,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg'
+            },
+            {
+                id: 'stylist_sarah',
+                name: 'Sarah Martinez',
+                specialty: 'Color Expert',
+                tagline: 'Color Match, Balayage',
+                rating: 5.0,
+                reviewCount: 203,
+                clientsCount: 410,
+                yearsExperience: 10,
+                instagram: '@sarahcolor',
+                color: '#FFB6C1',
+                available: true,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg'
+            },
+            {
+                id: 'stylist_maya',
+                name: 'Maya Johnson',
+                specialty: 'Maintenance Expert',
+                tagline: 'Maintenance, Repairs',
+                rating: 4.9,
+                reviewCount: 156,
+                clientsCount: 320,
+                yearsExperience: 5,
+                instagram: '@mayamaintains',
+                color: '#6d6e70',
+                available: true,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images3.jpg'
+            }
+        ];
+
+        for (const stylist of defaults) {
+            await StylistRepository.create(stylist);
+        }
+        console.log('Seeded default stylists');
+    } catch (err) {
+        console.error('Failed to seed stylists:', err.message);
+    }
+}
 
 // Seed default hair tips for customer app if none exist
 function seedHairTipsDefaults() {

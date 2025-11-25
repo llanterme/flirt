@@ -247,7 +247,8 @@ const StylistRepository = {
 
         const fieldMap = {
             name: 'name', specialty: 'specialty', tagline: 'tagline',
-            rating: 'rating', reviewCount: 'review_count', instagram: 'instagram',
+            rating: 'rating', reviewCount: 'review_count', clientsCount: 'clients_count',
+            yearsExperience: 'years_experience', instagram: 'instagram',
             color: 'color', available: 'available', imageUrl: 'image_url'
         };
 
