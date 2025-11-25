@@ -139,6 +139,10 @@ const UserRepository = {
         return this.findById(user.id);
     },
 
+    async findAll() {
+        return dbAll('SELECT * FROM users ORDER BY created_at DESC');
+    },
+
     async update(id, updates) {
         const fields = [];
         const values = [];
@@ -163,6 +167,11 @@ const UserRepository = {
 
         await dbRun(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, values);
         return this.findById(id);
+    },
+
+    // Alias for update() to match server.js usage
+    async updateById(id, updates) {
+        return this.update(id, updates);
     },
 
     async getHairTracker(userId) {

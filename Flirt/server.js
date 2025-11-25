@@ -3169,6 +3169,76 @@ let chatStore = { conversations: [] };
 let galleryStore = { items: [] };
 let hairTipsStore = { tips: [] };
 
+// Seed default gallery items from flirthair.co.za assets if gallery is empty
+function seedGalleryDefaults() {
+    if (galleryStore.items && galleryStore.items.length > 0) return;
+    const defaults = [
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg',
+            altText: 'Salon inspo 1',
+            label: 'Salon inspo',
+            category: 'inspiration'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg',
+            altText: 'Salon inspo 2',
+            label: 'Salon inspo',
+            category: 'inspiration'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg',
+            altText: 'Tape extensions',
+            label: 'Tape extensions',
+            category: 'services'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg',
+            altText: 'Weft installation',
+            label: 'Weft installation',
+            category: 'services'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg',
+            altText: 'Color matching',
+            label: 'Color matching',
+            category: 'services'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU249_PLUMPING.WASH_250ml-03-300x300.png',
+            altText: 'Plumping Wash',
+            label: 'Plumping Wash',
+            category: 'products'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU491_SESSION.SPRAY_FLEX_400ML_EU-02-300x300.png',
+            altText: 'Session Spray',
+            label: 'Session Spray',
+            category: 'products'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU291_STIMULATE-ME.WASH_250ml-03-300x300.png',
+            altText: 'Stimulate Me Wash',
+            label: 'Stimulate Me Wash',
+            category: 'products'
+        }
+    ];
+
+    defaults.forEach((item, idx) => {
+        galleryStore.items.push({
+            id: `seed_${idx + 1}`,
+            imageUrl: item.imageUrl,
+            altText: item.altText,
+            label: item.label,
+            category: item.category,
+            order: idx + 1,
+            active: true,
+            createdAt: new Date().toISOString()
+        });
+    });
+}
+
+seedGalleryDefaults();
+
 // Optional auth middleware - sets req.user if token is valid, but doesn't fail if not
 function optionalAuth(req, res, next) {
     const authHeader = req.headers['authorization'];
@@ -3564,7 +3634,7 @@ app.patch('/api/admin/chat/conversations/:id/status', authenticateAdmin, async (
 app.get('/api/gallery', (req, res) => {
     try {
         if (!galleryStore.items || galleryStore.items.length === 0) {
-            return res.json({ items: [] });
+            seedGalleryDefaults();
         }
 
         const activeItems = galleryStore.items
@@ -3582,7 +3652,7 @@ app.get('/api/gallery', (req, res) => {
 app.get('/api/admin/gallery', authenticateAdmin, async (req, res) => {
     try {
         if (!galleryStore.items || galleryStore.items.length === 0) {
-            return res.json({ items: [] });
+            seedGalleryDefaults();
         }
 
         const items = [...galleryStore.items].sort((a, b) => a.order - b.order);
