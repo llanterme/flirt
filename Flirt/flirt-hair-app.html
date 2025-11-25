@@ -2782,8 +2782,14 @@
             </div>
 
             <div id="instagramFeedContainer" style="margin-top: 20px; display: none;">
-                <h3 style="font-size: 18px; margin-bottom: 10px; color: var(--brand-charcoal);">Instagram Highlights</h3>
-                <div id="instagramEmbed" style="width: 100%; min-height: 420px; background: var(--gray-light); border-radius: 12px; overflow: hidden;"></div>
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 10px;">
+                    <h3 style="font-size: 18px; margin: 0; color: var(--brand-charcoal);">Instagram Highlights</h3>
+                    <a id="instagramCTA" href="#" target="_blank" style="display:none; font-size: 14px; color: var(--brand-pink); text-decoration: none;">Follow us</a>
+                </div>
+                <div id="instagramEmbed" style="width: 100%; min-height: 620px; background: var(--gray-light); border-radius: 12px; overflow: hidden;">
+                    <iframe id="instagramEmbedFrame" src="" style="width:100%; height:620px; border:0; overflow:hidden;" allowtransparency="true" allow="encrypted-media"></iframe>
+                </div>
+                <div id="instagramFallback" style="display:none; color: var(--gray-medium); margin-top: 10px;"></div>
             </div>
 
             <div class="section-header">
@@ -4899,6 +4905,7 @@
             document.body.classList.add('logged-in');
             updateUserUI();
             loadUserData();
+            loadUpcomingAppointment();
         }
 
         async function checkAuthStatus() {
@@ -4911,6 +4918,7 @@
                 document.body.classList.add('logged-in');
                 updateUserUI();
                 await loadUserData();
+                await loadUpcomingAppointment();
             } catch (error) {
                 // Token was present but invalid/expired - clear it and notify user
                 localStorage.removeItem('flirt_token');
@@ -4924,6 +4932,28 @@
                     message: 'Please sign in again to view your profile and bookings.',
                     type: 'info'
                 });
+            }
+        }
+
+        // Dev-only auto-login when running locally without a token
+        async function devAutoLoginIfNeeded() {
+            const hasToken = !!getToken();
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (hasToken || !isLocalhost) return;
+            try {
+                const res = await fetch(`${API_BASE}/auth/dev-login`);
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.token && data.user) {
+                    localStorage.setItem('flirt_token', data.token);
+                    currentUser = data.user;
+                    document.body.classList.add('logged-in');
+                    updateUserUI();
+                    await loadUserData();
+                    await loadUpcomingAppointment();
+                }
+            } catch (e) {
+                console.warn('Dev auto-login failed:', e);
             }
         }
 
@@ -6849,14 +6879,27 @@
 
                 const instagram = data.instagram;
                 const instaContainer = document.getElementById('instagramFeedContainer');
-                const instaEmbed = document.getElementById('instagramEmbed');
-                if (instaContainer && instaEmbed) {
+                const instaFallback = document.getElementById('instagramFallback');
+                const instaCTA = document.getElementById('instagramCTA');
+                const instaFrame = document.getElementById('instagramEmbedFrame');
+                if (instaContainer && instaFallback && instaCTA && instaFrame) {
                     if (instagram && instagram.embedUrl) {
                         instaContainer.style.display = 'block';
-                        instaEmbed.innerHTML = `<iframe src="${instagram.embedUrl}" style="width:100%; height:420px; border:0; overflow:hidden;" allowtransparency="true" allow="encrypted-media"></iframe>`;
+                        instaFallback.style.display = 'none';
+                        instaCTA.style.display = 'inline';
+                        if (instagram.username) {
+                            instaCTA.href = `https://www.instagram.com/${instagram.username}/`;
+                            instaCTA.textContent = `@${instagram.username}`;
+                        }
+                        instaFrame.src = instagram.embedUrl;
                     } else {
-                        instaContainer.style.display = 'none';
-                        instaEmbed.innerHTML = '';
+                        instaContainer.style.display = 'block';
+                        instaFrame.src = '';
+                        instaCTA.style.display = instagram?.username ? 'inline' : 'none';
+                        instaFallback.style.display = 'block';
+                        instaFallback.innerHTML = instagram?.username
+                            ? `Follow us on Instagram: <a href="https://www.instagram.com/${instagram.username}/" target="_blank">@${instagram.username}</a>`
+                            : 'Follow us on Instagram for the latest looks.';
                     }
                 }
 
@@ -7604,6 +7647,9 @@
         async function initApp() {
             console.log('🚀 Initializing Flirt Hair & Beauty App...');
             console.log('API_BASE:', API_BASE);
+
+            // Dev auto-login for localhost
+            await devAutoLoginIfNeeded();
 
             // Register service worker
             registerServiceWorker();

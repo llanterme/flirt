@@ -75,6 +75,8 @@ const JWT_SECRET = process.env.JWT_SECRET || (() => {
 // Admin seed password from environment
 const ADMIN_SEED_PASSWORD = process.env.ADMIN_SEED_PASSWORD || 'admin123';
 
+const IS_DEV = process.env.NODE_ENV !== 'production';
+
 // OAuth configuration (set these in environment for production)
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || 'GOOGLE_CLIENT_ID_HERE';
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || 'GOOGLE_CLIENT_SECRET_HERE';
@@ -3760,6 +3762,46 @@ app.get('/api/gallery', (req, res) => {
     }
 });
 
+// Dev-only: Auto-login as first user (useful when social logins are not configured)
+if (IS_DEV) {
+    app.get('/api/auth/dev-login', async (req, res) => {
+        try {
+            const users = await UserRepository.findAll();
+            let user = users && users.length > 0 ? users[0] : null;
+
+            if (!user) {
+                // Create a placeholder user if none exist
+                const userId = uuidv4();
+                const passwordHash = await bcrypt.hash('dev-user', 10);
+                user = await UserRepository.create({
+                    id: userId,
+                    email: 'devuser@flirthair.co.za',
+                    passwordHash,
+                    name: 'Dev User',
+                    phone: '',
+                    role: 'customer',
+                    points: 0,
+                    tier: 'bronze',
+                    referralCode: generateReferralCode('Dev User'),
+                    referredBy: null
+                });
+            }
+
+            const token = jwt.sign(
+                { id: user.id, email: user.email, role: user.role },
+                JWT_SECRET,
+                { expiresIn: '7d' }
+            );
+
+            const { passwordHash, password_hash, ...userResponse } = user;
+            res.json({ success: true, token, user: userResponse });
+        } catch (error) {
+            console.error('Dev login error:', error);
+            res.status(500).json({ success: false, message: 'Dev login failed' });
+        }
+    });
+}
+
 // Get all gallery items (admin)
 app.get('/api/admin/gallery', authenticateAdmin, async (req, res) => {
     try {
@@ -3808,9 +3850,9 @@ app.post('/api/admin/gallery', authenticateAdmin, async (req, res) => {
 });
 
 // Set Instagram feed configuration
-app.put('/api/admin/gallery/instagram', authenticateAdmin, async (req, res) => {
+async function handleInstagramConfig(req, res) {
     try {
-        const { username, embedUrl } = req.body;
+        const { username, embedUrl } = req.body || {};
         if (!username && !embedUrl) {
             return res.status(400).json({ message: 'username or embedUrl is required' });
         }
@@ -3830,6 +3872,53 @@ app.put('/api/admin/gallery/instagram', authenticateAdmin, async (req, res) => {
     } catch (error) {
         console.error('Error updating Instagram config:', error);
         res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+app.put('/api/admin/gallery/instagram', authenticateAdmin, handleInstagramConfig);
+app.post('/api/admin/gallery/instagram', authenticateAdmin, handleInstagramConfig);
+
+// Proxy Instagram feed (best-effort, public data)
+app.get('/api/instagram/:username', async (req, res) => {
+    const username = (req.params.username || '').trim();
+    if (!username) return res.status(400).json({ success: false, message: 'Username is required' });
+
+    try {
+        const igRes = await fetch(`https://www.instagram.com/${username}/?__a=1&__d=dis`, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; FlirtBot/1.0)'
+            }
+        });
+
+        if (!igRes.ok) {
+            return res.status(502).json({ success: false, message: 'Failed to fetch Instagram feed' });
+        }
+
+        const json = await igRes.json();
+        const edges =
+            json?.graphql?.user?.edge_owner_to_timeline_media?.edges ||
+            json?.items ||
+            [];
+
+        const images = edges
+            .slice(0, 9)
+            .map(edge => {
+                const node = edge.node || edge;
+                return {
+                    url: node.display_url || node.thumbnail_src || node.thumbnail_url,
+                    link: node.shortcode ? `https://www.instagram.com/p/${node.shortcode}/` : null
+                };
+            })
+            .filter(img => img.url);
+
+        if (!images.length) {
+            return res.status(204).json({ success: true, images: [] });
+        }
+
+        res.json({ success: true, images });
+    } catch (error) {
+        console.error('Instagram proxy error:', error.message);
+        res.status(500).json({ success: false, message: 'Instagram feed unavailable' });
     }
 });
 
