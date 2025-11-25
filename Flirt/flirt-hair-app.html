@@ -2681,14 +2681,14 @@
 
         <!-- Home Content -->
         <div id="home" class="content-area active">
-            <div class="welcome-banner">
-                <div class="welcome-title">Welcome back, Sarah! 👋</div>
-                <p>Your beauty journey continues...</p>
-                <div class="points-display">
+            <div class="welcome-banner" id="welcomeBanner">
+                <div class="welcome-title" id="welcomeTitle">Welcome to FL!RT 👋</div>
+                <p id="welcomeSubtitle">Discover premium hair extensions and book your transformation!</p>
+                <div class="points-display" id="pointsDisplay" style="display: none;">
                     <span class="points-icon">✨</span>
                     <div>
-                        <strong>1,250 Points</strong>
-                        <div style="font-size: 12px; opacity: 0.8;">Gold Tier Member</div>
+                        <strong id="bannerPoints">0 Points</strong>
+                        <div style="font-size: 12px; opacity: 0.8;" id="bannerTier">Bronze Member</div>
                     </div>
                 </div>
             </div>
@@ -2785,7 +2785,7 @@
                 <h2 class="section-title">Hair Care Tips</h2>
             </div>
 
-            <div class="card">
+            <div class="card" id="hairTipCard">
                 <strong>💡 Pro Tip:</strong>
                 <p id="hairTipText" style="margin-top: 10px; color: var(--gray-medium);">
                     Loading...
@@ -4928,11 +4928,23 @@
             const name = document.getElementById('profileName');
             const tierText = document.getElementById('profileTierText');
 
+            // Update welcome banner
+            const welcomeTitle = document.getElementById('welcomeTitle');
+            const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+            const pointsDisplayBanner = document.getElementById('pointsDisplay');
+            const bannerPoints = document.getElementById('bannerPoints');
+            const bannerTier = document.getElementById('bannerTier');
+
             if (!currentUser) {
                 // Guest state
                 if (avatar) avatar.textContent = '?';
                 if (name) name.textContent = 'Guest';
                 if (tierText) tierText.textContent = 'Sign in to unlock rewards';
+
+                // Welcome banner for guests
+                if (welcomeTitle) welcomeTitle.textContent = 'Welcome to FL!RT 👋';
+                if (welcomeSubtitle) welcomeSubtitle.textContent = 'Discover premium hair extensions and book your transformation!';
+                if (pointsDisplayBanner) pointsDisplayBanner.style.display = 'none';
                 return;
             }
 
@@ -4943,6 +4955,20 @@
                 const tier = currentUser.tier || 'bronze';
                 const niceTier = tier.charAt(0).toUpperCase() + tier.slice(1);
                 tierText.textContent = `${niceTier} Tier Member`;
+            }
+
+            // Welcome banner for logged-in users
+            const firstName = currentUser.name?.split(' ')[0] || 'there';
+            if (welcomeTitle) welcomeTitle.textContent = `Welcome back, ${firstName}! 👋`;
+            if (welcomeSubtitle) welcomeSubtitle.textContent = 'Your beauty journey continues...';
+
+            // Show points display
+            if (pointsDisplayBanner) pointsDisplayBanner.style.display = 'flex';
+            if (bannerPoints) bannerPoints.textContent = `${(currentUser.points ?? 0).toLocaleString()} Points`;
+            if (bannerTier) {
+                const tier = currentUser.tier || 'bronze';
+                const niceTier = tier.charAt(0).toUpperCase() + tier.slice(1);
+                bannerTier.textContent = `${niceTier} Tier Member`;
             }
 
             // Update rewards section - use #userPoints which has class .stat-number
@@ -6792,8 +6818,15 @@
 
                 if (!items.length) {
                     container.innerHTML = `
-                        <div class="gallery-item" style="display: flex; align-items: center; justify-content: center; background: var(--gray-light);">
-                            <span style="color: var(--gray-medium);">No gallery images</span>
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #fef5f8 0%, #fff 100%); border-radius: 15px; border: 2px dashed var(--brand-pink);">
+                            <div style="font-size: 60px; margin-bottom: 15px;">💇‍♀️</div>
+                            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 10px; color: var(--brand-charcoal);">Our Gallery is Coming Soon!</h3>
+                            <p style="color: var(--gray-medium); margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                                We're building an amazing collection of transformation photos. In the meantime, check out our services!
+                            </p>
+                            <button class="btn btn-primary" onclick="navigateToSection('book')" style="background: var(--brand-pink); border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: 600;">
+                                Explore Our Services
+                            </button>
                         </div>
                     `;
                     return;
@@ -6812,8 +6845,15 @@
             } catch (error) {
                 console.error('Failed to load gallery:', error);
                 container.innerHTML = `
-                    <div class="gallery-item" style="display: flex; align-items: center; justify-content: center; background: var(--gray-light);">
-                        <span style="color: var(--gray-medium);">Unable to load gallery</span>
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #fef5f8 0%, #fff 100%); border-radius: 15px; border: 2px dashed var(--brand-pink);">
+                        <div style="font-size: 60px; margin-bottom: 15px;">💇‍♀️</div>
+                        <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 10px; color: var(--brand-charcoal);">Our Gallery is Coming Soon!</h3>
+                        <p style="color: var(--gray-medium); margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                            We're building an amazing collection of transformation photos. In the meantime, check out our services!
+                        </p>
+                        <button class="btn btn-primary" onclick="navigateToSection('book')" style="background: var(--brand-pink); border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: 600;">
+                            Explore Our Services
+                        </button>
                     </div>
                 `;
             }
@@ -6860,9 +6900,18 @@
         }
 
         // ========== HAIR TIPS FUNCTIONALITY ==========
+        const defaultHairTips = [
+            'Use a silk pillowcase to prevent tangling and maintain your extensions while you sleep. 💤',
+            'Avoid washing your hair in very hot water - lukewarm water helps preserve your extension bonds. 🚿',
+            'Brush your extensions from bottom to top using a loop brush to prevent shedding. 🪮',
+            'Apply hair oil or serum to the mid-lengths and ends daily to keep extensions smooth and shiny. ✨',
+            'Book regular maintenance appointments every 6-8 weeks to keep your extensions looking fresh. 📅'
+        ];
+
         async function loadHairTip() {
             const tipElement = document.getElementById('hairTipText');
-            if (!tipElement) return;
+            const tipCard = document.getElementById('hairTipCard');
+            if (!tipElement || !tipCard) return;
 
             try {
                 const response = await fetch(`${API_BASE}/hair-tips/random`);
@@ -6872,11 +6921,15 @@
                 if (data.tip && data.tip.text) {
                     tipElement.textContent = data.tip.text;
                 } else {
-                    tipElement.textContent = 'Use a silk pillowcase to prevent tangling and maintain your extensions while you sleep.';
+                    // Show random default tip
+                    const randomTip = defaultHairTips[Math.floor(Math.random() * defaultHairTips.length)];
+                    tipElement.textContent = randomTip;
                 }
             } catch (error) {
                 console.error('Failed to load hair tip:', error);
-                tipElement.textContent = 'Use a silk pillowcase to prevent tangling and maintain your extensions while you sleep.';
+                // Show random default tip on error
+                const randomTip = defaultHairTips[Math.floor(Math.random() * defaultHairTips.length)];
+                tipElement.textContent = randomTip;
             }
         }
 
