@@ -4449,6 +4449,8 @@
     </div>
 
     <script>
+        console.log('%c🎨 FLIRT Hair & Beauty App Script Loaded', 'background: #f67599; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;');
+
         // ============================================
         // TOAST NOTIFICATION SYSTEM
         // ============================================
@@ -4497,8 +4499,8 @@
         function showToast(options) {
             const {
                 type = 'info',
-                title,
-                message,
+                title = 'Notice',
+                message = '',
                 duration = 5000,
                 action = null,
                 actionText = 'View',
@@ -4509,6 +4511,8 @@
             const toast = document.createElement('div');
             toast.className = 'toast';
 
+            const safeTitle = title || 'Notification';
+            const safeMessage = message || '';
             const displayIcon = icon || toastIcons[type] || toastIcons.info;
 
             toast.innerHTML = `
@@ -4516,8 +4520,8 @@
                 <div class="toast-body">
                     <div class="toast-icon ${type}">${displayIcon}</div>
                     <div class="toast-content">
-                        <div class="toast-title">${title}</div>
-                        <div class="toast-message">${message}</div>
+                        <div class="toast-title">${safeTitle}</div>
+                        ${safeMessage ? `<div class="toast-message">${safeMessage}</div>` : ''}
                         ${action ? `<div class="toast-action"><button class="toast-action-btn" onclick="${action}">${actionText}</button></div>` : ''}
                     </div>
                     <button class="toast-close" onclick="dismissToast(this)">&times;</button>
@@ -6553,10 +6557,11 @@
                 userBookingsData = bookings;
 
                 // Filter for future confirmed/pending bookings (exclude cancelled)
-                const now = new Date();
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
                 const futureBookings = bookings.filter(b => {
                     const bookingDate = new Date(b.date);
-                    return bookingDate >= now && b.status !== 'cancelled';
+                    return bookingDate >= today && b.status !== 'cancelled';
                 });
 
                 // Sort by date (soonest first)
@@ -6642,7 +6647,7 @@
         function openRescheduleModal(bookingId) {
             const booking = userBookingsData.find(b => b.id === bookingId);
             if (!booking) {
-                showToast('Booking not found', 'error');
+                showToast({ type: 'error', title: 'Booking not found', message: 'Please refresh and try again.' });
                 return;
             }
 
@@ -6723,13 +6728,11 @@
                     })
                 });
 
-                if (result.success) {
-                    showToast('Appointment rescheduled successfully!', 'success');
-                    closeRescheduleModal();
-                    await loadUpcomingAppointment(); // Refresh the appointments list
-                } else {
-                    throw new Error(result.message || 'Failed to reschedule');
-                }
+                if (!result.success) throw new Error(result.message || 'Failed to reschedule');
+
+                showToast({ type: 'success', title: 'Rescheduled', message: 'We will confirm your new time.' });
+                closeRescheduleModal();
+                await loadUpcomingAppointment(); // Refresh the appointments list
             } catch (error) {
                 console.error('Reschedule error:', error);
                 errorDiv.textContent = error.message || 'Failed to reschedule. Please try again.';
