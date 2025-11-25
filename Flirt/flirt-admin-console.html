@@ -2806,7 +2806,7 @@
                                         Public Key
                                         <span id="yocoPublicKeyIcon"></span>
                                     </label>
-                                    <input type="text" id="yocoPublicKey" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                    <input type="text" id="yocoPublicKeyDisplay" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
                                     <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Set via YOCO_PUBLIC_KEY environment variable</p>
                                 </div>
                                 <div class="form-group">
@@ -6347,7 +6347,7 @@
             document.getElementById('yocoWebhookUrl').value = yoco.webhookUrl;
 
             // Public key (truncated for security)
-            document.getElementById('yocoPublicKey').value = yoco.publicKey || 'Not configured';
+            document.getElementById('yocoPublicKeyDisplay').value = yoco.publicKey || 'Not configured';
 
             // Icons for configured items
             const publicKeyIcon = document.getElementById('yocoPublicKeyIcon');
