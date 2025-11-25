@@ -36,6 +36,7 @@ try {
     PromoRepository = dbModule.PromoRepository;
     PaymentRepository = dbModule.PaymentRepository;
     PaymentSettingsRepository = dbModule.PaymentSettingsRepository;
+    NotificationRepository = dbModule.NotificationRepository;
 
     // Ensure database directory exists
     const dbDir = path.dirname(DATABASE_PATH);
@@ -3054,14 +3055,7 @@ let notificationsStore = { notifications: [] };
 // Get active notifications (for client app)
 app.get('/api/notifications/active', async (req, res) => {
     try {
-        const now = new Date();
-        const active = notificationsStore.notifications.filter(n => {
-            if (!n.active) return false;
-            if (n.expiresAt && new Date(n.expiresAt) < now) return false;
-            if (n.startsAt && new Date(n.startsAt) > now) return false;
-            return true;
-        });
-
+        const active = await NotificationRepository.findActive();
         res.json({ notifications: active });
     } catch (error) {
         console.error('Error getting active notifications:', error.message);
@@ -3072,7 +3066,8 @@ app.get('/api/notifications/active', async (req, res) => {
 // Get all notifications (admin)
 app.get('/api/notifications', authenticateToken, async (req, res) => {
     try {
-        res.json(notificationsStore);
+        const notifications = await NotificationRepository.findAll();
+        res.json({ notifications });
     } catch (error) {
         console.error('Error getting notifications:', error.message);
         res.status(500).json({ success: false, message: 'Error loading notifications' });
@@ -3098,13 +3093,12 @@ app.post('/api/notifications', authenticateAdmin, async (req, res) => {
             active: true,
             startsAt: startsAt || new Date().toISOString(),
             expiresAt: expiresAt || null,
-            createdAt: new Date().toISOString(),
             createdBy: req.user.userId
         };
 
-        notificationsStore.notifications.unshift(notification);
+        const created = await NotificationRepository.create(notification);
 
-        res.status(201).json({ message: 'Notification created', notification });
+        res.status(201).json({ message: 'Notification created', notification: created });
     } catch (error) {
         console.error('Error creating notification:', error.message);
         res.status(500).json({ success: false, message: 'Error creating notification' });
@@ -3114,16 +3108,12 @@ app.post('/api/notifications', authenticateAdmin, async (req, res) => {
 // Update notification (admin only)
 app.put('/api/notifications/:id', authenticateAdmin, async (req, res) => {
     try {
-        const index = notificationsStore.notifications.findIndex(n => n.id === req.params.id);
-        if (index === -1) return res.status(404).json({ message: 'Notification not found' });
+        const notification = await NotificationRepository.findById(req.params.id);
+        if (!notification) return res.status(404).json({ message: 'Notification not found' });
 
-        notificationsStore.notifications[index] = {
-            ...notificationsStore.notifications[index],
-            ...req.body,
-            updatedAt: new Date().toISOString()
-        };
+        const updated = await NotificationRepository.update(req.params.id, req.body);
 
-        res.json({ message: 'Notification updated', notification: notificationsStore.notifications[index] });
+        res.json({ message: 'Notification updated', notification: updated });
     } catch (error) {
         console.error('Error updating notification:', error.message);
         res.status(500).json({ success: false, message: 'Error updating notification' });
@@ -3133,10 +3123,10 @@ app.put('/api/notifications/:id', authenticateAdmin, async (req, res) => {
 // Delete notification (admin only)
 app.delete('/api/notifications/:id', authenticateAdmin, async (req, res) => {
     try {
-        const index = notificationsStore.notifications.findIndex(n => n.id === req.params.id);
-        if (index === -1) return res.status(404).json({ message: 'Notification not found' });
+        const notification = await NotificationRepository.findById(req.params.id);
+        if (!notification) return res.status(404).json({ message: 'Notification not found' });
 
-        notificationsStore.notifications.splice(index, 1);
+        await NotificationRepository.delete(req.params.id);
 
         res.json({ message: 'Notification deleted' });
     } catch (error) {
@@ -3148,12 +3138,12 @@ app.delete('/api/notifications/:id', authenticateAdmin, async (req, res) => {
 // Toggle notification active status (admin only)
 app.patch('/api/notifications/:id/toggle', authenticateAdmin, async (req, res) => {
     try {
-        const notification = notificationsStore.notifications.find(n => n.id === req.params.id);
+        const notification = await NotificationRepository.findById(req.params.id);
         if (!notification) return res.status(404).json({ message: 'Notification not found' });
 
-        notification.active = !notification.active;
+        const updated = await NotificationRepository.toggleActive(req.params.id);
 
-        res.json({ message: `Notification ${notification.active ? 'activated' : 'deactivated'}`, notification });
+        res.json({ message: `Notification ${updated.active ? 'activated' : 'deactivated'}`, notification: updated });
     } catch (error) {
         console.error('Error toggling notification:', error.message);
         res.status(500).json({ success: false, message: 'Error toggling notification' });
@@ -3168,6 +3158,46 @@ app.patch('/api/notifications/:id/toggle', authenticateAdmin, async (req, res) =
 let chatStore = { conversations: [] };
 let galleryStore = { items: [] };
 let hairTipsStore = { tips: [] };
+
+// Seed default hair tips for customer app if none exist
+function seedHairTipsDefaults() {
+    if (hairTipsStore.tips && hairTipsStore.tips.length > 0) return;
+    const defaults = [
+        { text: 'Sleep on a silk pillowcase to reduce friction and frizz.', category: 'care' },
+        { text: 'Use a sulfate-free shampoo to keep moisture locked in.', category: 'wash' },
+        { text: 'Deep condition once a week for softer, stronger strands.', category: 'treatment' },
+        { text: 'Trim your ends every 8-10 weeks to prevent split ends.', category: 'maintenance' },
+        { text: 'Avoid high heat; style on medium or low settings.', category: 'heat' },
+        { text: 'Always apply a heat protectant before blow-drying or ironing.', category: 'heat' },
+        { text: 'Rinse with cool water to boost shine and seal the cuticle.', category: 'wash' },
+        { text: 'Detangle from ends to roots using a wide-tooth comb.', category: 'detangle' },
+        { text: 'Massage your scalp for 2 minutes daily to encourage circulation.', category: 'scalp' },
+        { text: 'Don’t sleep with wet hair; it can cause breakage and tangles.', category: 'care' },
+        { text: 'Use a microfiber towel or cotton T-shirt to blot-dry gently.', category: 'drying' },
+        { text: 'Limit washing to 2-3 times a week to preserve natural oils.', category: 'wash' },
+        { text: 'Protect hair from sun with hats or UV-protectant sprays.', category: 'protection' },
+        { text: 'Keep extensions detangled with a soft bristle or loop brush.', category: 'extensions' },
+        { text: 'Avoid oils near tape/weft bonds to prevent slipping.', category: 'extensions' },
+        { text: 'Hydrate from within: drink water for scalp and hair health.', category: 'lifestyle' },
+        { text: 'Use a bond-building treatment monthly to reinforce strength.', category: 'treatment' },
+        { text: 'Switch to a wide satin scrunchie to avoid creases and breakage.', category: 'styling' },
+        { text: 'Clarify monthly to remove buildup, then follow with a mask.', category: 'wash' },
+        { text: 'Cold-pressed oils on mid-lengths and ends add shine—avoid the roots.', category: 'care' }
+    ];
+
+    defaults.forEach((tip, idx) => {
+        hairTipsStore.tips.push({
+            id: `tip${idx + 1}`,
+            text: tip.text,
+            active: true,
+            category: tip.category || 'general',
+            priority: tip.priority || 1,
+            createdAt: new Date().toISOString()
+        });
+    });
+}
+
+seedHairTipsDefaults();
 
 // Seed default gallery items from flirthair.co.za assets if gallery is empty
 function seedGalleryDefaults() {
@@ -3806,6 +3836,9 @@ app.post('/api/admin/gallery/reorder', authenticateAdmin, async (req, res) => {
 app.get('/api/hair-tips/random', (req, res) => {
     try {
         if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+            seedHairTipsDefaults();
+        }
+        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
             return res.json({ tip: null });
         }
 
@@ -3828,6 +3861,9 @@ app.get('/api/hair-tips/random', (req, res) => {
 app.get('/api/hair-tips', (req, res) => {
     try {
         if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+            seedHairTipsDefaults();
+        }
+        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
             return res.json({ tips: [] });
         }
 
@@ -3841,6 +3877,9 @@ app.get('/api/hair-tips', (req, res) => {
 // Get all tips (admin)
 app.get('/api/admin/hair-tips', authenticateAdmin, async (req, res) => {
     try {
+        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+            seedHairTipsDefaults();
+        }
         if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
             return res.json({ tips: [] });
         }
