@@ -174,6 +174,14 @@ const UserRepository = {
         return this.update(id, updates);
     },
 
+    async addPoints(id, pointsToAdd) {
+        await dbRun(
+            `UPDATE users SET points = COALESCE(points, 0) + ? WHERE id = ?`,
+            [pointsToAdd, id]
+        );
+        return this.findById(id);
+    },
+
     async getHairTracker(userId) {
         return dbGet('SELECT * FROM hair_tracker WHERE user_id = ?', [userId]);
     },
@@ -338,27 +346,91 @@ const BookingRepository = {
 
     async findAll(filters = {}) {
         let sql = `
-            SELECT b.*, u.name as customer_name, u.phone as customer_phone, u.email as customer_email
+            SELECT b.*, u.name as customer_name, u.phone as customer_phone, u.email as customer_email,
+                   s.name as stylist_name, srv.name as actual_service_name
             FROM bookings b
             LEFT JOIN users u ON u.id = b.user_id
+            LEFT JOIN stylists s ON s.id = b.stylist_id
+            LEFT JOIN services srv ON srv.id = b.service_id
             WHERE 1=1
         `;
         const params = [];
 
-        if (filters.status) {
+        // Status filter
+        if (filters.status && filters.status !== 'all') {
             sql += ' AND b.status = ?';
             params.push(filters.status);
         }
+
+        // Date filter (exact match)
         if (filters.date) {
             sql += ' AND b.date = ?';
             params.push(filters.date);
         }
+
+        // Date range filter
+        if (filters.dateFrom) {
+            sql += ' AND b.date >= ?';
+            params.push(filters.dateFrom);
+        }
+        if (filters.dateTo) {
+            sql += ' AND b.date <= ?';
+            params.push(filters.dateTo);
+        }
+
+        // Stylist filter
         if (filters.stylistId) {
             sql += ' AND b.stylist_id = ?';
             params.push(filters.stylistId);
         }
 
-        sql += ' ORDER BY b.created_at DESC';
+        // Service filter
+        if (filters.serviceId) {
+            sql += ' AND b.service_id = ?';
+            params.push(filters.serviceId);
+        }
+
+        // Time of day filter
+        if (filters.timeOfDay && filters.timeOfDay !== 'all') {
+            sql += ' AND b.preferred_time_of_day = ?';
+            params.push(filters.timeOfDay);
+        }
+
+        // Booking type filter
+        if (filters.bookingType) {
+            sql += ' AND b.booking_type = ?';
+            params.push(filters.bookingType);
+        }
+
+        // Search across multiple fields
+        if (filters.search) {
+            sql += ` AND (
+                u.name LIKE ? OR
+                u.email LIKE ? OR
+                u.phone LIKE ? OR
+                b.id LIKE ? OR
+                b.service_name LIKE ? OR
+                b.notes LIKE ? OR
+                s.name LIKE ?
+            )`;
+            const searchTerm = `%${filters.search}%`;
+            params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
+        }
+
+        // Sorting
+        const validSortFields = {
+            'date': 'b.date',
+            'time': 'b.confirmed_time',
+            'customer': 'u.name',
+            'stylist': 's.name',
+            'service': 'b.service_name',
+            'status': 'b.status',
+            'created': 'b.created_at'
+        };
+        const sortBy = filters.sortBy && validSortFields[filters.sortBy] ? validSortFields[filters.sortBy] : 'b.date';
+        const sortDir = filters.sortDir === 'desc' ? 'DESC' : 'ASC';
+        sql += ` ORDER BY ${sortBy} ${sortDir}, b.time ${sortDir}`;
+
         return dbAll(sql, params);
     },
 
@@ -368,7 +440,7 @@ const BookingRepository = {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         await dbRun(sql, [
-            booking.id, booking.userId, booking.type, booking.stylistId || null,
+            booking.id, booking.userId, booking.type || booking.bookingType, booking.stylistId || null,
             booking.serviceId, booking.serviceName, booking.servicePrice, booking.date,
             booking.preferredTimeOfDay || null, booking.time || null,
             booking.confirmedTime || null, booking.status || 'pending', booking.notes || null
@@ -399,6 +471,10 @@ const BookingRepository = {
 
         await dbRun(`UPDATE bookings SET ${fields.join(', ')} WHERE id = ?`, values);
         return this.findById(id);
+    },
+
+    async updateById(id, updates) {
+        return this.update(id, updates);
     }
 };
 
@@ -677,6 +753,10 @@ const LoyaltyRepository = {
         return dbAll('SELECT * FROM loyalty_transactions WHERE user_id = ? ORDER BY created_at DESC', [userId]);
     },
 
+    async getTransactionsByUserId(userId) {
+        return this.getTransactionsByUser(userId);
+    },
+
     async createTransaction(transaction) {
         const sql = `
             INSERT INTO loyalty_transactions (id, user_id, points, transaction_type, description)
@@ -686,6 +766,10 @@ const LoyaltyRepository = {
             transaction.id, transaction.userId, transaction.points,
             transaction.type, transaction.description || ''
         ]);
+    },
+
+    async addTransaction(transaction) {
+        return this.createTransaction(transaction);
     },
 
     calculateTier(points, thresholds) {

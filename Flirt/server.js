@@ -20,7 +20,7 @@ const https = require('https');
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
-let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, PaymentRepository, PaymentSettingsRepository;
+let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository;
 
 try {
     const dbModule = require('./db/database');
@@ -36,6 +36,7 @@ try {
     PromoRepository = dbModule.PromoRepository;
     PaymentRepository = dbModule.PaymentRepository;
     PaymentSettingsRepository = dbModule.PaymentSettingsRepository;
+    LoyaltyRepository = dbModule.LoyaltyRepository;
     NotificationRepository = dbModule.NotificationRepository;
 
     // Ensure database directory exists
@@ -951,6 +952,50 @@ function checkBookingConflict(bookingsData, stylistId, date, time, excludeBookin
     return conflictingBooking;
 }
 
+// Normalize DB booking rows to API-friendly camelCase
+function mapBookingResponse(row) {
+    if (!row) return null;
+
+    return {
+        id: row.id,
+        userId: row.user_id || row.userId,
+        type: row.booking_type || row.bookingType || row.type,
+        stylistId: row.stylist_id || row.stylistId || null,
+        serviceId: row.service_id || row.serviceId,
+        serviceName: row.service_name || row.serviceName,
+        servicePrice: row.service_price ?? row.servicePrice ?? null,
+        date: row.date,
+        preferredTimeOfDay: row.preferred_time_of_day ?? row.preferredTimeOfDay ?? null,
+        time: row.time ?? null,
+        confirmedTime: row.confirmed_time ?? row.confirmedTime ?? null,
+        status: row.status,
+        notes: row.notes ?? null,
+        createdAt: row.created_at ?? row.createdAt ?? null,
+        updatedAt: row.updated_at ?? row.updatedAt ?? null,
+        customerName: row.customer_name ?? row.customerName ?? null,
+        customerPhone: row.customer_phone ?? row.customerPhone ?? null,
+        customerEmail: row.customer_email ?? row.customerEmail ?? null
+    };
+}
+
+// Ensure time strings are stored in HH:MM 24h format
+function normalizeTimeStr(time) {
+    if (!time) return null;
+    const trimmed = String(time).trim().toLowerCase();
+    const match = trimmed.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
+    if (!match) return trimmed;
+
+    let hours = parseInt(match[1], 10);
+    const minutes = match[2] ? match[2].padEnd(2, '0') : '00';
+    const ampm = match[3];
+
+    if (ampm === 'am' && hours === 12) hours = 0;
+    if (ampm === 'pm' && hours < 12) hours += 12;
+
+    hours = hours % 24;
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+}
+
 // Create booking
 app.post('/api/bookings', authenticateToken, async (req, res) => {
     const { type, stylistId, serviceId, date, preferredTimeOfDay, time, notes } = req.body;
@@ -976,9 +1021,11 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
     }
 
     try {
+        const normalizedTime = normalizeTimeStr(time);
+
         // Check for booking conflicts (exact same stylist, date, time)
-        if (time && stylistId) {
-            const conflict = await BookingRepository.findConflict(stylistId, date, time);
+        if (normalizedTime && stylistId) {
+            const conflict = await BookingRepository.findConflict(stylistId, date, normalizedTime);
             if (conflict) {
                 return res.status(409).json({
                     success: false,
@@ -1001,7 +1048,7 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
         const newBooking = {
             id: uuidv4(),
             userId: req.user.id,
-            bookingType: type,
+            type,
             stylistId: stylistId || null,
             serviceId,
             serviceName: service.name,
@@ -1015,6 +1062,7 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
         };
 
         const createdBooking = await BookingRepository.create(newBooking);
+        const bookingResponse = mapBookingResponse(createdBooking);
 
         // Award loyalty points for booking
         const loyaltySettings = await LoyaltyRepository.getSettings();
@@ -1036,7 +1084,7 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
             message: type === 'hair'
                 ? 'Booking request submitted. We will contact you within 24 hours to confirm the time.'
                 : 'Booking confirmed!',
-            booking: createdBooking
+            booking: bookingResponse
         });
     } catch (error) {
         console.error('Database error creating booking:', error.message);
@@ -1048,7 +1096,7 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
 app.get('/api/bookings', authenticateToken, async (req, res) => {
     try {
         const userBookings = await BookingRepository.findByUserId(req.user.id);
-        res.json({ success: true, bookings: userBookings });
+        res.json({ success: true, bookings: userBookings.map(mapBookingResponse) });
     } catch (error) {
         console.error('Database error fetching user bookings:', error.message);
         res.status(500).json({ success: false, message: 'Failed to fetch bookings' });
@@ -1075,14 +1123,14 @@ app.patch('/api/bookings/:id', authenticateToken, async (req, res) => {
             // Reset status to pending when rescheduling
             if (!status) updates.status = 'pending';
         }
-        if (preferredTimeOfDay !== undefined) updates.preferred_time_of_day = preferredTimeOfDay;
-        if (time) updates.time = time;
+        if (preferredTimeOfDay !== undefined) updates.preferredTimeOfDay = preferredTimeOfDay;
+        if (time) updates.time = normalizeTimeStr(time);
         // Allow confirmedTime to be explicitly set to null (when rescheduling)
-        if (confirmedTime !== undefined) updates.confirmed_time = confirmedTime;
+        if (confirmedTime !== undefined) updates.confirmedTime = confirmedTime === null ? null : normalizeTimeStr(confirmedTime);
 
         const updatedBooking = await BookingRepository.update(req.params.id, updates);
 
-        res.json({ success: true, booking: updatedBooking });
+        res.json({ success: true, booking: mapBookingResponse(updatedBooking) });
     } catch (error) {
         console.error('Database error updating booking:', error.message);
         res.status(500).json({ success: false, message: 'Failed to update booking' });
@@ -2265,40 +2313,147 @@ app.put('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
     }
 });
 
+// Create booking (admin on behalf of customer)
+app.post('/api/admin/bookings', authenticateAdmin, async (req, res) => {
+    const { userId, type, stylistId, serviceId, date, preferredTimeOfDay, time, notes } = req.body;
+
+    if (!userId || !type || !serviceId || !date) {
+        return res.status(400).json({ success: false, message: 'User, type, service, and date are required' });
+    }
+
+    if (type === 'hair' && !stylistId) {
+        return res.status(400).json({ success: false, message: 'Stylist is required for hair bookings' });
+    }
+
+    if (type === 'beauty' && !time) {
+        return res.status(400).json({ success: false, message: 'Time is required for beauty bookings' });
+    }
+
+    const bookingDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (bookingDate < today) {
+        return res.status(400).json({ success: false, message: 'Booking date must be in the future' });
+    }
+
+    try {
+        const normalizedTime = normalizeTimeStr(time);
+
+        const user = await UserRepository.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+
+        if (normalizedTime && stylistId) {
+            const conflict = await BookingRepository.findConflict(stylistId, date, normalizedTime);
+            if (conflict) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'This time slot is already booked. Please select a different time.',
+                    conflict: {
+                        date: conflict.date,
+                        time: conflict.confirmed_time || conflict.time
+                    }
+                });
+            }
+        }
+
+        const service = await ServiceRepository.findById(serviceId);
+        if (!service) {
+            return res.status(404).json({ success: false, message: 'Service not found' });
+        }
+
+        const newBooking = {
+            id: uuidv4(),
+            userId,
+            type,
+            stylistId: stylistId || null,
+            serviceId,
+            serviceName: service.name,
+            servicePrice: service.price,
+            date,
+            preferredTimeOfDay: type === 'hair' ? (preferredTimeOfDay || null) : null,
+            time: type === 'beauty' ? normalizedTime : null,
+            confirmedTime: type === 'beauty' ? normalizedTime : null,
+            status: type === 'hair' ? 'pending' : 'confirmed',
+            notes: notes || null
+        };
+
+        const createdBooking = await BookingRepository.create(newBooking);
+        const bookingResponse = mapBookingResponse(createdBooking);
+
+        // Award loyalty points to the customer
+        const loyaltySettings = await LoyaltyRepository.getSettings();
+        const pointsToAdd = loyaltySettings.bookingPoints || 50;
+
+        if (pointsToAdd > 0) {
+            await UserRepository.addPoints(userId, pointsToAdd);
+            await LoyaltyRepository.addTransaction({
+                id: uuidv4(),
+                userId,
+                points: pointsToAdd,
+                type: 'earned',
+                description: `Booking (created by admin): ${service.name}`
+            });
+        }
+
+        res.status(201).json({
+            success: true,
+            message: 'Booking created',
+            booking: bookingResponse
+        });
+    } catch (error) {
+        console.error('Database error creating admin booking:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to create booking - please try again later' });
+    }
+});
+
 // Get all bookings (admin)
 app.get('/api/admin/bookings', authenticateAdmin, async (req, res) => {
     try {
-        const { status, date, stylistId } = req.query;
-        let bookings = await BookingRepository.findAll();
+        const {
+            status, date, dateFrom, dateTo, stylistId, serviceId,
+            timeOfDay, bookingType, search, sortBy, sortDir,
+            page, limit
+        } = req.query;
 
-        if (status) bookings = bookings.filter(b => b.status === status);
-        if (date) bookings = bookings.filter(b => b.date === date);
-        if (stylistId) bookings = bookings.filter(b => b.stylistId === stylistId);
+        // Build filters object
+        const filters = {};
+        if (status) filters.status = status;
+        if (date) filters.date = date;
+        if (dateFrom) filters.dateFrom = dateFrom;
+        if (dateTo) filters.dateTo = dateTo;
+        if (stylistId) filters.stylistId = stylistId;
+        if (serviceId) filters.serviceId = serviceId;
+        if (timeOfDay) filters.timeOfDay = timeOfDay;
+        if (bookingType) filters.bookingType = bookingType;
+        if (search) filters.search = search;
+        if (sortBy) filters.sortBy = sortBy;
+        if (sortDir) filters.sortDir = sortDir;
 
-        // Add customer info
-        const bookingsWithCustomers = await Promise.all(bookings.map(async (b) => {
-            try {
-                const user = await UserRepository.findById(b.userId);
-                return {
-                    ...b,
-                    customerName: user ? user.name : 'Unknown',
-                    customerPhone: user ? user.phone : null,
-                    customerEmail: user ? user.email : null
-                };
-            } catch (error) {
-                console.error(`Error fetching user ${b.userId} for booking ${b.id}:`, error.message);
-                return {
-                    ...b,
-                    customerName: 'Unknown',
-                    customerPhone: null,
-                    customerEmail: null
-                };
+        // Fetch all filtered bookings
+        let bookings = await BookingRepository.findAll(filters);
+        const totalCount = bookings.length;
+
+        // Apply pagination if requested
+        const pageNum = parseInt(page) || 1;
+        const pageSize = parseInt(limit) || 50;
+        const startIndex = (pageNum - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+
+        const paginatedBookings = bookings.slice(startIndex, endIndex);
+        const mapped = paginatedBookings.map(mapBookingResponse);
+
+        res.json({
+            success: true,
+            bookings: mapped,
+            pagination: {
+                page: pageNum,
+                limit: pageSize,
+                total: totalCount,
+                totalPages: Math.ceil(totalCount / pageSize)
             }
-        }));
-
-        bookingsWithCustomers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-        res.json({ success: true, bookings: bookingsWithCustomers });
+        });
     } catch (error) {
         console.error('Database error in admin bookings:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
@@ -2309,6 +2464,7 @@ app.get('/api/admin/bookings', authenticateAdmin, async (req, res) => {
 app.patch('/api/admin/bookings/:id/confirm', authenticateAdmin, async (req, res) => {
     try {
         const { confirmedTime } = req.body;
+        const normalizedTime = normalizeTimeStr(confirmedTime);
 
         const booking = await BookingRepository.findById(req.params.id);
         if (!booking) {
@@ -2316,12 +2472,12 @@ app.patch('/api/admin/bookings/:id/confirm', authenticateAdmin, async (req, res)
         }
 
         const updatedBooking = await BookingRepository.updateById(req.params.id, {
-            confirmedTime: confirmedTime,
+            confirmedTime: normalizedTime,
             status: 'confirmed',
             updatedAt: new Date().toISOString()
         });
 
-        res.json({ success: true, booking: updatedBooking });
+        res.json({ success: true, booking: mapBookingResponse(updatedBooking) });
     } catch (error) {
         console.error('Database error confirming booking:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
@@ -2358,9 +2514,66 @@ app.patch('/api/admin/bookings/:id/status', authenticateAdmin, async (req, res) 
 
         const updatedBooking = await BookingRepository.updateById(req.params.id, updateData);
 
-        res.json({ success: true, booking: updatedBooking });
+        res.json({ success: true, booking: mapBookingResponse(updatedBooking) });
     } catch (error) {
         console.error('Database error updating booking status:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
+});
+
+// Bulk update booking statuses (admin)
+app.patch('/api/admin/bookings/bulk-status', authenticateAdmin, async (req, res) => {
+    try {
+        const { bookingIds, status } = req.body;
+        const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+
+        if (!bookingIds || !Array.isArray(bookingIds) || bookingIds.length === 0) {
+            return res.status(400).json({ success: false, message: 'Booking IDs array is required' });
+        }
+
+        if (!status || !validStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+            });
+        }
+
+        const results = [];
+        const errors = [];
+
+        for (const id of bookingIds) {
+            try {
+                const booking = await BookingRepository.findById(id);
+                if (!booking) {
+                    errors.push({ id, error: 'Booking not found' });
+                    continue;
+                }
+
+                const updateData = {
+                    status: status,
+                    updatedAt: new Date().toISOString()
+                };
+
+                if (status === 'completed') {
+                    updateData.completedAt = new Date().toISOString();
+                }
+
+                const updated = await BookingRepository.updateById(id, updateData);
+                results.push({ id, status: 'success', booking: mapBookingResponse(updated) });
+            } catch (err) {
+                errors.push({ id, error: err.message });
+            }
+        }
+
+        res.json({
+            success: true,
+            updated: results.length,
+            failed: errors.length,
+            results,
+            errors
+        });
+    } catch (error) {
+        console.error('Database error in bulk status update:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
@@ -2429,14 +2642,14 @@ app.patch('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
 app.get('/api/admin/customers', authenticateAdmin, async (req, res) => {
     try {
         const allUsers = await UserRepository.findAll();
-        const allBookings = await BookingRepository.findAll();
+        const allBookings = (await BookingRepository.findAll()).map(mapBookingResponse);
         const allOrders = await OrderRepository.findAll();
 
         const customers = allUsers
             .filter(u => u.role === 'customer')
             .map(u => {
-                const userBookings = allBookings.filter(b => b.userId === u.id);
-                const userOrders = allOrders.filter(o => o.userId === u.id);
+                const userBookings = allBookings.filter(b => (b.userId || b.user_id) === u.id);
+                const userOrders = allOrders.filter(o => (o.userId || o.user_id) === u.id);
                 const totalSpent = userOrders.reduce((sum, o) => sum + (o.total || 0), 0);
 
                 return {
