@@ -1262,7 +1262,7 @@
                     <!-- Quick Actions -->
                     <h3 style="margin-bottom: 15px;">Quick Actions</h3>
                     <div class="quick-actions">
-                        <button class="quick-action-btn" onclick="openModal('addBookingModal')">
+                        <button class="quick-action-btn" onclick="openAdminBookingModal()">
                             <div class="quick-action-icon">➕</div>
                             <div class="quick-action-text">New Booking</div>
                         </button>
@@ -1353,7 +1353,7 @@
                             <option>Completed</option>
                             <option>Cancelled</option>
                         </select>
-                        <button class="btn btn-primary" onclick="openModal('addBookingModal')">+ New Booking</button>
+                        <button class="btn btn-primary" onclick="openAdminBookingModal()">+ New Booking</button>
                     </div>
 
                     <!-- List View -->
@@ -1704,7 +1704,7 @@
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <div>
-                                    <div class="stat-value">24</div>
+                                    <div class="stat-value" id="productsTotalCount">0</div>
                                     <div class="stat-label">Total Products</div>
                                 </div>
                                 <div class="stat-icon pink">📦</div>
@@ -1713,7 +1713,7 @@
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <div>
-                                    <div class="stat-value">3</div>
+                                    <div class="stat-value" id="productsLowStockCount">0</div>
                                     <div class="stat-label">Low Stock Alerts</div>
                                 </div>
                                 <div class="stat-icon" style="background: rgba(244, 67, 54, 0.1); color: var(--danger);">⚠️</div>
@@ -1722,7 +1722,7 @@
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <div>
-                                    <div class="stat-value">R18,450</div>
+                                    <div class="stat-value" id="productsInventoryValue">R0</div>
                                     <div class="stat-label">Inventory Value</div>
                                 </div>
                                 <div class="stat-icon green">💰</div>
@@ -3028,53 +3028,50 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label">Customer</label>
-                    <input type="text" class="form-input" placeholder="Search customer or add new...">
+                    <select class="form-input" id="adminBookingCustomer">
+                        <option value="">Loading customers...</option>
+                    </select>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Service</label>
-                        <select class="form-input">
-                            <option>Tape Extensions - R2,500</option>
-                            <option>Weft Installation - R3,200</option>
-                            <option>Maintenance - R800</option>
-                            <option>Color Matching - Free</option>
+                        <select class="form-input" id="adminBookingService" onchange="handleAdminBookingServiceChange()">
+                            <option value="">Loading services...</option>
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="adminBookingStylistGroup">
                         <label class="form-label">Stylist</label>
-                        <select class="form-input">
-                            <option>Lisa Thompson</option>
-                            <option>Emma Williams</option>
-                            <option>Sarah Martinez</option>
-                            <option>Maya Johnson</option>
+                        <select class="form-input" id="adminBookingStylist">
+                            <option value="">Any available</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row" id="adminBookingPreferredRow">
+                    <div class="form-group">
+                        <label class="form-label">Preferred Time of Day (hair)</label>
+                        <select class="form-input" id="adminBookingPreferredTime">
+                            <option value="">No preference</option>
+                            <option value="morning">Morning</option>
+                            <option value="afternoon">Afternoon</option>
+                            <option value="evening">Evening</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Date</label>
-                        <input type="date" class="form-input">
+                        <input type="date" class="form-input" id="adminBookingDate">
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Time</label>
-                        <select class="form-input">
-                            <option>8:00 AM</option>
-                            <option>9:00 AM</option>
-                            <option>10:00 AM</option>
-                            <option>11:00 AM</option>
-                            <option>12:00 PM</option>
-                            <option>1:00 PM</option>
-                            <option>2:00 PM</option>
-                            <option>3:00 PM</option>
-                            <option>4:00 PM</option>
-                            <option>5:00 PM</option>
-                        </select>
+                    <div class="form-group" id="adminBookingTimeGroup">
+                        <label class="form-label">Exact Time (beauty)</label>
+                        <input type="time" class="form-input" id="adminBookingTime">
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Notes</label>
-                    <textarea class="form-input" rows="3" placeholder="Any special requirements or notes..."></textarea>
+                    <textarea class="form-input" rows="3" id="adminBookingNotes" placeholder="Any special requirements or notes..."></textarea>
                 </div>
+                <div id="adminBookingError" style="color: var(--danger); font-size: 13px;"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="closeModal('addBookingModal')">Cancel</button>
@@ -3827,6 +3824,89 @@
         let adminBookings = [];
         let bookingsCalendarMonthOffset = 0;
         let currentBookingsView = 'list';
+        let adminBookingDataLoaded = false;
+        let adminBookingServices = [];
+        let adminBookingStylists = [];
+        let adminBookingCustomers = [];
+
+        async function ensureAdminBookingData() {
+            if (adminBookingDataLoaded) return;
+
+            const [hairServices, beautyServices, stylistsData, customersData] = await Promise.all([
+                apiCall('/services/hair'),
+                apiCall('/services/beauty'),
+                apiCall('/stylists'),
+                apiCall('/admin/customers')
+            ]);
+
+            adminBookingServices = [...(hairServices.services || []), ...(beautyServices.services || [])];
+            adminBookingStylists = stylistsData.stylists || [];
+            adminBookingCustomers = (customersData.customers || []).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            adminBookingDataLoaded = true;
+            populateAdminBookingForm();
+        }
+
+        function populateAdminBookingForm() {
+            const serviceSelect = document.getElementById('adminBookingService');
+            if (serviceSelect) {
+                serviceSelect.innerHTML = '<option value=\"\">Select service...</option>' +
+                    adminBookingServices.map(s => `
+                        <option value=\"${s.id}\" data-type=\"${s.service_type || s.serviceType || 'hair'}\">
+                            ${s.name} - R${s.price}
+                        </option>
+                    `).join('');
+            }
+
+            const stylistSelect = document.getElementById('adminBookingStylist');
+            if (stylistSelect) {
+                stylistSelect.innerHTML = '<option value=\"\">Any available</option>' +
+                    adminBookingStylists.map(s => `<option value=\"${s.id}\">${s.name}</option>`).join('');
+            }
+
+            const customerSelect = document.getElementById('adminBookingCustomer');
+            if (customerSelect) {
+                customerSelect.innerHTML = '<option value=\"\">Select customer...</option>' +
+                    adminBookingCustomers.map(c => `<option value=\"${c.id}\">${c.name} (${c.email})</option>`).join('');
+            }
+        }
+
+        async function openAdminBookingModal() {
+            const errorEl = document.getElementById('adminBookingError');
+            if (errorEl) errorEl.textContent = '';
+
+            try {
+                await ensureAdminBookingData();
+                populateAdminBookingForm();
+                document.getElementById('adminBookingDate').value = '';
+                document.getElementById('adminBookingTime').value = '';
+                document.getElementById('adminBookingPreferredTime').value = '';
+                document.getElementById('adminBookingNotes').value = '';
+                document.getElementById('adminBookingCustomer').value = '';
+                document.getElementById('adminBookingService').value = '';
+                handleAdminBookingServiceChange();
+                openModal('addBookingModal');
+            } catch (err) {
+                alert(`Failed to load booking data: ${err.message}`);
+            }
+        }
+
+        function handleAdminBookingServiceChange() {
+            const select = document.getElementById('adminBookingService');
+            const type = select?.selectedOptions[0]?.dataset.type || 'hair';
+            const stylistGroup = document.getElementById('adminBookingStylistGroup');
+            const preferredRow = document.getElementById('adminBookingPreferredRow');
+            const timeGroup = document.getElementById('adminBookingTimeGroup');
+
+            if (type === 'hair') {
+                if (stylistGroup) stylistGroup.style.display = 'block';
+                if (preferredRow) preferredRow.style.display = 'flex';
+                if (timeGroup) timeGroup.style.display = 'none';
+            } else {
+                if (stylistGroup) stylistGroup.style.display = 'none';
+                if (preferredRow) preferredRow.style.display = 'none';
+                if (timeGroup) timeGroup.style.display = 'block';
+            }
+        }
 
         async function loadBookings() {
             try {
@@ -4202,20 +4282,51 @@
         async function loadProducts() {
             try {
                 const data = await apiCall('/products');
+                const products = data.products || [];
+
+                // Calculate stats
+                const totalCount = products.length;
+                const lowStockThreshold = 10;
+                const lowStockCount = products.filter(p => p.stock < lowStockThreshold).length;
+                const inventoryValue = products.reduce((sum, p) => {
+                    const effectivePrice = p.onSale && p.salePrice ? p.salePrice : p.price;
+                    return sum + (effectivePrice * p.stock);
+                }, 0);
+
+                // Update stat cards
+                document.getElementById('productsTotalCount').textContent = totalCount;
+                document.getElementById('productsLowStockCount').textContent = lowStockCount;
+                document.getElementById('productsInventoryValue').textContent = 'R' + inventoryValue.toLocaleString();
+
+                // Update product table
                 const container = document.querySelector('#products .data-table tbody');
-                if (container && data.products.length > 0) {
-                    container.innerHTML = data.products.map(p => `
-                        <tr>
-                            <td><strong>${p.name}</strong></td>
-                            <td>${p.category}</td>
-                            <td>R${p.price}</td>
-                            <td>${p.onSale ? 'R' + p.salePrice : '-'}</td>
-                            <td>${p.stock}</td>
-                            <td>
-                                <button class="btn btn-sm" onclick="editProduct('${p.id}')">Edit</button>
-                            </td>
-                        </tr>
-                    `).join('');
+                if (container) {
+                    if (products.length > 0) {
+                        container.innerHTML = products.map(p => {
+                            const isLowStock = p.stock < lowStockThreshold;
+                            const stockClass = isLowStock ? 'style="color: var(--danger); font-weight: 600;"' : '';
+                            const stockBadge = isLowStock ? '<span style="background: rgba(244, 67, 54, 0.1); color: var(--danger); padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 4px;">Low Stock</span>' : '';
+
+                            return `
+                                <tr>
+                                    <td>
+                                        <div><strong>${p.name}</strong></div>
+                                        ${p.sku ? `<div style="font-size: 11px; color: var(--gray-medium);">SKU: ${p.sku}</div>` : ''}
+                                    </td>
+                                    <td>${p.category}</td>
+                                    <td>R${p.price}</td>
+                                    <td>${p.onSale ? '<span style="color: var(--danger); font-weight: 600;">R' + p.salePrice + '</span>' : '-'}</td>
+                                    <td ${stockClass}>${p.stock}${stockBadge}</td>
+                                    <td>
+                                        <button class="btn btn-sm" onclick="editProduct('${p.id}')" title="Edit product">✏️</button>
+                                        <button class="btn btn-sm" onclick="deleteProduct('${p.id}')" title="Delete product" style="color: var(--danger);">🗑️</button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        container.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--gray-medium);">No products yet. Add your first product!</td></tr>';
+                    }
                 }
             } catch (error) {
                 console.log('Products load error:', error);
@@ -5094,6 +5205,23 @@
             openModal('addProductModal');
         }
 
+        async function deleteProduct(id) {
+            if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                await apiCall(`/admin/products/${id}`, {
+                    method: 'DELETE'
+                });
+                alert('Product deleted successfully!');
+                productListCache = []; // Clear cache
+                loadProducts();
+            } catch (error) {
+                alert('Error deleting product: ' + error.message);
+            }
+        }
+
         // Reset staff modal for adding new
         function openAddStaffModal() {
             editingStaffId = null;
@@ -5122,9 +5250,60 @@
             openModal('addProductModal');
         }
 
-        function saveBooking() {
-            alert('Booking created! (Use client app for new bookings)');
-            closeModal('addBookingModal');
+        async function saveBooking() {
+            const errorEl = document.getElementById('adminBookingError');
+            if (errorEl) errorEl.textContent = '';
+
+            const customerId = document.getElementById('adminBookingCustomer').value;
+            const serviceSelect = document.getElementById('adminBookingService');
+            const serviceId = serviceSelect?.value;
+            const bookingType = serviceSelect?.selectedOptions[0]?.dataset.type || 'hair';
+            const stylistId = document.getElementById('adminBookingStylist').value;
+            const date = document.getElementById('adminBookingDate').value;
+            const time = document.getElementById('adminBookingTime').value;
+            const preferredTime = document.getElementById('adminBookingPreferredTime').value;
+            const notes = document.getElementById('adminBookingNotes').value.trim();
+
+            if (!customerId || !serviceId || !date) {
+                if (errorEl) errorEl.textContent = 'Customer, service, and date are required.';
+                return;
+            }
+            if (bookingType === 'hair' && !stylistId) {
+                if (errorEl) errorEl.textContent = 'Please choose a stylist for hair bookings.';
+                return;
+            }
+            if (bookingType === 'beauty' && !time) {
+                if (errorEl) errorEl.textContent = 'Time is required for beauty bookings.';
+                return;
+            }
+
+            const payload = {
+                userId: customerId,
+                type: bookingType,
+                serviceId,
+                date,
+                notes: notes || undefined
+            };
+
+            if (bookingType === 'hair') {
+                payload.stylistId = stylistId;
+                payload.preferredTimeOfDay = preferredTime || null;
+            } else {
+                payload.time = time;
+                payload.stylistId = stylistId || null;
+            }
+
+            try {
+                await apiCall('/admin/bookings', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                closeModal('addBookingModal');
+                await loadBookings();
+                showToast({ type: 'success', title: 'Booking created', message: 'Booking saved and synced.' });
+            } catch (error) {
+                if (errorEl) errorEl.textContent = error.message || 'Failed to create booking.';
+            }
         }
 
         function selectChat(id) {
