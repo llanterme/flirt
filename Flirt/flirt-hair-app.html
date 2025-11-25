@@ -2781,6 +2781,11 @@
                 </div>
             </div>
 
+            <div id="instagramFeedContainer" style="margin-top: 20px; display: none;">
+                <h3 style="font-size: 18px; margin-bottom: 10px; color: var(--brand-charcoal);">Instagram Highlights</h3>
+                <div id="instagramEmbed" style="width: 100%; min-height: 420px; background: var(--gray-light); border-radius: 12px; overflow: hidden;"></div>
+            </div>
+
             <div class="section-header">
                 <h2 class="section-title">Hair Care Tips</h2>
             </div>
@@ -6842,6 +6847,19 @@
                 // Store items for lightbox
                 window.galleryItems = items;
 
+                const instagram = data.instagram;
+                const instaContainer = document.getElementById('instagramFeedContainer');
+                const instaEmbed = document.getElementById('instagramEmbed');
+                if (instaContainer && instaEmbed) {
+                    if (instagram && instagram.embedUrl) {
+                        instaContainer.style.display = 'block';
+                        instaEmbed.innerHTML = `<iframe src="${instagram.embedUrl}" style="width:100%; height:420px; border:0; overflow:hidden;" allowtransparency="true" allow="encrypted-media"></iframe>`;
+                    } else {
+                        instaContainer.style.display = 'none';
+                        instaEmbed.innerHTML = '';
+                    }
+                }
+
             } catch (error) {
                 console.error('Failed to load gallery:', error);
                 container.innerHTML = `
@@ -6856,6 +6874,14 @@
                         </button>
                     </div>
                 `;
+            }
+        }
+
+        function openInstagramConfigPrompt() {
+            const username = prompt('Follow us on Instagram! Enter handle to open profile:', 'flirthair');
+            if (username) {
+                const clean = username.replace('@','').trim();
+                window.open(`https://www.instagram.com/${clean}/`, '_blank');
             }
         }
 

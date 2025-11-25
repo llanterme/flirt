@@ -2001,11 +2001,27 @@
                     <div class="data-card">
                         <div class="data-card-header">
                             <h3 class="data-card-title">Gallery Management</h3>
-                            <button class="btn btn-primary btn-small" onclick="showGalleryModal()">+ Add Image</button>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <button class="btn btn-outline btn-small" onclick="openInstagramModal()">Instagram Feed</button>
+                                <button class="btn btn-primary btn-small" onclick="showGalleryModal()">+ Add Image</button>
+                            </div>
                         </div>
                         <p style="color: var(--gray-medium); margin-bottom: 20px;">
                             Manage the gallery images displayed on the client app. Drag to reorder, toggle visibility, or add new images.
                         </p>
+
+                        <div class="data-card" style="margin-bottom: 15px;">
+                            <div class="data-card-header">
+                                <h4 class="data-card-title" style="font-size: 16px;">Instagram Feed</h4>
+                                <span id="instagramStatus" style="font-size: 12px; color: var(--gray-medium);"></span>
+                            </div>
+                            <div style="padding: 15px; color: var(--gray-medium);">
+                                Configure your Instagram handle to surface the feed in the client gallery.
+                                <div style="margin-top: 10px;">
+                                    <button class="btn btn-outline btn-small" onclick="openInstagramModal()">Configure</button>
+                                </div>
+                            </div>
+                        </div>
 
                         <div id="galleryList" class="gallery-admin-grid">
                             <!-- Gallery items will be loaded dynamically -->
@@ -5812,6 +5828,19 @@
             try {
                 const data = await apiCall('/admin/gallery');
                 renderGallery(data.items || []);
+                window.instagramConfig = data.instagram || null;
+
+                const instaStatus = document.getElementById('instagramStatus');
+                if (instaStatus) {
+                    const insta = data.instagram;
+                    if (insta && insta.username) {
+                        instaStatus.textContent = `Connected to @${insta.username}`;
+                        instaStatus.style.color = 'var(--success)';
+                    } else {
+                        instaStatus.textContent = 'Not configured';
+                        instaStatus.style.color = 'var(--gray-medium)';
+                    }
+                }
             } catch (error) {
                 console.error('Error loading gallery:', error);
                 document.getElementById('galleryList').innerHTML = `
@@ -5819,6 +5848,27 @@
                         Failed to load gallery: ${error.message}
                     </div>
                 `;
+            }
+        }
+
+        function openInstagramModal() {
+            const existing = window.instagramConfig || {};
+            const username = prompt('Instagram handle (without @):', existing.username || '');
+            if (username === null) return;
+            const embedUrl = prompt('Custom embed URL (optional):', existing.embedUrl || '');
+            saveInstagramConfig(username.trim(), embedUrl ? embedUrl.trim() : '');
+        }
+
+        async function saveInstagramConfig(username, embedUrl) {
+            try {
+                await apiCall('/admin/gallery/instagram', {
+                    method: 'PUT',
+                    body: JSON.stringify({ username, embedUrl })
+                });
+                alert('Instagram feed updated');
+                loadGallery();
+            } catch (error) {
+                alert('Error saving Instagram config: ' + error.message);
             }
         }
 

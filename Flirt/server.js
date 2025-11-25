@@ -3161,7 +3161,7 @@ app.patch('/api/notifications/:id/toggle', authenticateAdmin, async (req, res) =
 
 // In-memory storage for chat conversations (since these are transient support messages)
 let chatStore = { conversations: [] };
-let galleryStore = { items: [] };
+let galleryStore = { items: [], instagram: null };
 let hairTipsStore = { tips: [] };
 
 // Seed default stylists into DB if none exist
@@ -3281,6 +3281,9 @@ seedHairTipsDefaults();
 // Seed default gallery items from flirthair.co.za assets if gallery is empty
 function seedGalleryDefaults() {
     if (galleryStore.items && galleryStore.items.length > 0) return;
+    if (!galleryStore.instagram) {
+        galleryStore.instagram = null;
+    }
     const defaults = [
         {
             imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg',
@@ -3750,7 +3753,7 @@ app.get('/api/gallery', (req, res) => {
             .filter(item => item.active)
             .sort((a, b) => a.order - b.order);
 
-        res.json({ items: activeItems });
+        res.json({ items: activeItems, instagram: galleryStore.instagram || null });
     } catch (error) {
         console.error('Error getting gallery items:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -3765,7 +3768,7 @@ app.get('/api/admin/gallery', authenticateAdmin, async (req, res) => {
         }
 
         const items = [...galleryStore.items].sort((a, b) => a.order - b.order);
-        res.json({ items });
+        res.json({ items, instagram: galleryStore.instagram || null });
     } catch (error) {
         console.error('Error getting admin gallery items:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -3800,6 +3803,32 @@ app.post('/api/admin/gallery', authenticateAdmin, async (req, res) => {
         res.status(201).json({ message: 'Gallery item created', item: newItem });
     } catch (error) {
         console.error('Error creating gallery item:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// Set Instagram feed configuration
+app.put('/api/admin/gallery/instagram', authenticateAdmin, async (req, res) => {
+    try {
+        const { username, embedUrl } = req.body;
+        if (!username && !embedUrl) {
+            return res.status(400).json({ message: 'username or embedUrl is required' });
+        }
+        const normalized = (username || '').replace('@', '').trim();
+        const url = embedUrl && embedUrl.trim()
+            ? embedUrl.trim()
+            : normalized
+                ? `https://www.instagram.com/${normalized}/embed`
+                : null;
+
+        galleryStore.instagram = {
+            username: normalized || null,
+            embedUrl: url
+        };
+
+        res.json({ success: true, instagram: galleryStore.instagram });
+    } catch (error) {
+        console.error('Error updating Instagram config:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
