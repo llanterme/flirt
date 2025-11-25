@@ -17,47 +17,43 @@ try {
 }
 const https = require('https');
 
-// Database imports - conditionally use SQLite if DATABASE_PATH is set
-let db = null;
-let UserRepository = null;
-let StylistRepository = null;
-let ServiceRepository = null;
-let BookingRepository = null;
-let ProductRepository = null;
-let OrderRepository = null;
+// Database imports - SQLite-only (mandatory)
+const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
-const DATABASE_PATH = process.env.DATABASE_PATH;
-const USE_DATABASE = !!DATABASE_PATH;
+let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository;
 
-if (USE_DATABASE) {
-    try {
-        const dbModule = require('./db/database');
-        db = dbModule;
-        UserRepository = dbModule.UserRepository;
-        StylistRepository = dbModule.StylistRepository;
-        ServiceRepository = dbModule.ServiceRepository;
-        BookingRepository = dbModule.BookingRepository;
-        ProductRepository = dbModule.ProductRepository;
-        OrderRepository = dbModule.OrderRepository;
+try {
+    const dbModule = require('./db/database');
 
-        // Ensure database directory exists
-        const dbDir = path.dirname(DATABASE_PATH);
-        if (!fs.existsSync(dbDir)) {
-            fs.mkdirSync(dbDir, { recursive: true });
-            console.log(`📁 Created database directory: ${dbDir}`);
-        }
+    // Initialize all database repositories
+    db = dbModule;
+    UserRepository = dbModule.UserRepository;
+    StylistRepository = dbModule.StylistRepository;
+    ServiceRepository = dbModule.ServiceRepository;
+    BookingRepository = dbModule.BookingRepository;
+    ProductRepository = dbModule.ProductRepository;
+    OrderRepository = dbModule.OrderRepository;
+    PromoRepository = dbModule.PromoRepository;
 
-        console.log('✅ Using SQLite database at:', DATABASE_PATH);
-    } catch (error) {
-        console.error('❌ Failed to load database module:', error.message);
-        console.error('🔍 Error type:', error.constructor.name);
-        if (error.message.includes('invalid ELF header')) {
-            console.error('🔧 SQLite3 native bindings are compiled for wrong architecture');
-            console.error('💡 This usually happens when SQLite3 was compiled for different OS');
-            console.error('🚀 Railway deployment should rebuild SQLite3 during postinstall');
-        }
-        console.log('📁 Falling back to JSON file storage');
+    // Ensure database directory exists
+    const dbDir = path.dirname(DATABASE_PATH);
+    if (!fs.existsSync(dbDir)) {
+        fs.mkdirSync(dbDir, { recursive: true });
+        console.log(`📁 Created database directory: ${dbDir}`);
     }
+
+    console.log('✅ SQLite database initialized at:', DATABASE_PATH);
+
+} catch (error) {
+    console.error('❌ FATAL: Failed to initialize SQLite database:', error.message);
+    console.error('🔍 Error type:', error.constructor.name);
+    if (error.message.includes('invalid ELF header')) {
+        console.error('🔧 SQLite3 native bindings are compiled for wrong architecture');
+        console.error('💡 This usually happens when SQLite3 was compiled for different OS');
+        console.error('🚀 Try running: npm rebuild sqlite3 --build-from-source');
+    }
+    console.error('💥 Server cannot start without database. Exiting...');
+    process.exit(1);
 }
 
 const app = express();
@@ -115,21 +111,6 @@ function recordLoginAttempt(identifier, success) {
     loginAttempts.set(identifier, attempts);
 }
 
-// Data file paths
-const DATA_DIR = path.join(__dirname, 'data');
-const USERS_FILE = path.join(DATA_DIR, 'users.json');
-const STYLISTS_FILE = path.join(DATA_DIR, 'stylists.json');
-const SERVICES_FILE = path.join(DATA_DIR, 'services.json');
-const BOOKINGS_FILE = path.join(DATA_DIR, 'bookings.json');
-const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json');
-const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
-const PROMOS_FILE = path.join(DATA_DIR, 'promos.json');
-const LOYALTY_FILE = path.join(DATA_DIR, 'loyalty.json');
-const NOTIFICATIONS_FILE = path.join(DATA_DIR, 'notifications.json');
-const GALLERY_FILE = path.join(DATA_DIR, 'gallery.json');
-const CHAT_FILE = path.join(DATA_DIR, 'chat.json');
-const HAIR_TIPS_FILE = path.join(DATA_DIR, 'hair_tips.json');
-const HAIR_TRACKER_FILE = path.join(DATA_DIR, 'hair_tracker.json');
 
 // Middleware
 app.use(cors());
@@ -140,43 +121,15 @@ app.use(express.static(__dirname));
 // SEED ADMIN USER
 // ============================================
 async function seedAdminUser() {
-    if (USE_DATABASE && UserRepository) {
-        try {
-            // Initialize database first
-            await db.initializeDatabase();
+    try {
+        // Initialize database first
+        await db.initializeDatabase();
 
-            // Check if admin already exists
-            const adminExists = await UserRepository.findByRole('admin');
-            if (!adminExists || adminExists.length === 0) {
-                const passwordHash = await bcrypt.hash(ADMIN_SEED_PASSWORD, 10);
-                await UserRepository.create({
-                    id: 'admin-001',
-                    email: 'admin@flirthair.co.za',
-                    passwordHash,
-                    name: 'Flirt Admin',
-                    phone: '+27 11 123 4567',
-                    role: 'admin',
-                    mustChangePassword: true,
-                    points: 0,
-                    tier: 'platinum',
-                    referralCode: 'FLIRTADMIN',
-                    referredBy: null
-                });
-                console.log(`✅ Admin user created in SQLite: admin@flirthair.co.za`);
-                console.log('⚠️  Admin must change password on first login');
-            }
-        } catch (error) {
-            console.error('❌ Failed to seed admin user in database:', error.message);
-        }
-    } else {
-        // Fallback to JSON files
-        const usersData = loadJSON(USERS_FILE);
-        if (!usersData) return;
-
-        const adminExists = usersData.users.find(u => u.role === 'admin');
-        if (!adminExists) {
+        // Check if admin already exists
+        const adminExists = await UserRepository.findByRole('admin');
+        if (!adminExists || adminExists.length === 0) {
             const passwordHash = await bcrypt.hash(ADMIN_SEED_PASSWORD, 10);
-            usersData.users.push({
+            await UserRepository.create({
                 id: 'admin-001',
                 email: 'admin@flirthair.co.za',
                 passwordHash,
@@ -187,76 +140,20 @@ async function seedAdminUser() {
                 points: 0,
                 tier: 'platinum',
                 referralCode: 'FLIRTADMIN',
-                referredBy: null,
-                hairTracker: { lastInstallDate: null, extensionType: null },
-                createdAt: new Date().toISOString()
+                referredBy: null
             });
-            saveJSON(USERS_FILE, usersData);
-            console.log(`✅ Admin user created in JSON: admin@flirthair.co.za`);
+            console.log(`✅ Admin user created in SQLite: admin@flirthair.co.za`);
             console.log('⚠️  Admin must change password on first login');
         }
+    } catch (error) {
+        console.error('❌ Failed to seed admin user in database:', error.message);
+        throw error; // Re-throw to prevent server from starting with broken admin setup
     }
 }
 
 // Run seed on startup
 seedAdminUser();
 
-// ============================================
-// UTILITY FUNCTIONS WITH FILE LOCKING
-// ============================================
-
-// Simple file lock mechanism to prevent concurrent writes
-const fileLocks = new Map();
-
-async function acquireLock(filePath, timeout = 5000) {
-    const startTime = Date.now();
-    while (fileLocks.get(filePath)) {
-        if (Date.now() - startTime > timeout) {
-            throw new Error(`Lock timeout for ${filePath}`);
-        }
-        await new Promise(resolve => setTimeout(resolve, 10));
-    }
-    fileLocks.set(filePath, true);
-}
-
-function releaseLock(filePath) {
-    fileLocks.delete(filePath);
-}
-
-function loadJSON(filePath) {
-    try {
-        const data = fs.readFileSync(filePath, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error(`Error loading ${filePath}:`, error.message);
-        return null;
-    }
-}
-
-function saveJSON(filePath, data) {
-    try {
-        fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-        return true;
-    } catch (error) {
-        console.error(`Error saving ${filePath}:`, error.message);
-        return false;
-    }
-}
-
-// Safe read-modify-write operation with locking
-async function withFileLock(filePath, operation) {
-    await acquireLock(filePath);
-    try {
-        const data = loadJSON(filePath);
-        const result = await operation(data);
-        if (result.save !== false && result.data) {
-            saveJSON(filePath, result.data);
-        }
-        return result;
-    } finally {
-        releaseLock(filePath);
-    }
-}
 
 // Validation helpers
 function validateEmail(email) {
@@ -339,16 +236,11 @@ app.post('/api/auth/signup', async (req, res) => {
 
     // Check if email exists
     let existingUser = null;
-    if (USE_DATABASE && UserRepository) {
-        try {
-            existingUser = await UserRepository.findByEmail(email);
-        } catch (error) {
-            console.error('Database error during signup:', error.message);
-            return res.status(500).json({ success: false, message: 'Server error' });
-        }
-    } else {
-        const usersData = loadJSON(USERS_FILE);
-        existingUser = usersData.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    try {
+        existingUser = await UserRepository.findByEmail(email);
+    } catch (error) {
+        console.error('Database error during signup:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 
     if (existingUser) {
@@ -373,22 +265,11 @@ app.post('/api/auth/signup', async (req, res) => {
     };
 
     let newUser;
-    if (USE_DATABASE && UserRepository) {
-        try {
-            newUser = await UserRepository.create(userData);
-        } catch (error) {
-            console.error('Database error creating user:', error.message);
-            return res.status(500).json({ success: false, message: 'Failed to create account' });
-        }
-    } else {
-        const usersData = loadJSON(USERS_FILE);
-        newUser = {
-            ...userData,
-            hairTracker: { lastInstallDate: null, extensionType: null },
-            createdAt: new Date().toISOString()
-        };
-        usersData.users.push(newUser);
-        saveJSON(USERS_FILE, usersData);
+    try {
+        newUser = await UserRepository.create(userData);
+    } catch (error) {
+        console.error('Database error creating user:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to create account - please try again later' });
     }
 
     // Generate token
@@ -429,23 +310,11 @@ app.post('/api/auth/login', async (req, res) => {
 
     let user = null;
 
-    if (USE_DATABASE && UserRepository) {
-        try {
-            user = await UserRepository.findByEmail(email);
-        } catch (error) {
-            console.error('Database error during login:', error.message);
-            return res.status(500).json({ success: false, message: 'Server error' });
-        }
-    } else {
-        const usersData = loadJSON(USERS_FILE);
-        if (!usersData || !usersData.users) {
-            console.error('❌ No user data available - cannot authenticate');
-            return res.status(500).json({
-                success: false,
-                message: 'Database not available - please try again later'
-            });
-        }
-        user = usersData.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    try {
+        user = await UserRepository.findByEmail(email);
+    } catch (error) {
+        console.error('Database error during login:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 
     if (!user) {
@@ -484,16 +353,20 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Get current user
-app.get('/api/auth/me', authenticateToken, (req, res) => {
-    const usersData = loadJSON(USERS_FILE);
-    const user = usersData.users.find(u => u.id === req.user.id);
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+    try {
+        const user = await UserRepository.findById(req.user.id);
 
-    if (!user) {
-        return res.status(404).json({ success: false, message: 'User not found' });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const { passwordHash: _, password_hash: __, ...userResponse } = user;
+        res.json({ success: true, user: userResponse });
+    } catch (error) {
+        console.error('Database error fetching user:', error.message);
+        res.status(500).json({ success: false, message: 'Database error' });
     }
-
-    const { passwordHash: _, ...userResponse } = user;
-    res.json({ success: true, user: userResponse });
 });
 
 // ============================================
@@ -639,17 +512,16 @@ app.get('/api/auth/google/callback', async (req, res) => {
         }
 
         // Find or create local user
-        const usersData = loadJSON(USERS_FILE);
-        if (!usersData.users) usersData.users = [];
-
-        let user = usersData.users.find(u => u.email.toLowerCase() === email);
+        let user = await UserRepository.findByEmail(email);
 
         if (!user) {
+            const userId = uuidv4();
             user = {
-                id: uuidv4(),
+                id: userId,
                 email,
                 name,
                 phone: '',
+                password_hash: null, // OAuth users don't have passwords
                 role: 'customer',
                 points: 0,
                 tier: 'bronze',
@@ -659,8 +531,7 @@ app.get('/api/auth/google/callback', async (req, res) => {
                 createdAt: new Date().toISOString(),
                 authProvider: 'google'
             };
-            usersData.users.push(user);
-            saveJSON(USERS_FILE, usersData);
+            await UserRepository.create(user);
             console.log(`New user created via Google OAuth: ${email}`);
         }
 
@@ -750,17 +621,16 @@ app.get('/api/auth/facebook/callback', async (req, res) => {
             return renderSocialError(res, 'No email address returned from Facebook. Please ensure your Facebook account has a verified email.');
         }
 
-        const usersData = loadJSON(USERS_FILE);
-        if (!usersData.users) usersData.users = [];
-
-        let user = usersData.users.find(u => u.email.toLowerCase() === email);
+        let user = await UserRepository.findByEmail(email);
 
         if (!user) {
+            const userId = uuidv4();
             user = {
-                id: uuidv4(),
+                id: userId,
                 email,
                 name,
                 phone: '',
+                password_hash: null, // OAuth users don't have passwords
                 role: 'customer',
                 points: 0,
                 tier: 'bronze',
@@ -770,8 +640,7 @@ app.get('/api/auth/facebook/callback', async (req, res) => {
                 createdAt: new Date().toISOString(),
                 authProvider: 'facebook'
             };
-            usersData.users.push(user);
-            saveJSON(USERS_FILE, usersData);
+            await UserRepository.create(user);
             console.log(`New user created via Facebook OAuth: ${email}`);
         }
 
@@ -786,22 +655,30 @@ app.get('/api/auth/facebook/callback', async (req, res) => {
 });
 
 // Update profile
-app.patch('/api/auth/me', authenticateToken, (req, res) => {
-    const { name, phone } = req.body;
-    const usersData = loadJSON(USERS_FILE);
-    const userIndex = usersData.users.findIndex(u => u.id === req.user.id);
+app.patch('/api/auth/me', authenticateToken, async (req, res) => {
+    try {
+        const { name, phone } = req.body;
+        const user = await UserRepository.findById(req.user.id);
 
-    if (userIndex === -1) {
-        return res.status(404).json({ success: false, message: 'User not found' });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const updateData = {};
+        if (name) updateData.name = name.trim();
+        if (phone) updateData.phone = phone;
+
+        if (Object.keys(updateData).length > 0) {
+            await UserRepository.updateById(req.user.id, updateData);
+        }
+
+        const updatedUser = await UserRepository.findById(req.user.id);
+        const { password_hash: _, ...userResponse } = updatedUser;
+        res.json({ success: true, user: userResponse });
+    } catch (error) {
+        console.error('Error updating user profile:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
-
-    if (name) usersData.users[userIndex].name = name.trim();
-    if (phone) usersData.users[userIndex].phone = phone;
-
-    saveJSON(USERS_FILE, usersData);
-
-    const { passwordHash: _, ...userResponse } = usersData.users[userIndex];
-    res.json({ success: true, user: userResponse });
 });
 
 // ============================================
@@ -809,51 +686,59 @@ app.patch('/api/auth/me', authenticateToken, (req, res) => {
 // ============================================
 
 // Get hair profile for authenticated user
-app.get('/api/hair-profile', authenticateToken, (req, res) => {
-    const usersData = loadJSON(USERS_FILE);
-    const user = usersData.users.find(u => u.id === req.user.id);
+app.get('/api/hair-profile', authenticateToken, async (req, res) => {
+    try {
+        const user = await UserRepository.findById(req.user.id);
 
-    if (!user) {
-        return res.status(404).json({ success: false, message: 'User not found' });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Return hair profile or defaults
+        const hairProfile = user.hairProfile || {
+            hairType: null,
+            extensionType: null,
+            preferredStylist: null,
+            notes: null
+        };
+
+        res.json({ success: true, hairProfile });
+    } catch (error) {
+        console.error('Error getting hair profile:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
-
-    // Return hair profile or defaults
-    const hairProfile = user.hairProfile || {
-        hairType: null,
-        extensionType: null,
-        preferredStylist: null,
-        notes: null
-    };
-
-    res.json({ success: true, hairProfile });
 });
 
 // Update hair profile for authenticated user
-app.patch('/api/hair-profile', authenticateToken, (req, res) => {
-    const { hairType, extensionType, preferredStylist, notes } = req.body;
-    const usersData = loadJSON(USERS_FILE);
-    const userIndex = usersData.users.findIndex(u => u.id === req.user.id);
+app.patch('/api/hair-profile', authenticateToken, async (req, res) => {
+    try {
+        const { hairType, extensionType, preferredStylist, notes } = req.body;
+        const user = await UserRepository.findById(req.user.id);
 
-    if (userIndex === -1) {
-        return res.status(404).json({ success: false, message: 'User not found' });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Initialize hairProfile if it doesn't exist
+        let profile = user.hairProfile || {};
+
+        // Merge updates
+        if (hairType !== undefined) profile.hairType = hairType;
+        if (extensionType !== undefined) profile.extensionType = extensionType;
+        if (preferredStylist !== undefined) profile.preferredStylist = preferredStylist;
+        if (notes !== undefined) profile.notes = notes;
+
+        const updateData = {
+            hairProfile: profile,
+            updatedAt: new Date().toISOString()
+        };
+        await UserRepository.updateById(req.user.id, updateData);
+
+        res.json({ success: true, hairProfile: profile });
+    } catch (error) {
+        console.error('Error updating hair profile:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
-
-    // Initialize hairProfile if it doesn't exist
-    if (!usersData.users[userIndex].hairProfile) {
-        usersData.users[userIndex].hairProfile = {};
-    }
-
-    // Merge updates
-    const profile = usersData.users[userIndex].hairProfile;
-    if (hairType !== undefined) profile.hairType = hairType;
-    if (extensionType !== undefined) profile.extensionType = extensionType;
-    if (preferredStylist !== undefined) profile.preferredStylist = preferredStylist;
-    if (notes !== undefined) profile.notes = notes;
-
-    usersData.users[userIndex].updatedAt = new Date().toISOString();
-    saveJSON(USERS_FILE, usersData);
-
-    res.json({ success: true, hairProfile: profile });
 });
 
 // ============================================
@@ -861,127 +746,157 @@ app.patch('/api/hair-profile', authenticateToken, (req, res) => {
 // ============================================
 
 // Get notification preferences for authenticated user
-app.get('/api/notification-prefs', authenticateToken, (req, res) => {
-    const usersData = loadJSON(USERS_FILE);
-    const user = usersData.users.find(u => u.id === req.user.id);
+app.get('/api/notification-prefs', authenticateToken, async (req, res) => {
+    try {
+        const user = await UserRepository.findById(req.user.id);
 
-    if (!user) {
-        return res.status(404).json({ success: false, message: 'User not found' });
-    }
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
 
-    // Return notification prefs or defaults
-    const notificationPrefs = user.notificationPrefs || {
-        promotions: true,
-        appointmentReminders: true,
-        loyaltyUpdates: true
-    };
-
-    res.json({ success: true, notificationPrefs });
-});
-
-// Update notification preferences for authenticated user
-app.patch('/api/notification-prefs', authenticateToken, (req, res) => {
-    const { promotions, appointmentReminders, loyaltyUpdates } = req.body;
-    const usersData = loadJSON(USERS_FILE);
-    const userIndex = usersData.users.findIndex(u => u.id === req.user.id);
-
-    if (userIndex === -1) {
-        return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    // Initialize notificationPrefs if it doesn't exist
-    if (!usersData.users[userIndex].notificationPrefs) {
-        usersData.users[userIndex].notificationPrefs = {
+        // Return notification prefs or defaults
+        const notificationPrefs = user.notificationPrefs || {
             promotions: true,
             appointmentReminders: true,
             loyaltyUpdates: true
         };
+
+        res.json({ success: true, notificationPrefs });
+    } catch (error) {
+        console.error('Database error getting notification preferences:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
+});
 
-    // Merge updates
-    const prefs = usersData.users[userIndex].notificationPrefs;
-    if (promotions !== undefined) prefs.promotions = promotions;
-    if (appointmentReminders !== undefined) prefs.appointmentReminders = appointmentReminders;
-    if (loyaltyUpdates !== undefined) prefs.loyaltyUpdates = loyaltyUpdates;
+// Update notification preferences for authenticated user
+app.patch('/api/notification-prefs', authenticateToken, async (req, res) => {
+    try {
+        const { promotions, appointmentReminders, loyaltyUpdates } = req.body;
+        const user = await UserRepository.findById(req.user.id);
 
-    usersData.users[userIndex].updatedAt = new Date().toISOString();
-    saveJSON(USERS_FILE, usersData);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
 
-    res.json({ success: true, notificationPrefs: prefs });
+        // Initialize notificationPrefs if it doesn't exist
+        const currentPrefs = user.notificationPrefs || {
+            promotions: true,
+            appointmentReminders: true,
+            loyaltyUpdates: true
+        };
+
+        // Merge updates
+        const updatedPrefs = { ...currentPrefs };
+        if (promotions !== undefined) updatedPrefs.promotions = promotions;
+        if (appointmentReminders !== undefined) updatedPrefs.appointmentReminders = appointmentReminders;
+        if (loyaltyUpdates !== undefined) updatedPrefs.loyaltyUpdates = loyaltyUpdates;
+
+        await UserRepository.updateById(req.user.id, {
+            notificationPrefs: updatedPrefs,
+            updatedAt: new Date().toISOString()
+        });
+
+        res.json({ success: true, notificationPrefs: updatedPrefs });
+    } catch (error) {
+        console.error('Database error updating notification preferences:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
 });
 
 // Change password
 app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
-    const { currentPassword, newPassword } = req.body;
+    try {
+        const { currentPassword, newPassword } = req.body;
 
-    if (!currentPassword || !newPassword) {
-        return res.status(400).json({ success: false, message: 'Current and new password are required' });
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ success: false, message: 'Current and new password are required' });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({ success: false, message: 'New password must be at least 8 characters' });
+        }
+
+        const user = await UserRepository.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Verify current password
+        const validPassword = await bcrypt.compare(currentPassword, user.password_hash);
+        if (!validPassword) {
+            return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+        }
+
+        // Hash and save new password
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
+        const updateData = {
+            password_hash: newPasswordHash,
+            mustChangePassword: false,
+            updatedAt: new Date().toISOString()
+        };
+        await UserRepository.updateById(req.user.id, updateData);
+
+        console.log(`Password changed for user: ${user.email}`);
+
+        res.json({ success: true, message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Error changing password:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
-
-    if (newPassword.length < 8) {
-        return res.status(400).json({ success: false, message: 'New password must be at least 8 characters' });
-    }
-
-    const usersData = loadJSON(USERS_FILE);
-    const userIndex = usersData.users.findIndex(u => u.id === req.user.id);
-
-    if (userIndex === -1) {
-        return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    const user = usersData.users[userIndex];
-
-    // Verify current password
-    const validPassword = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!validPassword) {
-        return res.status(401).json({ success: false, message: 'Current password is incorrect' });
-    }
-
-    // Hash and save new password
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
-    usersData.users[userIndex].passwordHash = newPasswordHash;
-    usersData.users[userIndex].mustChangePassword = false;
-    usersData.users[userIndex].updatedAt = new Date().toISOString();
-
-    saveJSON(USERS_FILE, usersData);
-
-    console.log(`Password changed for user: ${user.email}`);
-
-    res.json({ success: true, message: 'Password changed successfully' });
 });
 
 // ============================================
 // STYLISTS ROUTES
 // ============================================
 
-app.get('/api/stylists', (req, res) => {
-    const data = loadJSON(STYLISTS_FILE);
-    res.json({ success: true, stylists: data.stylists });
+app.get('/api/stylists', async (req, res) => {
+    try {
+        const stylists = await StylistRepository.findAll();
+        res.json({ success: true, stylists });
+    } catch (error) {
+        console.error('Database error fetching stylists:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch stylists' });
+    }
 });
 
-app.get('/api/stylists/:id', (req, res) => {
-    const data = loadJSON(STYLISTS_FILE);
-    const stylist = data.stylists.find(s => s.id === req.params.id);
+app.get('/api/stylists/:id', async (req, res) => {
+    try {
+        const stylist = await StylistRepository.findById(req.params.id);
 
-    if (!stylist) {
-        return res.status(404).json({ success: false, message: 'Stylist not found' });
+        if (!stylist) {
+            return res.status(404).json({ success: false, message: 'Stylist not found' });
+        }
+
+        res.json({ success: true, stylist });
+    } catch (error) {
+        console.error('Database error fetching stylist:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch stylist' });
     }
-
-    res.json({ success: true, stylist });
 });
 
 // ============================================
 // SERVICES ROUTES
 // ============================================
 
-app.get('/api/services/hair', (req, res) => {
-    const data = loadJSON(SERVICES_FILE);
-    res.json({ success: true, services: data.hairServices });
+app.get('/api/services/hair', async (req, res) => {
+    try {
+        const services = await ServiceRepository.findByType('hair');
+        res.json({ success: true, services });
+    } catch (error) {
+        console.error('Database error fetching hair services:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch hair services' });
+    }
 });
 
-app.get('/api/services/beauty', (req, res) => {
-    const data = loadJSON(SERVICES_FILE);
-    res.json({ success: true, services: data.beautyServices });
+app.get('/api/services/beauty', async (req, res) => {
+    try {
+        const services = await ServiceRepository.findByType('beauty');
+        res.json({ success: true, services });
+    } catch (error) {
+        console.error('Database error fetching beauty services:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch beauty services' });
+    }
 });
 
 // ============================================
@@ -1011,7 +926,7 @@ function checkBookingConflict(bookingsData, stylistId, date, time, excludeBookin
 }
 
 // Create booking
-app.post('/api/bookings', authenticateToken, (req, res) => {
+app.post('/api/bookings', authenticateToken, async (req, res) => {
     const { type, stylistId, serviceId, date, preferredTimeOfDay, time, notes } = req.body;
 
     if (!type || !serviceId || !date) {
@@ -1034,159 +949,158 @@ app.post('/api/bookings', authenticateToken, (req, res) => {
         return res.status(400).json({ success: false, message: 'Booking date must be in the future' });
     }
 
-    const bookingsData = loadJSON(BOOKINGS_FILE);
-    const servicesData = loadJSON(SERVICES_FILE);
-
-    // Check for booking conflicts (exact same stylist, date, time)
-    if (time && stylistId) {
-        const conflict = checkBookingConflict(bookingsData, stylistId, date, time);
-        if (conflict) {
-            return res.status(409).json({
-                success: false,
-                message: 'This time slot is already booked. Please select a different time.',
-                conflict: {
-                    date: conflict.date,
-                    time: conflict.confirmedTime || conflict.time
-                }
-            });
+    try {
+        // Check for booking conflicts (exact same stylist, date, time)
+        if (time && stylistId) {
+            const conflict = await BookingRepository.findConflict(stylistId, date, time);
+            if (conflict) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'This time slot is already booked. Please select a different time.',
+                    conflict: {
+                        date: conflict.date,
+                        time: conflict.confirmed_time || conflict.time
+                    }
+                });
+            }
         }
-    }
 
-    // Get service details
-    let service;
-    if (type === 'hair') {
-        service = servicesData.hairServices.find(s => s.id === serviceId);
-    } else {
-        service = servicesData.beautyServices.find(s => s.id === serviceId);
-    }
+        // Get service details
+        const service = await ServiceRepository.findById(serviceId);
 
-    if (!service) {
-        return res.status(404).json({ success: false, message: 'Service not found' });
-    }
+        if (!service) {
+            return res.status(404).json({ success: false, message: 'Service not found' });
+        }
 
-    const newBooking = {
-        id: uuidv4(),
-        userId: req.user.id,
-        type,
-        stylistId: stylistId || null,
-        serviceId,
-        serviceName: service.name,
-        servicePrice: service.price,
-        date,
-        preferredTimeOfDay: type === 'hair' ? (preferredTimeOfDay || null) : null,
-        time: type === 'beauty' ? time : null,
-        confirmedTime: type === 'beauty' ? time : null,
-        status: type === 'hair' ? 'pending' : 'confirmed',
-        notes: notes || null,
-        createdAt: new Date().toISOString()
-    };
-
-    bookingsData.bookings.push(newBooking);
-    saveJSON(BOOKINGS_FILE, bookingsData);
-
-    // Award loyalty points for booking (using centralized config)
-    const usersData = loadJSON(USERS_FILE);
-    const userIndex = usersData.users.findIndex(u => u.id === req.user.id);
-    if (userIndex !== -1) {
-        const pointsToAdd = loyaltyHelperModule.getBookingPoints();
-        usersData.users[userIndex].points += pointsToAdd;
-        usersData.users[userIndex].tier = calculateTier(usersData.users[userIndex].points);
-        saveJSON(USERS_FILE, usersData);
-
-        // Log transaction
-        const loyaltyData = loadJSON(LOYALTY_FILE);
-        loyaltyData.transactions.push({
+        const newBooking = {
             id: uuidv4(),
             userId: req.user.id,
-            points: pointsToAdd,
-            type: 'earned',
-            description: `Booking: ${service.name}`,
-            createdAt: new Date().toISOString()
-        });
-        saveJSON(LOYALTY_FILE, loyaltyData);
-    }
+            bookingType: type,
+            stylistId: stylistId || null,
+            serviceId,
+            serviceName: service.name,
+            servicePrice: service.price,
+            date,
+            preferredTimeOfDay: type === 'hair' ? (preferredTimeOfDay || null) : null,
+            time: type === 'beauty' ? time : null,
+            confirmedTime: type === 'beauty' ? time : null,
+            status: type === 'hair' ? 'pending' : 'confirmed',
+            notes: notes || null
+        };
 
-    res.status(201).json({
-        success: true,
-        message: type === 'hair'
-            ? 'Booking request submitted. We will contact you within 24 hours to confirm the time.'
-            : 'Booking confirmed!',
-        booking: newBooking
-    });
+        const createdBooking = await BookingRepository.create(newBooking);
+
+        // Award loyalty points for booking
+        const loyaltySettings = await LoyaltyRepository.getSettings();
+        const pointsToAdd = loyaltySettings.bookingPoints || 50;
+
+        if (pointsToAdd > 0) {
+            await UserRepository.addPoints(req.user.id, pointsToAdd);
+            await LoyaltyRepository.addTransaction({
+                id: uuidv4(),
+                userId: req.user.id,
+                points: pointsToAdd,
+                type: 'earned',
+                description: `Booking: ${service.name}`
+            });
+        }
+
+        res.status(201).json({
+            success: true,
+            message: type === 'hair'
+                ? 'Booking request submitted. We will contact you within 24 hours to confirm the time.'
+                : 'Booking confirmed!',
+            booking: createdBooking
+        });
+    } catch (error) {
+        console.error('Database error creating booking:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to create booking - please try again later' });
+    }
 });
 
 // Get user's bookings
-app.get('/api/bookings', authenticateToken, (req, res) => {
-    const bookingsData = loadJSON(BOOKINGS_FILE);
-    const userBookings = bookingsData.bookings.filter(b => b.userId === req.user.id);
-
-    // Sort by date descending
-    userBookings.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    res.json({ success: true, bookings: userBookings });
+app.get('/api/bookings', authenticateToken, async (req, res) => {
+    try {
+        const userBookings = await BookingRepository.findByUserId(req.user.id);
+        res.json({ success: true, bookings: userBookings });
+    } catch (error) {
+        console.error('Database error fetching user bookings:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch bookings' });
+    }
 });
 
 // Cancel/reschedule booking
-app.patch('/api/bookings/:id', authenticateToken, (req, res) => {
+app.patch('/api/bookings/:id', authenticateToken, async (req, res) => {
     const { status, date, preferredTimeOfDay, time, confirmedTime } = req.body;
-    const bookingsData = loadJSON(BOOKINGS_FILE);
 
-    const bookingIndex = bookingsData.bookings.findIndex(
-        b => b.id === req.params.id && b.userId === req.user.id
-    );
+    try {
+        // Find booking and verify ownership
+        const booking = await BookingRepository.findById(req.params.id);
 
-    if (bookingIndex === -1) {
-        return res.status(404).json({ success: false, message: 'Booking not found' });
+        if (!booking || booking.user_id !== req.user.id) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        const updates = {};
+
+        if (status) updates.status = status;
+        if (date) {
+            updates.date = date;
+            // Reset status to pending when rescheduling
+            if (!status) updates.status = 'pending';
+        }
+        if (preferredTimeOfDay !== undefined) updates.preferred_time_of_day = preferredTimeOfDay;
+        if (time) updates.time = time;
+        // Allow confirmedTime to be explicitly set to null (when rescheduling)
+        if (confirmedTime !== undefined) updates.confirmed_time = confirmedTime;
+
+        const updatedBooking = await BookingRepository.update(req.params.id, updates);
+
+        res.json({ success: true, booking: updatedBooking });
+    } catch (error) {
+        console.error('Database error updating booking:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to update booking' });
     }
-
-    if (status) bookingsData.bookings[bookingIndex].status = status;
-    if (date) {
-        bookingsData.bookings[bookingIndex].date = date;
-        // Reset status to pending when rescheduling
-        if (!status) bookingsData.bookings[bookingIndex].status = 'pending';
-    }
-    if (preferredTimeOfDay !== undefined) bookingsData.bookings[bookingIndex].preferredTimeOfDay = preferredTimeOfDay;
-    if (time) bookingsData.bookings[bookingIndex].time = time;
-    // Allow confirmedTime to be explicitly set to null (when rescheduling)
-    if (confirmedTime !== undefined) bookingsData.bookings[bookingIndex].confirmedTime = confirmedTime;
-
-    bookingsData.bookings[bookingIndex].updatedAt = new Date().toISOString();
-
-    saveJSON(BOOKINGS_FILE, bookingsData);
-
-    res.json({ success: true, booking: bookingsData.bookings[bookingIndex] });
 });
 
 // ============================================
 // PRODUCTS ROUTES
 // ============================================
 
-app.get('/api/products', (req, res) => {
-    const { category, onSale } = req.query;
-    const data = loadJSON(PRODUCTS_FILE);
+app.get('/api/products', async (req, res) => {
+    try {
+        const { category, onSale } = req.query;
+        const filters = {};
 
-    let products = data.products;
+        if (category) {
+            filters.category = category;
+        }
 
-    if (category) {
-        products = products.filter(p => p.category === category);
+        if (onSale === 'true') {
+            filters.onSale = true;
+        }
+
+        const products = await ProductRepository.findAll(filters);
+        res.json({ success: true, products });
+    } catch (error) {
+        console.error('Database error fetching products:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch products' });
     }
-
-    if (onSale === 'true') {
-        products = products.filter(p => p.onSale);
-    }
-
-    res.json({ success: true, products });
 });
 
-app.get('/api/products/:id', (req, res) => {
-    const data = loadJSON(PRODUCTS_FILE);
-    const product = data.products.find(p => p.id === req.params.id);
+app.get('/api/products/:id', async (req, res) => {
+    try {
+        const product = await ProductRepository.findById(req.params.id);
 
-    if (!product) {
-        return res.status(404).json({ success: false, message: 'Product not found' });
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+
+        res.json({ success: true, product });
+    } catch (error) {
+        console.error('Database error fetching product:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch product' });
     }
-
-    res.json({ success: true, product });
 });
 
 // ============================================
@@ -1194,208 +1108,198 @@ app.get('/api/products/:id', (req, res) => {
 // ============================================
 
 // Create order
-app.post('/api/orders', authenticateToken, (req, res) => {
+app.post('/api/orders', authenticateToken, async (req, res) => {
     const { items, deliveryMethod, deliveryAddress, promoCode } = req.body;
 
     if (!items || items.length === 0) {
         return res.status(400).json({ success: false, message: 'Order must contain items' });
     }
 
-    const productsData = loadJSON(PRODUCTS_FILE);
-    const ordersData = loadJSON(ORDERS_FILE);
+    try {
+        // Calculate order totals
+        let subtotal = 0;
+        const orderItems = [];
 
-    // Calculate order totals
-    let subtotal = 0;
-    const orderItems = [];
+        // Validate products and calculate subtotal
+        for (const item of items) {
+            const product = await ProductRepository.findById(item.productId);
+            if (!product) {
+                return res.status(404).json({ success: false, message: `Product ${item.productId} not found` });
+            }
+            if (product.stock < item.quantity) {
+                return res.status(400).json({ success: false, message: `Insufficient stock for ${product.name}` });
+            }
 
-    for (const item of items) {
-        const product = productsData.products.find(p => p.id === item.productId);
-        if (!product) {
-            return res.status(404).json({ success: false, message: `Product ${item.productId} not found` });
+            const unitPrice = product.on_sale && product.sale_price ? product.sale_price : product.price;
+            subtotal += unitPrice * item.quantity;
+
+            orderItems.push({
+                productId: product.id,
+                productName: product.name,
+                quantity: item.quantity,
+                unitPrice
+            });
         }
-        if (product.stock < item.quantity) {
-            return res.status(400).json({ success: false, message: `Insufficient stock for ${product.name}` });
-        }
 
-        const unitPrice = product.onSale && product.salePrice ? product.salePrice : product.price;
-        subtotal += unitPrice * item.quantity;
+        // Delivery fee
+        const deliveryFees = { pickup: 0, standard: 65, express: 120 };
+        const deliveryFee = deliveryFees[deliveryMethod] || 0;
 
-        orderItems.push({
-            productId: product.id,
-            productName: product.name,
-            quantity: item.quantity,
-            unitPrice
-        });
-    }
+        // Apply promo code
+        let discount = 0;
+        let appliedPromo = null;
+        if (promoCode) {
+            const promo = await PromoRepository.findByCode(promoCode);
 
-    // Delivery fee
-    const deliveryFees = { pickup: 0, standard: 65, express: 120 };
-    const deliveryFee = deliveryFees[deliveryMethod] || 0;
+            if (promo && promo.active && new Date(promo.expires_at) > new Date()) {
+                if (!promo.min_order || subtotal >= promo.min_order) {
+                    if (promo.discount_type === 'percentage') {
+                        discount = Math.round(subtotal * (promo.discount_value / 100));
+                    } else {
+                        discount = promo.discount_value;
+                    }
+                    appliedPromo = promo.code;
 
-    // Apply promo code
-    let discount = 0;
-    let appliedPromo = null;
-    if (promoCode) {
-        const promosData = loadJSON(PROMOS_FILE);
-        const promo = promosData.promos.find(
-            p => p.code.toUpperCase() === promoCode.toUpperCase() && p.active
-        );
-
-        if (promo && new Date(promo.expiresAt) > new Date()) {
-            if (!promo.minOrder || subtotal >= promo.minOrder) {
-                if (promo.discountType === 'percentage') {
-                    discount = Math.round(subtotal * (promo.discountValue / 100));
-                } else {
-                    discount = promo.discountValue;
+                    // Increment usage
+                    await PromoRepository.incrementUsage(promo.id);
                 }
-                appliedPromo = promo.code;
-
-                // Increment usage
-                promo.timesUsed++;
-                saveJSON(PROMOS_FILE, promosData);
             }
         }
-    }
 
-    const total = subtotal + deliveryFee - discount;
+        const total = subtotal + deliveryFee - discount;
 
-    const newOrder = {
-        id: uuidv4(),
-        userId: req.user.id,
-        items: orderItems,
-        subtotal,
-        deliveryMethod: deliveryMethod || 'pickup',
-        deliveryFee,
-        deliveryAddress: deliveryAddress || null,
-        promoCode: appliedPromo,
-        discount,
-        total,
-        status: 'pending',
-        createdAt: new Date().toISOString()
-    };
-
-    ordersData.orders.push(newOrder);
-    saveJSON(ORDERS_FILE, ordersData);
-
-    // Update product stock
-    for (const item of items) {
-        const productIndex = productsData.products.findIndex(p => p.id === item.productId);
-        if (productIndex !== -1) {
-            productsData.products[productIndex].stock -= item.quantity;
-        }
-    }
-    saveJSON(PRODUCTS_FILE, productsData);
-
-    // Award loyalty points (using centralized config)
-    const usersData = loadJSON(USERS_FILE);
-    const userIndex = usersData.users.findIndex(u => u.id === req.user.id);
-    if (userIndex !== -1) {
-        const pointsToAdd = loyaltyHelperModule.calculateSpendPoints(total);
-        usersData.users[userIndex].points += pointsToAdd;
-        usersData.users[userIndex].tier = calculateTier(usersData.users[userIndex].points);
-        saveJSON(USERS_FILE, usersData);
-
-        const loyaltyData = loadJSON(LOYALTY_FILE);
-        loyaltyData.transactions.push({
+        const orderData = {
             id: uuidv4(),
             userId: req.user.id,
-            points: pointsToAdd,
-            type: 'earned',
-            description: `Order #${newOrder.id.substring(0, 8)}`,
-            createdAt: new Date().toISOString()
-        });
-        saveJSON(LOYALTY_FILE, loyaltyData);
-    }
+            subtotal,
+            deliveryMethod: deliveryMethod || 'pickup',
+            deliveryFee,
+            deliveryAddress: deliveryAddress ? JSON.stringify(deliveryAddress) : null,
+            promoCode: appliedPromo,
+            discount,
+            total,
+            status: 'pending'
+        };
 
-    res.status(201).json({
-        success: true,
-        message: 'Order placed successfully!',
-        order: newOrder
-    });
+        // Create order with items
+        const newOrder = await OrderRepository.create(orderData, orderItems);
+
+        // Update product stock
+        for (const item of items) {
+            await ProductRepository.updateStock(item.productId, -item.quantity);
+        }
+
+        // Award loyalty points
+        const loyaltySettings = await LoyaltyRepository.getSettings();
+        const pointsToAdd = Math.floor(total / loyaltySettings.spendRatio);
+
+        if (pointsToAdd > 0) {
+            await UserRepository.addPoints(req.user.id, pointsToAdd);
+            await LoyaltyRepository.addTransaction({
+                id: uuidv4(),
+                userId: req.user.id,
+                points: pointsToAdd,
+                type: 'earned',
+                description: `Order #${newOrder.id.substring(0, 8)}`
+            });
+        }
+
+        res.status(201).json({
+            success: true,
+            message: 'Order placed successfully!',
+            order: newOrder
+        });
+    } catch (error) {
+        console.error('Database error creating order:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to create order - please try again later' });
+    }
 });
 
 // Get user's orders
-app.get('/api/orders', authenticateToken, (req, res) => {
-    const ordersData = loadJSON(ORDERS_FILE);
-    const userOrders = ordersData.orders.filter(o => o.userId === req.user.id);
-
-    userOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    res.json({ success: true, orders: userOrders });
+app.get('/api/orders', authenticateToken, async (req, res) => {
+    try {
+        const userOrders = await OrderRepository.findByUserId(req.user.id);
+        res.json({ success: true, orders: userOrders });
+    } catch (error) {
+        console.error('Database error fetching user orders:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch orders' });
+    }
 });
 
 // ============================================
 // PROMO ROUTES
 // ============================================
 
-app.post('/api/promo/validate', (req, res) => {
+app.post('/api/promo/validate', async (req, res) => {
     const { code, subtotal } = req.body;
 
     if (!code) {
         return res.status(400).json({ success: false, message: 'Promo code is required' });
     }
 
-    const promosData = loadJSON(PROMOS_FILE);
-    const promo = promosData.promos.find(
-        p => p.code.toUpperCase() === code.toUpperCase() && p.active
-    );
+    try {
+        const promo = await PromoRepository.findByCode(code);
 
-    if (!promo) {
-        return res.status(404).json({ success: false, message: 'Invalid promo code' });
-    }
-
-    if (new Date(promo.expiresAt) < new Date()) {
-        return res.status(400).json({ success: false, message: 'Promo code has expired' });
-    }
-
-    if (promo.usageLimit && promo.timesUsed >= promo.usageLimit) {
-        return res.status(400).json({ success: false, message: 'Promo code usage limit reached' });
-    }
-
-    if (promo.minOrder && subtotal < promo.minOrder) {
-        return res.status(400).json({
-            success: false,
-            message: `Minimum order of R${promo.minOrder} required`
-        });
-    }
-
-    let discount = 0;
-    if (promo.discountType === 'percentage') {
-        discount = Math.round((subtotal || 0) * (promo.discountValue / 100));
-    } else {
-        discount = promo.discountValue;
-    }
-
-    res.json({
-        success: true,
-        promo: {
-            code: promo.code,
-            description: promo.description,
-            discountType: promo.discountType,
-            discountValue: promo.discountValue,
-            calculatedDiscount: discount
+        if (!promo || !promo.active) {
+            return res.status(404).json({ success: false, message: 'Invalid promo code' });
         }
-    });
+
+        if (new Date(promo.expires_at) < new Date()) {
+            return res.status(400).json({ success: false, message: 'Promo code has expired' });
+        }
+
+        if (promo.usage_limit && promo.times_used >= promo.usage_limit) {
+            return res.status(400).json({ success: false, message: 'Promo code usage limit reached' });
+        }
+
+        if (promo.min_order && subtotal < promo.min_order) {
+            return res.status(400).json({
+                success: false,
+                message: `Minimum order of R${promo.min_order} required`
+            });
+        }
+
+        let discount = 0;
+        if (promo.discount_type === 'percentage') {
+            discount = Math.round((subtotal || 0) * (promo.discount_value / 100));
+        } else {
+            discount = promo.discount_value;
+        }
+
+        res.json({
+            success: true,
+            promo: {
+                code: promo.code,
+                description: promo.description,
+                discountType: promo.discount_type,
+                discountValue: promo.discount_value,
+                calculatedDiscount: discount
+            }
+        });
+    } catch (error) {
+        console.error('Database error validating promo:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to validate promo code' });
+    }
 });
 
 // Get highlighted promos for Special Offers section (public endpoint)
-app.get('/api/promos/highlighted', (req, res) => {
+app.get('/api/promos/highlighted', async (req, res) => {
     try {
-        const data = loadJSON(PROMOS_FILE);
         const now = new Date();
+        const allPromos = await PromoRepository.findAll();
 
         // Filter for active, highlighted promos that haven't expired
-        const promos = data.promos
+        const promos = allPromos
             .filter(p => p.active && p.highlighted)
-            .filter(p => !p.expiresAt || new Date(p.expiresAt) >= now)
+            .filter(p => !p.expires_at || new Date(p.expires_at) >= now)
             .map(p => ({
                 // Only return safe, public fields
                 code: p.code,
                 description: p.description,
-                discountType: p.discountType,
-                discountValue: p.discountValue,
-                minOrder: p.minOrder || 0,
-                expiresAt: p.expiresAt,
+                discountType: p.discount_type,
+                discountValue: p.discount_value,
+                minOrder: p.min_order || 0,
+                expiresAt: p.expires_at,
                 badge: p.badge || 'SPECIAL',
                 title: p.title || p.code,
                 subtitle: p.subtitle || p.description || '',
@@ -1414,151 +1318,151 @@ app.get('/api/promos/highlighted', (req, res) => {
 // LOYALTY ROUTES
 // ============================================
 
-app.get('/api/loyalty/balance', authenticateToken, (req, res) => {
-    const usersData = loadJSON(USERS_FILE);
-    const user = usersData.users.find(u => u.id === req.user.id);
+app.get('/api/loyalty/balance', authenticateToken, async (req, res) => {
+    try {
+        const user = await UserRepository.findById(req.user.id);
 
-    if (!user) {
-        return res.status(404).json({ success: false, message: 'User not found' });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        res.json({
+            success: true,
+            points: user.points,
+            tier: user.tier,
+            referralCode: user.referral_code
+        });
+    } catch (error) {
+        console.error('Database error fetching loyalty balance:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch loyalty balance' });
     }
-
-    res.json({
-        success: true,
-        points: user.points,
-        tier: user.tier,
-        referralCode: user.referralCode
-    });
 });
 
-app.get('/api/loyalty/history', authenticateToken, (req, res) => {
-    const loyaltyData = loadJSON(LOYALTY_FILE);
-    const transactions = loyaltyData.transactions.filter(t => t.userId === req.user.id);
-
-    transactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    res.json({ success: true, transactions });
+app.get('/api/loyalty/history', authenticateToken, async (req, res) => {
+    try {
+        const transactions = await LoyaltyRepository.getTransactionsByUserId(req.user.id);
+        res.json({ success: true, transactions });
+    } catch (error) {
+        console.error('Database error fetching loyalty history:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch loyalty history' });
+    }
 });
 
-app.post('/api/loyalty/redeem', authenticateToken, (req, res) => {
+app.post('/api/loyalty/redeem', authenticateToken, async (req, res) => {
     const { points, rewardType } = req.body;
 
-    const usersData = loadJSON(USERS_FILE);
-    const userIndex = usersData.users.findIndex(u => u.id === req.user.id);
+    try {
+        const user = await UserRepository.findById(req.user.id);
 
-    if (userIndex === -1) {
-        return res.status(404).json({ success: false, message: 'User not found' });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (user.points < points) {
+            return res.status(400).json({ success: false, message: 'Insufficient points' });
+        }
+
+        // Deduct points and update tier
+        const newBalance = await UserRepository.deductPoints(req.user.id, points);
+
+        // Log redemption transaction
+        await LoyaltyRepository.addTransaction({
+            id: uuidv4(),
+            userId: req.user.id,
+            points: -points,
+            type: 'redeemed',
+            description: `Redeemed: ${rewardType || 'Discount'}`
+        });
+
+        res.json({
+            success: true,
+            message: 'Points redeemed successfully!',
+            remainingPoints: newBalance
+        });
+    } catch (error) {
+        console.error('Database error redeeming points:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to redeem points' });
     }
-
-    if (usersData.users[userIndex].points < points) {
-        return res.status(400).json({ success: false, message: 'Insufficient points' });
-    }
-
-    usersData.users[userIndex].points -= points;
-    usersData.users[userIndex].tier = calculateTier(usersData.users[userIndex].points);
-    saveJSON(USERS_FILE, usersData);
-
-    // Log redemption
-    const loyaltyData = loadJSON(LOYALTY_FILE);
-    loyaltyData.transactions.push({
-        id: uuidv4(),
-        userId: req.user.id,
-        points: -points,
-        type: 'redeemed',
-        description: `Redeemed: ${rewardType || 'Discount'}`,
-        createdAt: new Date().toISOString()
-    });
-    saveJSON(LOYALTY_FILE, loyaltyData);
-
-    res.json({
-        success: true,
-        message: 'Points redeemed successfully!',
-        remainingPoints: usersData.users[userIndex].points
-    });
 });
 
 // ============================================
 // REFERRAL ROUTES
 // ============================================
 
-app.post('/api/referrals/apply', authenticateToken, (req, res) => {
+app.post('/api/referrals/apply', authenticateToken, async (req, res) => {
     const { referralCode } = req.body;
 
     if (!referralCode) {
         return res.status(400).json({ success: false, message: 'Referral code is required' });
     }
 
-    const usersData = loadJSON(USERS_FILE);
-    const currentUser = usersData.users.find(u => u.id === req.user.id);
+    try {
+        const currentUser = await UserRepository.findById(req.user.id);
 
-    if (currentUser.referredBy) {
-        return res.status(400).json({ success: false, message: 'You have already used a referral code' });
+        if (currentUser.referred_by) {
+            return res.status(400).json({ success: false, message: 'You have already used a referral code' });
+        }
+
+        const referrer = await UserRepository.findByReferralCode(referralCode);
+
+        if (!referrer || referrer.id === req.user.id) {
+            return res.status(404).json({ success: false, message: 'Invalid referral code' });
+        }
+
+        // Get referral points from loyalty settings
+        const loyaltySettings = await LoyaltyRepository.getSettings();
+        const referralPoints = loyaltySettings.referralPoints || 100;
+
+        // Update current user's referrer
+        await UserRepository.update(req.user.id, { referred_by: referrer.id });
+
+        // Award points to both users
+        await UserRepository.addPoints(referrer.id, referralPoints);
+        await UserRepository.addPoints(req.user.id, referralPoints);
+
+        // Log loyalty transactions
+        await LoyaltyRepository.addTransaction({
+            id: uuidv4(),
+            userId: referrer.id,
+            points: referralPoints,
+            type: 'earned',
+            description: `Referral: ${currentUser.name} joined`
+        });
+
+        await LoyaltyRepository.addTransaction({
+            id: uuidv4(),
+            userId: req.user.id,
+            points: referralPoints,
+            type: 'earned',
+            description: `Welcome bonus: Referred by ${referrer.name}`
+        });
+
+        res.json({
+            success: true,
+            message: `Referral applied! You and ${referrer.name} each earned ${referralPoints} points!`,
+            pointsEarned: referralPoints
+        });
+    } catch (error) {
+        console.error('Database error applying referral:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to apply referral code' });
     }
-
-    const referrer = usersData.users.find(
-        u => u.referralCode.toUpperCase() === referralCode.toUpperCase() && u.id !== req.user.id
-    );
-
-    if (!referrer) {
-        return res.status(404).json({ success: false, message: 'Invalid referral code' });
-    }
-
-    // Update current user
-    const currentUserIndex = usersData.users.findIndex(u => u.id === req.user.id);
-    usersData.users[currentUserIndex].referredBy = referrer.id;
-
-    // Award points to both (using centralized config)
-    const referralPoints = loyaltyHelperModule.getReferralPoints();
-
-    // Points to referrer
-    const referrerIndex = usersData.users.findIndex(u => u.id === referrer.id);
-    usersData.users[referrerIndex].points += referralPoints;
-    usersData.users[referrerIndex].tier = calculateTier(usersData.users[referrerIndex].points);
-
-    // Points to referee
-    usersData.users[currentUserIndex].points += referralPoints;
-    usersData.users[currentUserIndex].tier = calculateTier(usersData.users[currentUserIndex].points);
-
-    saveJSON(USERS_FILE, usersData);
-
-    // Log transactions
-    const loyaltyData = loadJSON(LOYALTY_FILE);
-    loyaltyData.transactions.push({
-        id: uuidv4(),
-        userId: referrer.id,
-        points: referralPoints,
-        type: 'earned',
-        description: `Referral: ${currentUser.name} joined`,
-        createdAt: new Date().toISOString()
-    });
-    loyaltyData.transactions.push({
-        id: uuidv4(),
-        userId: req.user.id,
-        points: referralPoints,
-        type: 'earned',
-        description: `Welcome bonus: Referred by ${referrer.name}`,
-        createdAt: new Date().toISOString()
-    });
-    saveJSON(LOYALTY_FILE, loyaltyData);
-
-    res.json({
-        success: true,
-        message: `Referral applied! You and ${referrer.name} each earned ${referralPoints} points!`,
-        pointsEarned: referralPoints
-    });
 });
 
-app.get('/api/referrals', authenticateToken, (req, res) => {
-    const usersData = loadJSON(USERS_FILE);
-    const currentUser = usersData.users.find(u => u.id === req.user.id);
+app.get('/api/referrals', authenticateToken, async (req, res) => {
+    try {
+        const currentUser = await UserRepository.findById(req.user.id);
+        const referrals = await UserRepository.findReferrals(req.user.id);
 
-    const referrals = usersData.users.filter(u => u.referredBy === req.user.id);
-
-    res.json({
-        success: true,
-        referralCode: currentUser.referralCode,
-        referralCount: referrals.length,
-        referrals: referrals.map(r => ({ name: r.name, date: r.createdAt }))
-    });
+        res.json({
+            success: true,
+            referralCode: currentUser.referral_code,
+            referralCount: referrals.length,
+            referrals: referrals.map(r => ({ name: r.name, date: r.created_at }))
+        });
+    } catch (error) {
+        console.error('Database error fetching referrals:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch referrals' });
+    }
 });
 
 // ============================================
@@ -1566,31 +1470,74 @@ app.get('/api/referrals', authenticateToken, (req, res) => {
 // ============================================
 
 // Get hair tracker config (public - no auth required)
-app.get('/api/hair-tracker/config', (req, res) => {
+app.get('/api/hair-tracker/config', async (req, res) => {
     try {
-        const config = loadJSON(HAIR_TRACKER_FILE);
-        if (!config) {
-            return res.status(500).json({ success: false, message: 'Hair tracker config not found' });
-        }
+        // Hair tracker config is now stored in the database or use default values
+        const config = {
+            washFrequencyDays: 3,
+            deepConditionFrequencyDays: 14,
+            defaultMaintenanceIntervalDays: 42,
+            extensionTypes: [
+                'clip-in',
+                'tape-in',
+                'sew-in',
+                'micro-link',
+                'fusion',
+                'halo',
+                'ponytail',
+                'other'
+            ],
+            extensionTypeIntervals: {
+                'clip-in': 1,        // Daily removal
+                'tape-in': 42,       // 6 weeks
+                'sew-in': 56,        // 8 weeks
+                'micro-link': 84,    // 12 weeks
+                'fusion': 84,        // 12 weeks
+                'halo': 1,           // Daily removal
+                'ponytail': 14,      // 2 weeks
+                'other': 42          // Default 6 weeks
+            }
+        };
         res.json({ success: true, config });
     } catch (error) {
-        console.error('Error loading hair tracker config:', error);
-        res.status(500).json({ success: false, message: 'Failed to load hair tracker config' });
+        console.error('Error loading hair tracker config:', error.message);
+        res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
 
 // Get user's hair tracker data with computed metrics
-app.get('/api/hair-tracker', authenticateToken, (req, res) => {
+app.get('/api/hair-tracker', authenticateToken, async (req, res) => {
     try {
-        const usersData = loadJSON(USERS_FILE);
-        const user = usersData.users.find(u => u.id === req.user.id);
-
+        const user = await UserRepository.findById(req.user.id);
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
         const tracker = user.hairTracker || {};
-        const config = loadJSON(HAIR_TRACKER_FILE) || {};
+        // Use the same config as in the config endpoint
+        const config = {
+            washFrequencyDays: 3,
+            deepConditionFrequencyDays: 14,
+            defaultMaintenanceIntervalDays: 42,
+            extensionTypeIntervals: {
+                'clip-in': 1,
+                'tape-in': 42,
+                'sew-in': 56,
+                'micro-link': 84,
+                'fusion': 84,
+                'halo': 1,
+                'ponytail': 14,
+                'other': 42
+            },
+            healthScore: {
+                base: 100,
+                penalties: {
+                    overMaintenanceByDay: 0.5,
+                    noDeepConditionOverDays: 0.3,
+                    tooManyWashesPerWeek: 1.0
+                }
+            }
+        };
         const today = new Date();
 
         // Derive maintenance interval from config if not set on user
@@ -1696,13 +1643,13 @@ app.get('/api/hair-tracker', authenticateToken, (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error getting hair tracker:', error);
-        res.status(500).json({ success: false, message: 'Failed to load hair tracker data' });
+        console.error('Database error getting hair tracker:', error.message);
+        res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
 
 // Update hair tracker (extend existing PATCH)
-app.patch('/api/hair-tracker', authenticateToken, (req, res) => {
+app.patch('/api/hair-tracker', authenticateToken, async (req, res) => {
     try {
         const {
             lastInstallDate,
@@ -1714,18 +1661,15 @@ app.patch('/api/hair-tracker', authenticateToken, (req, res) => {
             hairHealthScore
         } = req.body;
 
-        const usersData = loadJSON(USERS_FILE);
-        const userIndex = usersData.users.findIndex(u => u.id === req.user.id);
-
-        if (userIndex === -1) {
+        const user = await UserRepository.findById(req.user.id);
+        if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        const user = usersData.users[userIndex];
         const existingTracker = user.hairTracker || {};
 
         // Merge with existing data
-        user.hairTracker = {
+        const updatedTracker = {
             ...existingTracker,
             lastInstallDate: lastInstallDate !== undefined ? lastInstallDate : existingTracker.lastInstallDate,
             extensionType: extensionType !== undefined ? extensionType : existingTracker.extensionType,
@@ -1740,104 +1684,130 @@ app.patch('/api/hair-tracker', authenticateToken, (req, res) => {
 
         // If lastInstallDate changed, reset nextMaintenanceDate to recalculate
         if (lastInstallDate && lastInstallDate !== existingTracker.lastInstallDate) {
-            const config = loadJSON(HAIR_TRACKER_FILE) || {};
+            const config = {
+                extensionTypeIntervals: {
+                    'clip-in': 1,
+                    'tape-in': 42,
+                    'sew-in': 56,
+                    'micro-link': 84,
+                    'fusion': 84,
+                    'halo': 1,
+                    'ponytail': 14,
+                    'other': 42
+                },
+                defaultMaintenanceIntervalDays: 42
+            };
             const extType = extensionType || existingTracker.extensionType;
             const interval = maintenanceIntervalDays
                 || config.extensionTypeIntervals?.[extType]
                 || config.defaultMaintenanceIntervalDays
                 || 42;
             const nm = new Date(new Date(lastInstallDate).getTime() + interval * 86400000);
-            user.hairTracker.nextMaintenanceDate = nm.toISOString();
+            updatedTracker.nextMaintenanceDate = nm.toISOString();
         }
 
-        saveJSON(USERS_FILE, usersData);
+        await UserRepository.updateById(req.user.id, {
+            hairTracker: updatedTracker
+        });
 
         res.json({
             success: true,
-            hairTracker: user.hairTracker
+            hairTracker: updatedTracker
         });
     } catch (error) {
-        console.error('Error updating hair tracker:', error);
-        res.status(500).json({ success: false, message: 'Failed to update hair tracker' });
+        console.error('Database error updating hair tracker:', error.message);
+        res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
 
 // Log a wash event
-app.post('/api/hair-tracker/log-wash', authenticateToken, (req, res) => {
+app.post('/api/hair-tracker/log-wash', authenticateToken, async (req, res) => {
     try {
         const { date, notes } = req.body;
-        const usersData = loadJSON(USERS_FILE);
-        const userIndex = usersData.users.findIndex(u => u.id === req.user.id);
+        const user = await UserRepository.findById(req.user.id);
 
-        if (userIndex === -1) {
+        if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        const user = usersData.users[userIndex];
-        user.hairTracker = user.hairTracker || {};
-        user.hairTracker.washHistory = user.hairTracker.washHistory || [];
-
+        const currentTracker = user.hairTracker || {};
+        const washHistory = currentTracker.washHistory || [];
         const washDate = date ? new Date(date) : new Date();
 
-        user.hairTracker.washHistory.push({
+        const newWashEntry = {
             id: uuidv4(),
             date: washDate.toISOString(),
             notes: notes || ''
-        });
-        user.hairTracker.lastWashDate = washDate.toISOString();
+        };
 
-        saveJSON(USERS_FILE, usersData);
+        washHistory.push(newWashEntry);
+
+        const updatedTracker = {
+            ...currentTracker,
+            washHistory: washHistory,
+            lastWashDate: washDate.toISOString()
+        };
+
+        await UserRepository.updateById(req.user.id, {
+            hairTracker: updatedTracker
+        });
 
         res.json({
             success: true,
             message: 'Wash logged successfully',
-            hairTracker: user.hairTracker
+            hairTracker: updatedTracker
         });
     } catch (error) {
-        console.error('Error logging wash:', error);
-        res.status(500).json({ success: false, message: 'Failed to log wash' });
+        console.error('Database error logging wash:', error.message);
+        res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
 
 // Log a deep condition event
-app.post('/api/hair-tracker/log-deep-condition', authenticateToken, (req, res) => {
+app.post('/api/hair-tracker/log-deep-condition', authenticateToken, async (req, res) => {
     try {
         const { date, notes } = req.body;
-        const usersData = loadJSON(USERS_FILE);
-        const userIndex = usersData.users.findIndex(u => u.id === req.user.id);
+        const user = await UserRepository.findById(req.user.id);
 
-        if (userIndex === -1) {
+        if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        const user = usersData.users[userIndex];
-        user.hairTracker = user.hairTracker || {};
-        user.hairTracker.deepConditionHistory = user.hairTracker.deepConditionHistory || [];
-
+        const currentTracker = user.hairTracker || {};
+        const deepConditionHistory = currentTracker.deepConditionHistory || [];
         const conditionDate = date ? new Date(date) : new Date();
 
-        user.hairTracker.deepConditionHistory.push({
+        const newDeepConditionEntry = {
             id: uuidv4(),
             date: conditionDate.toISOString(),
             notes: notes || ''
-        });
-        user.hairTracker.lastDeepConditionDate = conditionDate.toISOString();
+        };
 
-        saveJSON(USERS_FILE, usersData);
+        deepConditionHistory.push(newDeepConditionEntry);
+
+        const updatedTracker = {
+            ...currentTracker,
+            deepConditionHistory: deepConditionHistory,
+            lastDeepConditionDate: conditionDate.toISOString()
+        };
+
+        await UserRepository.updateById(req.user.id, {
+            hairTracker: updatedTracker
+        });
 
         res.json({
             success: true,
             message: 'Deep condition logged successfully',
-            hairTracker: user.hairTracker
+            hairTracker: updatedTracker
         });
     } catch (error) {
-        console.error('Error logging deep condition:', error);
-        res.status(500).json({ success: false, message: 'Failed to log deep condition' });
+        console.error('Database error logging deep condition:', error.message);
+        res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
 
 // Add a product to tracker
-app.post('/api/hair-tracker/add-product', authenticateToken, (req, res) => {
+app.post('/api/hair-tracker/add-product', authenticateToken, async (req, res) => {
     try {
         const { productId, productName } = req.body;
 
@@ -1845,68 +1815,82 @@ app.post('/api/hair-tracker/add-product', authenticateToken, (req, res) => {
             return res.status(400).json({ success: false, message: 'Product ID or name required' });
         }
 
-        const usersData = loadJSON(USERS_FILE);
-        const userIndex = usersData.users.findIndex(u => u.id === req.user.id);
-
-        if (userIndex === -1) {
+        const user = await UserRepository.findById(req.user.id);
+        if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        const user = usersData.users[userIndex];
-        user.hairTracker = user.hairTracker || {};
-        user.hairTracker.productsUsed = user.hairTracker.productsUsed || [];
+        const currentTracker = user.hairTracker || {};
+        const productsUsed = currentTracker.productsUsed || [];
 
         // Check if product already exists
-        const existingProduct = user.hairTracker.productsUsed.find(p =>
+        const existingProduct = productsUsed.find(p =>
             (productId && p.productId === productId) || (productName && p.productName === productName)
         );
 
+        let updatedTracker = currentTracker;
         if (!existingProduct) {
-            user.hairTracker.productsUsed.push({
+            const newProduct = {
                 productId: productId || null,
                 productName: productName || null,
                 addedAt: new Date().toISOString()
+            };
+
+            updatedTracker = {
+                ...currentTracker,
+                productsUsed: [...productsUsed, newProduct]
+            };
+
+            await UserRepository.updateById(req.user.id, {
+                hairTracker: updatedTracker
             });
-            saveJSON(USERS_FILE, usersData);
         }
 
         res.json({
             success: true,
             message: existingProduct ? 'Product already tracked' : 'Product added successfully',
-            hairTracker: user.hairTracker
+            hairTracker: updatedTracker
         });
     } catch (error) {
-        console.error('Error adding product:', error);
-        res.status(500).json({ success: false, message: 'Failed to add product' });
+        console.error('Database error adding product:', error.message);
+        res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
 
 // Remove a product from tracker
-app.delete('/api/hair-tracker/remove-product/:productId', authenticateToken, (req, res) => {
+app.delete('/api/hair-tracker/remove-product/:productId', authenticateToken, async (req, res) => {
     try {
         const { productId } = req.params;
 
-        const usersData = loadJSON(USERS_FILE);
-        const userIndex = usersData.users.findIndex(u => u.id === req.user.id);
-
-        if (userIndex === -1) {
+        const user = await UserRepository.findById(req.user.id);
+        if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
-        const user = usersData.users[userIndex];
-        if (user.hairTracker?.productsUsed) {
-            user.hairTracker.productsUsed = user.hairTracker.productsUsed.filter(p => p.productId !== productId);
-            saveJSON(USERS_FILE, usersData);
+        const currentTracker = user.hairTracker || {};
+        let updatedTracker = currentTracker;
+
+        if (currentTracker.productsUsed) {
+            const filteredProducts = currentTracker.productsUsed.filter(p => p.productId !== productId);
+
+            updatedTracker = {
+                ...currentTracker,
+                productsUsed: filteredProducts
+            };
+
+            await UserRepository.updateById(req.user.id, {
+                hairTracker: updatedTracker
+            });
         }
 
         res.json({
             success: true,
             message: 'Product removed successfully',
-            hairTracker: user.hairTracker
+            hairTracker: updatedTracker
         });
     } catch (error) {
-        console.error('Error removing product:', error);
-        res.status(500).json({ success: false, message: 'Failed to remove product' });
+        console.error('Database error removing product:', error.message);
+        res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
 
@@ -1915,507 +1899,598 @@ app.delete('/api/hair-tracker/remove-product/:productId', authenticateToken, (re
 // ============================================
 
 // Dashboard stats
-app.get('/api/admin/stats', authenticateAdmin, (req, res) => {
-    const bookingsData = loadJSON(BOOKINGS_FILE);
-    const ordersData = loadJSON(ORDERS_FILE);
-    const usersData = loadJSON(USERS_FILE);
+app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
+    try {
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
 
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
+        // Get first day of current month (YYYY-MM-01)
+        const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
-    // Get first day of current month (YYYY-MM-01)
-    const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+        // Get all data from repositories
+        const allBookings = await BookingRepository.findAll();
+        const allOrders = await OrderRepository.findAll();
+        const allUsers = await UserRepository.findAll();
 
-    // Revenue this month (from orders with createdAt in current month, excluding cancelled)
-    const monthRevenue = ordersData.orders
-        .filter(o => {
-            if (o.status === 'cancelled') return false;
-            const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
-            return orderDate && orderDate >= monthStart && orderDate <= today;
-        })
-        .reduce((sum, o) => sum + (o.total || 0), 0);
-
-    // Bookings this month
-    const monthBookings = bookingsData.bookings.filter(b => {
-        return b.date && b.date >= monthStart && b.date <= today;
-    }).length;
-
-    // Product orders this month
-    const monthOrders = ordersData.orders.filter(o => {
-        const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
-        return orderDate && orderDate >= monthStart && orderDate <= today;
-    }).length;
-
-    // Active customers (users who have made a booking or order in the last 90 days)
-    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const activeUserIds = new Set();
-
-    bookingsData.bookings.forEach(b => {
-        if (b.date >= ninetyDaysAgo) activeUserIds.add(b.userId);
-    });
-    ordersData.orders.forEach(o => {
-        const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
-        if (orderDate && orderDate >= ninetyDaysAgo) activeUserIds.add(o.userId);
-    });
-    const activeCustomers = activeUserIds.size;
-
-    // Today's bookings count
-    const todayBookings = bookingsData.bookings.filter(b => b.date === today).length;
-    const pendingBookings = bookingsData.bookings.filter(b => b.status === 'pending').length;
-    const pendingOrders = ordersData.orders.filter(o => o.status === 'pending').length;
-
-    res.json({
-        success: true,
-        stats: {
-            // New monthly metrics for dashboard cards
-            monthRevenue,
-            monthBookings,
-            monthOrders,
-            activeCustomers,
-            // Legacy fields (still useful for other purposes)
-            totalRevenue: ordersData.orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.total || 0), 0),
-            totalBookings: bookingsData.bookings.length,
-            todayBookings,
-            pendingBookings,
-            totalOrders: ordersData.orders.length,
-            pendingOrders,
-            totalCustomers: usersData.users.length
-        }
-    });
-});
-
-// Revenue trend data for charts (last 30 days by default)
-app.get('/api/admin/revenue-trend', authenticateAdmin, (req, res) => {
-    const { range = '30d' } = req.query;
-    const ordersData = loadJSON(ORDERS_FILE);
-
-    const now = new Date();
-    let days = 30;
-    if (range === '7d') days = 7;
-    else if (range === '90d') days = 90;
-
-    // Build array of dates for the last N days
-    const labels = [];
-    const values = [];
-
-    for (let i = days - 1; i >= 0; i--) {
-        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-        const dateStr = date.toISOString().split('T')[0];
-        labels.push(dateStr);
-
-        // Sum revenue for this day from orders (paid, not cancelled)
-        const dayRevenue = ordersData.orders
+        // Revenue this month (from orders with createdAt in current month, excluding cancelled)
+        const monthRevenue = allOrders
             .filter(o => {
-                if (o.status === 'cancelled' || o.paymentStatus !== 'paid') return false;
+                if (o.status === 'cancelled') return false;
                 const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
-                return orderDate === dateStr;
+                return orderDate && orderDate >= monthStart && orderDate <= today;
             })
             .reduce((sum, o) => sum + (o.total || 0), 0);
 
-        values.push(dayRevenue);
-    }
+        // Bookings this month
+        const monthBookings = allBookings.filter(b => {
+            return b.date && b.date >= monthStart && b.date <= today;
+        }).length;
 
-    res.json({ success: true, labels, values });
+        // Product orders this month
+        const monthOrders = allOrders.filter(o => {
+            const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
+            return orderDate && orderDate >= monthStart && orderDate <= today;
+        }).length;
+
+        // Active customers (users who have made a booking or order in the last 90 days)
+        const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const activeUserIds = new Set();
+
+        allBookings.forEach(b => {
+            if (b.date >= ninetyDaysAgo) activeUserIds.add(b.userId);
+        });
+        allOrders.forEach(o => {
+            const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
+            if (orderDate && orderDate >= ninetyDaysAgo) activeUserIds.add(o.userId);
+        });
+        const activeCustomers = activeUserIds.size;
+
+        // Today's bookings count
+        const todayBookings = allBookings.filter(b => b.date === today).length;
+        const pendingBookings = allBookings.filter(b => b.status === 'pending').length;
+        const pendingOrders = allOrders.filter(o => o.status === 'pending').length;
+
+        res.json({
+            success: true,
+            stats: {
+                // New monthly metrics for dashboard cards
+                monthRevenue,
+                monthBookings,
+                monthOrders,
+                activeCustomers,
+                // Legacy fields (still useful for other purposes)
+                totalRevenue: allOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.total || 0), 0),
+                totalBookings: allBookings.length,
+                todayBookings,
+                pendingBookings,
+                totalOrders: allOrders.length,
+                pendingOrders,
+                totalCustomers: allUsers.length
+            }
+        });
+    } catch (error) {
+        console.error('Database error in admin stats:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
+});
+
+// Revenue trend data for charts (last 30 days by default)
+app.get('/api/admin/revenue-trend', authenticateAdmin, async (req, res) => {
+    try {
+        const { range = '30d' } = req.query;
+        const allOrders = await OrderRepository.findAll();
+
+        const now = new Date();
+        let days = 30;
+        if (range === '7d') days = 7;
+        else if (range === '90d') days = 90;
+
+        // Build array of dates for the last N days
+        const labels = [];
+        const values = [];
+
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+            const dateStr = date.toISOString().split('T')[0];
+            labels.push(dateStr);
+
+            // Sum revenue for this day from orders (paid, not cancelled)
+            const dayRevenue = allOrders
+                .filter(o => {
+                    if (o.status === 'cancelled' || o.paymentStatus !== 'paid') return false;
+                    const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
+                    return orderDate === dateStr;
+                })
+                .reduce((sum, o) => sum + (o.total || 0), 0);
+
+            values.push(dayRevenue);
+        }
+
+        res.json({ success: true, labels, values });
+    } catch (error) {
+        console.error('Database error in revenue trend:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
 });
 
 // Popular services data for charts (last 30 days by default)
-app.get('/api/admin/popular-services', authenticateAdmin, (req, res) => {
-    const { range = '30d' } = req.query;
-    const bookingsData = loadJSON(BOOKINGS_FILE);
+app.get('/api/admin/popular-services', authenticateAdmin, async (req, res) => {
+    try {
+        const { range = '30d' } = req.query;
+        const allBookings = await BookingRepository.findAll();
 
-    const now = new Date();
-    let days = 30;
-    if (range === '7d') days = 7;
-    else if (range === '90d') days = 90;
+        const now = new Date();
+        let days = 30;
+        if (range === '7d') days = 7;
+        else if (range === '90d') days = 90;
 
-    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    // Count bookings per service in the time range
-    const serviceCounts = {};
-    bookingsData.bookings.forEach(b => {
-        if (b.date >= startDate) {
-            const serviceName = b.serviceName || 'Unknown';
-            serviceCounts[serviceName] = (serviceCounts[serviceName] || 0) + 1;
-        }
-    });
+        // Count bookings per service in the time range
+        const serviceCounts = {};
+        allBookings.forEach(b => {
+            if (b.date >= startDate) {
+                const serviceName = b.serviceName || 'Unknown';
+                serviceCounts[serviceName] = (serviceCounts[serviceName] || 0) + 1;
+            }
+        });
 
-    // Sort by count and take top 5
-    const sorted = Object.entries(serviceCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5);
+        // Sort by count and take top 5
+        const sorted = Object.entries(serviceCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
 
-    const labels = sorted.map(s => s[0]);
-    const values = sorted.map(s => s[1]);
+        const labels = sorted.map(s => s[0]);
+        const values = sorted.map(s => s[1]);
 
-    res.json({ success: true, labels, values });
+        res.json({ success: true, labels, values });
+    } catch (error) {
+        console.error('Database error in popular services:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
 });
 
 // Get all bookings (admin)
-app.get('/api/admin/bookings', authenticateAdmin, (req, res) => {
-    const { status, date, stylistId } = req.query;
-    const bookingsData = loadJSON(BOOKINGS_FILE);
-    const usersData = loadJSON(USERS_FILE);
+app.get('/api/admin/bookings', authenticateAdmin, async (req, res) => {
+    try {
+        const { status, date, stylistId } = req.query;
+        let bookings = await BookingRepository.findAll();
 
-    let bookings = bookingsData.bookings;
+        if (status) bookings = bookings.filter(b => b.status === status);
+        if (date) bookings = bookings.filter(b => b.date === date);
+        if (stylistId) bookings = bookings.filter(b => b.stylistId === stylistId);
 
-    if (status) bookings = bookings.filter(b => b.status === status);
-    if (date) bookings = bookings.filter(b => b.date === date);
-    if (stylistId) bookings = bookings.filter(b => b.stylistId === stylistId);
+        // Add customer info
+        const bookingsWithCustomers = await Promise.all(bookings.map(async (b) => {
+            try {
+                const user = await UserRepository.findById(b.userId);
+                return {
+                    ...b,
+                    customerName: user ? user.name : 'Unknown',
+                    customerPhone: user ? user.phone : null,
+                    customerEmail: user ? user.email : null
+                };
+            } catch (error) {
+                console.error(`Error fetching user ${b.userId} for booking ${b.id}:`, error.message);
+                return {
+                    ...b,
+                    customerName: 'Unknown',
+                    customerPhone: null,
+                    customerEmail: null
+                };
+            }
+        }));
 
-    // Add customer info
-    bookings = bookings.map(b => {
-        const user = usersData.users.find(u => u.id === b.userId);
-        return {
-            ...b,
-            customerName: user ? user.name : 'Unknown',
-            customerPhone: user ? user.phone : null,
-            customerEmail: user ? user.email : null
-        };
-    });
+        bookingsWithCustomers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    bookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    res.json({ success: true, bookings });
+        res.json({ success: true, bookings: bookingsWithCustomers });
+    } catch (error) {
+        console.error('Database error in admin bookings:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
 });
 
 // Confirm booking time (admin)
-app.patch('/api/admin/bookings/:id/confirm', authenticateAdmin, (req, res) => {
-    const { confirmedTime } = req.body;
+app.patch('/api/admin/bookings/:id/confirm', authenticateAdmin, async (req, res) => {
+    try {
+        const { confirmedTime } = req.body;
 
-    const bookingsData = loadJSON(BOOKINGS_FILE);
-    const bookingIndex = bookingsData.bookings.findIndex(b => b.id === req.params.id);
+        const booking = await BookingRepository.findById(req.params.id);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
 
-    if (bookingIndex === -1) {
-        return res.status(404).json({ success: false, message: 'Booking not found' });
+        const updatedBooking = await BookingRepository.updateById(req.params.id, {
+            confirmedTime: confirmedTime,
+            status: 'confirmed',
+            updatedAt: new Date().toISOString()
+        });
+
+        res.json({ success: true, booking: updatedBooking });
+    } catch (error) {
+        console.error('Database error confirming booking:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
-
-    bookingsData.bookings[bookingIndex].confirmedTime = confirmedTime;
-    bookingsData.bookings[bookingIndex].status = 'confirmed';
-    bookingsData.bookings[bookingIndex].updatedAt = new Date().toISOString();
-
-    saveJSON(BOOKINGS_FILE, bookingsData);
-
-    res.json({ success: true, booking: bookingsData.bookings[bookingIndex] });
 });
 
 // Update booking status (admin) - supports 'completed', 'cancelled', 'pending', 'confirmed'
-app.patch('/api/admin/bookings/:id/status', authenticateAdmin, (req, res) => {
-    const { status } = req.body;
-    const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+app.patch('/api/admin/bookings/:id/status', authenticateAdmin, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
 
-    if (!status || !validStatuses.includes(status)) {
-        return res.status(400).json({
-            success: false,
-            message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
-        });
+        if (!status || !validStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+            });
+        }
+
+        const booking = await BookingRepository.findById(req.params.id);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        const updateData = {
+            status: status,
+            updatedAt: new Date().toISOString()
+        };
+
+        // Add completion timestamp if marking as completed
+        if (status === 'completed') {
+            updateData.completedAt = new Date().toISOString();
+        }
+
+        const updatedBooking = await BookingRepository.updateById(req.params.id, updateData);
+
+        res.json({ success: true, booking: updatedBooking });
+    } catch (error) {
+        console.error('Database error updating booking status:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
-
-    const bookingsData = loadJSON(BOOKINGS_FILE);
-    const bookingIndex = bookingsData.bookings.findIndex(b => b.id === req.params.id);
-
-    if (bookingIndex === -1) {
-        return res.status(404).json({ success: false, message: 'Booking not found' });
-    }
-
-    bookingsData.bookings[bookingIndex].status = status;
-    bookingsData.bookings[bookingIndex].updatedAt = new Date().toISOString();
-
-    // Add completion timestamp if marking as completed
-    if (status === 'completed') {
-        bookingsData.bookings[bookingIndex].completedAt = new Date().toISOString();
-    }
-
-    saveJSON(BOOKINGS_FILE, bookingsData);
-
-    res.json({ success: true, booking: bookingsData.bookings[bookingIndex] });
 });
 
 // Get all orders (admin)
-app.get('/api/admin/orders', authenticateAdmin, (req, res) => {
-    const { status } = req.query;
-    const ordersData = loadJSON(ORDERS_FILE);
-    const usersData = loadJSON(USERS_FILE);
+app.get('/api/admin/orders', authenticateAdmin, async (req, res) => {
+    try {
+        const { status } = req.query;
+        let orders = await OrderRepository.findAll();
 
-    let orders = ordersData.orders;
+        if (status) orders = orders.filter(o => o.status === status);
 
-    if (status) orders = orders.filter(o => o.status === status);
+        // Add customer info
+        const ordersWithCustomers = await Promise.all(orders.map(async (o) => {
+            try {
+                const user = await UserRepository.findById(o.userId);
+                return {
+                    ...o,
+                    customerName: user ? user.name : 'Unknown',
+                    customerPhone: user ? user.phone : null,
+                    customerEmail: user ? user.email : null
+                };
+            } catch (error) {
+                console.error(`Error fetching user ${o.userId} for order ${o.id}:`, error.message);
+                return {
+                    ...o,
+                    customerName: 'Unknown',
+                    customerPhone: null,
+                    customerEmail: null
+                };
+            }
+        }));
 
-    // Add customer info
-    orders = orders.map(o => {
-        const user = usersData.users.find(u => u.id === o.userId);
-        return {
-            ...o,
-            customerName: user ? user.name : 'Unknown',
-            customerPhone: user ? user.phone : null,
-            customerEmail: user ? user.email : null
-        };
-    });
+        ordersWithCustomers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    res.json({ success: true, orders });
+        res.json({ success: true, orders: ordersWithCustomers });
+    } catch (error) {
+        console.error('Database error in admin orders:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
 });
 
 // Update order status (admin)
-app.patch('/api/admin/orders/:id', authenticateAdmin, (req, res) => {
-    const { status } = req.body;
+app.patch('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { status } = req.body;
 
-    const ordersData = loadJSON(ORDERS_FILE);
-    const orderIndex = ordersData.orders.findIndex(o => o.id === req.params.id);
+        const order = await OrderRepository.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
 
-    if (orderIndex === -1) {
-        return res.status(404).json({ success: false, message: 'Order not found' });
+        const updatedOrder = await OrderRepository.updateById(req.params.id, {
+            status: status,
+            updatedAt: new Date().toISOString()
+        });
+
+        res.json({ success: true, order: updatedOrder });
+    } catch (error) {
+        console.error('Database error updating order status:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
-
-    ordersData.orders[orderIndex].status = status;
-    ordersData.orders[orderIndex].updatedAt = new Date().toISOString();
-
-    saveJSON(ORDERS_FILE, ordersData);
-
-    res.json({ success: true, order: ordersData.orders[orderIndex] });
 });
 
 // Get all customers (admin)
-app.get('/api/admin/customers', authenticateAdmin, (req, res) => {
-    const usersData = loadJSON(USERS_FILE);
-    const bookingsData = loadJSON(BOOKINGS_FILE);
-    const ordersData = loadJSON(ORDERS_FILE);
+app.get('/api/admin/customers', authenticateAdmin, async (req, res) => {
+    try {
+        const allUsers = await UserRepository.findAll();
+        const allBookings = await BookingRepository.findAll();
+        const allOrders = await OrderRepository.findAll();
 
-    const customers = usersData.users
-        .filter(u => u.role === 'customer')
-        .map(u => {
-            const userBookings = bookingsData.bookings.filter(b => b.userId === u.id);
-            const userOrders = ordersData.orders.filter(o => o.userId === u.id);
-            const totalSpent = userOrders.reduce((sum, o) => sum + o.total, 0);
+        const customers = allUsers
+            .filter(u => u.role === 'customer')
+            .map(u => {
+                const userBookings = allBookings.filter(b => b.userId === u.id);
+                const userOrders = allOrders.filter(o => o.userId === u.id);
+                const totalSpent = userOrders.reduce((sum, o) => sum + (o.total || 0), 0);
 
-            return {
-                id: u.id,
-                name: u.name,
-                email: u.email,
-                phone: u.phone,
-                tier: u.tier,
-                points: u.points,
-                totalBookings: userBookings.length,
-                totalOrders: userOrders.length,
-                totalSpent,
-                createdAt: u.createdAt
-            };
-        });
+                return {
+                    id: u.id,
+                    name: u.name,
+                    email: u.email,
+                    phone: u.phone,
+                    tier: u.tier,
+                    points: u.points,
+                    totalBookings: userBookings.length,
+                    totalOrders: userOrders.length,
+                    totalSpent,
+                    createdAt: u.createdAt
+                };
+            });
 
-    res.json({ success: true, customers });
+        res.json({ success: true, customers });
+    } catch (error) {
+        console.error('Database error in admin customers:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
 });
 
 // Staff management (admin)
-app.get('/api/admin/staff', authenticateAdmin, (req, res) => {
-    const data = loadJSON(STYLISTS_FILE);
-    res.json({ success: true, staff: data.stylists });
+app.get('/api/admin/staff', authenticateAdmin, async (req, res) => {
+    try {
+        const stylists = await StylistRepository.findAll();
+        res.json({ success: true, staff: stylists });
+    } catch (error) {
+        console.error('Database error in admin staff:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
 });
 
-app.post('/api/admin/staff', authenticateAdmin, (req, res) => {
-    const { name, specialty, tagline, instagram, color } = req.body;
+app.post('/api/admin/staff', authenticateAdmin, async (req, res) => {
+    try {
+        const { name, specialty, tagline, instagram, color } = req.body;
 
-    if (!name || !specialty) {
-        return res.status(400).json({ success: false, message: 'Name and specialty are required' });
-    }
-
-    const data = loadJSON(STYLISTS_FILE);
-
-    const newStylist = {
-        id: name.toLowerCase().replace(/\s+/g, '_'),
-        name,
-        specialty,
-        tagline: tagline || '',
-        rating: 5.0,
-        reviewCount: 0,
-        clientsCount: 0,
-        yearsExperience: 0,
-        instagram: instagram || '',
-        color: color || '#FF6B9D',
-        available: true,
-        imageUrl: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400'
-    };
-
-    data.stylists.push(newStylist);
-    saveJSON(STYLISTS_FILE, data);
-
-    res.status(201).json({ success: true, stylist: newStylist });
-});
-
-app.patch('/api/admin/staff/:id', authenticateAdmin, (req, res) => {
-    const data = loadJSON(STYLISTS_FILE);
-    const stylistIndex = data.stylists.findIndex(s => s.id === req.params.id);
-
-    if (stylistIndex === -1) {
-        return res.status(404).json({ success: false, message: 'Stylist not found' });
-    }
-
-    const allowedUpdates = ['name', 'specialty', 'tagline', 'instagram', 'color', 'available', 'imageUrl'];
-    for (const key of allowedUpdates) {
-        if (req.body[key] !== undefined) {
-            data.stylists[stylistIndex][key] = req.body[key];
+        if (!name || !specialty) {
+            return res.status(400).json({ success: false, message: 'Name and specialty are required' });
         }
+
+        const newStylist = {
+            id: name.toLowerCase().replace(/\s+/g, '_'),
+            name,
+            specialty,
+            tagline: tagline || '',
+            rating: 5.0,
+            reviewCount: 0,
+            clientsCount: 0,
+            yearsExperience: 0,
+            instagram: instagram || '',
+            color: color || '#FF6B9D',
+            available: true,
+            imageUrl: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400'
+        };
+
+        const createdStylist = await StylistRepository.create(newStylist);
+
+        res.status(201).json({ success: true, stylist: createdStylist });
+    } catch (error) {
+        console.error('Database error creating stylist:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
-
-    saveJSON(STYLISTS_FILE, data);
-
-    res.json({ success: true, stylist: data.stylists[stylistIndex] });
 });
 
-app.delete('/api/admin/staff/:id', authenticateAdmin, (req, res) => {
-    const data = loadJSON(STYLISTS_FILE);
-    const stylistIndex = data.stylists.findIndex(s => s.id === req.params.id);
+app.patch('/api/admin/staff/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const stylist = await StylistRepository.findById(req.params.id);
+        if (!stylist) {
+            return res.status(404).json({ success: false, message: 'Stylist not found' });
+        }
 
-    if (stylistIndex === -1) {
-        return res.status(404).json({ success: false, message: 'Stylist not found' });
+        const allowedUpdates = ['name', 'specialty', 'tagline', 'instagram', 'color', 'available', 'imageUrl'];
+        const updateData = {};
+        for (const key of allowedUpdates) {
+            if (req.body[key] !== undefined) {
+                updateData[key] = req.body[key];
+            }
+        }
+
+        const updatedStylist = await StylistRepository.updateById(req.params.id, updateData);
+
+        res.json({ success: true, stylist: updatedStylist });
+    } catch (error) {
+        console.error('Database error updating stylist:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
+});
 
-    data.stylists.splice(stylistIndex, 1);
-    saveJSON(STYLISTS_FILE, data);
+app.delete('/api/admin/staff/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const stylist = await StylistRepository.findById(req.params.id);
+        if (!stylist) {
+            return res.status(404).json({ success: false, message: 'Stylist not found' });
+        }
 
-    res.json({ success: true, message: 'Stylist deleted' });
+        await StylistRepository.deleteById(req.params.id);
+
+        res.json({ success: true, message: 'Stylist deleted' });
+    } catch (error) {
+        console.error('Database error deleting stylist:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
 });
 
 // Product management (admin)
-app.post('/api/admin/products', authenticateAdmin, (req, res) => {
-    const { name, category, description, price, salePrice, stock, imageUrl } = req.body;
+app.post('/api/admin/products', authenticateAdmin, async (req, res) => {
+    try {
+        const { name, category, description, price, salePrice, stock, imageUrl } = req.body;
 
-    if (!name || !category || !price) {
-        return res.status(400).json({ success: false, message: 'Name, category, and price are required' });
-    }
-
-    const data = loadJSON(PRODUCTS_FILE);
-
-    const newProduct = {
-        id: `prod_${uuidv4().substring(0, 8)}`,
-        name,
-        category,
-        description: description || '',
-        price,
-        salePrice: salePrice || null,
-        onSale: !!salePrice,
-        stock: stock || 0,
-        imageUrl: imageUrl || ''
-    };
-
-    data.products.push(newProduct);
-    saveJSON(PRODUCTS_FILE, data);
-
-    res.status(201).json({ success: true, product: newProduct });
-});
-
-app.patch('/api/admin/products/:id', authenticateAdmin, (req, res) => {
-    const data = loadJSON(PRODUCTS_FILE);
-    const productIndex = data.products.findIndex(p => p.id === req.params.id);
-
-    if (productIndex === -1) {
-        return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-
-    const allowedUpdates = ['name', 'category', 'description', 'price', 'salePrice', 'onSale', 'stock', 'imageUrl'];
-    for (const key of allowedUpdates) {
-        if (req.body[key] !== undefined) {
-            data.products[productIndex][key] = req.body[key];
+        if (!name || !category || !price) {
+            return res.status(400).json({ success: false, message: 'Name, category, and price are required' });
         }
+
+        const newProduct = {
+            id: `prod_${uuidv4().substring(0, 8)}`,
+            name,
+            category,
+            description: description || '',
+            price,
+            salePrice: salePrice || null,
+            onSale: !!salePrice,
+            stock: stock || 0,
+            imageUrl: imageUrl || ''
+        };
+
+        const createdProduct = await ProductRepository.create(newProduct);
+
+        res.status(201).json({ success: true, product: createdProduct });
+    } catch (error) {
+        console.error('Database error creating product:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
-
-    saveJSON(PRODUCTS_FILE, data);
-
-    res.json({ success: true, product: data.products[productIndex] });
 });
 
-app.delete('/api/admin/products/:id', authenticateAdmin, (req, res) => {
-    const data = loadJSON(PRODUCTS_FILE);
-    const productIndex = data.products.findIndex(p => p.id === req.params.id);
+app.patch('/api/admin/products/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const product = await ProductRepository.findById(req.params.id);
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
 
-    if (productIndex === -1) {
-        return res.status(404).json({ success: false, message: 'Product not found' });
+        const allowedUpdates = ['name', 'category', 'description', 'price', 'salePrice', 'onSale', 'stock', 'imageUrl'];
+        const updateData = {};
+        for (const key of allowedUpdates) {
+            if (req.body[key] !== undefined) {
+                updateData[key] = req.body[key];
+            }
+        }
+
+        const updatedProduct = await ProductRepository.updateById(req.params.id, updateData);
+
+        res.json({ success: true, product: updatedProduct });
+    } catch (error) {
+        console.error('Database error updating product:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
+});
 
-    data.products.splice(productIndex, 1);
-    saveJSON(PRODUCTS_FILE, data);
+app.delete('/api/admin/products/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const product = await ProductRepository.findById(req.params.id);
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
 
-    res.json({ success: true, message: 'Product deleted' });
+        await ProductRepository.deleteById(req.params.id);
+
+        res.json({ success: true, message: 'Product deleted' });
+    } catch (error) {
+        console.error('Database error deleting product:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
 });
 
 // Promo management (admin)
-app.get('/api/admin/promos', authenticateAdmin, (req, res) => {
-    const data = loadJSON(PROMOS_FILE);
-    res.json({ success: true, promos: data.promos });
+app.get('/api/admin/promos', authenticateAdmin, async (req, res) => {
+    try {
+        const promos = await PromoRepository.findAll();
+        res.json({ success: true, promos: promos });
+    } catch (error) {
+        console.error('Database error in admin promos:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
 });
 
-app.post('/api/admin/promos', authenticateAdmin, (req, res) => {
-    const { code, description, discountType, discountValue, minOrder, expiresAt, usageLimit,
-            highlighted, badge, title, subtitle, priority } = req.body;
+app.post('/api/admin/promos', authenticateAdmin, async (req, res) => {
+    try {
+        const { code, description, discountType, discountValue, minOrder, expiresAt, usageLimit,
+                highlighted, badge, title, subtitle, priority } = req.body;
 
-    if (!code || !discountType || !discountValue) {
-        return res.status(400).json({ success: false, message: 'Code, discount type, and value are required' });
-    }
-
-    const data = loadJSON(PROMOS_FILE);
-
-    if (data.promos.find(p => p.code.toUpperCase() === code.toUpperCase())) {
-        return res.status(409).json({ success: false, message: 'Promo code already exists' });
-    }
-
-    const newPromo = {
-        id: `promo_${uuidv4().substring(0, 8)}`,
-        code: code.toUpperCase(),
-        description: description || '',
-        discountType,
-        discountValue,
-        minOrder: minOrder || 0,
-        expiresAt: expiresAt || null,
-        usageLimit: usageLimit || null,
-        timesUsed: 0,
-        active: true,
-        // Special Offer fields
-        highlighted: highlighted === true,
-        badge: badge || '',
-        title: title || '',
-        subtitle: subtitle || '',
-        priority: typeof priority === 'number' ? priority : 0
-    };
-
-    data.promos.push(newPromo);
-    saveJSON(PROMOS_FILE, data);
-
-    res.status(201).json({ success: true, promo: newPromo });
-});
-
-app.patch('/api/admin/promos/:id', authenticateAdmin, (req, res) => {
-    const data = loadJSON(PROMOS_FILE);
-    const promoIndex = data.promos.findIndex(p => p.id === req.params.id);
-
-    if (promoIndex === -1) {
-        return res.status(404).json({ success: false, message: 'Promo not found' });
-    }
-
-    // Include Special Offer fields in allowed updates
-    const allowedUpdates = ['description', 'discountType', 'discountValue', 'minOrder', 'expiresAt', 'usageLimit', 'active',
-                           'highlighted', 'badge', 'title', 'subtitle', 'priority'];
-    for (const key of allowedUpdates) {
-        if (req.body[key] !== undefined) {
-            data.promos[promoIndex][key] = req.body[key];
+        if (!code || !discountType || !discountValue) {
+            return res.status(400).json({ success: false, message: 'Code, discount type, and value are required' });
         }
+
+        const existingPromos = await PromoRepository.findAll();
+        if (existingPromos.find(p => p.code.toUpperCase() === code.toUpperCase())) {
+            return res.status(409).json({ success: false, message: 'Promo code already exists' });
+        }
+
+        const newPromo = {
+            id: `promo_${uuidv4().substring(0, 8)}`,
+            code: code.toUpperCase(),
+            description: description || '',
+            discountType,
+            discountValue,
+            minOrder: minOrder || 0,
+            expiresAt: expiresAt || null,
+            usageLimit: usageLimit || null,
+            timesUsed: 0,
+            active: true,
+            // Special Offer fields
+            highlighted: highlighted === true,
+            badge: badge || '',
+            title: title || '',
+            subtitle: subtitle || '',
+            priority: typeof priority === 'number' ? priority : 0
+        };
+
+        const createdPromo = await PromoRepository.create(newPromo);
+
+        res.status(201).json({ success: true, promo: createdPromo });
+    } catch (error) {
+        console.error('Database error creating promo:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
-
-    saveJSON(PROMOS_FILE, data);
-
-    res.json({ success: true, promo: data.promos[promoIndex] });
 });
 
-app.delete('/api/admin/promos/:id', authenticateAdmin, (req, res) => {
-    const data = loadJSON(PROMOS_FILE);
-    const promoIndex = data.promos.findIndex(p => p.id === req.params.id);
+app.patch('/api/admin/promos/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const promo = await PromoRepository.findById(req.params.id);
+        if (!promo) {
+            return res.status(404).json({ success: false, message: 'Promo not found' });
+        }
 
-    if (promoIndex === -1) {
-        return res.status(404).json({ success: false, message: 'Promo not found' });
+        // Include Special Offer fields in allowed updates
+        const allowedUpdates = ['description', 'discountType', 'discountValue', 'minOrder', 'expiresAt', 'usageLimit', 'active',
+                               'highlighted', 'badge', 'title', 'subtitle', 'priority'];
+        const updateData = {};
+        for (const key of allowedUpdates) {
+            if (req.body[key] !== undefined) {
+                updateData[key] = req.body[key];
+            }
+        }
+
+        const updatedPromo = await PromoRepository.updateById(req.params.id, updateData);
+
+        res.json({ success: true, promo: updatedPromo });
+    } catch (error) {
+        console.error('Database error updating promo:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
+});
 
-    data.promos.splice(promoIndex, 1);
-    saveJSON(PROMOS_FILE, data);
+app.delete('/api/admin/promos/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const promo = await PromoRepository.findById(req.params.id);
+        if (!promo) {
+            return res.status(404).json({ success: false, message: 'Promo not found' });
+        }
 
-    res.json({ success: true, message: 'Promo deleted' });
+        await PromoRepository.deleteById(req.params.id);
+
+        res.json({ success: true, message: 'Promo deleted' });
+    } catch (error) {
+        console.error('Database error deleting promo:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
 });
 
 // ============================================
@@ -2501,115 +2576,39 @@ app.post('/api/admin/loyalty/reset', authenticateAdmin, (req, res) => {
 // ============================================
 
 // Get hair tracker settings for admin
-app.get('/api/admin/hair-tracker', authenticateAdmin, (req, res) => {
+app.get('/api/admin/hair-tracker', authenticateAdmin, async (req, res) => {
     try {
-        const config = loadJSON(HAIR_TRACKER_FILE);
-        if (!config) {
-            return res.status(500).json({ success: false, message: 'Hair tracker config not found' });
-        }
-        res.json({ success: true, ...config });
-    } catch (error) {
-        console.error('Error loading hair tracker config:', error);
-        res.status(500).json({ success: false, message: 'Failed to load hair tracker settings' });
-    }
-});
-
-// Update hair tracker settings
-app.put('/api/admin/hair-tracker', authenticateAdmin, (req, res) => {
-    try {
-        const {
-            defaultMaintenanceIntervalDays,
-            washFrequencyDays,
-            deepConditionFrequencyDays,
-            extensionTypeIntervals,
-            extensionTypes,
-            healthScore,
-            copy,
-            tips
-        } = req.body;
-
-        // Validate
-        const errors = [];
-        if (defaultMaintenanceIntervalDays !== undefined && (isNaN(defaultMaintenanceIntervalDays) || defaultMaintenanceIntervalDays < 1)) {
-            errors.push('Default maintenance interval must be at least 1 day');
-        }
-        if (washFrequencyDays !== undefined && (isNaN(washFrequencyDays) || washFrequencyDays < 1)) {
-            errors.push('Wash frequency must be at least 1 day');
-        }
-        if (deepConditionFrequencyDays !== undefined && (isNaN(deepConditionFrequencyDays) || deepConditionFrequencyDays < 1)) {
-            errors.push('Deep condition frequency must be at least 1 day');
-        }
-
-        if (errors.length > 0) {
-            return res.status(400).json({ success: false, errors });
-        }
-
-        // Load existing config
-        const existingConfig = loadJSON(HAIR_TRACKER_FILE) || {};
-
-        // Merge updates
-        const updatedConfig = {
-            defaultMaintenanceIntervalDays: parseInt(defaultMaintenanceIntervalDays) || existingConfig.defaultMaintenanceIntervalDays || 42,
-            washFrequencyDays: parseInt(washFrequencyDays) || existingConfig.washFrequencyDays || 3,
-            deepConditionFrequencyDays: parseInt(deepConditionFrequencyDays) || existingConfig.deepConditionFrequencyDays || 14,
-            extensionTypeIntervals: extensionTypeIntervals || existingConfig.extensionTypeIntervals || {},
-            extensionTypes: extensionTypes || existingConfig.extensionTypes || [],
-            healthScore: healthScore || existingConfig.healthScore || { base: 100, penalties: {} },
-            copy: copy || existingConfig.copy || {},
-            tips: tips || existingConfig.tips || []
-        };
-
-        // Ensure extensionTypeIntervals is updated from extensionTypes if provided
-        if (extensionTypes && Array.isArray(extensionTypes)) {
-            updatedConfig.extensionTypeIntervals = {};
-            extensionTypes.forEach(et => {
-                if (et.id && et.maintenanceDays !== undefined) {
-                    updatedConfig.extensionTypeIntervals[et.id] = parseInt(et.maintenanceDays) || 42;
-                }
-            });
-        }
-
-        saveJSON(HAIR_TRACKER_FILE, updatedConfig);
-
-        res.json({
-            success: true,
-            message: 'Hair tracker settings updated successfully',
-            ...updatedConfig
-        });
-    } catch (error) {
-        console.error('Error updating hair tracker settings:', error);
-        res.status(500).json({ success: false, message: 'Failed to update hair tracker settings' });
-    }
-});
-
-// Reset hair tracker settings to defaults
-app.post('/api/admin/hair-tracker/reset', authenticateAdmin, (req, res) => {
-    try {
-        const defaultConfig = {
+        // Return the hardcoded configuration used throughout the app
+        const config = {
             defaultMaintenanceIntervalDays: 42,
             washFrequencyDays: 3,
             deepConditionFrequencyDays: 14,
             extensionTypeIntervals: {
-                tapes: 42,
-                wefts: 56,
-                keratin_bonds: 90,
-                clip_ins: 0,
-                ponytails: 0
+                'clip-in': 1,
+                'tape-in': 42,
+                'sew-in': 56,
+                'micro-link': 84,
+                'fusion': 84,
+                'halo': 1,
+                'ponytail': 14,
+                'other': 42
             },
             extensionTypes: [
-                { id: 'tapes', label: 'Tape Extensions', maintenanceDays: 42 },
-                { id: 'wefts', label: 'Weft Extensions', maintenanceDays: 56 },
-                { id: 'keratin_bonds', label: 'Keratin Bonds', maintenanceDays: 90 },
-                { id: 'clip_ins', label: 'Clip-In Extensions', maintenanceDays: 0 },
-                { id: 'ponytails', label: 'Ponytails', maintenanceDays: 0 }
+                { id: 'clip-in', label: 'Clip-In Extensions', maintenanceDays: 1 },
+                { id: 'tape-in', label: 'Tape Extensions', maintenanceDays: 42 },
+                { id: 'sew-in', label: 'Sew-In Extensions', maintenanceDays: 56 },
+                { id: 'micro-link', label: 'Micro-Link Extensions', maintenanceDays: 84 },
+                { id: 'fusion', label: 'Fusion Extensions', maintenanceDays: 84 },
+                { id: 'halo', label: 'Halo Extensions', maintenanceDays: 1 },
+                { id: 'ponytail', label: 'Ponytail Extensions', maintenanceDays: 14 },
+                { id: 'other', label: 'Other Extensions', maintenanceDays: 42 }
             ],
             healthScore: {
                 base: 100,
                 penalties: {
                     overMaintenanceByDay: 0.5,
                     noDeepConditionOverDays: 0.3,
-                    tooManyWashesPerWeek: 1.0,
-                    missedWashDay: 0.2
+                    tooManyWashesPerWeek: 1.0
                 }
             },
             copy: {
@@ -2630,16 +2629,166 @@ app.post('/api/admin/hair-tracker/reset', authenticateAdmin, (req, res) => {
             ]
         };
 
-        saveJSON(HAIR_TRACKER_FILE, defaultConfig);
+        res.json({ success: true, ...config });
+    } catch (error) {
+        console.error('Database error loading hair tracker config:', error.message);
+        res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
+});
+
+// Update hair tracker settings
+app.put('/api/admin/hair-tracker', authenticateAdmin, async (req, res) => {
+    try {
+        const {
+            defaultMaintenanceIntervalDays,
+            washFrequencyDays,
+            deepConditionFrequencyDays,
+            extensionTypeIntervals,
+            extensionTypes,
+            healthScore,
+            copy,
+            tips
+        } = req.body;
+
+        // Validate input
+        const errors = [];
+        if (defaultMaintenanceIntervalDays !== undefined && (isNaN(defaultMaintenanceIntervalDays) || defaultMaintenanceIntervalDays < 1)) {
+            errors.push('Default maintenance interval must be at least 1 day');
+        }
+        if (washFrequencyDays !== undefined && (isNaN(washFrequencyDays) || washFrequencyDays < 1)) {
+            errors.push('Wash frequency must be at least 1 day');
+        }
+        if (deepConditionFrequencyDays !== undefined && (isNaN(deepConditionFrequencyDays) || deepConditionFrequencyDays < 1)) {
+            errors.push('Deep condition frequency must be at least 1 day');
+        }
+
+        if (errors.length > 0) {
+            return res.status(400).json({ success: false, errors });
+        }
+
+        // Since configuration is now hardcoded in the app code, we return the current config
+        const updatedConfig = {
+            defaultMaintenanceIntervalDays: 42,
+            washFrequencyDays: 3,
+            deepConditionFrequencyDays: 14,
+            extensionTypeIntervals: {
+                'clip-in': 1,
+                'tape-in': 42,
+                'sew-in': 56,
+                'micro-link': 84,
+                'fusion': 84,
+                'halo': 1,
+                'ponytail': 14,
+                'other': 42
+            },
+            extensionTypes: [
+                { id: 'clip-in', label: 'Clip-In Extensions', maintenanceDays: 1 },
+                { id: 'tape-in', label: 'Tape Extensions', maintenanceDays: 42 },
+                { id: 'sew-in', label: 'Sew-In Extensions', maintenanceDays: 56 },
+                { id: 'micro-link', label: 'Micro-Link Extensions', maintenanceDays: 84 },
+                { id: 'fusion', label: 'Fusion Extensions', maintenanceDays: 84 },
+                { id: 'halo', label: 'Halo Extensions', maintenanceDays: 1 },
+                { id: 'ponytail', label: 'Ponytail Extensions', maintenanceDays: 14 },
+                { id: 'other', label: 'Other Extensions', maintenanceDays: 42 }
+            ],
+            healthScore: {
+                base: 100,
+                penalties: {
+                    overMaintenanceByDay: 0.5,
+                    noDeepConditionOverDays: 0.3,
+                    tooManyWashesPerWeek: 1.0
+                }
+            },
+            copy: {
+                trackerTitle: 'Hair Care Journey',
+                trackerSubtitle: 'Keep your extensions healthy and on track',
+                nextWashLabel: 'Next Wash Day',
+                maintenanceLabel: 'Maintenance Due',
+                deepConditionLabel: 'Deep Condition',
+                noInstallMessage: 'Set up your hair tracker to get personalized care recommendations!',
+                setupButtonText: 'Set Up Tracker'
+            },
+            tips: [
+                'Your extensions are at optimal health! Keep up the great care routine.',
+                'Consider booking maintenance in the next 2 weeks for best results.',
+                'You\'re due for a deep conditioning treatment this week.',
+                'Use a silk pillowcase to reduce friction and tangling while you sleep.',
+                'Avoid applying heat directly to the bonds or tape areas.'
+            ]
+        };
 
         res.json({
             success: true,
-            message: 'Hair tracker settings reset to defaults',
+            message: 'Hair tracker settings updated successfully (configuration is now application-managed)',
+            ...updatedConfig
+        });
+    } catch (error) {
+        console.error('Database error updating hair tracker settings:', error.message);
+        res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
+});
+
+// Reset hair tracker settings to defaults
+app.post('/api/admin/hair-tracker/reset', authenticateAdmin, async (req, res) => {
+    try {
+        const defaultConfig = {
+            defaultMaintenanceIntervalDays: 42,
+            washFrequencyDays: 3,
+            deepConditionFrequencyDays: 14,
+            extensionTypeIntervals: {
+                'clip-in': 1,
+                'tape-in': 42,
+                'sew-in': 56,
+                'micro-link': 84,
+                'fusion': 84,
+                'halo': 1,
+                'ponytail': 14,
+                'other': 42
+            },
+            extensionTypes: [
+                { id: 'clip-in', label: 'Clip-In Extensions', maintenanceDays: 1 },
+                { id: 'tape-in', label: 'Tape Extensions', maintenanceDays: 42 },
+                { id: 'sew-in', label: 'Sew-In Extensions', maintenanceDays: 56 },
+                { id: 'micro-link', label: 'Micro-Link Extensions', maintenanceDays: 84 },
+                { id: 'fusion', label: 'Fusion Extensions', maintenanceDays: 84 },
+                { id: 'halo', label: 'Halo Extensions', maintenanceDays: 1 },
+                { id: 'ponytail', label: 'Ponytail Extensions', maintenanceDays: 14 },
+                { id: 'other', label: 'Other Extensions', maintenanceDays: 42 }
+            ],
+            healthScore: {
+                base: 100,
+                penalties: {
+                    overMaintenanceByDay: 0.5,
+                    noDeepConditionOverDays: 0.3,
+                    tooManyWashesPerWeek: 1.0
+                }
+            },
+            copy: {
+                trackerTitle: 'Hair Care Journey',
+                trackerSubtitle: 'Keep your extensions healthy and on track',
+                nextWashLabel: 'Next Wash Day',
+                maintenanceLabel: 'Maintenance Due',
+                deepConditionLabel: 'Deep Condition',
+                noInstallMessage: 'Set up your hair tracker to get personalized care recommendations!',
+                setupButtonText: 'Set Up Tracker'
+            },
+            tips: [
+                'Your extensions are at optimal health! Keep up the great care routine.',
+                'Consider booking maintenance in the next 2 weeks for best results.',
+                'You\'re due for a deep conditioning treatment this week.',
+                'Use a silk pillowcase to reduce friction and tangling while you sleep.',
+                'Avoid applying heat directly to the bonds or tape areas.'
+            ]
+        };
+
+        res.json({
+            success: true,
+            message: 'Hair tracker settings reset to defaults (configuration is now application-managed)',
             ...defaultConfig
         });
     } catch (error) {
-        console.error('Error resetting hair tracker settings:', error);
-        res.status(500).json({ success: false, message: 'Failed to reset hair tracker settings' });
+        console.error('Database error resetting hair tracker settings:', error.message);
+        res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
 
@@ -2693,103 +2842,126 @@ app.get('/admin', (req, res) => {
 // NOTIFICATION ENDPOINTS (Admin-triggered)
 // ============================================
 
+// In-memory storage for notifications (since these are transient admin messages)
+let notificationsStore = { notifications: [] };
+
 // Get active notifications (for client app)
-app.get('/api/notifications/active', (req, res) => {
-    const data = loadJSON(NOTIFICATIONS_FILE);
-    if (!data) return res.json({ notifications: [] });
+app.get('/api/notifications/active', async (req, res) => {
+    try {
+        const now = new Date();
+        const active = notificationsStore.notifications.filter(n => {
+            if (!n.active) return false;
+            if (n.expiresAt && new Date(n.expiresAt) < now) return false;
+            if (n.startsAt && new Date(n.startsAt) > now) return false;
+            return true;
+        });
 
-    const now = new Date();
-    const active = data.notifications.filter(n => {
-        if (!n.active) return false;
-        if (n.expiresAt && new Date(n.expiresAt) < now) return false;
-        if (n.startsAt && new Date(n.startsAt) > now) return false;
-        return true;
-    });
-
-    res.json({ notifications: active });
+        res.json({ notifications: active });
+    } catch (error) {
+        console.error('Error getting active notifications:', error.message);
+        res.status(500).json({ success: false, message: 'Error loading notifications' });
+    }
 });
 
 // Get all notifications (admin)
-app.get('/api/notifications', authenticateToken, (req, res) => {
-    const data = loadJSON(NOTIFICATIONS_FILE);
-    res.json(data || { notifications: [] });
+app.get('/api/notifications', authenticateToken, async (req, res) => {
+    try {
+        res.json(notificationsStore);
+    } catch (error) {
+        console.error('Error getting notifications:', error.message);
+        res.status(500).json({ success: false, message: 'Error loading notifications' });
+    }
 });
 
 // Create notification (admin only)
-app.post('/api/notifications', authenticateAdmin, (req, res) => {
-    const { title, message, type, action, actionText, startsAt, expiresAt } = req.body;
+app.post('/api/notifications', authenticateAdmin, async (req, res) => {
+    try {
+        const { title, message, type, action, actionText, startsAt, expiresAt } = req.body;
 
-    if (!title || !message) {
-        return res.status(400).json({ message: 'Title and message are required' });
+        if (!title || !message) {
+            return res.status(400).json({ message: 'Title and message are required' });
+        }
+
+        const notification = {
+            id: uuidv4(),
+            title,
+            message,
+            type: type || 'promo',
+            action: action || null,
+            actionText: actionText || 'View',
+            active: true,
+            startsAt: startsAt || new Date().toISOString(),
+            expiresAt: expiresAt || null,
+            createdAt: new Date().toISOString(),
+            createdBy: req.user.userId
+        };
+
+        notificationsStore.notifications.unshift(notification);
+
+        res.status(201).json({ message: 'Notification created', notification });
+    } catch (error) {
+        console.error('Error creating notification:', error.message);
+        res.status(500).json({ success: false, message: 'Error creating notification' });
     }
-
-    const data = loadJSON(NOTIFICATIONS_FILE) || { notifications: [] };
-
-    const notification = {
-        id: uuidv4(),
-        title,
-        message,
-        type: type || 'promo',
-        action: action || null,
-        actionText: actionText || 'View',
-        active: true,
-        startsAt: startsAt || new Date().toISOString(),
-        expiresAt: expiresAt || null,
-        createdAt: new Date().toISOString(),
-        createdBy: req.user.userId
-    };
-
-    data.notifications.unshift(notification);
-    saveJSON(NOTIFICATIONS_FILE, data);
-
-    res.status(201).json({ message: 'Notification created', notification });
 });
 
 // Update notification (admin only)
-app.put('/api/notifications/:id', authenticateAdmin, (req, res) => {
-    const data = loadJSON(NOTIFICATIONS_FILE);
-    if (!data) return res.status(404).json({ message: 'Notifications not found' });
+app.put('/api/notifications/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const index = notificationsStore.notifications.findIndex(n => n.id === req.params.id);
+        if (index === -1) return res.status(404).json({ message: 'Notification not found' });
 
-    const index = data.notifications.findIndex(n => n.id === req.params.id);
-    if (index === -1) return res.status(404).json({ message: 'Notification not found' });
+        notificationsStore.notifications[index] = {
+            ...notificationsStore.notifications[index],
+            ...req.body,
+            updatedAt: new Date().toISOString()
+        };
 
-    data.notifications[index] = { ...data.notifications[index], ...req.body, updatedAt: new Date().toISOString() };
-    saveJSON(NOTIFICATIONS_FILE, data);
-
-    res.json({ message: 'Notification updated', notification: data.notifications[index] });
+        res.json({ message: 'Notification updated', notification: notificationsStore.notifications[index] });
+    } catch (error) {
+        console.error('Error updating notification:', error.message);
+        res.status(500).json({ success: false, message: 'Error updating notification' });
+    }
 });
 
 // Delete notification (admin only)
-app.delete('/api/notifications/:id', authenticateAdmin, (req, res) => {
-    const data = loadJSON(NOTIFICATIONS_FILE);
-    if (!data) return res.status(404).json({ message: 'Notifications not found' });
+app.delete('/api/notifications/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const index = notificationsStore.notifications.findIndex(n => n.id === req.params.id);
+        if (index === -1) return res.status(404).json({ message: 'Notification not found' });
 
-    const index = data.notifications.findIndex(n => n.id === req.params.id);
-    if (index === -1) return res.status(404).json({ message: 'Notification not found' });
+        notificationsStore.notifications.splice(index, 1);
 
-    data.notifications.splice(index, 1);
-    saveJSON(NOTIFICATIONS_FILE, data);
-
-    res.json({ message: 'Notification deleted' });
+        res.json({ message: 'Notification deleted' });
+    } catch (error) {
+        console.error('Error deleting notification:', error.message);
+        res.status(500).json({ success: false, message: 'Error deleting notification' });
+    }
 });
 
 // Toggle notification active status (admin only)
-app.patch('/api/notifications/:id/toggle', authenticateAdmin, (req, res) => {
-    const data = loadJSON(NOTIFICATIONS_FILE);
-    if (!data) return res.status(404).json({ message: 'Notifications not found' });
+app.patch('/api/notifications/:id/toggle', authenticateAdmin, async (req, res) => {
+    try {
+        const notification = notificationsStore.notifications.find(n => n.id === req.params.id);
+        if (!notification) return res.status(404).json({ message: 'Notification not found' });
 
-    const notification = data.notifications.find(n => n.id === req.params.id);
-    if (!notification) return res.status(404).json({ message: 'Notification not found' });
+        notification.active = !notification.active;
 
-    notification.active = !notification.active;
-    saveJSON(NOTIFICATIONS_FILE, data);
-
-    res.json({ message: `Notification ${notification.active ? 'activated' : 'deactivated'}`, notification });
+        res.json({ message: `Notification ${notification.active ? 'activated' : 'deactivated'}`, notification });
+    } catch (error) {
+        console.error('Error toggling notification:', error.message);
+        res.status(500).json({ success: false, message: 'Error toggling notification' });
+    }
 });
 
 // ============================================
 // CHAT ENDPOINTS (PUBLIC - Customer Side)
 // ============================================
+
+// In-memory storage for chat conversations (since these are transient support messages)
+let chatStore = { conversations: [] };
+let galleryStore = { items: [] };
+let hairTipsStore = { tips: [] };
 
 // Optional auth middleware - sets req.user if token is valid, but doesn't fail if not
 function optionalAuth(req, res, next) {
@@ -2812,27 +2984,122 @@ function optionalAuth(req, res, next) {
 }
 
 // Send a message (create or continue conversation)
-app.post('/api/chat/message', optionalAuth, (req, res) => {
-    const { conversationId, guestId, source, text } = req.body;
+app.post('/api/chat/message', optionalAuth, async (req, res) => {
+    try {
+        const { conversationId, guestId, source, text } = req.body;
 
-    // Validate text
-    if (!text || typeof text !== 'string' || text.trim().length === 0) {
-        return res.status(400).json({ success: false, message: 'Message text is required' });
+        // Validate text
+        if (!text || typeof text !== 'string' || text.trim().length === 0) {
+            return res.status(400).json({ success: false, message: 'Message text is required' });
+        }
+
+        if (text.length > 2000) {
+            return res.status(400).json({ success: false, message: 'Message too long (max 2000 characters)' });
+        }
+
+        const now = new Date().toISOString();
+
+        let conversation;
+        let isNewConversation = false;
+
+        if (conversationId) {
+            // Find existing conversation
+            conversation = chatStore.conversations.find(c => c.id === conversationId);
+
+            if (!conversation) {
+                return res.status(404).json({ success: false, message: 'Conversation not found' });
+            }
+
+            // Verify ownership
+            if (req.user) {
+                if (conversation.userId && conversation.userId !== req.user.id) {
+                    return res.status(403).json({ success: false, message: 'Access denied' });
+                }
+            } else {
+                if (conversation.guestId && conversation.guestId !== guestId) {
+                    return res.status(403).json({ success: false, message: 'Access denied' });
+                }
+            }
+        } else {
+            // Create new conversation
+            isNewConversation = true;
+
+            // Get user info if authenticated
+            let userName = null;
+            let userEmail = null;
+            if (req.user) {
+                try {
+                    const user = await UserRepository.findById(req.user.id);
+                    if (user) {
+                        userName = user.name;
+                        userEmail = user.email;
+                    }
+                } catch (error) {
+                    console.error('Error fetching user for chat:', error.message);
+                }
+            }
+
+            conversation = {
+                id: 'conv_' + uuidv4().substring(0, 8),
+                userId: req.user ? req.user.id : null,
+                userName: userName,
+                userEmail: userEmail,
+                guestId: req.user ? null : (guestId || 'guest_' + uuidv4().substring(0, 8)),
+                source: source || 'web',
+                createdAt: now,
+                lastMessageAt: now,
+                status: 'open',
+                assignedTo: null,
+                messages: []
+            };
+
+            // Add welcome message from system
+            conversation.messages.push({
+                id: 'msg_' + uuidv4().substring(0, 8),
+                from: 'system',
+                text: 'Welcome to Flirt Hair Support! How can we help you today?',
+                createdAt: now,
+                readByAgent: false
+            });
+
+            chatStore.conversations.push(conversation);
+        }
+
+        // Add the new message
+        const newMessage = {
+            id: 'msg_' + uuidv4().substring(0, 8),
+            from: 'user',
+            text: text.trim(),
+            createdAt: now,
+            readByAgent: false
+        };
+
+        conversation.messages.push(newMessage);
+        conversation.lastMessageAt = now;
+
+        res.json({
+            success: true,
+            conversation: {
+                id: conversation.id,
+                status: conversation.status,
+                lastMessageAt: conversation.lastMessageAt
+            },
+            message: newMessage,
+            isNewConversation
+        });
+    } catch (error) {
+        console.error('Error processing chat message:', error.message);
+        res.status(500).json({ success: false, message: 'Error processing message' });
     }
+});
 
-    if (text.length > 2000) {
-        return res.status(400).json({ success: false, message: 'Message too long (max 2000 characters)' });
-    }
+// Get a specific conversation (user)
+app.get('/api/chat/conversation/:id', optionalAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { guestId } = req.query;
 
-    const chatData = loadJSON(CHAT_FILE) || { conversations: [] };
-    const now = new Date().toISOString();
-
-    let conversation;
-    let isNewConversation = false;
-
-    if (conversationId) {
-        // Find existing conversation
-        conversation = chatData.conversations.find(c => c.id === conversationId);
+        const conversation = chatStore.conversations.find(c => c.id === id);
 
         if (!conversation) {
             return res.status(404).json({ success: false, message: 'Conversation not found' });
@@ -2848,135 +3115,49 @@ app.post('/api/chat/message', optionalAuth, (req, res) => {
                 return res.status(403).json({ success: false, message: 'Access denied' });
             }
         }
-    } else {
-        // Create new conversation
-        isNewConversation = true;
 
-        // Get user info if authenticated
-        let userName = null;
-        let userEmail = null;
-        if (req.user) {
-            const usersData = loadJSON(USERS_FILE);
-            const user = usersData.users.find(u => u.id === req.user.id);
-            if (user) {
-                userName = user.name;
-                userEmail = user.email;
-            }
-        }
-
-        conversation = {
-            id: 'conv_' + uuidv4().substring(0, 8),
-            userId: req.user ? req.user.id : null,
-            userName: userName,
-            userEmail: userEmail,
-            guestId: req.user ? null : (guestId || 'guest_' + uuidv4().substring(0, 8)),
-            source: source || 'web',
-            createdAt: now,
-            lastMessageAt: now,
-            status: 'open',
-            assignedTo: null,
-            messages: []
-        };
-
-        // Add welcome message from system
-        conversation.messages.push({
-            id: 'msg_' + uuidv4().substring(0, 8),
-            from: 'system',
-            text: 'Welcome to Flirt Hair Support! How can we help you today?',
-            createdAt: now,
-            readByAgent: false
+        // Mark agent messages as read by user (optional tracking)
+        res.json({
+            success: true,
+            conversation
         });
-
-        chatData.conversations.push(conversation);
+    } catch (error) {
+        console.error('Error getting conversation:', error.message);
+        res.status(500).json({ success: false, message: 'Error loading conversation' });
     }
-
-    // Add the new message
-    const newMessage = {
-        id: 'msg_' + uuidv4().substring(0, 8),
-        from: 'user',
-        text: text.trim(),
-        createdAt: now,
-        readByAgent: false
-    };
-
-    conversation.messages.push(newMessage);
-    conversation.lastMessageAt = now;
-
-    saveJSON(CHAT_FILE, chatData);
-
-    res.json({
-        success: true,
-        conversation: {
-            id: conversation.id,
-            status: conversation.status,
-            lastMessageAt: conversation.lastMessageAt
-        },
-        message: newMessage,
-        isNewConversation
-    });
-});
-
-// Get a specific conversation (user)
-app.get('/api/chat/conversation/:id', optionalAuth, (req, res) => {
-    const { id } = req.params;
-    const { guestId } = req.query;
-
-    const chatData = loadJSON(CHAT_FILE);
-    if (!chatData) {
-        return res.status(404).json({ success: false, message: 'Conversation not found' });
-    }
-
-    const conversation = chatData.conversations.find(c => c.id === id);
-
-    if (!conversation) {
-        return res.status(404).json({ success: false, message: 'Conversation not found' });
-    }
-
-    // Verify ownership
-    if (req.user) {
-        if (conversation.userId && conversation.userId !== req.user.id) {
-            return res.status(403).json({ success: false, message: 'Access denied' });
-        }
-    } else {
-        if (conversation.guestId && conversation.guestId !== guestId) {
-            return res.status(403).json({ success: false, message: 'Access denied' });
-        }
-    }
-
-    // Mark agent messages as read by user (optional tracking)
-    res.json({
-        success: true,
-        conversation
-    });
 });
 
 // Get latest conversation for current visitor
 app.get('/api/chat/my-latest', optionalAuth, (req, res) => {
-    const { guestId } = req.query;
+    try {
+        const { guestId } = req.query;
 
-    const chatData = loadJSON(CHAT_FILE);
-    if (!chatData || !chatData.conversations) {
-        return res.json({ success: true, conversation: null });
+        if (!chatStore.conversations || chatStore.conversations.length === 0) {
+            return res.json({ success: true, conversation: null });
+        }
+
+        let conversation;
+
+        if (req.user) {
+            // Find by userId
+            conversation = chatStore.conversations
+                .filter(c => c.userId === req.user.id && c.status === 'open')
+                .sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))[0];
+        } else if (guestId) {
+            // Find by guestId
+            conversation = chatStore.conversations
+                .filter(c => c.guestId === guestId && c.status === 'open')
+                .sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))[0];
+        }
+
+        res.json({
+            success: true,
+            conversation: conversation || null
+        });
+    } catch (error) {
+        console.error('Error getting latest conversation:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
-
-    let conversation;
-
-    if (req.user) {
-        // Find by userId
-        conversation = chatData.conversations
-            .filter(c => c.userId === req.user.id && c.status === 'open')
-            .sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))[0];
-    } else if (guestId) {
-        // Find by guestId
-        conversation = chatData.conversations
-            .filter(c => c.guestId === guestId && c.status === 'open')
-            .sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))[0];
-    }
-
-    res.json({
-        success: true,
-        conversation: conversation || null
-    });
 });
 
 // ============================================
@@ -2984,175 +3165,189 @@ app.get('/api/chat/my-latest', optionalAuth, (req, res) => {
 // ============================================
 
 // List all conversations (admin inbox)
-app.get('/api/admin/chat/conversations', authenticateAdmin, (req, res) => {
-    const { status, search } = req.query;
+app.get('/api/admin/chat/conversations', authenticateAdmin, async (req, res) => {
+    try {
+        const { status, search } = req.query;
 
-    const chatData = loadJSON(CHAT_FILE);
-    if (!chatData || !chatData.conversations) {
-        return res.json({ success: true, conversations: [] });
-    }
+        if (!chatStore.conversations || chatStore.conversations.length === 0) {
+            return res.json({ success: true, conversations: [] });
+        }
 
-    let conversations = chatData.conversations;
+        let conversations = [...chatStore.conversations];
 
-    // Filter by status if provided
-    if (status) {
-        conversations = conversations.filter(c => c.status === status);
-    }
+        // Filter by status if provided
+        if (status) {
+            conversations = conversations.filter(c => c.status === status);
+        }
 
-    // Search in userName, userEmail, or messages
-    if (search) {
-        const searchLower = search.toLowerCase();
-        conversations = conversations.filter(c => {
-            if (c.userName && c.userName.toLowerCase().includes(searchLower)) return true;
-            if (c.userEmail && c.userEmail.toLowerCase().includes(searchLower)) return true;
-            if (c.messages.some(m => m.text.toLowerCase().includes(searchLower))) return true;
-            return false;
+        // Search in userName, userEmail, or messages
+        if (search) {
+            const searchLower = search.toLowerCase();
+            conversations = conversations.filter(c => {
+                if (c.userName && c.userName.toLowerCase().includes(searchLower)) return true;
+                if (c.userEmail && c.userEmail.toLowerCase().includes(searchLower)) return true;
+                if (c.messages.some(m => m.text.toLowerCase().includes(searchLower))) return true;
+                return false;
+            });
+        }
+
+        // Sort by lastMessageAt descending
+        conversations.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
+
+        // Return summary info for inbox view
+        const summaries = conversations.map(c => {
+            const lastUserMessage = [...c.messages].reverse().find(m => m.from === 'user');
+            const unreadCount = c.messages.filter(m => m.from === 'user' && !m.readByAgent).length;
+
+            return {
+                id: c.id,
+                userName: c.userName || (c.guestId ? `Guest ${c.guestId.substring(0, 8)}` : 'Unknown'),
+                userEmail: c.userEmail || null,
+                guestId: c.guestId,
+                source: c.source,
+                lastMessage: lastUserMessage ? lastUserMessage.text.substring(0, 100) : '',
+                lastMessageAt: c.lastMessageAt,
+                unreadCount,
+                status: c.status,
+                createdAt: c.createdAt
+            };
         });
+
+        res.json({ success: true, conversations: summaries });
+    } catch (error) {
+        console.error('Error listing admin conversations:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
-
-    // Sort by lastMessageAt descending
-    conversations.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
-
-    // Return summary info for inbox view
-    const summaries = conversations.map(c => {
-        const lastUserMessage = [...c.messages].reverse().find(m => m.from === 'user');
-        const unreadCount = c.messages.filter(m => m.from === 'user' && !m.readByAgent).length;
-
-        return {
-            id: c.id,
-            userName: c.userName || (c.guestId ? `Guest ${c.guestId.substring(0, 8)}` : 'Unknown'),
-            userEmail: c.userEmail || null,
-            guestId: c.guestId,
-            source: c.source,
-            lastMessage: lastUserMessage ? lastUserMessage.text.substring(0, 100) : '',
-            lastMessageAt: c.lastMessageAt,
-            unreadCount,
-            status: c.status,
-            createdAt: c.createdAt
-        };
-    });
-
-    res.json({ success: true, conversations: summaries });
 });
 
 // Get full conversation (admin)
-app.get('/api/admin/chat/conversations/:id', authenticateAdmin, (req, res) => {
-    const { id } = req.params;
+app.get('/api/admin/chat/conversations/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
 
-    const chatData = loadJSON(CHAT_FILE);
-    if (!chatData) {
-        return res.status(404).json({ success: false, message: 'Conversation not found' });
+        if (!chatStore.conversations || chatStore.conversations.length === 0) {
+            return res.status(404).json({ success: false, message: 'Conversation not found' });
+        }
+
+        const conversation = chatStore.conversations.find(c => c.id === id);
+
+        if (!conversation) {
+            return res.status(404).json({ success: false, message: 'Conversation not found' });
+        }
+
+        res.json({ success: true, conversation });
+    } catch (error) {
+        console.error('Error getting admin conversation:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
-
-    const conversation = chatData.conversations.find(c => c.id === id);
-
-    if (!conversation) {
-        return res.status(404).json({ success: false, message: 'Conversation not found' });
-    }
-
-    res.json({ success: true, conversation });
 });
 
 // Send message as agent
-app.post('/api/admin/chat/message', authenticateAdmin, (req, res) => {
-    const { conversationId, text } = req.body;
+app.post('/api/admin/chat/message', authenticateAdmin, async (req, res) => {
+    try {
+        const { conversationId, text } = req.body;
 
-    if (!conversationId) {
-        return res.status(400).json({ success: false, message: 'Conversation ID is required' });
+        if (!conversationId) {
+            return res.status(400).json({ success: false, message: 'Conversation ID is required' });
+        }
+
+        if (!text || typeof text !== 'string' || text.trim().length === 0) {
+            return res.status(400).json({ success: false, message: 'Message text is required' });
+        }
+
+        if (!chatStore.conversations || chatStore.conversations.length === 0) {
+            return res.status(404).json({ success: false, message: 'Chat data not found' });
+        }
+
+        const conversation = chatStore.conversations.find(c => c.id === conversationId);
+
+        if (!conversation) {
+            return res.status(404).json({ success: false, message: 'Conversation not found' });
+        }
+
+        const now = new Date().toISOString();
+
+        const newMessage = {
+            id: 'msg_' + uuidv4().substring(0, 8),
+            from: 'agent',
+            text: text.trim(),
+            createdAt: now,
+            agentId: req.user.id,
+            readByAgent: true
+        };
+
+        conversation.messages.push(newMessage);
+        conversation.lastMessageAt = now;
+
+        // Assign conversation to this agent if not already assigned
+        if (!conversation.assignedTo) {
+            conversation.assignedTo = req.user.id;
+        }
+
+        res.json({ success: true, message: newMessage });
+    } catch (error) {
+        console.error('Error sending admin chat message:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
-
-    if (!text || typeof text !== 'string' || text.trim().length === 0) {
-        return res.status(400).json({ success: false, message: 'Message text is required' });
-    }
-
-    const chatData = loadJSON(CHAT_FILE);
-    if (!chatData) {
-        return res.status(404).json({ success: false, message: 'Chat data not found' });
-    }
-
-    const conversation = chatData.conversations.find(c => c.id === conversationId);
-
-    if (!conversation) {
-        return res.status(404).json({ success: false, message: 'Conversation not found' });
-    }
-
-    const now = new Date().toISOString();
-
-    const newMessage = {
-        id: 'msg_' + uuidv4().substring(0, 8),
-        from: 'agent',
-        text: text.trim(),
-        createdAt: now,
-        agentId: req.user.id,
-        readByAgent: true
-    };
-
-    conversation.messages.push(newMessage);
-    conversation.lastMessageAt = now;
-
-    // Assign conversation to this agent if not already assigned
-    if (!conversation.assignedTo) {
-        conversation.assignedTo = req.user.id;
-    }
-
-    saveJSON(CHAT_FILE, chatData);
-
-    res.json({ success: true, message: newMessage });
 });
 
 // Mark conversation as read (admin)
-app.patch('/api/admin/chat/conversations/:id/read', authenticateAdmin, (req, res) => {
-    const { id } = req.params;
+app.patch('/api/admin/chat/conversations/:id/read', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
 
-    const chatData = loadJSON(CHAT_FILE);
-    if (!chatData) {
-        return res.status(404).json({ success: false, message: 'Chat data not found' });
-    }
-
-    const conversation = chatData.conversations.find(c => c.id === id);
-
-    if (!conversation) {
-        return res.status(404).json({ success: false, message: 'Conversation not found' });
-    }
-
-    // Mark all user messages as read by agent
-    conversation.messages.forEach(m => {
-        if (m.from === 'user') {
-            m.readByAgent = true;
+        if (!chatStore.conversations || chatStore.conversations.length === 0) {
+            return res.status(404).json({ success: false, message: 'Chat data not found' });
         }
-    });
 
-    saveJSON(CHAT_FILE, chatData);
+        const conversation = chatStore.conversations.find(c => c.id === id);
 
-    res.json({ success: true, message: 'Conversation marked as read' });
+        if (!conversation) {
+            return res.status(404).json({ success: false, message: 'Conversation not found' });
+        }
+
+        // Mark all user messages as read by agent
+        conversation.messages.forEach(m => {
+            if (m.from === 'user') {
+                m.readByAgent = true;
+            }
+        });
+
+        res.json({ success: true, message: 'Conversation marked as read' });
+    } catch (error) {
+        console.error('Error marking conversation as read:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
 });
 
 // Update conversation status (admin)
-app.patch('/api/admin/chat/conversations/:id/status', authenticateAdmin, (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
+app.patch('/api/admin/chat/conversations/:id/status', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
 
-    if (!status || !['open', 'closed'].includes(status)) {
-        return res.status(400).json({ success: false, message: 'Invalid status' });
+        if (!status || !['open', 'closed'].includes(status)) {
+            return res.status(400).json({ success: false, message: 'Invalid status' });
+        }
+
+        if (!chatStore.conversations || chatStore.conversations.length === 0) {
+            return res.status(404).json({ success: false, message: 'Chat data not found' });
+        }
+
+        const conversation = chatStore.conversations.find(c => c.id === id);
+
+        if (!conversation) {
+            return res.status(404).json({ success: false, message: 'Conversation not found' });
+        }
+
+        conversation.status = status;
+        conversation.updatedAt = new Date().toISOString();
+
+        res.json({ success: true, message: `Conversation ${status}`, conversation });
+    } catch (error) {
+        console.error('Error updating conversation status:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
-
-    const chatData = loadJSON(CHAT_FILE);
-    if (!chatData) {
-        return res.status(404).json({ success: false, message: 'Chat data not found' });
-    }
-
-    const conversation = chatData.conversations.find(c => c.id === id);
-
-    if (!conversation) {
-        return res.status(404).json({ success: false, message: 'Conversation not found' });
-    }
-
-    conversation.status = status;
-    conversation.updatedAt = new Date().toISOString();
-
-    saveJSON(CHAT_FILE, chatData);
-
-    res.json({ success: true, message: `Conversation ${status}`, conversation });
 });
 
 // ============================================
@@ -3161,138 +3356,170 @@ app.patch('/api/admin/chat/conversations/:id/status', authenticateAdmin, (req, r
 
 // Get all active gallery items (public)
 app.get('/api/gallery', (req, res) => {
-    const data = loadJSON(GALLERY_FILE);
-    if (!data) return res.json({ items: [] });
+    try {
+        if (!galleryStore.items || galleryStore.items.length === 0) {
+            return res.json({ items: [] });
+        }
 
-    const activeItems = data.items
-        .filter(item => item.active)
-        .sort((a, b) => a.order - b.order);
+        const activeItems = galleryStore.items
+            .filter(item => item.active)
+            .sort((a, b) => a.order - b.order);
 
-    res.json({ items: activeItems });
+        res.json({ items: activeItems });
+    } catch (error) {
+        console.error('Error getting gallery items:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
 
 // Get all gallery items (admin)
-app.get('/api/admin/gallery', authenticateAdmin, (req, res) => {
-    const data = loadJSON(GALLERY_FILE);
-    if (!data) return res.json({ items: [] });
+app.get('/api/admin/gallery', authenticateAdmin, async (req, res) => {
+    try {
+        if (!galleryStore.items || galleryStore.items.length === 0) {
+            return res.json({ items: [] });
+        }
 
-    const items = data.items.sort((a, b) => a.order - b.order);
-    res.json({ items });
+        const items = [...galleryStore.items].sort((a, b) => a.order - b.order);
+        res.json({ items });
+    } catch (error) {
+        console.error('Error getting admin gallery items:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
 
 // Create gallery item (admin)
-app.post('/api/admin/gallery', authenticateAdmin, (req, res) => {
-    const { imageUrl, altText, label, category } = req.body;
+app.post('/api/admin/gallery', authenticateAdmin, async (req, res) => {
+    try {
+        const { imageUrl, altText, label, category } = req.body;
 
-    if (!imageUrl) {
-        return res.status(400).json({ message: 'Image URL is required' });
+        if (!imageUrl) {
+            return res.status(400).json({ message: 'Image URL is required' });
+        }
+
+        // Find the highest order number
+        const maxOrder = galleryStore.items.reduce((max, item) => Math.max(max, item.order || 0), 0);
+
+        const newItem = {
+            id: `img_${uuidv4().substring(0, 8)}`,
+            imageUrl,
+            altText: altText || 'Gallery Image',
+            label: label || '',
+            category: category || 'general',
+            order: maxOrder + 1,
+            active: true,
+            createdAt: new Date().toISOString()
+        };
+
+        galleryStore.items.push(newItem);
+
+        res.status(201).json({ message: 'Gallery item created', item: newItem });
+    } catch (error) {
+        console.error('Error creating gallery item:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-
-    const data = loadJSON(GALLERY_FILE) || { items: [] };
-
-    // Find the highest order number
-    const maxOrder = data.items.reduce((max, item) => Math.max(max, item.order || 0), 0);
-
-    const newItem = {
-        id: `img_${uuidv4().substring(0, 8)}`,
-        imageUrl,
-        altText: altText || 'Gallery Image',
-        label: label || '',
-        category: category || 'general',
-        order: maxOrder + 1,
-        active: true,
-        createdAt: new Date().toISOString()
-    };
-
-    data.items.push(newItem);
-    saveJSON(GALLERY_FILE, data);
-
-    res.status(201).json({ message: 'Gallery item created', item: newItem });
 });
 
 // Update gallery item (admin)
-app.patch('/api/admin/gallery/:id', authenticateAdmin, (req, res) => {
-    const { imageUrl, altText, label, category, order, active } = req.body;
+app.patch('/api/admin/gallery/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { imageUrl, altText, label, category, order, active } = req.body;
 
-    const data = loadJSON(GALLERY_FILE);
-    if (!data) return res.status(404).json({ message: 'Gallery not found' });
+        if (!galleryStore.items || galleryStore.items.length === 0) {
+            return res.status(404).json({ message: 'Gallery not found' });
+        }
 
-    const itemIndex = data.items.findIndex(item => item.id === req.params.id);
-    if (itemIndex === -1) {
-        return res.status(404).json({ message: 'Gallery item not found' });
+        const itemIndex = galleryStore.items.findIndex(item => item.id === req.params.id);
+        if (itemIndex === -1) {
+            return res.status(404).json({ message: 'Gallery item not found' });
+        }
+
+        const item = galleryStore.items[itemIndex];
+
+        if (imageUrl !== undefined) item.imageUrl = imageUrl;
+        if (altText !== undefined) item.altText = altText;
+        if (label !== undefined) item.label = label;
+        if (category !== undefined) item.category = category;
+        if (order !== undefined) item.order = order;
+        if (active !== undefined) item.active = active;
+
+        item.updatedAt = new Date().toISOString();
+
+        res.json({ message: 'Gallery item updated', item });
+    } catch (error) {
+        console.error('Error updating gallery item:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-
-    const item = data.items[itemIndex];
-
-    if (imageUrl !== undefined) item.imageUrl = imageUrl;
-    if (altText !== undefined) item.altText = altText;
-    if (label !== undefined) item.label = label;
-    if (category !== undefined) item.category = category;
-    if (order !== undefined) item.order = order;
-    if (active !== undefined) item.active = active;
-
-    item.updatedAt = new Date().toISOString();
-
-    saveJSON(GALLERY_FILE, data);
-
-    res.json({ message: 'Gallery item updated', item });
 });
 
 // Delete gallery item (admin)
-app.delete('/api/admin/gallery/:id', authenticateAdmin, (req, res) => {
-    const data = loadJSON(GALLERY_FILE);
-    if (!data) return res.status(404).json({ message: 'Gallery not found' });
+app.delete('/api/admin/gallery/:id', authenticateAdmin, async (req, res) => {
+    try {
+        if (!galleryStore.items || galleryStore.items.length === 0) {
+            return res.status(404).json({ message: 'Gallery not found' });
+        }
 
-    const itemIndex = data.items.findIndex(item => item.id === req.params.id);
-    if (itemIndex === -1) {
-        return res.status(404).json({ message: 'Gallery item not found' });
+        const itemIndex = galleryStore.items.findIndex(item => item.id === req.params.id);
+        if (itemIndex === -1) {
+            return res.status(404).json({ message: 'Gallery item not found' });
+        }
+
+        galleryStore.items.splice(itemIndex, 1);
+
+        res.json({ message: 'Gallery item deleted' });
+    } catch (error) {
+        console.error('Error deleting gallery item:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-
-    data.items.splice(itemIndex, 1);
-    saveJSON(GALLERY_FILE, data);
-
-    res.json({ message: 'Gallery item deleted' });
 });
 
 // Toggle gallery item active status (admin)
-app.patch('/api/admin/gallery/:id/toggle', authenticateAdmin, (req, res) => {
-    const data = loadJSON(GALLERY_FILE);
-    if (!data) return res.status(404).json({ message: 'Gallery not found' });
+app.patch('/api/admin/gallery/:id/toggle', authenticateAdmin, async (req, res) => {
+    try {
+        if (!galleryStore.items || galleryStore.items.length === 0) {
+            return res.status(404).json({ message: 'Gallery not found' });
+        }
 
-    const item = data.items.find(item => item.id === req.params.id);
-    if (!item) {
-        return res.status(404).json({ message: 'Gallery item not found' });
+        const item = galleryStore.items.find(item => item.id === req.params.id);
+        if (!item) {
+            return res.status(404).json({ message: 'Gallery item not found' });
+        }
+
+        item.active = !item.active;
+        item.updatedAt = new Date().toISOString();
+
+        res.json({ message: `Gallery item ${item.active ? 'activated' : 'deactivated'}`, item });
+    } catch (error) {
+        console.error('Error toggling gallery item:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-
-    item.active = !item.active;
-    item.updatedAt = new Date().toISOString();
-    saveJSON(GALLERY_FILE, data);
-
-    res.json({ message: `Gallery item ${item.active ? 'activated' : 'deactivated'}`, item });
 });
 
 // Reorder gallery items (admin)
-app.post('/api/admin/gallery/reorder', authenticateAdmin, (req, res) => {
-    const { orderedIds } = req.body;
+app.post('/api/admin/gallery/reorder', authenticateAdmin, async (req, res) => {
+    try {
+        const { orderedIds } = req.body;
 
-    if (!Array.isArray(orderedIds)) {
-        return res.status(400).json({ message: 'orderedIds array is required' });
-    }
-
-    const data = loadJSON(GALLERY_FILE);
-    if (!data) return res.status(404).json({ message: 'Gallery not found' });
-
-    // Update order based on array position
-    orderedIds.forEach((id, index) => {
-        const item = data.items.find(item => item.id === id);
-        if (item) {
-            item.order = index + 1;
+        if (!Array.isArray(orderedIds)) {
+            return res.status(400).json({ message: 'orderedIds array is required' });
         }
-    });
 
-    saveJSON(GALLERY_FILE, data);
+        if (!galleryStore.items || galleryStore.items.length === 0) {
+            return res.status(404).json({ message: 'Gallery not found' });
+        }
 
-    res.json({ message: 'Gallery order updated' });
+        // Update order based on array position
+        orderedIds.forEach((id, index) => {
+            const item = galleryStore.items.find(item => item.id === id);
+            if (item) {
+                item.order = index + 1;
+            }
+        });
+
+        res.json({ message: 'Gallery order updated' });
+    } catch (error) {
+        console.error('Error reordering gallery items:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
 
 // ============================================
@@ -3301,122 +3528,158 @@ app.post('/api/admin/gallery/reorder', authenticateAdmin, (req, res) => {
 
 // Get random active tip (public)
 app.get('/api/hair-tips/random', (req, res) => {
-    const data = loadJSON(HAIR_TIPS_FILE);
-    if (!data || !data.tips) return res.json({ tip: null });
+    try {
+        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+            return res.json({ tip: null });
+        }
 
-    const activeTips = data.tips.filter(tip => tip.active);
-    if (activeTips.length === 0) return res.json({ tip: null });
+        const activeTips = hairTipsStore.tips.filter(tip => tip.active);
+        if (activeTips.length === 0) {
+            return res.json({ tip: null });
+        }
 
-    const randomIndex = Math.floor(Math.random() * activeTips.length);
-    const randomTip = activeTips[randomIndex];
+        const randomIndex = Math.floor(Math.random() * activeTips.length);
+        const randomTip = activeTips[randomIndex];
 
-    res.json({ tip: { id: randomTip.id, text: randomTip.text } });
+        res.json({ tip: { id: randomTip.id, text: randomTip.text } });
+    } catch (error) {
+        console.error('Error getting random hair tip:', error);
+        res.status(500).json({ tip: null });
+    }
 });
 
 // Get all tips (public - for admin to list)
 app.get('/api/hair-tips', (req, res) => {
-    const data = loadJSON(HAIR_TIPS_FILE);
-    if (!data) return res.json({ tips: [] });
+    try {
+        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+            return res.json({ tips: [] });
+        }
 
-    res.json({ tips: data.tips || [] });
+        res.json({ tips: hairTipsStore.tips });
+    } catch (error) {
+        console.error('Error getting hair tips:', error);
+        res.status(500).json({ tips: [] });
+    }
 });
 
 // Get all tips (admin)
-app.get('/api/admin/hair-tips', authenticateAdmin, (req, res) => {
-    const data = loadJSON(HAIR_TIPS_FILE);
-    if (!data) return res.json({ tips: [] });
+app.get('/api/admin/hair-tips', authenticateAdmin, async (req, res) => {
+    try {
+        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+            return res.json({ tips: [] });
+        }
 
-    res.json({ tips: data.tips || [] });
+        res.json({ tips: hairTipsStore.tips });
+    } catch (error) {
+        console.error('Error getting admin hair tips:', error);
+        res.status(500).json({ tips: [] });
+    }
 });
 
 // Create hair tip (admin)
-app.post('/api/admin/hair-tips', authenticateAdmin, (req, res) => {
-    const { text, category, priority } = req.body;
+app.post('/api/admin/hair-tips', authenticateAdmin, async (req, res) => {
+    try {
+        const { text, category, priority } = req.body;
 
-    if (!text || text.trim() === '') {
-        return res.status(400).json({ message: 'Tip text is required' });
+        if (!text || text.trim() === '') {
+            return res.status(400).json({ message: 'Tip text is required' });
+        }
+
+        // Generate a new ID
+        const maxId = hairTipsStore.tips.reduce((max, tip) => {
+            const num = parseInt(tip.id.replace('tip', '')) || 0;
+            return Math.max(max, num);
+        }, 0);
+
+        const newTip = {
+            id: `tip${maxId + 1}`,
+            text: text.trim(),
+            active: true,
+            category: category || 'general',
+            priority: priority || 1,
+            createdAt: new Date().toISOString()
+        };
+
+        hairTipsStore.tips.push(newTip);
+
+        res.status(201).json({ message: 'Hair tip created', tip: newTip });
+    } catch (error) {
+        console.error('Error creating hair tip:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-
-    const data = loadJSON(HAIR_TIPS_FILE) || { tips: [] };
-
-    // Generate a new ID
-    const maxId = data.tips.reduce((max, tip) => {
-        const num = parseInt(tip.id.replace('tip', '')) || 0;
-        return Math.max(max, num);
-    }, 0);
-
-    const newTip = {
-        id: `tip${maxId + 1}`,
-        text: text.trim(),
-        active: true,
-        category: category || 'general',
-        priority: priority || 1,
-        createdAt: new Date().toISOString()
-    };
-
-    data.tips.push(newTip);
-    saveJSON(HAIR_TIPS_FILE, data);
-
-    res.status(201).json({ message: 'Hair tip created', tip: newTip });
 });
 
 // Update hair tip (admin)
-app.put('/api/admin/hair-tips/:id', authenticateAdmin, (req, res) => {
-    const { text, category, priority, active } = req.body;
+app.put('/api/admin/hair-tips/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { text, category, priority, active } = req.body;
 
-    const data = loadJSON(HAIR_TIPS_FILE);
-    if (!data) return res.status(404).json({ message: 'Hair tips data not found' });
+        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+            return res.status(404).json({ message: 'Hair tips data not found' });
+        }
 
-    const tipIndex = data.tips.findIndex(tip => tip.id === req.params.id);
-    if (tipIndex === -1) {
-        return res.status(404).json({ message: 'Hair tip not found' });
+        const tipIndex = hairTipsStore.tips.findIndex(tip => tip.id === req.params.id);
+        if (tipIndex === -1) {
+            return res.status(404).json({ message: 'Hair tip not found' });
+        }
+
+        const tip = hairTipsStore.tips[tipIndex];
+
+        if (text !== undefined) tip.text = text.trim();
+        if (category !== undefined) tip.category = category;
+        if (priority !== undefined) tip.priority = priority;
+        if (active !== undefined) tip.active = active;
+
+        tip.updatedAt = new Date().toISOString();
+
+        res.json({ message: 'Hair tip updated', tip });
+    } catch (error) {
+        console.error('Error updating hair tip:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-
-    const tip = data.tips[tipIndex];
-
-    if (text !== undefined) tip.text = text.trim();
-    if (category !== undefined) tip.category = category;
-    if (priority !== undefined) tip.priority = priority;
-    if (active !== undefined) tip.active = active;
-
-    tip.updatedAt = new Date().toISOString();
-
-    saveJSON(HAIR_TIPS_FILE, data);
-
-    res.json({ message: 'Hair tip updated', tip });
 });
 
 // Toggle hair tip active status (admin)
-app.patch('/api/admin/hair-tips/:id/toggle', authenticateAdmin, (req, res) => {
-    const data = loadJSON(HAIR_TIPS_FILE);
-    if (!data) return res.status(404).json({ message: 'Hair tips data not found' });
+app.patch('/api/admin/hair-tips/:id/toggle', authenticateAdmin, async (req, res) => {
+    try {
+        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+            return res.status(404).json({ message: 'Hair tips data not found' });
+        }
 
-    const tip = data.tips.find(tip => tip.id === req.params.id);
-    if (!tip) {
-        return res.status(404).json({ message: 'Hair tip not found' });
+        const tip = hairTipsStore.tips.find(tip => tip.id === req.params.id);
+        if (!tip) {
+            return res.status(404).json({ message: 'Hair tip not found' });
+        }
+
+        tip.active = !tip.active;
+        tip.updatedAt = new Date().toISOString();
+
+        res.json({ message: `Hair tip ${tip.active ? 'activated' : 'deactivated'}`, tip });
+    } catch (error) {
+        console.error('Error toggling hair tip:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-
-    tip.active = !tip.active;
-    tip.updatedAt = new Date().toISOString();
-    saveJSON(HAIR_TIPS_FILE, data);
-
-    res.json({ message: `Hair tip ${tip.active ? 'activated' : 'deactivated'}`, tip });
 });
 
 // Delete hair tip (admin)
-app.delete('/api/admin/hair-tips/:id', authenticateAdmin, (req, res) => {
-    const data = loadJSON(HAIR_TIPS_FILE);
-    if (!data) return res.status(404).json({ message: 'Hair tips data not found' });
+app.delete('/api/admin/hair-tips/:id', authenticateAdmin, async (req, res) => {
+    try {
+        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+            return res.status(404).json({ message: 'Hair tips data not found' });
+        }
 
-    const tipIndex = data.tips.findIndex(tip => tip.id === req.params.id);
-    if (tipIndex === -1) {
-        return res.status(404).json({ message: 'Hair tip not found' });
+        const tipIndex = hairTipsStore.tips.findIndex(tip => tip.id === req.params.id);
+        if (tipIndex === -1) {
+            return res.status(404).json({ message: 'Hair tip not found' });
+        }
+
+        hairTipsStore.tips.splice(tipIndex, 1);
+
+        res.json({ message: 'Hair tip deleted' });
+    } catch (error) {
+        console.error('Error deleting hair tip:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-
-    data.tips.splice(tipIndex, 1);
-    saveJSON(HAIR_TIPS_FILE, data);
-
-    res.json({ message: 'Hair tip deleted' });
 });
 
 // ============================================

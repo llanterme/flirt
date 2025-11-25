@@ -9,15 +9,17 @@ This repository contains **two distinct projects** in different stages of develo
 
 A comprehensive Progressive Web App (PWA) for a hair salon specializing in hair extensions, built for the South African market.
 
+**✅ Current Status:** Fully migrated to SQLite-only architecture with zero JSON dependencies. All core business logic uses SQLite repositories, while transient features (chat, gallery, hair tips) use in-memory storage.
+
 ### Tech Stack
 
 - **Backend:** Node.js, Express.js
-- **Database:** SQLite3 (migrated from JSON storage)
+- **Database:** SQLite3 (100% converted from JSON storage)
 - **Authentication:** JWT tokens with bcrypt password hashing
 - **Payments:** PayFast and Yoco (South African payment gateways)
 - **PWA Features:** Service Worker, Web Push notifications, App Manifest
 - **Email:** Nodemailer for transactional emails
-- **Real-time:** Chat system with message persistence
+- **Real-time:** Chat system with in-memory storage for transient messages
 
 ### Key Features
 
@@ -108,7 +110,7 @@ VAPID_PRIVATE_KEY=
 
 #### 4. Database Setup
 ```bash
-# Initialize SQLite database and migrate from JSON
+# Initialize SQLite database (migration from JSON is complete)
 npm run db:init
 ```
 
@@ -125,9 +127,10 @@ npm run dev
 ```
 
 #### 7. Access the Application
-- **Customer App:** http://localhost:3001/flirt-hair-app.html
-- **Admin Console:** http://localhost:3001/flirt-admin-console.html
+- **Customer App:** http://localhost:3001/
+- **Admin Console:** http://localhost:3001/admin
 - **API Base:** http://localhost:3001/api
+- **API Health Check:** http://localhost:3001/api/health
 
 ### Default Login Credentials
 
@@ -144,11 +147,8 @@ Flirt/
 ├── flirt-admin-console.html # Admin dashboard (7000+ lines)
 ├── package.json             # Dependencies and scripts
 ├── .env.example             # Environment template
-├── data/                    # Legacy JSON storage
-│   ├── users.json
-│   ├── bookings.json
-│   ├── products.json
-│   └── ...
+├── data/                    # Empty (migrated to SQLite)
+│   └── (no longer used - all data in SQLite)
 ├── db/                      # SQLite database
 │   ├── database.js         # Database connection & queries
 │   ├── schema.sql          # Database schema

@@ -10,20 +10,11 @@ cmds = ['npm ci']
 [phases.build]
 cmds = [
   'echo "=== Build Phase Diagnostics ==="',
-  'ls -la data/ || echo "❌ Data directory not found"',
-  'ls -la data/*.json 2>/dev/null | wc -l | xargs -I {} echo "📁 Found {} JSON files"',
-  'echo "📁 Ensuring data files are preserved for runtime..."',
-  'mkdir -p /tmp/data-backup',
-  'cp -r data/* /tmp/data-backup/ 2>/dev/null || echo "No data files to backup"',
   'echo "🐍 Checking Python distutils compatibility..."',
   'python3 -c "import distutils; print(\"✅ distutils available\")" || echo "⚠️ distutils missing"',
   'echo "🔧 Rebuilding SQLite3 for Linux platform..."',
-  'npm rebuild sqlite3 --build-from-source || echo "⚠️ SQLite3 rebuild failed - will use JSON fallback"',
-  'echo "📁 Restoring data files after build..."',
-  'mkdir -p data',
-  'cp -r /tmp/data-backup/* data/ 2>/dev/null || echo "No backup files to restore"',
-  'ls -la data/ | head -5',
-  'echo "✅ Build complete"'
+  'npm rebuild sqlite3 --build-from-source',
+  'echo "✅ SQLite3 build complete - SQLite-only configuration"'
 ]
 
 [start]

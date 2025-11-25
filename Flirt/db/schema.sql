@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TEXT
 );
 
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_referral_code ON users(referral_code);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_referral_code ON users(referral_code);
 
 -- ============================================
 -- HAIR TRACKER TABLE (normalized from users)
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS services (
     created_at TEXT DEFAULT (datetime('now'))
 );
 
-CREATE INDEX idx_services_type ON services(service_type);
+CREATE INDEX IF NOT EXISTS idx_services_type ON services(service_type);
 
 -- ============================================
 -- BOOKINGS TABLE
@@ -94,10 +94,10 @@ CREATE TABLE IF NOT EXISTS bookings (
     updated_at TEXT
 );
 
-CREATE INDEX idx_bookings_user ON bookings(user_id);
-CREATE INDEX idx_bookings_date ON bookings(date);
-CREATE INDEX idx_bookings_stylist ON bookings(stylist_id);
-CREATE INDEX idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings(user_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(date);
+CREATE INDEX IF NOT EXISTS idx_bookings_stylist ON bookings(stylist_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
 
 -- ============================================
 -- PRODUCTS TABLE
@@ -116,8 +116,8 @@ CREATE TABLE IF NOT EXISTS products (
     created_at TEXT DEFAULT (datetime('now'))
 );
 
-CREATE INDEX idx_products_category ON products(category);
-CREATE INDEX idx_products_on_sale ON products(on_sale);
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
+CREATE INDEX IF NOT EXISTS idx_products_on_sale ON products(on_sale);
 
 -- ============================================
 -- ORDERS TABLE
@@ -137,8 +137,8 @@ CREATE TABLE IF NOT EXISTS orders (
     updated_at TEXT
 );
 
-CREATE INDEX idx_orders_user ON orders(user_id);
-CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
 
 -- ============================================
 -- ORDER ITEMS TABLE (normalized from orders)
@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     unit_price REAL NOT NULL
 );
 
-CREATE INDEX idx_order_items_order ON order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 
 -- ============================================
 -- PROMOS TABLE
@@ -171,8 +171,8 @@ CREATE TABLE IF NOT EXISTS promos (
     created_at TEXT DEFAULT (datetime('now'))
 );
 
-CREATE INDEX idx_promos_code ON promos(code);
-CREATE INDEX idx_promos_active ON promos(active);
+CREATE INDEX IF NOT EXISTS idx_promos_code ON promos(code);
+CREATE INDEX IF NOT EXISTS idx_promos_active ON promos(active);
 
 -- ============================================
 -- LOYALTY TRANSACTIONS TABLE
@@ -186,7 +186,7 @@ CREATE TABLE IF NOT EXISTS loyalty_transactions (
     created_at TEXT DEFAULT (datetime('now'))
 );
 
-CREATE INDEX idx_loyalty_user ON loyalty_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_loyalty_user ON loyalty_transactions(user_id);
 
 -- ============================================
 -- LOYALTY SETTINGS TABLE
@@ -225,7 +225,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     updated_at TEXT
 );
 
-CREATE INDEX idx_notifications_active ON notifications(active);
+CREATE INDEX IF NOT EXISTS idx_notifications_active ON notifications(active);
 
 -- ============================================
 -- PUSH SUBSCRIPTIONS TABLE (for Web Push)
@@ -239,7 +239,7 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
     created_at TEXT DEFAULT (datetime('now'))
 );
 
-CREATE INDEX idx_push_subs_user ON push_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_push_subs_user ON push_subscriptions(user_id);
 
 -- ============================================
 -- PAYMENT TRANSACTIONS TABLE (for PayFast/Yoco)
@@ -259,6 +259,6 @@ CREATE TABLE IF NOT EXISTS payment_transactions (
     updated_at TEXT
 );
 
-CREATE INDEX idx_payments_order ON payment_transactions(order_id);
-CREATE INDEX idx_payments_user ON payment_transactions(user_id);
-CREATE INDEX idx_payments_status ON payment_transactions(status);
+CREATE INDEX IF NOT EXISTS idx_payments_order ON payment_transactions(order_id);
+CREATE INDEX IF NOT EXISTS idx_payments_user ON payment_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payment_transactions(status);

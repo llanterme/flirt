@@ -10,10 +10,8 @@ node_modules
 db/*.db
 db/*.db-journal
 
-# Keep JSON data files as fallback - explicitly include data directory
-!data/
-!data/*.json
-!data/**
+# Data directory is empty (SQLite-only, no JSON files needed)
+data/
 
 # Development files
 .git
