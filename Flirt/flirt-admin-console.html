@@ -1924,7 +1924,7 @@
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <div>
-                                    <div class="stat-value">3</div>
+                                    <div class="stat-value" id="promoActiveCount">0</div>
                                     <div class="stat-label">Active Promos</div>
                                 </div>
                                 <div class="stat-icon pink">🏷️</div>
@@ -1933,7 +1933,7 @@
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <div>
-                                    <div class="stat-value">156</div>
+                                    <div class="stat-value" id="promoCodesUsed">0</div>
                                     <div class="stat-label">Codes Used</div>
                                 </div>
                                 <div class="stat-icon gold">🎟️</div>
@@ -1942,7 +1942,7 @@
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <div>
-                                    <div class="stat-value">R4,680</div>
+                                    <div class="stat-value" id="promoDiscountsGiven">R0</div>
                                     <div class="stat-label">Discounts Given</div>
                                 </div>
                                 <div class="stat-icon green">💸</div>
@@ -4295,19 +4295,41 @@
         async function loadPromos() {
             try {
                 const data = await apiCall('/admin/promos');
+                const promos = data.promos || [];
+
+                // Calculate stats
+                const activeCount = promos.filter(p => p.active).length;
+                const totalUsed = promos.reduce((sum, p) => sum + (p.times_used || 0), 0);
+
+                // Calculate total discounts given (this is an estimate based on orders table)
+                // For now, we'll fetch from orders API
+                let totalDiscounts = 0;
+                try {
+                    const ordersData = await apiCall('/admin/orders');
+                    totalDiscounts = (ordersData.orders || []).reduce((sum, o) => sum + (o.discount || 0), 0);
+                } catch (e) {
+                    console.log('Could not fetch orders for discount calculation');
+                }
+
+                // Update stat cards
+                document.getElementById('promoActiveCount').textContent = activeCount;
+                document.getElementById('promoCodesUsed').textContent = totalUsed;
+                document.getElementById('promoDiscountsGiven').textContent = 'R' + totalDiscounts.toLocaleString();
+
+                // Update table
                 const container = document.querySelector('#promotions .data-table tbody');
                 if (container) {
-                    if (data.promos.length > 0) {
-                        container.innerHTML = data.promos.map(p => `
+                    if (promos.length > 0) {
+                        container.innerHTML = promos.map(p => `
                             <tr>
                                 <td><code style="background: var(--gray-light); padding: 4px 8px; border-radius: 4px;">${p.code}</code></td>
                                 <td>
                                     <div style="font-weight: 500;">${p.title || p.description || '-'}</div>
                                     ${p.title && p.description ? `<div style="font-size: 12px; color: var(--gray-medium);">${p.description}</div>` : ''}
                                 </td>
-                                <td>${p.discountType === 'percentage' ? p.discountValue + '%' : 'R' + p.discountValue}</td>
-                                <td>${p.minOrder ? 'R' + p.minOrder : '-'}</td>
-                                <td>${p.timesUsed || 0}${p.usageLimit ? '/' + p.usageLimit : ''}</td>
+                                <td>${p.discount_type === 'percentage' ? p.discount_value + '%' : 'R' + p.discount_value}</td>
+                                <td>${p.min_order ? 'R' + p.min_order : '-'}</td>
+                                <td>${p.times_used || 0}${p.usage_limit ? '/' + p.usage_limit : ''}</td>
                                 <td>
                                     ${p.highlighted
                                         ? `<span class="status-badge" style="background: var(--brand-pink); color: white;" title="${p.badge || 'SPECIAL'}: ${p.subtitle || ''}">Yes</span>`
