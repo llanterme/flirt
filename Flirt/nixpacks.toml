@@ -2,7 +2,7 @@
 # Provides build environment, SQLite3 compilation handled by postinstall script
 
 [phases.setup]
-nixPkgs = ['nodejs_22', 'python3', 'python3Packages.setuptools', 'python3Packages.distutils', 'pkg-config', 'sqlite', 'gcc', 'gnumake']
+nixPkgs = ['nodejs_22', 'python311', 'python311Packages.setuptools', 'pkg-config', 'sqlite', 'gcc', 'gnumake']
 
 [phases.install]
 cmds = ['npm ci']
@@ -10,9 +10,11 @@ cmds = ['npm ci']
 [phases.build]
 cmds = [
   'echo "=== Build Phase Diagnostics ==="',
-  'echo "🐍 Verifying Python distutils availability..."',
-  'python3 -c "import distutils; print(\"✅ distutils available\")"',
+  'echo "🐍 Verifying Python 3.11 distutils availability..."',
+  'python3.11 -c "import distutils; print(\"✅ distutils available\")"',
   'echo "🔧 Rebuilding SQLite3 for Linux platform..."',
+  'export PYTHON=python3.11',
+  'npm config set python python3.11',
   'npm rebuild sqlite3 --build-from-source',
   'echo "✅ SQLite3 build complete - SQLite-only configuration"'
 ]
