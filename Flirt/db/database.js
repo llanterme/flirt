@@ -694,6 +694,112 @@ const PromoRepository = {
 };
 
 // ============================================
+// GALLERY REPOSITORY
+// ============================================
+const GalleryRepository = {
+    mapRow(row) {
+        if (!row) return null;
+        return {
+            id: row.id,
+            imageUrl: row.image_url,
+            altText: row.alt_text,
+            label: row.label,
+            category: row.category,
+            order: row.order_num,
+            active: !!row.active,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+    },
+
+    async findAll({ includeInactive = true } = {}) {
+        let sql = 'SELECT * FROM gallery_items';
+        const params = [];
+        if (!includeInactive) {
+            sql += ' WHERE active = 1';
+        }
+        sql += ' ORDER BY order_num ASC';
+        const rows = await dbAll(sql, params);
+        return rows.map(this.mapRow);
+    },
+
+    async findById(id) {
+        const row = await dbGet('SELECT * FROM gallery_items WHERE id = ?', [id]);
+        return this.mapRow(row);
+    },
+
+    async create(item) {
+        const sql = `
+            INSERT INTO gallery_items (id, image_url, alt_text, label, category, order_num, active, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        `;
+        await dbRun(sql, [
+            item.id,
+            item.imageUrl,
+            item.altText || null,
+            item.label || null,
+            item.category || null,
+            item.order || 0,
+            item.active ? 1 : 0
+        ]);
+        return this.findById(item.id);
+    },
+
+    async update(id, updates) {
+        const fields = [];
+        const values = [];
+        const map = {
+            imageUrl: 'image_url',
+            altText: 'alt_text',
+            label: 'label',
+            category: 'category',
+            order: 'order_num',
+            active: 'active'
+        };
+        for (const [key, column] of Object.entries(map)) {
+            if (updates[key] !== undefined) {
+                fields.push(`${column} = ?`);
+                values.push(key === 'active' ? (updates[key] ? 1 : 0) : updates[key]);
+            }
+        }
+        if (fields.length === 0) return this.findById(id);
+
+        fields.push("updated_at = datetime('now')");
+        values.push(id);
+
+        await dbRun(`UPDATE gallery_items SET ${fields.join(', ')} WHERE id = ?`, values);
+        return this.findById(id);
+    },
+
+    async delete(id) {
+        await dbRun('DELETE FROM gallery_items WHERE id = ?', [id]);
+    },
+
+    async reorder(orderedIds) {
+        const tasks = orderedIds.map((id, idx) =>
+            dbRun('UPDATE gallery_items SET order_num = ?, updated_at = datetime(\'now\') WHERE id = ?', [idx + 1, id])
+        );
+        await Promise.all(tasks);
+    },
+
+    async getInstagram() {
+        const row = await dbGet('SELECT value FROM gallery_settings WHERE key = ?', ['instagram']);
+        if (!row || !row.value) return null;
+        try {
+            return JSON.parse(row.value);
+        } catch (err) {
+            return null;
+        }
+    },
+
+    async setInstagram(config) {
+        const payload = JSON.stringify(config || {});
+        await dbRun('INSERT OR REPLACE INTO gallery_settings (key, value) VALUES (?, ?)', ['instagram', payload]);
+        return this.getInstagram();
+    }
+};
+
+// ============================================
 // LOYALTY REPOSITORY
 // ============================================
 const LoyaltyRepository = {
@@ -999,6 +1105,189 @@ const PaymentRepository = {
     }
 };
 
+// ============================================
+// CHAT REPOSITORY
+// ============================================
+const ChatRepository = {
+    // Create a new conversation
+    async createConversation(conversation) {
+        const sql = `
+            INSERT INTO chat_conversations (
+                id, user_id, guest_id, user_name, user_email, source, status,
+                assigned_to, unread_by_agent, unread_by_user, created_at, updated_at, last_message_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        await dbRun(sql, [
+            conversation.id,
+            conversation.userId || null,
+            conversation.guestId || null,
+            conversation.userName,
+            conversation.userEmail || null,
+            conversation.source || 'general',
+            conversation.status || 'open',
+            conversation.assignedTo || null,
+            conversation.unreadByAgent || 0,
+            conversation.unreadByUser || 0,
+            conversation.createdAt || new Date().toISOString(),
+            conversation.updatedAt || new Date().toISOString(),
+            conversation.lastMessageAt || new Date().toISOString()
+        ]);
+        return this.findConversationById(conversation.id);
+    },
+
+    // Find conversation by ID
+    async findConversationById(id) {
+        const sql = 'SELECT * FROM chat_conversations WHERE id = ?';
+        return await dbGet(sql, [id]);
+    },
+
+    // Find latest conversation for user/guest
+    async findLatestConversation(userId, guestId) {
+        let sql, params;
+        if (userId) {
+            sql = 'SELECT * FROM chat_conversations WHERE user_id = ? ORDER BY last_message_at DESC LIMIT 1';
+            params = [userId];
+        } else if (guestId) {
+            sql = 'SELECT * FROM chat_conversations WHERE guest_id = ? ORDER BY last_message_at DESC LIMIT 1';
+            params = [guestId];
+        } else {
+            return null;
+        }
+        return await dbGet(sql, params);
+    },
+
+    // Get all conversations (for admin)
+    async findAllConversations(filters = {}) {
+        let sql = 'SELECT * FROM chat_conversations WHERE 1=1';
+        const params = [];
+
+        if (filters.status) {
+            sql += ' AND status = ?';
+            params.push(filters.status);
+        }
+        if (filters.assignedTo) {
+            sql += ' AND assigned_to = ?';
+            params.push(filters.assignedTo);
+        }
+
+        sql += ' ORDER BY last_message_at DESC';
+
+        if (filters.limit) {
+            sql += ' LIMIT ?';
+            params.push(filters.limit);
+        }
+
+        return await dbAll(sql, params);
+    },
+
+    // Update conversation
+    async updateConversation(id, updates) {
+        const fields = [];
+        const params = [];
+
+        const map = {
+            status: 'status',
+            assignedTo: 'assigned_to',
+            unreadByAgent: 'unread_by_agent',
+            unreadByUser: 'unread_by_user',
+            lastMessageAt: 'last_message_at',
+            userName: 'user_name',
+            userEmail: 'user_email'
+        };
+
+        for (const [key, column] of Object.entries(map)) {
+            if (updates[key] !== undefined) {
+                fields.push(`${column} = ?`);
+                params.push(updates[key]);
+            }
+        }
+
+        if (fields.length === 0) return this.findConversationById(id);
+
+        fields.push('updated_at = ?');
+        params.push(new Date().toISOString());
+        params.push(id);
+
+        const sql = `UPDATE chat_conversations SET ${fields.join(', ')} WHERE id = ?`;
+        await dbRun(sql, params);
+        return this.findConversationById(id);
+    },
+
+    // Increment unread count
+    async incrementUnread(conversationId, byAgent = false) {
+        const field = byAgent ? 'unread_by_user' : 'unread_by_agent';
+        const sql = `UPDATE chat_conversations SET ${field} = ${field} + 1, updated_at = ? WHERE id = ?`;
+        await dbRun(sql, [new Date().toISOString(), conversationId]);
+    },
+
+    // Reset unread count
+    async resetUnread(conversationId, byAgent = false) {
+        const field = byAgent ? 'unread_by_agent' : 'unread_by_user';
+        const sql = `UPDATE chat_conversations SET ${field} = 0, updated_at = ? WHERE id = ?`;
+        await dbRun(sql, [new Date().toISOString(), conversationId]);
+    },
+
+    // Create a message
+    async createMessage(message) {
+        const sql = `
+            INSERT INTO chat_messages (
+                id, conversation_id, from_type, text, agent_id, read_by_agent, read_by_user, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `;
+        await dbRun(sql, [
+            message.id,
+            message.conversationId,
+            message.fromType,
+            message.text,
+            message.agentId || null,
+            message.readByAgent || 0,
+            message.readByUser || 0,
+            message.createdAt || new Date().toISOString()
+        ]);
+
+        // Update conversation's last_message_at
+        await this.updateConversation(message.conversationId, {
+            lastMessageAt: message.createdAt || new Date().toISOString()
+        });
+
+        return this.findMessageById(message.id);
+    },
+
+    // Find message by ID
+    async findMessageById(id) {
+        const sql = 'SELECT * FROM chat_messages WHERE id = ?';
+        return await dbGet(sql, [id]);
+    },
+
+    // Get messages for a conversation
+    async findMessagesByConversation(conversationId, limit = 100) {
+        const sql = `
+            SELECT * FROM chat_messages
+            WHERE conversation_id = ?
+            ORDER BY created_at ASC
+            LIMIT ?
+        `;
+        return await dbAll(sql, [conversationId, limit]);
+    },
+
+    // Mark messages as read
+    async markMessagesAsRead(conversationId, byAgent = false) {
+        const field = byAgent ? 'read_by_agent' : 'read_by_user';
+        const sql = `UPDATE chat_messages SET ${field} = 1 WHERE conversation_id = ? AND ${field} = 0`;
+        await dbRun(sql, [conversationId]);
+
+        // Reset unread count
+        await this.resetUnread(conversationId, byAgent);
+    },
+
+    // Get total unread count for admin
+    async getTotalUnreadCount() {
+        const sql = 'SELECT SUM(unread_by_agent) as total FROM chat_conversations WHERE status = ?';
+        const result = await dbGet(sql, ['open']);
+        return result?.total || 0;
+    }
+};
+
 module.exports = {
     getDb,
     dbRun,
@@ -1013,9 +1302,11 @@ module.exports = {
     ProductRepository,
     OrderRepository,
     PromoRepository,
+    GalleryRepository,
     LoyaltyRepository,
     NotificationRepository,
     PushSubscriptionRepository,
     PaymentRepository,
-    PaymentSettingsRepository
+    PaymentSettingsRepository,
+    ChatRepository
 };

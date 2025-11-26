@@ -16,7 +16,9 @@
       "Bash(node add-sample-notifications.js:*)",
       "Bash(taskkill:*)",
       "Bash(node:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(del debug-bookings.js test-api.js check-users.js test-date-filter.js test-month-end.js test-month-calc.js)"
     ],
     "deny": [],
     "ask": []

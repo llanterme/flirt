@@ -20,7 +20,7 @@ const https = require('https');
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
-let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository;
+let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository;
 
 try {
     const dbModule = require('./db/database');
@@ -34,10 +34,12 @@ try {
     ProductRepository = dbModule.ProductRepository;
     OrderRepository = dbModule.OrderRepository;
     PromoRepository = dbModule.PromoRepository;
+    GalleryRepository = dbModule.GalleryRepository;
     PaymentRepository = dbModule.PaymentRepository;
     PaymentSettingsRepository = dbModule.PaymentSettingsRepository;
     LoyaltyRepository = dbModule.LoyaltyRepository;
     NotificationRepository = dbModule.NotificationRepository;
+    ChatRepository = dbModule.ChatRepository;
 
     // Ensure database directory exists
     const dbDir = path.dirname(DATABASE_PATH);
@@ -2111,6 +2113,10 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
         // Get first day of current month (YYYY-MM-01)
         const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
+        // Get last day of current month (YYYY-MM-DD)
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const monthEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+
         // Get all data from repositories
         const allBookings = await BookingRepository.findAll();
         const allOrders = await OrderRepository.findAll();
@@ -2125,9 +2131,9 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
             })
             .reduce((sum, o) => sum + (o.total || 0), 0);
 
-        // Bookings this month
+        // Bookings this month (all bookings in current month, including future dates)
         const monthBookings = allBookings.filter(b => {
-            return b.date && b.date >= monthStart && b.date <= today;
+            return b.date && b.date >= monthStart && b.date <= monthEnd;
         }).length;
 
         // Product orders this month
@@ -3376,9 +3382,35 @@ app.patch('/api/notifications/:id/toggle', authenticateAdmin, async (req, res) =
 // CHAT ENDPOINTS (PUBLIC - Customer Side)
 // ============================================
 
-// In-memory storage for chat conversations (since these are transient support messages)
-let chatStore = { conversations: [] };
-let galleryStore = { items: [], instagram: null };
+// Rate limiting for chat (in-memory, simple implementation)
+const chatRateLimiter = {
+    requests: new Map(), // key: userId or guestId, value: { count, resetAt }
+    maxRequests: 10, // 10 messages per minute
+    windowMs: 60 * 1000, // 1 minute
+
+    check(identifier) {
+        const now = Date.now();
+        const record = this.requests.get(identifier);
+
+        if (!record || now > record.resetAt) {
+            // New window
+            this.requests.set(identifier, {
+                count: 1,
+                resetAt: now + this.windowMs
+            });
+            return true;
+        }
+
+        if (record.count >= this.maxRequests) {
+            return false; // Rate limit exceeded
+        }
+
+        record.count++;
+        return true;
+    }
+};
+
+// In-memory storage for hair tips (transient data)
 let hairTipsStore = { tips: [] };
 
 // Seed default services into DB if none exist
@@ -3579,76 +3611,81 @@ function seedHairTipsDefaults() {
 }
 
 seedHairTipsDefaults();
+// Seed gallery defaults into DB if empty
+seedGalleryDefaults();
 
 // Seed default gallery items from flirthair.co.za assets if gallery is empty
-function seedGalleryDefaults() {
-    if (galleryStore.items && galleryStore.items.length > 0) return;
-    if (!galleryStore.instagram) {
-        galleryStore.instagram = null;
-    }
-    const defaults = [
-        {
-            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg',
-            altText: 'Salon inspo 1',
-            label: 'Salon inspo',
-            category: 'inspiration'
-        },
-        {
-            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg',
-            altText: 'Salon inspo 2',
-            label: 'Salon inspo',
-            category: 'inspiration'
-        },
-        {
-            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg',
-            altText: 'Tape extensions',
-            label: 'Tape extensions',
-            category: 'services'
-        },
-        {
-            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg',
-            altText: 'Weft installation',
-            label: 'Weft installation',
-            category: 'services'
-        },
-        {
-            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg',
-            altText: 'Color matching',
-            label: 'Color matching',
-            category: 'services'
-        },
-        {
-            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU249_PLUMPING.WASH_250ml-03-300x300.png',
-            altText: 'Plumping Wash',
-            label: 'Plumping Wash',
-            category: 'products'
-        },
-        {
-            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU491_SESSION.SPRAY_FLEX_400ML_EU-02-300x300.png',
-            altText: 'Session Spray',
-            label: 'Session Spray',
-            category: 'products'
-        },
-        {
-            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU291_STIMULATE-ME.WASH_250ml-03-300x300.png',
-            altText: 'Stimulate Me Wash',
-            label: 'Stimulate Me Wash',
-            category: 'products'
-        }
-    ];
+async function seedGalleryDefaults() {
+    try {
+        const existing = await GalleryRepository.findAll({});
+        if (existing && existing.length > 0) return;
 
-    defaults.forEach((item, idx) => {
-        galleryStore.items.push({
-            id: `seed_${idx + 1}`,
-            imageUrl: item.imageUrl,
-            altText: item.altText,
-            label: item.label,
-            category: item.category,
-            order: idx + 1,
-            active: true,
-            createdAt: new Date().toISOString()
-        });
-    });
+        const defaults = [
+            {
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg',
+                altText: 'Salon inspo 1',
+                label: 'Salon inspo',
+                category: 'inspiration'
+            },
+            {
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg',
+                altText: 'Salon inspo 2',
+                label: 'Salon inspo',
+                category: 'inspiration'
+            },
+            {
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg',
+                altText: 'Tape extensions',
+                label: 'Tape extensions',
+                category: 'services'
+            },
+            {
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg',
+                altText: 'Weft installation',
+                label: 'Weft installation',
+                category: 'services'
+            },
+            {
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg',
+                altText: 'Color matching',
+                label: 'Color matching',
+                category: 'services'
+            },
+            {
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU249_PLUMPING.WASH_250ml-03-300x300.png',
+                altText: 'Plumping Wash',
+                label: 'Plumping Wash',
+                category: 'products'
+            },
+            {
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU491_SESSION.SPRAY_FLEX_400ML_EU-02-300x300.png',
+                altText: 'Session Spray',
+                label: 'Session Spray',
+                category: 'products'
+            },
+            {
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU291_STIMULATE-ME.WASH_250ml-03-300x300.png',
+                altText: 'Stimulate Me Wash',
+                label: 'Stimulate Me Wash',
+                category: 'products'
+            }
+        ];
+
+        for (let idx = 0; idx < defaults.length; idx++) {
+            const item = defaults[idx];
+            await GalleryRepository.create({
+                id: `seed_${idx + 1}`,
+                imageUrl: item.imageUrl,
+                altText: item.altText,
+                label: item.label,
+                category: item.category,
+                order: idx + 1,
+                active: true
+            });
+        }
+    } catch (err) {
+        console.error('Failed to seed gallery defaults:', err.message);
+    }
 }
 
 seedGalleryDefaults();
@@ -3673,108 +3710,172 @@ function optionalAuth(req, res, next) {
     });
 }
 
+// Helpers for chat
+function mapConversationResponse(conv, messages = []) {
+    if (!conv) return null;
+    return {
+        id: conv.id,
+        userId: conv.user_id || conv.userId,
+        guestId: conv.guest_id || conv.guestId,
+        customerName: conv.user_name || conv.customerName || 'Guest',
+        customerEmail: conv.user_email || conv.customerEmail || null,
+        source: conv.source || 'general',
+        status: conv.status,
+        assignedTo: conv.assigned_to || conv.assignedTo || null,
+        unreadCount: conv.unread_by_agent || conv.unreadByAgent || 0,
+        unreadByUser: conv.unread_by_user || conv.unreadByUser || 0,
+        createdAt: conv.created_at || conv.createdAt,
+        updatedAt: conv.updated_at || conv.updatedAt,
+        lastMessageAt: conv.last_message_at || conv.lastMessageAt,
+        messages: messages.map(m => ({
+            id: m.id,
+            from: m.from_type || m.from,
+            text: m.text,
+            createdAt: m.created_at || m.createdAt,
+            timestamp: m.created_at || m.createdAt,
+            agentId: m.agent_id || m.agentId,
+            readByAgent: !!(m.read_by_agent || m.readByAgent),
+            readByUser: !!(m.read_by_user || m.readByUser)
+        }))
+    };
+}
+
+async function getUserDisplay(userId) {
+    if (!userId) return { name: 'Guest', email: null };
+    try {
+        const user = await UserRepository.findById(userId);
+        if (!user) return { name: 'Guest', email: null };
+        return { name: user.name || 'Guest', email: user.email || null };
+    } catch {
+        return { name: 'Guest', email: null };
+    }
+}
+
+async function buildConversationPayload(conv, includeMessages = true) {
+    if (!conv) return null;
+    let customerName = conv.user_name || conv.customerName || null;
+    let customerEmail = conv.user_email || conv.customerEmail || null;
+
+    if (!customerName && conv.user_id) {
+        const userInfo = await getUserDisplay(conv.user_id);
+        customerName = userInfo.name;
+        customerEmail = userInfo.email;
+    }
+    if (!customerName) {
+        customerName = conv.guest_id ? `Guest ${conv.guest_id.substring(0, 8)}` : 'Guest';
+    }
+
+    let messages = [];
+    if (includeMessages) {
+        messages = await ChatRepository.findMessagesByConversation(conv.id, 500);
+    }
+
+    return mapConversationResponse(
+        {
+            ...conv,
+            user_name: customerName,
+            user_email: customerEmail
+        },
+        messages
+    );
+}
+
 // Send a message (create or continue conversation)
 app.post('/api/chat/message', optionalAuth, async (req, res) => {
     try {
         const { conversationId, guestId, source, text } = req.body;
 
-        // Validate text
         if (!text || typeof text !== 'string' || text.trim().length === 0) {
             return res.status(400).json({ success: false, message: 'Message text is required' });
         }
-
         if (text.length > 2000) {
             return res.status(400).json({ success: false, message: 'Message too long (max 2000 characters)' });
         }
 
         const now = new Date().toISOString();
-
-        let conversation;
+        const userDisplay = await getUserDisplay(req.user?.id);
+        let conversation = null;
         let isNewConversation = false;
 
         if (conversationId) {
-            // Find existing conversation
-            conversation = chatStore.conversations.find(c => c.id === conversationId);
-
+            conversation = await ChatRepository.findConversationById(conversationId);
             if (!conversation) {
                 return res.status(404).json({ success: false, message: 'Conversation not found' });
             }
-
-            // Verify ownership
             if (req.user) {
-                if (conversation.userId && conversation.userId !== req.user.id) {
+                if (conversation.user_id && conversation.user_id !== req.user.id) {
                     return res.status(403).json({ success: false, message: 'Access denied' });
                 }
-            } else {
-                if (conversation.guestId && conversation.guestId !== guestId) {
-                    return res.status(403).json({ success: false, message: 'Access denied' });
+                // Enrich stored name/email for known user
+                if (!conversation.user_name || !conversation.user_email) {
+                    await ChatRepository.updateConversation(conversation.id, {
+                        userName: userDisplay.name,
+                        userEmail: userDisplay.email
+                    });
+                    conversation.user_name = userDisplay.name;
+                    conversation.user_email = userDisplay.email;
                 }
+            } else if (conversation.guest_id && conversation.guest_id !== guestId) {
+                return res.status(403).json({ success: false, message: 'Access denied' });
             }
         } else {
-            // Create new conversation
             isNewConversation = true;
-
-            // Get user info if authenticated
-            let userName = null;
-            let userEmail = null;
-            if (req.user) {
-                try {
-                    const user = await UserRepository.findById(req.user.id);
-                    if (user) {
-                        userName = user.name;
-                        userEmail = user.email;
-                    }
-                } catch (error) {
-                    console.error('Error fetching user for chat:', error.message);
-                }
-            }
-
-            conversation = {
+            const newConv = {
                 id: 'conv_' + uuidv4().substring(0, 8),
                 userId: req.user ? req.user.id : null,
-                userName: userName,
-                userEmail: userEmail,
                 guestId: req.user ? null : (guestId || 'guest_' + uuidv4().substring(0, 8)),
+                userName: req.user ? userDisplay.name : 'Guest',
+                userEmail: req.user ? userDisplay.email : null,
                 source: source || 'web',
-                createdAt: now,
-                lastMessageAt: now,
                 status: 'open',
                 assignedTo: null,
-                messages: []
-            };
-
-            // Add welcome message from system
-            conversation.messages.push({
-                id: 'msg_' + uuidv4().substring(0, 8),
-                from: 'system',
-                text: 'Welcome to Flirt Hair Support! How can we help you today?',
+                unreadByAgent: 1, // the welcome message will be read? keep 1 for user msg later
+                unreadByUser: 0,
                 createdAt: now,
-                readByAgent: false
+                updatedAt: now,
+                lastMessageAt: now
+            };
+            // Create conversation
+            conversation = await ChatRepository.createConversation(newConv);
+            // Add welcome system message
+            await ChatRepository.createMessage({
+                id: 'msg_' + uuidv4().substring(0, 8),
+                conversationId: conversation.id,
+                fromType: 'system',
+                text: 'Welcome to Flirt Hair Support! How can we help you today?',
+                readByAgent: 0,
+                readByUser: 0,
+                createdAt: now
             });
-
-            chatStore.conversations.push(conversation);
         }
 
-        // Add the new message
-        const newMessage = {
+        // Add the new user message
+        const newMessage = await ChatRepository.createMessage({
             id: 'msg_' + uuidv4().substring(0, 8),
-            from: 'user',
+            conversationId: conversation.id,
+            fromType: 'user',
             text: text.trim(),
-            createdAt: now,
-            readByAgent: false
-        };
+            readByAgent: 0,
+            readByUser: 1,
+            createdAt: now
+        });
 
-        conversation.messages.push(newMessage);
-        conversation.lastMessageAt = now;
+        // Increment unread for agent
+        await ChatRepository.incrementUnread(conversation.id, false);
 
         res.json({
             success: true,
             conversation: {
                 id: conversation.id,
                 status: conversation.status,
-                lastMessageAt: conversation.lastMessageAt
+                lastMessageAt: now
             },
-            message: newMessage,
+            message: {
+                id: newMessage.id,
+                from: newMessage.from_type,
+                text: newMessage.text,
+                createdAt: newMessage.created_at
+            },
             isNewConversation
         });
     } catch (error) {
@@ -3789,28 +3890,21 @@ app.get('/api/chat/conversation/:id', optionalAuth, async (req, res) => {
         const { id } = req.params;
         const { guestId } = req.query;
 
-        const conversation = chatStore.conversations.find(c => c.id === id);
-
+        const conversation = await ChatRepository.findConversationById(id);
         if (!conversation) {
             return res.status(404).json({ success: false, message: 'Conversation not found' });
         }
 
-        // Verify ownership
         if (req.user) {
-            if (conversation.userId && conversation.userId !== req.user.id) {
+            if (conversation.user_id && conversation.user_id !== req.user.id) {
                 return res.status(403).json({ success: false, message: 'Access denied' });
             }
-        } else {
-            if (conversation.guestId && conversation.guestId !== guestId) {
-                return res.status(403).json({ success: false, message: 'Access denied' });
-            }
+        } else if (conversation.guest_id && conversation.guest_id !== guestId) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
         }
 
-        // Mark agent messages as read by user (optional tracking)
-        res.json({
-            success: true,
-            conversation
-        });
+        const payload = await buildConversationPayload(conversation, true);
+        res.json({ success: true, conversation: payload });
     } catch (error) {
         console.error('Error getting conversation:', error.message);
         res.status(500).json({ success: false, message: 'Error loading conversation' });
@@ -3818,32 +3912,15 @@ app.get('/api/chat/conversation/:id', optionalAuth, async (req, res) => {
 });
 
 // Get latest conversation for current visitor
-app.get('/api/chat/my-latest', optionalAuth, (req, res) => {
+app.get('/api/chat/my-latest', optionalAuth, async (req, res) => {
     try {
         const { guestId } = req.query;
-
-        if (!chatStore.conversations || chatStore.conversations.length === 0) {
+        const conversation = await ChatRepository.findLatestConversation(req.user?.id || null, guestId || null);
+        if (!conversation) {
             return res.json({ success: true, conversation: null });
         }
-
-        let conversation;
-
-        if (req.user) {
-            // Find by userId
-            conversation = chatStore.conversations
-                .filter(c => c.userId === req.user.id && c.status === 'open')
-                .sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))[0];
-        } else if (guestId) {
-            // Find by guestId
-            conversation = chatStore.conversations
-                .filter(c => c.guestId === guestId && c.status === 'open')
-                .sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt))[0];
-        }
-
-        res.json({
-            success: true,
-            conversation: conversation || null
-        });
+        const payload = await buildConversationPayload(conversation, true);
+        res.json({ success: true, conversation: payload });
     } catch (error) {
         console.error('Error getting latest conversation:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
@@ -3857,51 +3934,27 @@ app.get('/api/chat/my-latest', optionalAuth, (req, res) => {
 // List all conversations (admin inbox)
 app.get('/api/admin/chat/conversations', authenticateAdmin, async (req, res) => {
     try {
-        const { status, search } = req.query;
+        const { status, assignedTo } = req.query;
+        const conversations = await ChatRepository.findAllConversations({ status, assignedTo });
 
-        if (!chatStore.conversations || chatStore.conversations.length === 0) {
-            return res.json({ success: true, conversations: [] });
-        }
-
-        let conversations = [...chatStore.conversations];
-
-        // Filter by status if provided
-        if (status) {
-            conversations = conversations.filter(c => c.status === status);
-        }
-
-        // Search in userName, userEmail, or messages
-        if (search) {
-            const searchLower = search.toLowerCase();
-            conversations = conversations.filter(c => {
-                if (c.userName && c.userName.toLowerCase().includes(searchLower)) return true;
-                if (c.userEmail && c.userEmail.toLowerCase().includes(searchLower)) return true;
-                if (c.messages.some(m => m.text.toLowerCase().includes(searchLower))) return true;
-                return false;
+        const summaries = [];
+        for (const c of conversations) {
+            const payload = await buildConversationPayload(c, false);
+            const msgs = await ChatRepository.findMessagesByConversation(c.id, 5);
+            const lastUser = [...msgs].reverse().find(m => m.from_type === 'user');
+            summaries.push({
+                id: c.id,
+                userName: payload.customerName,
+                userEmail: payload.customerEmail,
+                guestId: c.guest_id,
+                source: c.source,
+                lastMessage: lastUser ? lastUser.text.substring(0, 100) : '',
+                lastMessageAt: c.last_message_at,
+                unreadCount: c.unread_by_agent || 0,
+                status: c.status,
+                createdAt: c.created_at
             });
         }
-
-        // Sort by lastMessageAt descending
-        conversations.sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
-
-        // Return summary info for inbox view
-        const summaries = conversations.map(c => {
-            const lastUserMessage = [...c.messages].reverse().find(m => m.from === 'user');
-            const unreadCount = c.messages.filter(m => m.from === 'user' && !m.readByAgent).length;
-
-            return {
-                id: c.id,
-                userName: c.userName || (c.guestId ? `Guest ${c.guestId.substring(0, 8)}` : 'Unknown'),
-                userEmail: c.userEmail || null,
-                guestId: c.guestId,
-                source: c.source,
-                lastMessage: lastUserMessage ? lastUserMessage.text.substring(0, 100) : '',
-                lastMessageAt: c.lastMessageAt,
-                unreadCount,
-                status: c.status,
-                createdAt: c.createdAt
-            };
-        });
 
         res.json({ success: true, conversations: summaries });
     } catch (error) {
@@ -3914,18 +3967,12 @@ app.get('/api/admin/chat/conversations', authenticateAdmin, async (req, res) => 
 app.get('/api/admin/chat/conversations/:id', authenticateAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-
-        if (!chatStore.conversations || chatStore.conversations.length === 0) {
-            return res.status(404).json({ success: false, message: 'Conversation not found' });
-        }
-
-        const conversation = chatStore.conversations.find(c => c.id === id);
-
+        const conversation = await ChatRepository.findConversationById(id);
         if (!conversation) {
             return res.status(404).json({ success: false, message: 'Conversation not found' });
         }
-
-        res.json({ success: true, conversation });
+        const payload = await buildConversationPayload(conversation, true);
+        res.json({ success: true, conversation: payload });
     } catch (error) {
         console.error('Error getting admin conversation:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
@@ -3940,41 +3987,41 @@ app.post('/api/admin/chat/message', authenticateAdmin, async (req, res) => {
         if (!conversationId) {
             return res.status(400).json({ success: false, message: 'Conversation ID is required' });
         }
-
         if (!text || typeof text !== 'string' || text.trim().length === 0) {
             return res.status(400).json({ success: false, message: 'Message text is required' });
         }
 
-        if (!chatStore.conversations || chatStore.conversations.length === 0) {
-            return res.status(404).json({ success: false, message: 'Chat data not found' });
-        }
-
-        const conversation = chatStore.conversations.find(c => c.id === conversationId);
-
+        const conversation = await ChatRepository.findConversationById(conversationId);
         if (!conversation) {
             return res.status(404).json({ success: false, message: 'Conversation not found' });
         }
 
         const now = new Date().toISOString();
-
-        const newMessage = {
+        const newMessage = await ChatRepository.createMessage({
             id: 'msg_' + uuidv4().substring(0, 8),
-            from: 'agent',
+            conversationId,
+            fromType: 'agent',
             text: text.trim(),
-            createdAt: now,
             agentId: req.user.id,
-            readByAgent: true
-        };
+            readByAgent: 1,
+            readByUser: 0,
+            createdAt: now
+        });
 
-        conversation.messages.push(newMessage);
-        conversation.lastMessageAt = now;
-
-        // Assign conversation to this agent if not already assigned
-        if (!conversation.assignedTo) {
-            conversation.assignedTo = req.user.id;
+        // Assign conversation if needed
+        if (!conversation.assigned_to) {
+            await ChatRepository.updateConversation(conversationId, { assignedTo: req.user.id });
         }
 
-        res.json({ success: true, message: newMessage });
+        // Increment unread for user
+        await ChatRepository.incrementUnread(conversationId, true);
+
+        res.json({ success: true, message: {
+            id: newMessage.id,
+            from: newMessage.from_type,
+            text: newMessage.text,
+            createdAt: newMessage.created_at
+        }});
     } catch (error) {
         console.error('Error sending admin chat message:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
@@ -3985,24 +4032,12 @@ app.post('/api/admin/chat/message', authenticateAdmin, async (req, res) => {
 app.patch('/api/admin/chat/conversations/:id/read', authenticateAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-
-        if (!chatStore.conversations || chatStore.conversations.length === 0) {
-            return res.status(404).json({ success: false, message: 'Chat data not found' });
-        }
-
-        const conversation = chatStore.conversations.find(c => c.id === id);
-
+        const conversation = await ChatRepository.findConversationById(id);
         if (!conversation) {
             return res.status(404).json({ success: false, message: 'Conversation not found' });
         }
 
-        // Mark all user messages as read by agent
-        conversation.messages.forEach(m => {
-            if (m.from === 'user') {
-                m.readByAgent = true;
-            }
-        });
-
+        await ChatRepository.markMessagesAsRead(id, true);
         res.json({ success: true, message: 'Conversation marked as read' });
     } catch (error) {
         console.error('Error marking conversation as read:', error);
@@ -4020,20 +4055,14 @@ app.patch('/api/admin/chat/conversations/:id/status', authenticateAdmin, async (
             return res.status(400).json({ success: false, message: 'Invalid status' });
         }
 
-        if (!chatStore.conversations || chatStore.conversations.length === 0) {
-            return res.status(404).json({ success: false, message: 'Chat data not found' });
-        }
-
-        const conversation = chatStore.conversations.find(c => c.id === id);
-
+        const conversation = await ChatRepository.findConversationById(id);
         if (!conversation) {
             return res.status(404).json({ success: false, message: 'Conversation not found' });
         }
 
-        conversation.status = status;
-        conversation.updatedAt = new Date().toISOString();
+        const updated = await ChatRepository.updateConversation(id, { status });
 
-        res.json({ success: true, message: `Conversation ${status}`, conversation });
+        res.json({ success: true, message: `Conversation ${status}`, conversation: updated });
     } catch (error) {
         console.error('Error updating conversation status:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
@@ -4045,17 +4074,12 @@ app.patch('/api/admin/chat/conversations/:id/status', authenticateAdmin, async (
 // ============================================
 
 // Get all active gallery items (public)
-app.get('/api/gallery', (req, res) => {
+app.get('/api/gallery', async (req, res) => {
     try {
-        if (!galleryStore.items || galleryStore.items.length === 0) {
-            seedGalleryDefaults();
-        }
-
-        const activeItems = galleryStore.items
-            .filter(item => item.active)
-            .sort((a, b) => a.order - b.order);
-
-        res.json({ items: activeItems, instagram: galleryStore.instagram || null });
+        await seedGalleryDefaults();
+        const activeItems = await GalleryRepository.findAll({ includeInactive: false });
+        const instagram = await GalleryRepository.getInstagram();
+        res.json({ items: activeItems, instagram: instagram || null });
     } catch (error) {
         console.error('Error getting gallery items:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -4105,12 +4129,10 @@ if (IS_DEV) {
 // Get all gallery items (admin)
 app.get('/api/admin/gallery', authenticateAdmin, async (req, res) => {
     try {
-        if (!galleryStore.items || galleryStore.items.length === 0) {
-            seedGalleryDefaults();
-        }
-
-        const items = [...galleryStore.items].sort((a, b) => a.order - b.order);
-        res.json({ items, instagram: galleryStore.instagram || null });
+        await seedGalleryDefaults();
+        const items = await GalleryRepository.findAll({ includeInactive: true });
+        const instagram = await GalleryRepository.getInstagram();
+        res.json({ items, instagram: instagram || null });
     } catch (error) {
         console.error('Error getting admin gallery items:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -4126,21 +4148,18 @@ app.post('/api/admin/gallery', authenticateAdmin, async (req, res) => {
             return res.status(400).json({ message: 'Image URL is required' });
         }
 
-        // Find the highest order number
-        const maxOrder = galleryStore.items.reduce((max, item) => Math.max(max, item.order || 0), 0);
+        const existing = await GalleryRepository.findAll({ includeInactive: true });
+        const maxOrder = existing.reduce((max, item) => Math.max(max, item.order_num || item.order || 0), 0);
 
-        const newItem = {
+        const newItem = await GalleryRepository.create({
             id: `img_${uuidv4().substring(0, 8)}`,
             imageUrl,
             altText: altText || 'Gallery Image',
             label: label || '',
             category: category || 'general',
             order: maxOrder + 1,
-            active: true,
-            createdAt: new Date().toISOString()
-        };
-
-        galleryStore.items.push(newItem);
+            active: true
+        });
 
         res.status(201).json({ message: 'Gallery item created', item: newItem });
     } catch (error) {
@@ -4163,12 +4182,12 @@ async function handleInstagramConfig(req, res) {
                 ? `https://www.instagram.com/${normalized}/embed`
                 : null;
 
-        galleryStore.instagram = {
+        const saved = await GalleryRepository.setInstagram({
             username: normalized || null,
             embedUrl: url
-        };
+        });
 
-        res.json({ success: true, instagram: galleryStore.instagram });
+        res.json({ success: true, instagram: saved });
     } catch (error) {
         console.error('Error updating Instagram config:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -4227,27 +4246,21 @@ app.patch('/api/admin/gallery/:id', authenticateAdmin, async (req, res) => {
     try {
         const { imageUrl, altText, label, category, order, active } = req.body;
 
-        if (!galleryStore.items || galleryStore.items.length === 0) {
-            return res.status(404).json({ message: 'Gallery not found' });
-        }
-
-        const itemIndex = galleryStore.items.findIndex(item => item.id === req.params.id);
-        if (itemIndex === -1) {
+        const existing = await GalleryRepository.findById(req.params.id);
+        if (!existing) {
             return res.status(404).json({ message: 'Gallery item not found' });
         }
 
-        const item = galleryStore.items[itemIndex];
+        const updated = await GalleryRepository.update(req.params.id, {
+            imageUrl,
+            altText,
+            label,
+            category,
+            order,
+            active
+        });
 
-        if (imageUrl !== undefined) item.imageUrl = imageUrl;
-        if (altText !== undefined) item.altText = altText;
-        if (label !== undefined) item.label = label;
-        if (category !== undefined) item.category = category;
-        if (order !== undefined) item.order = order;
-        if (active !== undefined) item.active = active;
-
-        item.updatedAt = new Date().toISOString();
-
-        res.json({ message: 'Gallery item updated', item });
+        res.json({ message: 'Gallery item updated', item: updated });
     } catch (error) {
         console.error('Error updating gallery item:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -4257,16 +4270,12 @@ app.patch('/api/admin/gallery/:id', authenticateAdmin, async (req, res) => {
 // Delete gallery item (admin)
 app.delete('/api/admin/gallery/:id', authenticateAdmin, async (req, res) => {
     try {
-        if (!galleryStore.items || galleryStore.items.length === 0) {
-            return res.status(404).json({ message: 'Gallery not found' });
-        }
-
-        const itemIndex = galleryStore.items.findIndex(item => item.id === req.params.id);
-        if (itemIndex === -1) {
+        const existing = await GalleryRepository.findById(req.params.id);
+        if (!existing) {
             return res.status(404).json({ message: 'Gallery item not found' });
         }
 
-        galleryStore.items.splice(itemIndex, 1);
+        await GalleryRepository.delete(req.params.id);
 
         res.json({ message: 'Gallery item deleted' });
     } catch (error) {
@@ -4278,19 +4287,14 @@ app.delete('/api/admin/gallery/:id', authenticateAdmin, async (req, res) => {
 // Toggle gallery item active status (admin)
 app.patch('/api/admin/gallery/:id/toggle', authenticateAdmin, async (req, res) => {
     try {
-        if (!galleryStore.items || galleryStore.items.length === 0) {
-            return res.status(404).json({ message: 'Gallery not found' });
-        }
-
-        const item = galleryStore.items.find(item => item.id === req.params.id);
+        const item = await GalleryRepository.findById(req.params.id);
         if (!item) {
             return res.status(404).json({ message: 'Gallery item not found' });
         }
 
-        item.active = !item.active;
-        item.updatedAt = new Date().toISOString();
+        const updated = await GalleryRepository.update(req.params.id, { active: !item.active });
 
-        res.json({ message: `Gallery item ${item.active ? 'activated' : 'deactivated'}`, item });
+        res.json({ message: `Gallery item ${updated.active ? 'activated' : 'deactivated'}`, item: updated });
     } catch (error) {
         console.error('Error toggling gallery item:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -4306,17 +4310,12 @@ app.post('/api/admin/gallery/reorder', authenticateAdmin, async (req, res) => {
             return res.status(400).json({ message: 'orderedIds array is required' });
         }
 
-        if (!galleryStore.items || galleryStore.items.length === 0) {
+        const existing = await GalleryRepository.findAll({ includeInactive: true });
+        if (!existing || existing.length === 0) {
             return res.status(404).json({ message: 'Gallery not found' });
         }
 
-        // Update order based on array position
-        orderedIds.forEach((id, index) => {
-            const item = galleryStore.items.find(item => item.id === id);
-            if (item) {
-                item.order = index + 1;
-            }
-        });
+        await GalleryRepository.reorder(orderedIds);
 
         res.json({ message: 'Gallery order updated' });
     } catch (error) {

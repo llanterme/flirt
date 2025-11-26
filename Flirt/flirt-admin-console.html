@@ -1076,7 +1076,7 @@
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
                     Bookings
-                    <span class="nav-badge">12</span>
+                    <span class="nav-badge" id="bookingsNavBadge">0</span>
                 </a>
                 <a class="nav-item" onclick="showSection('staff')">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1341,74 +1341,256 @@
 
                 <!-- Bookings Section -->
                 <section id="bookings" class="page-section">
+                    <!-- View Toggle & Actions Bar -->
                     <div class="filters-bar">
                         <div style="display: flex; gap: 10px; margin-right: auto;">
                             <button class="btn btn-sm" id="bookingsListViewBtn" onclick="setBookingsView('list')" style="background: var(--primary); color: white;">List</button>
                             <button class="btn btn-sm btn-outline" id="bookingsCalendarViewBtn" onclick="setBookingsView('calendar')">Calendar</button>
                         </div>
-                        <select class="filter-select">
-                            <option>All Status</option>
-                            <option>Confirmed</option>
-                            <option>Pending</option>
-                            <option>Completed</option>
-                            <option>Cancelled</option>
-                        </select>
+                        <button class="btn btn-outline btn-sm" onclick="exportBookingsToCSV()" title="Export filtered results to CSV">📥 Export CSV</button>
                         <button class="btn btn-primary" onclick="openAdminBookingModal()">+ New Booking</button>
+                    </div>
+
+                    <!-- Advanced Filters Bar -->
+                    <div class="data-card" style="margin-bottom: 20px; padding: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: end;">
+                            <!-- Search -->
+                            <div style="grid-column: span 2;">
+                                <label class="form-label">Search</label>
+                                <input type="text" id="bookingsSearchInput" class="form-input" placeholder="Search by name, email, phone, service, ID..." oninput="onBookingsSearchInput(this.value)">
+                            </div>
+
+                            <!-- Status Filter -->
+                            <div>
+                                <label class="form-label">Status</label>
+                                <select id="bookingsStatusFilter" class="form-input" onchange="onBookingsFilterChange()">
+                                    <option value="all">All Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+
+                            <!-- Stylist Filter -->
+                            <div>
+                                <label class="form-label">Stylist</label>
+                                <select id="bookingsStylistFilter" class="form-input" onchange="onBookingsFilterChange()">
+                                    <option value="all">All Stylists</option>
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+
+                            <!-- Service Filter -->
+                            <div>
+                                <label class="form-label">Service</label>
+                                <select id="bookingsServiceFilter" class="form-input" onchange="onBookingsFilterChange()">
+                                    <option value="all">All Services</option>
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+
+                            <!-- Time of Day Filter -->
+                            <div>
+                                <label class="form-label">Time of Day</label>
+                                <select id="bookingsTimeFilter" class="form-input" onchange="onBookingsFilterChange()">
+                                    <option value="all">All Times</option>
+                                    <option value="morning">Morning</option>
+                                    <option value="afternoon">Afternoon</option>
+                                    <option value="evening">Evening</option>
+                                </select>
+                            </div>
+
+                            <!-- Date Range Preset -->
+                            <div>
+                                <label class="form-label">Date Range</label>
+                                <select id="bookingsDatePreset" class="form-input" onchange="onBookingsDatePresetChange()">
+                                    <option value="all">All Dates</option>
+                                    <option value="today">Today</option>
+                                    <option value="tomorrow">Tomorrow</option>
+                                    <option value="thisweek">This Week</option>
+                                    <option value="next7days">Next 7 Days</option>
+                                    <option value="custom">Custom Range...</option>
+                                </select>
+                            </div>
+
+                            <!-- Custom Date From -->
+                            <div id="bookingsDateFromGroup" style="display: none;">
+                                <label class="form-label">From Date</label>
+                                <input type="date" id="bookingsDateFrom" class="form-input" onchange="onBookingsDateRangeChange()">
+                            </div>
+
+                            <!-- Custom Date To -->
+                            <div id="bookingsDateToGroup" style="display: none;">
+                                <label class="form-label">To Date</label>
+                                <input type="date" id="bookingsDateTo" class="form-input" onchange="onBookingsDateRangeChange()">
+                            </div>
+
+                            <!-- Clear Filters Button -->
+                            <div>
+                                <button class="btn btn-outline" onclick="clearAllBookingsFilters()" style="width: 100%;">Clear All</button>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- List View -->
                     <div id="bookingsListView">
+                        <!-- Bulk Actions Bar -->
+                        <div id="bookingsBulkActionsBar" class="data-card" style="display: none; margin-bottom: 15px; padding: 15px; background: var(--primary-light); border: 2px solid var(--primary);">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <span style="font-weight: 600; color: var(--primary);" id="bookingsSelectedCount">0 selected</span>
+                                <button class="btn btn-sm" onclick="bulkConfirmBookings()" style="background: var(--success); color: white;">✓ Confirm Selected</button>
+                                <button class="btn btn-sm" onclick="bulkCompleteBookings()" style="background: var(--info); color: white;">✓ Complete Selected</button>
+                                <button class="btn btn-sm btn-outline" onclick="bulkCancelBookings()" style="color: var(--danger); border-color: var(--danger);">✗ Cancel Selected</button>
+                                <button class="btn btn-sm btn-outline" onclick="deselectAllBookings()" style="margin-left: auto;">Deselect All</button>
+                            </div>
+                        </div>
+
                         <div class="data-card">
                             <div class="data-card-header">
-                                <h3 class="data-card-title">All Bookings</h3>
-                                <span style="color: var(--gray-medium);" id="bookingsTotalCount">Loading...</span>
+                                <div>
+                                    <h3 class="data-card-title">Bookings</h3>
+                                    <span style="color: var(--gray-medium); font-size: 13px;" id="bookingsTotalCount">Loading...</span>
+                                </div>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer;">
+                                        <input type="checkbox" id="bookingsGroupByDate" onchange="toggleBookingsGrouping()" style="cursor: pointer;">
+                                        <span>Group by Date</span>
+                                    </label>
+                                </div>
                             </div>
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Client</th>
-                                        <th>Service</th>
-                                        <th>Stylist</th>
-                                        <th>Date</th>
-                                        <th>Time</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="bookingsTableBody">
-                                    <tr>
-                                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--gray-medium);">
-                                            Loading bookings...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div style="overflow-x: auto;">
+                                <table class="data-table" id="bookingsTable" style="position: relative;">
+                                    <thead style="position: sticky; top: 0; background: white; z-index: 10;">
+                                        <tr>
+                                            <th style="width: 40px;">
+                                                <input type="checkbox" id="bookingsSelectAll" onchange="toggleSelectAllBookings()" title="Select all on this page">
+                                            </th>
+                                            <th style="width: 80px;">ID</th>
+                                            <th style="cursor: pointer;" onclick="sortBookingsBy('customer')">
+                                                Client <span id="sortIconCustomer">↕</span>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortBookingsBy('service')">
+                                                Service <span id="sortIconService">↕</span>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortBookingsBy('stylist')">
+                                                Stylist <span id="sortIconStylist">↕</span>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortBookingsBy('date')">
+                                                Date <span id="sortIconDate">↕</span>
+                                            </th>
+                                            <th>Time</th>
+                                            <th style="cursor: pointer;" onclick="sortBookingsBy('status')">
+                                                Status <span id="sortIconStatus">↕</span>
+                                            </th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bookingsTableBody">
+                                        <tr>
+                                            <td colspan="9" style="text-align: center; padding: 40px; color: var(--gray-medium);">
+                                                Loading bookings...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination Controls -->
+                            <div id="bookingsPagination" class="data-card-footer" style="display: none; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid var(--gray-light);">
+                                <div style="color: var(--gray-medium); font-size: 14px;" id="bookingsPaginationInfo">
+                                    Showing 1-50 of 125
+                                </div>
+                                <div style="display: flex; gap: 5px;">
+                                    <button class="btn btn-sm btn-outline" id="bookingsPrevPage" onclick="goToBookingsPage('prev')" disabled>← Previous</button>
+                                    <div id="bookingsPaginationPages" style="display: flex; gap: 5px;">
+                                        <!-- Page numbers rendered dynamically -->
+                                    </div>
+                                    <button class="btn btn-sm btn-outline" id="bookingsNextPage" onclick="goToBookingsPage('next')">Next →</button>
+                                </div>
+                                <div>
+                                    <select id="bookingsPageSize" class="form-input" onchange="onBookingsPageSizeChange()" style="width: auto; padding: 5px 10px; font-size: 13px;">
+                                        <option value="25">25 per page</option>
+                                        <option value="50" selected>50 per page</option>
+                                        <option value="100">100 per page</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Calendar View -->
                     <div id="bookingsCalendarView" style="display: none;">
                         <div class="data-card">
-                            <div class="data-card-header">
+                            <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
-                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarMonth(-1)">◀</button>
-                                    <h3 class="data-card-title" id="bookingsCalendarMonthLabel">June 2024</h3>
-                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarMonth(1)">▶</button>
+                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(-1)">◀</button>
+                                    <h3 class="data-card-title" id="bookingsCalendarLabel" style="min-width: 200px; text-align: center;">November 2025</h3>
+                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(1)">▶</button>
                                 </div>
-                                <button class="btn btn-sm btn-outline" onclick="goToBookingsCalendarToday()">Today</button>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="display: flex; border: 1px solid var(--gray-light); border-radius: 6px; overflow: hidden;">
+                                        <button id="calendarDayBtn" class="btn btn-sm" style="border-radius: 0; border: none;" onclick="setCalendarView('day')">Day</button>
+                                        <button id="calendarWeekBtn" class="btn btn-sm btn-outline" style="border-radius: 0; border: none; border-left: 1px solid var(--gray-light);" onclick="setCalendarView('week')">Week</button>
+                                        <button id="calendarMonthBtn" class="btn btn-sm btn-outline" style="border-radius: 0; border: none; border-left: 1px solid var(--gray-light);" onclick="setCalendarView('month')">Month</button>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline" onclick="goToCalendarToday()">Today</button>
+                                </div>
                             </div>
                             <div style="padding: 20px;">
-                                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 10px;">
-                                    <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">SUN</div>
-                                    <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">MON</div>
-                                    <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">TUE</div>
-                                    <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">WED</div>
-                                    <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">THU</div>
-                                    <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">FRI</div>
-                                    <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">SAT</div>
+                                <!-- Day View -->
+                                <div id="calendarDayView" style="display: none;">
+                                    <div style="border: 1px solid var(--gray-light); border-radius: 8px; overflow: hidden;">
+                                        <div style="background: var(--gray-light); padding: 12px 15px; font-weight: 600; border-bottom: 1px solid var(--gray-light);">
+                                            <span id="dayViewDate">Thursday, November 28, 2025</span>
+                                        </div>
+                                        <div id="dayViewGrid" style="position: relative; height: 600px; overflow-y: auto;">
+                                            <!-- Time slots 6 AM to 10 PM -->
+                                            <div style="display: grid; grid-template-columns: 80px 1fr; border-bottom: 1px solid var(--gray-light);">
+                                                <div style="border-right: 1px solid var(--gray-light); padding: 0;">
+                                                    <!-- Time labels -->
+                                                </div>
+                                                <div style="position: relative; min-height: 600px;">
+                                                    <!-- Booking slots -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div id="bookingsCalendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;">
-                                    <!-- Calendar days rendered by JS -->
+
+                                <!-- Week View -->
+                                <div id="calendarWeekView" style="display: none;">
+                                    <div style="border: 1px solid var(--gray-light); border-radius: 8px; overflow: hidden;">
+                                        <div style="display: grid; grid-template-columns: 80px repeat(7, 1fr); background: var(--gray-light); border-bottom: 1px solid var(--gray-light);">
+                                            <div style="border-right: 1px solid var(--gray-light); padding: 12px 10px; text-align: center; font-size: 11px; color: var(--gray-medium);">TIME</div>
+                                            <div style="border-right: 1px solid var(--gray-light); padding: 12px 10px; text-align: center; font-weight: 600; font-size: 12px;">SUN</div>
+                                            <div style="border-right: 1px solid var(--gray-light); padding: 12px 10px; text-align: center; font-weight: 600; font-size: 12px;">MON</div>
+                                            <div style="border-right: 1px solid var(--gray-light); padding: 12px 10px; text-align: center; font-weight: 600; font-size: 12px;">TUE</div>
+                                            <div style="border-right: 1px solid var(--gray-light); padding: 12px 10px; text-align: center; font-weight: 600; font-size: 12px;">WED</div>
+                                            <div style="border-right: 1px solid var(--gray-light); padding: 12px 10px; text-align: center; font-weight: 600; font-size: 12px;">THU</div>
+                                            <div style="border-right: 1px solid var(--gray-light); padding: 12px 10px; text-align: center; font-weight: 600; font-size: 12px;">FRI</div>
+                                            <div style="padding: 12px 10px; text-align: center; font-weight: 600; font-size: 12px;">SAT</div>
+                                        </div>
+                                        <div id="weekViewGrid" style="display: grid; grid-template-columns: 80px repeat(7, 1fr); height: 600px; overflow-y: auto;">
+                                            <!-- Week grid rendered by JS -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Month View -->
+                                <div id="calendarMonthView" style="display: block;">
+                                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 10px;">
+                                        <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">SUN</div>
+                                        <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">MON</div>
+                                        <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">TUE</div>
+                                        <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">WED</div>
+                                        <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">THU</div>
+                                        <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">FRI</div>
+                                        <div style="text-align: center; font-weight: 600; padding: 10px; color: var(--gray-medium); font-size: 12px;">SAT</div>
+                                    </div>
+                                    <div id="bookingsCalendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;">
+                                        <!-- Calendar days rendered by JS -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1423,6 +1605,77 @@
                             </div>
                             <div class="modal-body" id="bookingsDayPopupContent">
                                 <!-- Bookings for selected day -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Edit Booking Modal -->
+                    <div id="editBookingModal" class="modal-overlay" style="display: none;">
+                        <div class="modal-content" style="max-width: 600px;">
+                            <div class="modal-header">
+                                <h3>Edit Booking</h3>
+                                <button class="modal-close" onclick="closeModal('editBookingModal')">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label class="form-label">Customer</label>
+                                    <input type="text" id="editBookingCustomer" class="form-input" readonly style="background: var(--gray-light);">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Service</label>
+                                    <select id="editBookingService" class="form-input">
+                                        <!-- Populated by JS -->
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Stylist</label>
+                                    <select id="editBookingStylist" class="form-input">
+                                        <option value="">Any Available</option>
+                                        <!-- Populated by JS -->
+                                    </select>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                    <div class="form-group">
+                                        <label class="form-label">Date</label>
+                                        <input type="date" id="editBookingDate" class="form-input" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Time</label>
+                                        <input type="time" id="editBookingTime" class="form-input">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Duration (minutes)</label>
+                                    <input type="number" id="editBookingDuration" class="form-input" placeholder="60" min="15" step="15">
+                                    <small style="color: var(--gray-medium); font-size: 12px;">Typical duration for the selected service</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Status</label>
+                                    <select id="editBookingStatus" class="form-input">
+                                        <option value="pending">Pending</option>
+                                        <option value="confirmed">Confirmed</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Notes</label>
+                                    <textarea id="editBookingNotes" class="form-input" rows="3" placeholder="Special requests or notes..."></textarea>
+                                </div>
+
+                                <div id="editBookingError" style="color: var(--danger); margin-bottom: 15px; display: none;"></div>
+
+                                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                    <button class="btn btn-outline" onclick="closeModal('editBookingModal')">Cancel</button>
+                                    <button class="btn btn-primary" onclick="saveBookingEdit()">Save Changes</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3522,7 +3775,13 @@
             // Load section data
             switch(sectionId) {
                 case 'dashboard': initDashboard(); break;
-                case 'bookings': loadBookings(); break;
+                case 'bookings':
+                    if (typeof initBookingsFilters === 'function') {
+                        initBookingsFilters().then(() => loadBookings());
+                    } else {
+                        loadBookings();
+                    }
+                    break;
                 case 'staff': loadStaff(); break;
                 case 'customers': loadCustomers(); break;
                 case 'products': loadProducts(); break;
@@ -3625,7 +3884,9 @@
                 // Get today's date in YYYY-MM-DD format
                 const today = new Date().toISOString().split('T')[0];
                 const data = await apiCall(`/admin/bookings?date=${today}`);
+                // Filter out cancelled bookings and sort by time
                 const bookings = (data.bookings || [])
+                    .filter(b => b.status !== 'cancelled')
                     .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
                     .slice(0, 10); // Limit to 10 bookings
 
@@ -3665,16 +3926,19 @@
                             <td><span class="status-badge status-${b.status}">${b.status}</span></td>
                             <td class="action-btns">
                                 ${b.status === 'pending' ? `
-                                    <button class="btn btn-icon btn-outline" title="Confirm" onclick="confirmBookingTime('${b.id}')">✅</button>
+                                    <button class="btn btn-icon btn-outline booking-confirm-btn" data-booking-id="${b.id}" title="Confirm">✅</button>
                                 ` : ''}
                                 ${b.status === 'confirmed' ? `
-                                    <button class="btn btn-icon btn-outline" title="Complete" onclick="completeBooking('${b.id}')">✔️</button>
+                                    <button class="btn btn-icon btn-outline booking-complete-btn" data-booking-id="${b.id}" title="Complete">✔️</button>
                                 ` : ''}
                                 <button class="btn btn-icon btn-outline" title="View" onclick="showSection('bookings')">👁️</button>
                             </td>
                         </tr>
                     `;
                 }).join('');
+
+                // Attach event listeners for today's bookings buttons
+                setTimeout(() => attachTodayBookingsListeners(), 0);
             } catch (error) {
                 console.error('Today bookings load error:', error);
                 tbody.innerHTML = `
@@ -3685,6 +3949,24 @@
                     </tr>
                 `;
             }
+        }
+
+        function attachTodayBookingsListeners() {
+            // Confirm buttons in Today's Bookings
+            document.querySelectorAll('#todayBookingsBody .booking-confirm-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    confirmBookingTime(bookingId);
+                });
+            });
+
+            // Complete buttons in Today's Bookings
+            document.querySelectorAll('#todayBookingsBody .booking-complete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    completeBooking(bookingId);
+                });
+            });
         }
 
         // Quick action to view today's bookings in full section
@@ -3908,13 +4190,170 @@
             }
         }
 
+        // Bookings filter state
+        let bookingsFilters = {
+            search: '',
+            status: 'all',
+            stylistId: 'all',
+            serviceId: 'all',
+            timeOfDay: 'all',
+            dateFrom: null,
+            dateTo: null
+        };
+
+        // Search with debounce
+        let bookingsSearchTimeout = null;
+        function onBookingsSearchInput(value) {
+            clearTimeout(bookingsSearchTimeout);
+            bookingsSearchTimeout = setTimeout(() => {
+                bookingsFilters.search = value.trim();
+                loadBookings();
+            }, 300);
+        }
+
+        // Filter change handlers
+        function onBookingsFilterChange() {
+            bookingsFilters.status = document.getElementById('bookingsStatusFilter')?.value || 'all';
+            bookingsFilters.stylistId = document.getElementById('bookingsStylistFilter')?.value || 'all';
+            bookingsFilters.serviceId = document.getElementById('bookingsServiceFilter')?.value || 'all';
+            bookingsFilters.timeOfDay = document.getElementById('bookingsTimeFilter')?.value || 'all';
+            loadBookings();
+        }
+
+        function onBookingsDatePresetChange() {
+            const preset = document.getElementById('bookingsDatePreset')?.value;
+            const dateFromGroup = document.getElementById('bookingsDateFromGroup');
+            const dateToGroup = document.getElementById('bookingsDateToGroup');
+            const today = new Date();
+
+            if (preset === 'custom') {
+                if (dateFromGroup) dateFromGroup.style.display = 'block';
+                if (dateToGroup) dateToGroup.style.display = 'block';
+                return;
+            } else {
+                if (dateFromGroup) dateFromGroup.style.display = 'none';
+                if (dateToGroup) dateToGroup.style.display = 'none';
+            }
+
+            let dateFrom = null;
+            let dateTo = null;
+
+            switch(preset) {
+                case 'today':
+                    dateFrom = dateTo = today.toISOString().split('T')[0];
+                    break;
+                case 'tomorrow':
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    dateFrom = dateTo = tomorrow.toISOString().split('T')[0];
+                    break;
+                case 'thisweek':
+                    const startOfWeek = new Date(today);
+                    startOfWeek.setDate(today.getDate() - today.getDay());
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 6);
+                    dateFrom = startOfWeek.toISOString().split('T')[0];
+                    dateTo = endOfWeek.toISOString().split('T')[0];
+                    break;
+                case 'next7days':
+                    dateFrom = today.toISOString().split('T')[0];
+                    const next7 = new Date(today);
+                    next7.setDate(today.getDate() + 7);
+                    dateTo = next7.toISOString().split('T')[0];
+                    break;
+            }
+
+            bookingsFilters.dateFrom = dateFrom;
+            bookingsFilters.dateTo = dateTo;
+            loadBookings();
+        }
+
+        function onBookingsDateRangeChange() {
+            const dateFrom = document.getElementById('bookingsDateFrom')?.value;
+            const dateTo = document.getElementById('bookingsDateTo')?.value;
+            bookingsFilters.dateFrom = dateFrom || null;
+            bookingsFilters.dateTo = dateTo || null;
+            loadBookings();
+        }
+
+        function clearAllBookingsFilters() {
+            bookingsFilters = {
+                search: '',
+                status: 'all',
+                stylistId: 'all',
+                serviceId: 'all',
+                timeOfDay: 'all',
+                dateFrom: null,
+                dateTo: null
+            };
+
+            // Reset UI
+            const searchInput = document.getElementById('bookingsSearchInput');
+            if (searchInput) searchInput.value = '';
+            const statusFilter = document.getElementById('bookingsStatusFilter');
+            if (statusFilter) statusFilter.value = 'all';
+            const stylistFilter = document.getElementById('bookingsStylistFilter');
+            if (stylistFilter) stylistFilter.value = 'all';
+            const serviceFilter = document.getElementById('bookingsServiceFilter');
+            if (serviceFilter) serviceFilter.value = 'all';
+            const timeFilter = document.getElementById('bookingsTimeFilter');
+            if (timeFilter) timeFilter.value = 'all';
+            const datePreset = document.getElementById('bookingsDatePreset');
+            if (datePreset) datePreset.value = 'all';
+            const dateFrom = document.getElementById('bookingsDateFrom');
+            if (dateFrom) dateFrom.value = '';
+            const dateTo = document.getElementById('bookingsDateTo');
+            if (dateTo) dateTo.value = '';
+
+            loadBookings();
+        }
+
         async function loadBookings() {
             try {
-                const data = await apiCall('/admin/bookings');
+                // Build query parameters from filters
+                const params = new URLSearchParams();
+
+                if (bookingsFilters.search) {
+                    params.append('search', bookingsFilters.search);
+                }
+                if (bookingsFilters.status && bookingsFilters.status !== 'all') {
+                    params.append('status', bookingsFilters.status);
+                }
+                if (bookingsFilters.stylistId && bookingsFilters.stylistId !== 'all') {
+                    params.append('stylistId', bookingsFilters.stylistId);
+                }
+                if (bookingsFilters.serviceId && bookingsFilters.serviceId !== 'all') {
+                    params.append('serviceId', bookingsFilters.serviceId);
+                }
+                if (bookingsFilters.timeOfDay && bookingsFilters.timeOfDay !== 'all') {
+                    params.append('timeOfDay', bookingsFilters.timeOfDay);
+                }
+                if (bookingsFilters.dateFrom) {
+                    params.append('dateFrom', bookingsFilters.dateFrom);
+                }
+                if (bookingsFilters.dateTo) {
+                    params.append('dateTo', bookingsFilters.dateTo);
+                }
+
+                const url = params.toString() ? `/admin/bookings?${params.toString()}` : '/admin/bookings';
+                const data = await apiCall(url);
                 adminBookings = data.bookings || [];
 
                 // Update total count
-                document.getElementById('bookingsTotalCount').textContent = `${adminBookings.length} total bookings`;
+                const totalEl = document.getElementById('bookingsTotalCount');
+                if (totalEl) {
+                    if (data.pagination) {
+                        totalEl.textContent = `${adminBookings.length} shown of ${data.pagination.total} total`;
+                    } else {
+                        totalEl.textContent = `${adminBookings.length} total bookings`;
+                    }
+                }
+
+                // Update sidebar badge
+                const badge = document.getElementById('bookingsNavBadge');
+                if (badge) {
+                    badge.textContent = adminBookings.length;
+                }
 
                 // Render both views
                 renderBookingsTable();
@@ -3923,7 +4362,7 @@
                 console.log('Bookings load error:', error);
                 document.getElementById('bookingsTableBody').innerHTML = `
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--danger);">
+                        <td colspan="9" style="text-align: center; padding: 40px; color: var(--danger);">
                             Failed to load bookings: ${error.message}
                         </td>
                     </tr>
@@ -3938,7 +4377,7 @@
             if (adminBookings.length === 0) {
                 container.innerHTML = `
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--gray-medium);">
+                        <td colspan="9" style="text-align: center; padding: 40px; color: var(--gray-medium);">
                             No bookings found
                         </td>
                     </tr>
@@ -3949,44 +4388,82 @@
             container.innerHTML = adminBookings.map(b => {
                 const dateStr = new Date(b.date).toLocaleDateString();
                 const timeStr = b.confirmedTime || b.time || b.preferredTimeOfDay || 'TBC';
-                const initials = (b.customerName || 'G').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                const shortId = b.id.substring(0, 8);
 
                 return `
                     <tr>
                         <td>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div class="avatar-placeholder">${initials}</div>
-                                <div>
-                                    <div style="font-weight: 500;">${b.customerName || 'Guest'}</div>
-                                    <div style="font-size: 12px; color: var(--gray-medium);">${b.customerEmail || ''}</div>
-                                </div>
-                            </div>
+                            <input type="checkbox" disabled style="opacity: 0.3;" title="Enable in enhanced mode">
+                        </td>
+                        <td>
+                            <code style="font-size: 11px; background: var(--gray-light); padding: 2px 6px; border-radius: 3px;" title="${b.id}">${shortId}</code>
+                        </td>
+                        <td>
+                            <div style="font-weight: 500;">${b.customerName || 'Guest'}</div>
+                            <div style="font-size: 12px; color: var(--gray-medium);">${b.customerEmail || ''}</div>
                         </td>
                         <td>${b.serviceName}</td>
-                        <td>${b.stylistId || 'Any Available'}</td>
+                        <td>${b.stylistName || 'Any Available'}</td>
                         <td>${dateStr}</td>
                         <td>${timeStr}</td>
                         <td><span class="status-badge status-${b.status}">${b.status}</span></td>
                         <td class="action-btns">
+                            <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}" title="Edit booking">✏️</button>
                             ${b.status === 'pending' ? `
-                                <button class="btn btn-sm" onclick="confirmBookingTime('${b.id}')">Confirm</button>
-                                <button class="btn btn-sm btn-outline" onclick="cancelBooking('${b.id}')">Cancel</button>
+                                <button class="btn btn-sm booking-confirm-btn" data-booking-id="${b.id}" title="Confirm">✓</button>
                             ` : b.status === 'confirmed' ? `
-                                <button class="btn btn-sm" onclick="completeBooking('${b.id}')">Complete</button>
-                                <button class="btn btn-sm btn-outline" onclick="cancelBooking('${b.id}')">Cancel</button>
-                            ` : `
-                                <span style="color: var(--gray-medium); font-size: 12px;">-</span>
-                            `}
+                                <button class="btn btn-sm booking-complete-btn" data-booking-id="${b.id}" title="Complete">✓</button>
+                            ` : ''}
+                            ${(b.status === 'pending' || b.status === 'confirmed') ? `
+                                <button class="btn btn-sm btn-outline booking-cancel-btn" data-booking-id="${b.id}" title="Cancel">✗</button>
+                            ` : ''}
                         </td>
                     </tr>
                 `;
             }).join('');
+
+            // Add event listeners for booking action buttons
+            attachBookingActionListeners();
+        }
+
+        function attachBookingActionListeners() {
+            // Edit buttons
+            document.querySelectorAll('.booking-edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    openEditBookingModal(bookingId);
+                });
+            });
+
+            // Confirm buttons
+            document.querySelectorAll('.booking-confirm-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    confirmBookingTime(bookingId);
+                });
+            });
+
+            // Complete buttons
+            document.querySelectorAll('.booking-complete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    completeBooking(bookingId);
+                });
+            });
+
+            // Cancel buttons
+            document.querySelectorAll('.booking-cancel-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    cancelBooking(bookingId);
+                });
+            });
         }
 
         function renderBookingsCalendar() {
             const grid = document.getElementById('bookingsCalendarGrid');
-            const monthLabel = document.getElementById('bookingsCalendarMonthLabel');
-            if (!grid || !monthLabel) return;
+            const label = document.getElementById('bookingsCalendarLabel');
+            if (!grid) return;
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -3999,7 +4476,7 @@
             // Update month label
             const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
                                'July', 'August', 'September', 'October', 'November', 'December'];
-            monthLabel.textContent = `${monthNames[month]} ${year}`;
+            if (label) label.textContent = `${monthNames[month]} ${year}`;
 
             // Group bookings by date
             const bookingsByDate = {};
@@ -4119,23 +4596,432 @@
                             </div>
                             <div style="font-size: 14px; margin-bottom: 5px;"><strong>Service:</strong> ${b.serviceName}</div>
                             <div style="font-size: 14px; margin-bottom: 5px;"><strong>Time:</strong> ${timeStr}</div>
-                            ${b.stylistId ? `<div style="font-size: 14px;"><strong>Stylist:</strong> ${b.stylistId}</div>` : ''}
-                            ${b.status === 'pending' ? `
-                                <div style="margin-top: 10px; display: flex; gap: 10px;">
-                                    <button class="btn btn-sm btn-primary" onclick="confirmBookingTime('${b.id}'); closeBookingsDayPopup();">Confirm</button>
-                                    <button class="btn btn-sm btn-outline" onclick="cancelBooking('${b.id}'); closeBookingsDayPopup();">Cancel</button>
-                                </div>
-                            ` : ''}
+                            ${b.stylistName ? `<div style="font-size: 14px; margin-bottom: 5px;"><strong>Stylist:</strong> ${b.stylistName}</div>` : ''}
+                            ${b.notes ? `<div style="font-size: 12px; color: var(--gray-medium); margin-top: 8px; padding: 8px; background: var(--gray-light); border-radius: 4px;"><strong>Notes:</strong> ${b.notes}</div>` : ''}
+                            <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}">✏️ Edit</button>
+                                ${b.status === 'pending' ? `
+                                    <button class="btn btn-sm btn-primary booking-confirm-close-btn" data-booking-id="${b.id}">✓ Confirm</button>
+                                ` : ''}
+                                ${b.status === 'confirmed' ? `
+                                    <button class="btn btn-sm btn-primary booking-complete-close-btn" data-booking-id="${b.id}">✓ Complete</button>
+                                ` : ''}
+                                ${(b.status === 'pending' || b.status === 'confirmed') ? `
+                                    <button class="btn btn-sm btn-outline booking-cancel-close-btn" data-booking-id="${b.id}">✗ Cancel</button>
+                                ` : ''}
+                                <button class="btn btn-sm booking-delete-btn" data-booking-id="${b.id}" style="background: var(--danger); color: white; margin-left: auto;">🗑️ Delete</button>
+                            </div>
                         </div>
                     `;
                 }).join('');
+
+                // Attach event listeners for popup buttons
+                attachBookingPopupListeners();
             }
 
             popup.style.display = 'flex';
         }
 
+        function attachBookingPopupListeners() {
+            // Edit buttons
+            document.querySelectorAll('.booking-edit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    openEditBookingModal(bookingId);
+                });
+            });
+
+            // Confirm and close popup buttons
+            document.querySelectorAll('.booking-confirm-close-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    await confirmBookingTime(bookingId);
+                    closeBookingsDayPopup();
+                });
+            });
+
+            // Complete and close popup buttons
+            document.querySelectorAll('.booking-complete-close-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    await completeBooking(bookingId);
+                    closeBookingsDayPopup();
+                });
+            });
+
+            // Cancel and close popup buttons
+            document.querySelectorAll('.booking-cancel-close-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    await cancelBooking(bookingId);
+                    closeBookingsDayPopup();
+                });
+            });
+
+            // Delete buttons
+            document.querySelectorAll('.booking-delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const bookingId = this.getAttribute('data-booking-id');
+                    deleteBooking(bookingId);
+                });
+            });
+        }
+
+        // Calendar view state
+        let currentCalendarView = 'month'; // 'day', 'week', 'month'
+        let calendarViewDate = new Date();
+
+        function setCalendarView(view) {
+            currentCalendarView = view;
+
+            // Update button states
+            ['Day', 'Week', 'Month'].forEach(v => {
+                const btn = document.getElementById(`calendar${v}Btn`);
+                if (v.toLowerCase() === view) {
+                    btn.style.background = 'var(--primary)';
+                    btn.style.color = 'white';
+                    btn.classList.remove('btn-outline');
+                } else {
+                    btn.style.background = '';
+                    btn.style.color = '';
+                    btn.classList.add('btn-outline');
+                }
+            });
+
+            // Show/hide appropriate views
+            document.getElementById('calendarDayView').style.display = view === 'day' ? 'block' : 'none';
+            document.getElementById('calendarWeekView').style.display = view === 'week' ? 'block' : 'none';
+            document.getElementById('calendarMonthView').style.display = view === 'month' ? 'block' : 'none';
+
+            // Render the appropriate view
+            if (view === 'day') {
+                renderDayView();
+            } else if (view === 'week') {
+                renderWeekView();
+            } else {
+                renderBookingsCalendar();
+            }
+        }
+
+        function renderDayView() {
+            const dateLabel = document.getElementById('dayViewDate');
+            const grid = document.getElementById('dayViewGrid');
+            const label = document.getElementById('bookingsCalendarLabel');
+
+            const formattedDate = calendarViewDate.toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+            dateLabel.textContent = formattedDate;
+            label.textContent = formattedDate;
+
+            const dateKey = calendarViewDate.toISOString().split('T')[0];
+            const dayBookings = adminBookings.filter(b => b.date.split('T')[0] === dateKey);
+
+            // Sort bookings by time
+            dayBookings.sort((a, b) => {
+                const timeA = a.confirmedTime || a.time || '09:00';
+                const timeB = b.confirmedTime || b.time || '09:00';
+                return timeA.localeCompare(timeB);
+            });
+
+            let html = '<div style="display: grid; grid-template-columns: 80px 1fr;">';
+
+            // Time slots from 6 AM to 10 PM
+            for (let hour = 6; hour <= 22; hour++) {
+                const time = `${hour.toString().padStart(2, '0')}:00`;
+                const displayTime = hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+
+                html += `
+                    <div style="border-right: 1px solid var(--gray-light); border-bottom: 1px solid var(--gray-light); padding: 8px 10px; font-size: 11px; color: var(--gray-medium); text-align: right;">
+                        ${displayTime}
+                    </div>
+                    <div style="border-bottom: 1px solid var(--gray-light); padding: 5px; min-height: 60px; position: relative;">
+                `;
+
+                // Find bookings for this hour
+                const hourBookings = dayBookings.filter(b => {
+                    const bookingTime = b.confirmedTime || b.time || '';
+                    return bookingTime.startsWith(time.substring(0, 2));
+                });
+
+                hourBookings.forEach(b => {
+                    const statusColors = {
+                        'pending': 'background: #fff3cd; border-left: 3px solid #856404;',
+                        'confirmed': 'background: #d4edda; border-left: 3px solid #155724;',
+                        'completed': 'background: #d1ecf1; border-left: 3px solid #0c5460;',
+                        'cancelled': 'background: #f8d7da; border-left: 3px solid #721c24;'
+                    };
+
+                    html += `
+                        <div class="calendar-booking-item" data-booking-id="${b.id}" style="margin: 2px 0; padding: 8px 10px; border-radius: 4px; ${statusColors[b.status] || ''} cursor: pointer; position: relative;"
+                             title="Click to edit booking">
+                            <div style="font-weight: 600; font-size: 13px;">${b.customerName || 'Guest'}</div>
+                            <div style="font-size: 11px; margin-top: 2px;">${b.serviceName}</div>
+                            <div style="font-size: 10px; color: var(--gray-medium); margin-top: 2px;">${b.confirmedTime || b.time || 'Time TBC'}</div>
+                            <div style="position: absolute; top: 5px; right: 5px; font-size: 10px; opacity: 0.7;">✏️</div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            }
+
+            html += '</div>';
+            grid.innerHTML = html;
+
+            // Attach event listeners to calendar booking items
+            attachCalendarBookingListeners();
+        }
+
+        function attachCalendarBookingListeners() {
+            const items = document.querySelectorAll('.calendar-booking-item');
+            console.log('Attaching calendar booking listeners to', items.length, 'items');
+            items.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const bookingId = this.getAttribute('data-booking-id');
+                    console.log('Calendar booking clicked:', bookingId);
+                    if (typeof openEditBookingModal === 'function') {
+                        openEditBookingModal(bookingId);
+                    } else {
+                        console.error('openEditBookingModal function not found!');
+                    }
+                });
+            });
+        }
+
+        function renderWeekView() {
+            const label = document.getElementById('bookingsCalendarLabel');
+            const grid = document.getElementById('weekViewGrid');
+
+            // Get start of week (Sunday)
+            const weekStart = new Date(calendarViewDate);
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+
+            label.textContent = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+
+            let html = '';
+
+            // Time slots from 6 AM to 10 PM
+            for (let hour = 6; hour <= 22; hour++) {
+                const displayTime = hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+
+                html += `<div style="border-right: 1px solid var(--gray-light); border-bottom: 1px solid var(--gray-light); padding: 8px 5px; font-size: 10px; color: var(--gray-medium); text-align: right;">${displayTime}</div>`;
+
+                // For each day of the week
+                for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+                    const cellDate = new Date(weekStart);
+                    cellDate.setDate(weekStart.getDate() + dayOffset);
+                    const dateKey = cellDate.toISOString().split('T')[0];
+                    const time = `${hour.toString().padStart(2, '0')}:00`;
+
+                    const hourBookings = adminBookings.filter(b => {
+                        if (b.date.split('T')[0] !== dateKey) return false;
+                        const bookingTime = b.confirmedTime || b.time || '';
+                        return bookingTime.startsWith(time.substring(0, 2));
+                    });
+
+                    const borderRight = dayOffset < 6 ? 'border-right: 1px solid var(--gray-light);' : '';
+                    html += `<div style="${borderRight} border-bottom: 1px solid var(--gray-light); padding: 2px; min-height: 50px; font-size: 10px;">`;
+
+                    hourBookings.forEach(b => {
+                        const statusColors = {
+                            'pending': 'background: #fff3cd;',
+                            'confirmed': 'background: #d4edda;',
+                            'completed': 'background: #d1ecf1;',
+                            'cancelled': 'background: #f8d7da;'
+                        };
+
+                        html += `
+                            <div class="calendar-booking-item" data-booking-id="${b.id}" style="margin: 1px 0; padding: 4px; border-radius: 3px; ${statusColors[b.status] || ''} cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                                 title="Click to edit: ${b.customerName} - ${b.serviceName}">
+                                ${b.customerName?.substring(0, 10) || 'Guest'}
+                            </div>
+                        `;
+                    });
+
+                    html += '</div>';
+                }
+            }
+
+            grid.innerHTML = html;
+
+            // Attach event listeners to calendar booking items
+            attachCalendarBookingListeners();
+        }
+
+        function changeBookingsCalendarPeriod(delta) {
+            if (currentCalendarView === 'day') {
+                calendarViewDate.setDate(calendarViewDate.getDate() + delta);
+                renderDayView();
+            } else if (currentCalendarView === 'week') {
+                calendarViewDate.setDate(calendarViewDate.getDate() + (delta * 7));
+                renderWeekView();
+            } else {
+                bookingsCalendarMonthOffset += delta;
+                renderBookingsCalendar();
+            }
+        }
+
+        function goToCalendarToday() {
+            calendarViewDate = new Date();
+            bookingsCalendarMonthOffset = 0;
+
+            if (currentCalendarView === 'day') {
+                renderDayView();
+            } else if (currentCalendarView === 'week') {
+                renderWeekView();
+            } else {
+                renderBookingsCalendar();
+            }
+        }
+
         function closeBookingsDayPopup() {
             document.getElementById('bookingsDayPopup').style.display = 'none';
+        }
+
+        // Edit booking functionality
+        let currentEditingBookingId = null;
+
+        async function openEditBookingModal(bookingId) {
+            currentEditingBookingId = bookingId;
+            const booking = adminBookings.find(b => b.id === bookingId);
+
+            if (!booking) {
+                alert('Booking not found');
+                return;
+            }
+
+            // Ensure data is loaded
+            await ensureAdminBookingData();
+
+            // Populate services dropdown
+            const serviceSelect = document.getElementById('editBookingService');
+            serviceSelect.innerHTML = adminBookingServices.map(s =>
+                `<option value="${s.id}" ${s.id === booking.serviceId ? 'selected' : ''}>
+                    ${s.name} - R${s.price}
+                </option>`
+            ).join('');
+
+            // Populate stylists dropdown
+            const stylistSelect = document.getElementById('editBookingStylist');
+            stylistSelect.innerHTML = '<option value="">Any Available</option>' +
+                adminBookingStylists.map(s =>
+                    `<option value="${s.id}" ${s.id === booking.stylistId ? 'selected' : ''}>${s.name}</option>`
+                ).join('');
+
+            // Fill form with current booking data
+            document.getElementById('editBookingCustomer').value = booking.customerName || 'Guest';
+            document.getElementById('editBookingService').value = booking.serviceId || '';
+            document.getElementById('editBookingStylist').value = booking.stylistId || '';
+            document.getElementById('editBookingDate').value = booking.date.split('T')[0];
+            document.getElementById('editBookingTime').value = booking.confirmedTime || booking.time || '';
+            document.getElementById('editBookingDuration').value = booking.duration || 60;
+            document.getElementById('editBookingStatus').value = booking.status;
+            document.getElementById('editBookingNotes').value = booking.notes || '';
+
+            // Clear error
+            const errorEl = document.getElementById('editBookingError');
+            if (errorEl) {
+                errorEl.style.display = 'none';
+                errorEl.textContent = '';
+            }
+
+            // Close day popup if open
+            closeBookingsDayPopup();
+
+            // Open edit modal
+            openModal('editBookingModal');
+        }
+
+        async function saveBookingEdit() {
+            const errorEl = document.getElementById('editBookingError');
+            if (errorEl) {
+                errorEl.style.display = 'none';
+                errorEl.textContent = '';
+            }
+
+            try {
+                const serviceId = document.getElementById('editBookingService').value;
+                const stylistId = document.getElementById('editBookingStylist').value;
+                const date = document.getElementById('editBookingDate').value;
+                const time = document.getElementById('editBookingTime').value;
+                const duration = document.getElementById('editBookingDuration').value;
+                const status = document.getElementById('editBookingStatus').value;
+                const notes = document.getElementById('editBookingNotes').value;
+
+                if (!date) {
+                    throw new Error('Date is required');
+                }
+
+                if (!serviceId) {
+                    throw new Error('Service is required');
+                }
+
+                const service = adminBookingServices.find(s => s.id === serviceId);
+                if (!service) {
+                    throw new Error('Invalid service selected');
+                }
+
+                const updateData = {
+                    serviceId: serviceId,
+                    serviceName: service.name,
+                    servicePrice: service.price,
+                    stylistId: stylistId || null,
+                    date: date,
+                    confirmedTime: time || null,
+                    time: time || null,
+                    duration: duration ? parseInt(duration) : null,
+                    status: status,
+                    notes: notes || null,
+                    updatedAt: new Date().toISOString()
+                };
+
+                // If status is completed, add completed timestamp
+                if (status === 'completed') {
+                    updateData.completedAt = new Date().toISOString();
+                }
+
+                await apiCall(`/admin/bookings/${currentEditingBookingId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify(updateData)
+                });
+
+                alert('Booking updated successfully!');
+                closeModal('editBookingModal');
+                loadBookings();
+
+            } catch (error) {
+                if (errorEl) {
+                    errorEl.style.display = 'block';
+                    errorEl.textContent = error.message;
+                } else {
+                    alert('Error: ' + error.message);
+                }
+            }
+        }
+
+        async function deleteBooking(bookingId) {
+            if (!confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                await apiCall(`/admin/bookings/${bookingId}`, {
+                    method: 'DELETE'
+                });
+
+                alert('Booking deleted successfully');
+                closeBookingsDayPopup();
+                closeModal('editBookingModal');
+                loadBookings();
+
+            } catch (error) {
+                alert('Error deleting booking: ' + error.message);
+            }
         }
 
         async function completeBooking(id) {
@@ -5714,7 +6600,7 @@
                     method: 'POST',
                     body: JSON.stringify({
                         conversationId: selectedConversationId,
-                        message: message
+                        text: message
                     })
                 });
 

@@ -6,11 +6,15 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const EMAILS_FILE = path.join(__dirname, 'emails.json');
+const FLIRT_DIR = path.join(__dirname, 'Flirt');
+const MAIN_SITE = path.join(FLIRT_DIR, 'flirt-hair-app.html');
+const ADMIN_SITE = path.join(FLIRT_DIR, 'flirt-admin-console.html');
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
+app.use(express.static(FLIRT_DIR));
 
 // Initialize emails file if it doesn't exist
 if (!fs.existsSync(EMAILS_FILE)) {
@@ -139,19 +143,24 @@ app.get('/api/export', (req, res) => {
 
 // Serve the main landing pages
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'Thebutterfly effect.html'));
+    res.sendFile(MAIN_SITE);
 });
 
 app.get('/variant-a', (req, res) => {
-    res.sendFile(path.join(__dirname, 'Thebutterfly effect.html'));
+    res.sendFile(MAIN_SITE);
 });
 
 app.get('/variant-b', (req, res) => {
-    res.sendFile(path.join(__dirname, 'The butterflyeffectv2.html'));
+    res.sendFile(MAIN_SITE);
 });
 
 app.get('/science', (req, res) => {
-    res.sendFile(path.join(__dirname, 'The butterflyeffectv2.html'));
+    res.sendFile(MAIN_SITE);
+});
+
+// Admin console
+app.get('/admin', (req, res) => {
+    res.sendFile(ADMIN_SITE);
 });
 
 // Start server

@@ -271,3 +271,68 @@ CREATE TABLE IF NOT EXISTS payment_transactions (
 CREATE INDEX IF NOT EXISTS idx_payments_order ON payment_transactions(order_id);
 CREATE INDEX IF NOT EXISTS idx_payments_user ON payment_transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payment_transactions(status);
+
+-- ============================================
+-- CHAT CONVERSATIONS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS chat_conversations (
+    id TEXT PRIMARY KEY,
+    user_id TEXT REFERENCES users(id),
+    guest_id TEXT, -- For non-logged-in users
+    user_name TEXT NOT NULL,
+    user_email TEXT,
+    source TEXT DEFAULT 'general', -- 'general', 'stylist', 'booking', etc.
+    status TEXT DEFAULT 'open' CHECK(status IN ('open', 'closed')),
+    assigned_to TEXT REFERENCES users(id), -- Staff/stylist assigned to conversation
+    unread_by_agent INTEGER DEFAULT 0, -- Count of unread messages by agent
+    unread_by_user INTEGER DEFAULT 0, -- Count of unread messages by user
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    last_message_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_conv_user ON chat_conversations(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_conv_guest ON chat_conversations(guest_id);
+CREATE INDEX IF NOT EXISTS idx_chat_conv_status ON chat_conversations(status);
+CREATE INDEX IF NOT EXISTS idx_chat_conv_assigned ON chat_conversations(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_chat_conv_last_msg ON chat_conversations(last_message_at);
+
+-- ============================================
+-- CHAT MESSAGES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id TEXT PRIMARY KEY,
+    conversation_id TEXT NOT NULL REFERENCES chat_conversations(id) ON DELETE CASCADE,
+    from_type TEXT NOT NULL CHECK(from_type IN ('user', 'agent', 'system')),
+    text TEXT NOT NULL,
+    agent_id TEXT REFERENCES users(id), -- Which agent sent this (if from_type='agent')
+    read_by_agent INTEGER DEFAULT 0, -- Has agent read this message
+    read_by_user INTEGER DEFAULT 0, -- Has user read this message
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_msg_conv ON chat_messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_chat_msg_created ON chat_messages(created_at);
+
+-- ============================================
+-- GALLERY TABLES (persist gallery items + Instagram config)
+-- ============================================
+CREATE TABLE IF NOT EXISTS gallery_items (
+    id TEXT PRIMARY KEY,
+    image_url TEXT NOT NULL,
+    alt_text TEXT,
+    label TEXT,
+    category TEXT,
+    order_num INTEGER,
+    active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_gallery_order ON gallery_items(order_num);
+CREATE INDEX IF NOT EXISTS idx_gallery_active ON gallery_items(active);
+
+CREATE TABLE IF NOT EXISTS gallery_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
