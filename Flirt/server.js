@@ -4920,6 +4920,7 @@ app.get('/api/admin/chat/conversations/:id', authenticateAdmin, async (req, res)
 app.post('/api/admin/chat/message', authenticateAdmin, async (req, res) => {
     try {
         const { conversationId, text } = req.body;
+        console.log('Admin chat message request:', { conversationId, text: text?.substring(0, 50), userId: req.user?.id });
 
         if (!conversationId) {
             return res.status(400).json({ success: false, message: 'Conversation ID is required' });
@@ -4934,8 +4935,11 @@ app.post('/api/admin/chat/message', authenticateAdmin, async (req, res) => {
         }
 
         const now = new Date().toISOString();
+        const messageId = 'msg_' + uuidv4().substring(0, 8);
+        console.log('Creating message with ID:', messageId);
+
         const newMessage = await ChatRepository.createMessage({
-            id: 'msg_' + uuidv4().substring(0, 8),
+            id: messageId,
             conversationId,
             fromType: 'agent',
             text: text.trim(),
@@ -4944,6 +4948,11 @@ app.post('/api/admin/chat/message', authenticateAdmin, async (req, res) => {
             readByUser: 0,
             createdAt: now
         });
+
+        if (!newMessage) {
+            console.error('Failed to create message - no message returned');
+            return res.status(500).json({ success: false, message: 'Failed to create message' });
+        }
 
         // Assign conversation if needed
         if (!conversation.assigned_to) {
@@ -4961,7 +4970,8 @@ app.post('/api/admin/chat/message', authenticateAdmin, async (req, res) => {
         }});
     } catch (error) {
         console.error('Error sending admin chat message:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        console.error('Stack:', error.stack);
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
     }
 });
 
