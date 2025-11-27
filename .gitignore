@@ -49,4 +49,5 @@ build/
 *.tgz
 
 # Railway local files
-.railway/
+.railway/nul
+Flirt/nul
