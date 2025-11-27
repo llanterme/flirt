@@ -89,6 +89,44 @@ async function initializeDatabase() {
     await ensureColumn('promos', 'title', 'TEXT');
     await ensureColumn('promos', 'subtitle', 'TEXT');
     await ensureColumn('promos', 'priority', 'INTEGER DEFAULT 0');
+
+    // Booking table migrations for two-step booking flow
+    await ensureColumn('bookings', 'requested_date', "TEXT DEFAULT '2024-01-01'");
+    await ensureColumn('bookings', 'requested_time_window', "TEXT DEFAULT 'MORNING' CHECK(requested_time_window IN ('MORNING', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING'))");
+    await ensureColumn('bookings', 'assigned_start_time', 'TEXT');
+    await ensureColumn('bookings', 'assigned_end_time', 'TEXT');
+
+    // Update existing bookings to have proper status values
+    await ensureColumnWithUpdate('bookings', 'status',
+        "TEXT DEFAULT 'REQUESTED' CHECK(status IN ('REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED'))",
+        "'REQUESTED'"
+    );
+
+    // Migrate existing booking data to new fields
+    try {
+        // Update requested_date from legacy date field where available
+        await dbRun(`
+            UPDATE bookings
+            SET requested_date = COALESCE(date, '2024-01-01')
+            WHERE requested_date = '2024-01-01' AND date IS NOT NULL
+        `);
+
+        // Update requested_time_window from legacy preferred_time_of_day
+        await dbRun(`
+            UPDATE bookings
+            SET requested_time_window = CASE
+                WHEN preferred_time_of_day = 'morning' THEN 'MORNING'
+                WHEN preferred_time_of_day = 'afternoon' THEN 'AFTERNOON'
+                WHEN preferred_time_of_day = 'evening' THEN 'EVENING'
+                ELSE 'MORNING'
+            END
+            WHERE requested_time_window = 'MORNING' AND preferred_time_of_day IS NOT NULL
+        `);
+
+        console.log('Migrated legacy booking data to new fields');
+    } catch (error) {
+        console.log('Legacy booking migration skipped (table may not exist yet):', error.message);
+    }
 }
 
 // Utilities for lightweight migrations (add missing columns safely)
@@ -98,6 +136,22 @@ async function ensureColumn(table, column, definition) {
     if (!hasColumn) {
         await dbRun(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
         console.log(`Added missing column ${column} to ${table}`);
+    }
+}
+
+// Ensure column exists and update existing records if needed
+async function ensureColumnWithUpdate(table, column, definition, defaultValue) {
+    const info = await dbAll(`PRAGMA table_info(${table})`);
+    const hasColumn = info.some(col => col.name === column);
+    if (!hasColumn) {
+        await dbRun(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+        console.log(`Added missing column ${column} to ${table}`);
+
+        // Update existing records with the default value
+        if (defaultValue) {
+            await dbRun(`UPDATE ${table} SET ${column} = ${defaultValue} WHERE ${column} IS NULL`);
+            console.log(`Updated existing ${table} records with default ${column} value`);
+        }
     }
 }
 
