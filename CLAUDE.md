@@ -9,7 +9,7 @@ This repository contains **two distinct projects** in different stages of develo
 
 A comprehensive Progressive Web App (PWA) for a hair salon specializing in hair extensions, built for the South African market.
 
-**✅ Current Status:** Fully migrated to SQLite-only architecture with zero JSON dependencies. All core business logic uses SQLite repositories, while transient features (chat, gallery, hair tips) use in-memory storage.
+**✅ Current Status:** Fully migrated to SQLite-only architecture with zero JSON dependencies. All core business logic uses SQLite repositories; gallery and chat now persist to SQLite; only hair tips remain transient.
 
 ### Tech Stack
 
@@ -48,6 +48,7 @@ A comprehensive Progressive Web App (PWA) for a hair salon specializing in hair 
 - Inventory control and reporting
 - Promotion management
 - Stylist performance tracking
+- Live chat inbox with unread counts and assignment
 
 #### 📱 PWA Capabilities
 - Offline support with service worker
@@ -189,8 +190,14 @@ Flirt/
 - `GET /api/referrals` - Get referral stats
 
 ### Chat & Support
-- `POST /api/chat/send` - Send chat message
-- `GET /api/chat/messages` - Get chat history
+- `POST /api/chat/message` - Send chat message (creates/continues conversation)
+- `GET /api/chat/my-latest` - Fetch latest open conversation for current user/guest
+- `GET /api/chat/conversation/:id` - Fetch specific conversation
+- `GET /api/admin/chat/conversations` - Admin inbox (filters, unread counts)
+- `GET /api/admin/chat/conversations/:id` - Admin view conversation
+- `POST /api/admin/chat/message` - Admin reply
+- `PATCH /api/admin/chat/conversations/:id/read` - Mark as read
+- `PATCH /api/admin/chat/conversations/:id/status` - Open/close conversation
 
 ## 🛠️ Development Commands
 
@@ -225,7 +232,8 @@ npm start
 - **orders** - Purchase transactions
 - **loyalty_points** - Points tracking and history
 - **referrals** - Referral program data
-- **chat_messages** - Customer support messages
+- **gallery_items**, **gallery_settings** - Persisted gallery and Instagram config
+- **chat_conversations**, **chat_messages** - Persisted chat threads/messages with unread counts
 
 ### Key Relationships
 - Users have many bookings, orders, and loyalty points
@@ -336,8 +344,8 @@ For technical support or questions about this implementation:
 
 ## Recent Changes (2025-11-25)
 - Payments: Added runtime-configurable PayFast/Yoco settings (admin PUT `/api/admin/payment-config`), payment initiation + webhook endpoints, and frontend checkout redirect flow. APP/API base URLs, WhatsApp, and media bases are now configurable via meta tags.
-- Gallery/Media: Auto-seed gallery items when empty; added Instagram feed support (admin sets handle/embed, client renders embed when configured); fixed hardcoded media URLs; added placeholder PWA icons to stop 404s.
+- Gallery/Media: Persist gallery to SQLite (`gallery_items`, `gallery_settings`) with DB-backed admin CRUD and Instagram handle/embed; auto-seed defaults only when empty; client renders persisted feed; Instagram embed height extended to avoid internal scroll.
+- Chat: Persist chat to SQLite (`chat_conversations`, `chat_messages`) with user/guest identity, timestamps, unread counts; admin inbox uses DB-backed data; endpoints expanded for admin/user flows.
 - Content seeding: Auto-seed 20 hair care tips and default stylists on startup/empty datasets.
 - UI fixes: Corrected cart checkout alert escape, replaced missing team photo, ensured gallery/admin Instagram status rendering, and payment provider selection logic in checkout.
 - Dev UX: Added dev auto-login endpoint and client auto-login on localhost when no token is present (helps while social logins are unconfigured).
-- Instagram UX: Swapped between tiles/embed options, lengthened embed to show more of the feed.

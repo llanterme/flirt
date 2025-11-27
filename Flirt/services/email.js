@@ -59,6 +59,16 @@ const BRAND_STYLES = `
     </style>
 `;
 
+function formatEmailDate(dateValue) {
+    const date = new Date(dateValue);
+    return new Intl.DateTimeFormat('en-GB', {
+        weekday: 'long',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    }).format(date);
+}
+
 // Email header with logo
 function emailHeader(title = '') {
     return `
@@ -166,7 +176,7 @@ async function sendBookingConfirmation(booking, customer, stylist = null) {
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Date</span>
-                    <span class="detail-value">${new Date(booking.date).toLocaleDateString('en-ZA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    <span class="detail-value">${formatEmailDate(booking.date)}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Time</span>
@@ -231,7 +241,7 @@ async function sendBookingReminder(booking, customer, stylist = null) {
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Date</span>
-                    <span class="detail-value">${new Date(booking.date).toLocaleDateString('en-ZA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    <span class="detail-value">${formatEmailDate(booking.date)}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Time</span>

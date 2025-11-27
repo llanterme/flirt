@@ -18,7 +18,11 @@
       "Bash(node:*)",
       "Bash(curl:*)",
       "Bash(cat:*)",
-      "Bash(del debug-bookings.js test-api.js check-users.js test-date-filter.js test-month-end.js test-month-calc.js)"
+      "Bash(del debug-bookings.js test-api.js check-users.js test-date-filter.js test-month-end.js test-month-calc.js)",
+      "Bash(del dbcheck-table.js dbcleanup.js dbfix-booking-constraint.js)",
+      "Bash(del dbshow-schema.js dbcheck-bookings.js)",
+      "Bash(del fix-calendar-popup.js)",
+      "Bash(Start-Sleep -Seconds 3)"
     ],
     "deny": [],
     "ask": []

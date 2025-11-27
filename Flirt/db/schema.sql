@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS services (
 CREATE INDEX IF NOT EXISTS idx_services_type ON services(service_type);
 
 -- ============================================
--- BOOKINGS TABLE
+-- BOOKINGS TABLE (Redesigned for two-step booking flow)
 -- ============================================
 CREATE TABLE IF NOT EXISTS bookings (
     id TEXT PRIMARY KEY,
@@ -84,20 +84,34 @@ CREATE TABLE IF NOT EXISTS bookings (
     service_id TEXT NOT NULL REFERENCES services(id),
     service_name TEXT NOT NULL,
     service_price REAL NOT NULL,
-    date TEXT NOT NULL,
+
+    -- New two-step booking fields
+    requested_date TEXT NOT NULL,
+    requested_time_window TEXT CHECK(requested_time_window IN ('MORNING', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING')),
+    assigned_start_time TEXT,
+    assigned_end_time TEXT,
+    status TEXT DEFAULT 'REQUESTED' CHECK(status IN ('REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED')),
+
+    -- Legacy fields (kept for backward compatibility during migration)
+    date TEXT,
     preferred_time_of_day TEXT,
     time TEXT,
     confirmed_time TEXT,
-    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'confirmed', 'completed', 'cancelled')),
+
     notes TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings(user_id);
-CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(date);
+CREATE INDEX IF NOT EXISTS idx_bookings_requested_date ON bookings(requested_date);
+CREATE INDEX IF NOT EXISTS idx_bookings_requested_time_window ON bookings(requested_time_window);
+CREATE INDEX IF NOT EXISTS idx_bookings_assigned_start_time ON bookings(assigned_start_time);
 CREATE INDEX IF NOT EXISTS idx_bookings_stylist ON bookings(stylist_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+
+-- Legacy indexes (can be removed after migration)
+CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(date);
 
 -- ============================================
 -- PRODUCTS TABLE
@@ -168,6 +182,11 @@ CREATE TABLE IF NOT EXISTS promos (
     expires_at TEXT,
     usage_limit INTEGER,
     times_used INTEGER DEFAULT 0,
+    highlighted INTEGER DEFAULT 0,
+    badge TEXT,
+    title TEXT,
+    subtitle TEXT,
+    priority INTEGER DEFAULT 0,
     active INTEGER DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
 );
@@ -336,3 +355,19 @@ CREATE TABLE IF NOT EXISTS gallery_settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
+
+-- ============================================
+-- HAIR TIPS TABLE (persisted tips for customer/admin)
+-- ============================================
+CREATE TABLE IF NOT EXISTS hair_tips (
+    id TEXT PRIMARY KEY,
+    text TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    priority INTEGER DEFAULT 1,
+    active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_hair_tips_active ON hair_tips(active);
+CREATE INDEX IF NOT EXISTS idx_hair_tips_priority ON hair_tips(priority DESC, created_at DESC);

@@ -20,7 +20,7 @@ const https = require('https');
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
-let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository;
+let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository;
 
 try {
     const dbModule = require('./db/database');
@@ -40,6 +40,7 @@ try {
     LoyaltyRepository = dbModule.LoyaltyRepository;
     NotificationRepository = dbModule.NotificationRepository;
     ChatRepository = dbModule.ChatRepository;
+    HairTipRepository = dbModule.HairTipRepository;
 
     // Ensure database directory exists
     const dbDir = path.dirname(DATABASE_PATH);
@@ -125,8 +126,8 @@ function recordLoginAttempt(identifier, success) {
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Needed for PayFast form callbacks
+app.use(express.json({ limit: '10mb' })); // Increase limit for base64 images
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Needed for PayFast form callbacks
 app.use(express.static(__dirname));
 
 // ============================================
@@ -141,6 +142,8 @@ async function seedAdminUser() {
         await seedStylistsDefaults();
         // Seed services into DB if missing
         await seedServicesDefaults();
+        // Seed hair tips into DB if missing
+        await seedHairTipsDefaults();
 
         // Load persisted payment configuration into runtime (if any)
         try {
@@ -928,6 +931,36 @@ app.get('/api/services/beauty', async (req, res) => {
     }
 });
 
+// Get all service types with metadata (for dynamic booking type cards)
+app.get('/api/service-types', async (req, res) => {
+    try {
+        const services = await ServiceRepository.findAll();
+
+        // Group services by type and get counts
+        const typeMap = {};
+        services.forEach(service => {
+            if (!typeMap[service.service_type]) {
+                typeMap[service.service_type] = {
+                    type: service.service_type,
+                    count: 0,
+                    services: []
+                };
+            }
+            if (service.active) {
+                typeMap[service.service_type].count++;
+                typeMap[service.service_type].services.push(service);
+            }
+        });
+
+        const types = Object.values(typeMap).filter(t => t.count > 0);
+
+        res.json({ success: true, types });
+    } catch (error) {
+        console.error('Error fetching service types:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch service types' });
+    }
+});
+
 // ============================================
 // BOOKINGS ROUTES
 // ============================================
@@ -941,10 +974,11 @@ function checkBookingConflict(bookingsData, stylistId, date, time, excludeBookin
         if (b.status === 'cancelled') return false;
         if (excludeBookingId && b.id === excludeBookingId) return false;
 
-        // Check same stylist, same date, same time
-        if (b.stylistId === stylistId && b.date === date) {
+        // Check same stylist, same date, same time (support both old and new schema)
+        const bookingDate = b.requestedDate || b.date;
+        if (b.stylistId === stylistId && bookingDate === date) {
             // For confirmed bookings with exact time
-            if (b.confirmedTime === time || b.time === time) {
+            if (b.confirmedTime === time || b.time === time || b.assignedStartTime === time) {
                 return true;
             }
         }
@@ -963,10 +997,17 @@ function mapBookingResponse(row) {
         userId: row.user_id || row.userId,
         type: row.booking_type || row.bookingType || row.type,
         stylistId: row.stylist_id || row.stylistId || null,
+        stylistName: row.stylist_name || row.stylistName || null,
         serviceId: row.service_id || row.serviceId,
         serviceName: row.service_name || row.serviceName,
         servicePrice: row.service_price ?? row.servicePrice ?? null,
-        date: row.date,
+        // New two-step booking fields
+        requestedDate: row.requested_date || row.requestedDate || null,
+        requestedTimeWindow: row.requested_time_window || row.requestedTimeWindow || null,
+        assignedStartTime: row.assigned_start_time || row.assignedStartTime || null,
+        assignedEndTime: row.assigned_end_time || row.assignedEndTime || null,
+        // Legacy fields (for backward compatibility)
+        date: row.date || row.requested_date || null,
         preferredTimeOfDay: row.preferred_time_of_day ?? row.preferredTimeOfDay ?? null,
         time: row.time ?? null,
         confirmedTime: row.confirmed_time ?? row.confirmedTime ?? null,
@@ -998,24 +1039,55 @@ function normalizeTimeStr(time) {
     return `${hours.toString().padStart(2, '0')}:${minutes}`;
 }
 
+// Helper function to add hours to a time string (HH:MM format)
+function addHoursToTime(timeStr, hoursToAdd) {
+    if (!timeStr) return null;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const newHours = (hours + hoursToAdd) % 24;
+    return `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
+// Helper function to add duration in minutes to a time string (HH:MM format)
+function addDuration(timeStr, durationMinutes) {
+    if (!timeStr || !durationMinutes) return null;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const totalMinutes = hours * 60 + minutes + durationMinutes;
+    const newHours = Math.floor(totalMinutes / 60) % 24;
+    const newMinutes = totalMinutes % 60;
+    return `${newHours.toString().padStart(2, '0')}:${newMinutes.toString().padStart(2, '0')}`;
+}
+
 // Create booking
 app.post('/api/bookings', authenticateToken, async (req, res) => {
-    const { type, stylistId, serviceId, date, preferredTimeOfDay, time, notes } = req.body;
+    const { type, stylistId, serviceId, date, requestedTimeWindow, preferredTimeOfDay, time, notes } = req.body;
+
+    // Support both new (requestedTimeWindow) and legacy (preferredTimeOfDay) parameters
+    const timeWindow = requestedTimeWindow || preferredTimeOfDay;
 
     if (!type || !serviceId || !date) {
         return res.status(400).json({ success: false, message: 'Type, service, and date are required' });
     }
 
-    if (type === 'hair' && !stylistId) {
-        return res.status(400).json({ success: false, message: 'Stylist is required for hair bookings' });
+    // For the new two-step booking flow, require time window instead of exact time
+    if (type === 'hair' && !timeWindow) {
+        return res.status(400).json({ success: false, message: 'Time window is required for hair bookings (MORNING, AFTERNOON, LATE_AFTERNOON, or EVENING)' });
     }
 
     if (type === 'beauty' && !time) {
         return res.status(400).json({ success: false, message: 'Time is required for beauty bookings' });
     }
 
-    // Validate date is in the future
-    const bookingDate = new Date(date);
+    // Validate time window for hair bookings
+    const validTimeWindows = ['MORNING', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING'];
+    if (type === 'hair' && timeWindow && !validTimeWindows.includes(timeWindow)) {
+        return res.status(400).json({
+            success: false,
+            message: `Invalid time window. Must be one of: ${validTimeWindows.join(', ')}`
+        });
+    }
+
+    // Validate date is in the future (compare dates only, not time)
+    const bookingDate = new Date(date + 'T00:00:00'); // Parse as local timezone
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (bookingDate < today) {
@@ -1026,14 +1098,15 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
         const normalizedTime = normalizeTimeStr(time);
 
         // Check for booking conflicts (exact same stylist, date, time)
-        if (normalizedTime && stylistId) {
+        // Only for beauty bookings with exact time - hair bookings will be checked when admin assigns time
+        if (normalizedTime && type === 'beauty' && stylistId) {
             const conflict = await BookingRepository.findConflict(stylistId, date, normalizedTime);
             if (conflict) {
                 return res.status(409).json({
                     success: false,
                     message: 'This time slot is already booked. Please select a different time.',
                     conflict: {
-                        date: conflict.date,
+                        date: conflict.requestedDate || conflict.date,
                         time: conflict.confirmed_time || conflict.time
                     }
                 });
@@ -1055,11 +1128,17 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
             serviceId,
             serviceName: service.name,
             servicePrice: service.price,
+            // New two-step booking fields
+            requestedDate: date,
+            requestedTimeWindow: type === 'hair' ? timeWindow : null,
+            assignedStartTime: type === 'beauty' ? normalizedTime : null,
+            assignedEndTime: type === 'beauty' && normalizedTime ? addHoursToTime(normalizedTime, 1) : null,
+            status: type === 'hair' ? 'REQUESTED' : 'CONFIRMED',
+            // Legacy fields (for backward compatibility)
             date,
-            preferredTimeOfDay: type === 'hair' ? (preferredTimeOfDay || null) : null,
-            time: type === 'beauty' ? time : null,
-            confirmedTime: type === 'beauty' ? time : null,
-            status: type === 'hair' ? 'pending' : 'confirmed',
+            preferredTimeOfDay: type === 'hair' ? timeWindow : null,
+            time: type === 'beauty' ? normalizedTime : null,
+            confirmedTime: type === 'beauty' ? normalizedTime : null,
             notes: notes || null
         };
 
@@ -1068,7 +1147,7 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
 
         // Award loyalty points for booking
         const loyaltySettings = await LoyaltyRepository.getSettings();
-        const pointsToAdd = loyaltySettings.bookingPoints || 50;
+        const pointsToAdd = loyaltySettings.pointsRules?.bookingPoints || 50;
 
         if (pointsToAdd > 0) {
             await UserRepository.addPoints(req.user.id, pointsToAdd);
@@ -1084,7 +1163,7 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
         res.status(201).json({
             success: true,
             message: type === 'hair'
-                ? 'Booking request submitted. We will contact you within 24 hours to confirm the time.'
+                ? 'Booking request submitted! We will assign an exact time within 24 hours and notify you.'
                 : 'Booking confirmed!',
             booking: bookingResponse
         });
@@ -1107,7 +1186,10 @@ app.get('/api/bookings', authenticateToken, async (req, res) => {
 
 // Cancel/reschedule booking
 app.patch('/api/bookings/:id', authenticateToken, async (req, res) => {
-    const { status, date, preferredTimeOfDay, time, confirmedTime } = req.body;
+    const { status, date, preferredTimeOfDay, time, confirmedTime, requestedDate, requestedTimeWindow, assignedStartTime, assignedEndTime } = req.body;
+
+    // Log request for debugging
+    console.log(`📝 PATCH /api/bookings/${req.params.id}:`, JSON.stringify(req.body, null, 2));
 
     try {
         // Find booking and verify ownership
@@ -1119,23 +1201,172 @@ app.patch('/api/bookings/:id', authenticateToken, async (req, res) => {
 
         const updates = {};
 
-        if (status) updates.status = status;
-        if (date) {
-            updates.date = date;
-            // Reset status to pending when rescheduling
-            if (!status) updates.status = 'pending';
+        // Handle new two-step booking fields
+        if (status) {
+            // Validate status
+            const validStatuses = ['REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED'];
+            if (!validStatuses.includes(status)) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+                });
+            }
+            updates.status = status;
         }
-        if (preferredTimeOfDay !== undefined) updates.preferredTimeOfDay = preferredTimeOfDay;
+
+        // Support both new and legacy field names for date
+        const newDate = requestedDate || date;
+        if (newDate) {
+            updates.requestedDate = newDate;
+            updates.date = newDate; // Keep legacy field for backward compatibility
+            // Reset status to REQUESTED when rescheduling (unless explicitly set)
+            if (!status) updates.status = 'REQUESTED';
+        }
+
+        // Support both new and legacy field names for time window
+        const newTimeWindow = requestedTimeWindow || preferredTimeOfDay;
+        if (newTimeWindow !== undefined) {
+            // Validate time window if not null
+            if (newTimeWindow !== null) {
+                const validWindows = ['MORNING', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING'];
+                if (!validWindows.includes(newTimeWindow)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Invalid time window '${newTimeWindow}'. Must be one of: ${validWindows.join(', ')}`
+                    });
+                }
+            }
+            updates.requestedTimeWindow = newTimeWindow;
+            updates.preferredTimeOfDay = newTimeWindow; // Keep legacy field
+        }
+
+        // Handle assigned time fields (can be set to null when rescheduling)
+        if (assignedStartTime !== undefined) {
+            updates.assignedStartTime = assignedStartTime === null ? null : assignedStartTime;
+        }
+        if (assignedEndTime !== undefined) {
+            updates.assignedEndTime = assignedEndTime === null ? null : assignedEndTime;
+        }
+
+        // Legacy fields
         if (time) updates.time = normalizeTimeStr(time);
-        // Allow confirmedTime to be explicitly set to null (when rescheduling)
         if (confirmedTime !== undefined) updates.confirmedTime = confirmedTime === null ? null : normalizeTimeStr(confirmedTime);
+
+        console.log(`✅ Updating booking with:`, JSON.stringify(updates, null, 2));
 
         const updatedBooking = await BookingRepository.update(req.params.id, updates);
 
         res.json({ success: true, booking: mapBookingResponse(updatedBooking) });
     } catch (error) {
-        console.error('Database error updating booking:', error.message);
+        console.error('❌ Database error updating booking:', error.message);
         res.status(500).json({ success: false, message: 'Failed to update booking' });
+    }
+});
+
+// ============================================
+// USER INSPO PHOTOS ROUTES
+// ============================================
+
+// Get user's inspo photos
+app.get('/api/inspo-photos', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const photos = await db.dbAll(
+            'SELECT id, label, notes, created_at FROM user_inspo_photos WHERE user_id = ? ORDER BY created_at DESC',
+            [userId]
+        );
+
+        // Don't send full base64 data in list view - too large
+        res.json({ success: true, photos, count: photos.length });
+    } catch (error) {
+        console.error('Database error fetching inspo photos:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch photos' });
+    }
+});
+
+// Get single inspo photo with full image data
+app.get('/api/inspo-photos/:id', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const photo = await db.dbGet(
+            'SELECT * FROM user_inspo_photos WHERE id = ? AND user_id = ?',
+            [req.params.id, userId]
+        );
+
+        if (!photo) {
+            return res.status(404).json({ success: false, message: 'Photo not found' });
+        }
+
+        res.json({ success: true, photo });
+    } catch (error) {
+        console.error('Database error fetching inspo photo:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch photo' });
+    }
+});
+
+// Add inspo photo
+app.post('/api/inspo-photos', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { imageData, label, notes } = req.body;
+
+        if (!imageData) {
+            return res.status(400).json({ success: false, message: 'Image data is required' });
+        }
+
+        // Check current count
+        const countResult = await db.dbGet(
+            'SELECT COUNT(*) as count FROM user_inspo_photos WHERE user_id = ?',
+            [userId]
+        );
+
+        if (countResult.count >= 5) {
+            return res.status(400).json({
+                success: false,
+                message: 'Maximum of 5 photos allowed. Please delete a photo before uploading a new one.'
+            });
+        }
+
+        const photoId = `photo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        await db.dbRun(
+            'INSERT INTO user_inspo_photos (id, user_id, image_data, label, notes) VALUES (?, ?, ?, ?, ?)',
+            [photoId, userId, imageData, label || null, notes || null]
+        );
+
+        const newPhoto = await db.dbGet(
+            'SELECT id, label, notes, created_at FROM user_inspo_photos WHERE id = ?',
+            [photoId]
+        );
+
+        res.json({ success: true, photo: newPhoto });
+    } catch (error) {
+        console.error('Database error adding inspo photo:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to add photo' });
+    }
+});
+
+// Delete inspo photo
+app.delete('/api/inspo-photos/:id', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Verify ownership
+        const photo = await db.dbGet(
+            'SELECT id FROM user_inspo_photos WHERE id = ? AND user_id = ?',
+            [req.params.id, userId]
+        );
+
+        if (!photo) {
+            return res.status(404).json({ success: false, message: 'Photo not found' });
+        }
+
+        await db.dbRun('DELETE FROM user_inspo_photos WHERE id = ? AND user_id = ?', [req.params.id, userId]);
+
+        res.json({ success: true, message: 'Photo deleted' });
+    } catch (error) {
+        console.error('Database error deleting inspo photo:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to delete photo' });
     }
 });
 
@@ -1267,7 +1498,13 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
 
         // Award loyalty points
         const loyaltySettings = await LoyaltyRepository.getSettings();
-        const pointsToAdd = Math.floor(total / loyaltySettings.spendRatio);
+        const spendRand = loyaltySettings.pointsRules?.spendRand || 0;
+        let pointsToAdd = 0;
+
+        // Calculate points if spendRand is valid (positive)
+        if (spendRand > 0) {
+            pointsToAdd = Math.floor(total / spendRand);
+        }
 
         if (pointsToAdd > 0) {
             await UserRepository.addPoints(req.user.id, pointsToAdd);
@@ -1532,6 +1769,12 @@ app.get('/api/loyalty/balance', authenticateToken, async (req, res) => {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
+        if (!user.referral_code) {
+            const newCode = generateReferralCode(user.name || 'User');
+            await UserRepository.update(user.id, { referralCode: newCode });
+            user.referral_code = newCode;
+        }
+
         res.json({
             success: true,
             points: user.points,
@@ -1617,7 +1860,7 @@ app.post('/api/referrals/apply', authenticateToken, async (req, res) => {
 
         // Get referral points from loyalty settings
         const loyaltySettings = await LoyaltyRepository.getSettings();
-        const referralPoints = loyaltySettings.referralPoints || 100;
+        const referralPoints = loyaltySettings.pointsRules?.referralPoints || 100;
 
         // Update current user's referrer
         await UserRepository.update(req.user.id, { referred_by: referrer.id });
@@ -1657,6 +1900,14 @@ app.post('/api/referrals/apply', authenticateToken, async (req, res) => {
 app.get('/api/referrals', authenticateToken, async (req, res) => {
     try {
         const currentUser = await UserRepository.findById(req.user.id);
+        if (!currentUser) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        if (!currentUser.referral_code) {
+            const newCode = generateReferralCode(currentUser.name || 'User');
+            await UserRepository.update(currentUser.id, { referralCode: newCode });
+            currentUser.referral_code = newCode;
+        }
         const referrals = await UserRepository.findReferrals(req.user.id);
 
         res.json({
@@ -1679,30 +1930,41 @@ app.get('/api/referrals', authenticateToken, async (req, res) => {
 app.get('/api/hair-tracker/config', async (req, res) => {
     try {
         // Hair tracker config is now stored in the database or use default values
+        const extensionTypeIntervals = {
+            'clip-in': 1,        // Daily removal
+            'tape-in': 42,       // 6 weeks
+            'sew-in': 56,        // 8 weeks
+            'micro-link': 84,    // 12 weeks
+            'fusion': 84,        // 12 weeks
+            'halo': 1,           // Daily removal
+            'ponytail': 14,      // 2 weeks
+            'other': 42          // Default 6 weeks
+        };
+
+        const extensionTypeLabels = {
+            'clip-in': 'Clip-In Extensions',
+            'tape-in': 'Tape-In Extensions',
+            'sew-in': 'Sew-In Weave',
+            'micro-link': 'Micro-Link Extensions',
+            'fusion': 'Fusion Extensions',
+            'halo': 'Halo Extensions',
+            'ponytail': 'Ponytail Extensions',
+            'other': 'Other'
+        };
+
+        // Convert to array of objects for frontend
+        const extensionTypes = Object.keys(extensionTypeIntervals).map(id => ({
+            id,
+            label: extensionTypeLabels[id],
+            maintenanceDays: extensionTypeIntervals[id]
+        }));
+
         const config = {
             washFrequencyDays: 3,
             deepConditionFrequencyDays: 14,
             defaultMaintenanceIntervalDays: 42,
-            extensionTypes: [
-                'clip-in',
-                'tape-in',
-                'sew-in',
-                'micro-link',
-                'fusion',
-                'halo',
-                'ponytail',
-                'other'
-            ],
-            extensionTypeIntervals: {
-                'clip-in': 1,        // Daily removal
-                'tape-in': 42,       // 6 weeks
-                'sew-in': 56,        // 8 weeks
-                'micro-link': 84,    // 12 weeks
-                'fusion': 84,        // 12 weeks
-                'halo': 1,           // Daily removal
-                'ponytail': 14,      // 2 weeks
-                'other': 42          // Default 6 weeks
-            }
+            extensionTypes,
+            extensionTypeIntervals // Keep for backward compatibility
         };
         res.json({ success: true, config });
     } catch (error) {
@@ -2104,6 +2366,342 @@ app.delete('/api/hair-tracker/remove-product/:productId', authenticateToken, asy
 // ADMIN ROUTES
 // ============================================
 
+// ============================================
+// ADMIN - SERVICE MANAGEMENT
+// ============================================
+
+// Get all services (with optional filtering)
+app.get('/api/admin/services', authenticateAdmin, async (req, res) => {
+    try {
+        const { service_type, active } = req.query;
+        let services = await ServiceRepository.findAll();
+
+        // Filter by service_type if provided
+        if (service_type) {
+            services = services.filter(s => s.service_type === service_type);
+        }
+
+        // Filter by active status if provided
+        if (active !== undefined) {
+            const activeFilter = active === 'true' || active === '1' ? 1 : 0;
+            services = services.filter(s => s.active === activeFilter);
+        }
+
+        res.json({ success: true, services });
+    } catch (error) {
+        console.error('Error fetching services:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch services' });
+    }
+});
+
+// Get single service
+app.get('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const service = await ServiceRepository.findById(req.params.id);
+
+        if (!service) {
+            return res.status(404).json({ success: false, message: 'Service not found' });
+        }
+
+        res.json({ success: true, service });
+    } catch (error) {
+        console.error('Error fetching service:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch service' });
+    }
+});
+
+// Get unique service types (for dropdown/filter)
+app.get('/api/admin/service-types', authenticateAdmin, async (req, res) => {
+    try {
+        const services = await ServiceRepository.findAll();
+        const types = [...new Set(services.map(s => s.service_type))].sort();
+        res.json({ success: true, types });
+    } catch (error) {
+        console.error('Error fetching service types:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch service types' });
+    }
+});
+
+// Create new service
+app.post('/api/admin/services', authenticateAdmin, async (req, res) => {
+    try {
+        const { name, description, price, duration, service_type, category, image_url } = req.body;
+
+        // Validation
+        if (!name || !price || !service_type) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: name, price, service_type'
+            });
+        }
+
+        if (typeof price !== 'number' || price < 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Price must be a positive number'
+            });
+        }
+
+        const service = {
+            id: require('uuid').v4(),
+            name: name.trim(),
+            description: description ? description.trim() : null,
+            price,
+            duration: duration || null,
+            service_type: service_type.trim().toLowerCase(),
+            category: category ? category.trim() : null,
+            image_url: image_url ? image_url.trim() : null,
+            active: 1,
+            created_at: new Date().toISOString()
+        };
+
+        await ServiceRepository.create(service);
+
+        res.json({ success: true, service, message: 'Service created successfully' });
+    } catch (error) {
+        console.error('Error creating service:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to create service' });
+    }
+});
+
+// Update service
+app.put('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, price, duration, service_type, category, image_url, active } = req.body;
+
+        // Check if service exists
+        const existing = await ServiceRepository.findById(id);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: 'Service not found' });
+        }
+
+        // Validation
+        if (price !== undefined && (typeof price !== 'number' || price < 0)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Price must be a positive number'
+            });
+        }
+
+        const updates = {
+            name: name !== undefined ? name.trim() : existing.name,
+            description: description !== undefined ? (description ? description.trim() : null) : existing.description,
+            price: price !== undefined ? price : existing.price,
+            duration: duration !== undefined ? duration : existing.duration,
+            service_type: service_type !== undefined ? service_type.trim().toLowerCase() : existing.service_type,
+            category: category !== undefined ? (category ? category.trim() : null) : existing.category,
+            image_url: image_url !== undefined ? (image_url ? image_url.trim() : null) : existing.image_url,
+            active: active !== undefined ? (active ? 1 : 0) : existing.active
+        };
+
+        await ServiceRepository.update(id, updates);
+        const updatedService = await ServiceRepository.findById(id);
+
+        res.json({ success: true, service: updatedService, message: 'Service updated successfully' });
+    } catch (error) {
+        console.error('Error updating service:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to update service' });
+    }
+});
+
+// Toggle service active status
+app.patch('/api/admin/services/:id/toggle', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const service = await ServiceRepository.findById(id);
+
+        if (!service) {
+            return res.status(404).json({ success: false, message: 'Service not found' });
+        }
+
+        const newStatus = service.active ? 0 : 1;
+        await ServiceRepository.update(id, { active: newStatus });
+        const updated = await ServiceRepository.findById(id);
+
+        res.json({
+            success: true,
+            service: updated,
+            message: `Service ${newStatus ? 'activated' : 'deactivated'} successfully`
+        });
+    } catch (error) {
+        console.error('Error toggling service status:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to toggle service status' });
+    }
+});
+
+// Delete service
+app.delete('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const service = await ServiceRepository.findById(id);
+
+        if (!service) {
+            return res.status(404).json({ success: false, message: 'Service not found' });
+        }
+
+        // Check if service is being used in any bookings
+        const bookings = await BookingRepository.findAll();
+        const serviceInUse = bookings.some(b => b.service_id === id);
+
+        if (serviceInUse) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete service - it is referenced in existing bookings. Consider deactivating it instead.'
+            });
+        }
+
+        await ServiceRepository.delete(id);
+
+        res.json({ success: true, message: 'Service deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting service:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to delete service' });
+    }
+});
+
+// ========== STAFF SERVICES MANAGEMENT ==========
+
+// Get all services offered by a specific staff member
+app.get('/api/admin/staff/:staffId/services', authenticateAdmin, async (req, res) => {
+    try {
+        const { staffId } = req.params;
+
+        const staffServices = await db.dbAll(`
+            SELECT
+                ss.*,
+                s.name as service_name,
+                s.price as default_price,
+                s.duration as default_duration,
+                s.category,
+                s.service_type
+            FROM staff_services ss
+            JOIN services s ON ss.service_id = s.id
+            WHERE ss.staff_id = ?
+            ORDER BY s.category, s.name
+        `, [staffId]);
+
+        res.json({ success: true, services: staffServices });
+    } catch (error) {
+        console.error('Error fetching staff services:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch staff services' });
+    }
+});
+
+// Add a service to a staff member's offerings
+app.post('/api/admin/staff/:staffId/services', authenticateAdmin, async (req, res) => {
+    try {
+        const { staffId } = req.params;
+        const { serviceId, customPrice, customDuration } = req.body;
+
+        if (!serviceId) {
+            return res.status(400).json({ success: false, message: 'Service ID is required' });
+        }
+
+        // Check if already exists
+        const existing = await db.dbGet(
+            'SELECT id FROM staff_services WHERE staff_id = ? AND service_id = ?',
+            [staffId, serviceId]
+        );
+
+        if (existing) {
+            return res.status(400).json({ success: false, message: 'Service already added to this staff member' });
+        }
+
+        const id = uuidv4();
+        await db.dbRun(`
+            INSERT INTO staff_services (id, staff_id, service_id, custom_price, custom_duration, active)
+            VALUES (?, ?, ?, ?, ?, 1)
+        `, [id, staffId, serviceId, customPrice || null, customDuration || null]);
+
+        res.json({ success: true, message: 'Service added to staff member' });
+    } catch (error) {
+        console.error('Error adding staff service:', error);
+        res.status(500).json({ success: false, message: 'Failed to add service' });
+    }
+});
+
+// Update a staff member's service (custom pricing/duration)
+app.put('/api/admin/staff/:staffId/services/:serviceId', authenticateAdmin, async (req, res) => {
+    try {
+        const { staffId, serviceId } = req.params;
+        const { customPrice, customDuration, active } = req.body;
+
+        await db.dbRun(`
+            UPDATE staff_services
+            SET custom_price = ?,
+                custom_duration = ?,
+                active = ?,
+                updated_at = datetime('now')
+            WHERE staff_id = ? AND service_id = ?
+        `, [customPrice || null, customDuration || null, active !== undefined ? active : 1, staffId, serviceId]);
+
+        res.json({ success: true, message: 'Staff service updated' });
+    } catch (error) {
+        console.error('Error updating staff service:', error);
+        res.status(500).json({ success: false, message: 'Failed to update service' });
+    }
+});
+
+// Remove a service from a staff member
+app.delete('/api/admin/staff/:staffId/services/:serviceId', authenticateAdmin, async (req, res) => {
+    try {
+        const { staffId, serviceId } = req.params;
+
+        await db.dbRun(
+            'DELETE FROM staff_services WHERE staff_id = ? AND service_id = ?',
+            [staffId, serviceId]
+        );
+
+        res.json({ success: true, message: 'Service removed from staff member' });
+    } catch (error) {
+        console.error('Error removing staff service:', error);
+        res.status(500).json({ success: false, message: 'Failed to remove service' });
+    }
+});
+
+// Get services for a specific stylist (client-facing, filtered by active and type)
+app.get('/api/stylists/:stylistId/services', async (req, res) => {
+    try {
+        const { stylistId } = req.params;
+        const { type } = req.query; // optional filter by service_type
+
+        let query = `
+            SELECT
+                s.id,
+                s.name,
+                s.description,
+                s.category,
+                s.service_type,
+                s.image_url,
+                COALESCE(ss.custom_price, s.price) as price,
+                COALESCE(ss.custom_duration, s.duration) as duration,
+                ss.active as staff_service_active
+            FROM staff_services ss
+            JOIN services s ON ss.service_id = s.id
+            WHERE ss.staff_id = ?
+              AND ss.active = 1
+              AND s.active = 1
+        `;
+
+        const params = [stylistId];
+
+        if (type) {
+            query += ' AND s.service_type = ?';
+            params.push(type);
+        }
+
+        query += ' ORDER BY s.category, s.name';
+
+        const services = await db.dbAll(query, params);
+
+        res.json({ success: true, services });
+    } catch (error) {
+        console.error('Error fetching stylist services:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch services' });
+    }
+});
+
 // Dashboard stats
 app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
     try {
@@ -2133,7 +2731,8 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
 
         // Bookings this month (all bookings in current month, including future dates)
         const monthBookings = allBookings.filter(b => {
-            return b.date && b.date >= monthStart && b.date <= monthEnd;
+            const bookingDate = b.requestedDate || b.date;
+            return bookingDate && bookingDate >= monthStart && bookingDate <= monthEnd;
         }).length;
 
         // Product orders this month
@@ -2147,7 +2746,8 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
         const activeUserIds = new Set();
 
         allBookings.forEach(b => {
-            if (b.date >= ninetyDaysAgo) activeUserIds.add(b.userId);
+            const bookingDate = b.requestedDate || b.date;
+            if (bookingDate >= ninetyDaysAgo) activeUserIds.add(b.userId);
         });
         allOrders.forEach(o => {
             const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
@@ -2156,7 +2756,10 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
         const activeCustomers = activeUserIds.size;
 
         // Today's bookings count
-        const todayBookings = allBookings.filter(b => b.date === today).length;
+        const todayBookings = allBookings.filter(b => {
+            const bookingDate = b.requestedDate || b.date;
+            return bookingDate === today;
+        }).length;
         const pendingBookings = allBookings.filter(b => b.status === 'pending').length;
         const pendingOrders = allOrders.filter(o => o.status === 'pending').length;
 
@@ -2239,7 +2842,8 @@ app.get('/api/admin/popular-services', authenticateAdmin, async (req, res) => {
         // Count bookings per service in the time range
         const serviceCounts = {};
         allBookings.forEach(b => {
-            if (b.date >= startDate) {
+            const bookingDate = b.requestedDate || b.date;
+            if (bookingDate >= startDate) {
                 const serviceName = b.serviceName || 'Unknown';
                 serviceCounts[serviceName] = (serviceCounts[serviceName] || 0) + 1;
             }
@@ -2321,21 +2925,18 @@ app.put('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
 
 // Create booking (admin on behalf of customer)
 app.post('/api/admin/bookings', authenticateAdmin, async (req, res) => {
-    const { userId, type, stylistId, serviceId, date, preferredTimeOfDay, time, notes } = req.body;
+    const { userId, type, stylistId, serviceId, date, time, duration, notes } = req.body;
 
-    if (!userId || !type || !serviceId || !date) {
-        return res.status(400).json({ success: false, message: 'User, type, service, and date are required' });
+    if (!userId || !type || !serviceId || !date || !time) {
+        return res.status(400).json({ success: false, message: 'User, type, service, date, and time are required' });
     }
 
     if (type === 'hair' && !stylistId) {
         return res.status(400).json({ success: false, message: 'Stylist is required for hair bookings' });
     }
 
-    if (type === 'beauty' && !time) {
-        return res.status(400).json({ success: false, message: 'Time is required for beauty bookings' });
-    }
-
-    const bookingDate = new Date(date);
+    // Validate date is in the future (compare dates only, not time)
+    const bookingDate = new Date(date + 'T00:00:00'); // Parse as local timezone
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (bookingDate < today) {
@@ -2350,7 +2951,17 @@ app.post('/api/admin/bookings', authenticateAdmin, async (req, res) => {
             return res.status(404).json({ success: false, message: 'Customer not found' });
         }
 
-        if (normalizedTime && stylistId) {
+        const service = await ServiceRepository.findById(serviceId);
+        if (!service) {
+            return res.status(404).json({ success: false, message: 'Service not found' });
+        }
+
+        // Use provided duration or fall back to service duration
+        const bookingDuration = duration || service.duration || 60;
+        const endTime = addDuration(normalizedTime, bookingDuration);
+
+        // Check for conflicts if stylist is assigned
+        if (stylistId) {
             const conflict = await BookingRepository.findConflict(stylistId, date, normalizedTime);
             if (conflict) {
                 return res.status(409).json({
@@ -2358,30 +2969,31 @@ app.post('/api/admin/bookings', authenticateAdmin, async (req, res) => {
                     message: 'This time slot is already booked. Please select a different time.',
                     conflict: {
                         date: conflict.date,
-                        time: conflict.confirmed_time || conflict.time
+                        time: conflict.assigned_start_time || conflict.confirmed_time || conflict.time
                     }
                 });
             }
         }
 
-        const service = await ServiceRepository.findById(serviceId);
-        if (!service) {
-            return res.status(404).json({ success: false, message: 'Service not found' });
-        }
-
+        // Admin bookings are always CONFIRMED with specific start/end times
         const newBooking = {
             id: uuidv4(),
             userId,
-            type,
+            bookingType: type,  // New schema field
+            type,  // Legacy field
             stylistId: stylistId || null,
             serviceId,
             serviceName: service.name,
             servicePrice: service.price,
-            date,
-            preferredTimeOfDay: type === 'hair' ? (preferredTimeOfDay || null) : null,
-            time: type === 'beauty' ? normalizedTime : null,
-            confirmedTime: type === 'beauty' ? normalizedTime : null,
-            status: type === 'hair' ? 'pending' : 'confirmed',
+            requestedDate: date,  // New schema field (required NOT NULL)
+            date,  // Legacy field
+            requestedTimeWindow: null,  // Admin bookings don't use time windows
+            preferredTimeOfDay: null,  // Legacy field
+            assignedStartTime: normalizedTime,  // Confirmed start time
+            assignedEndTime: endTime,  // Confirmed end time
+            time: normalizedTime,  // Legacy field
+            confirmedTime: normalizedTime,  // Legacy field
+            status: 'CONFIRMED',  // Admin bookings are immediately confirmed
             notes: notes || null
         };
 
@@ -2390,7 +3002,7 @@ app.post('/api/admin/bookings', authenticateAdmin, async (req, res) => {
 
         // Award loyalty points to the customer
         const loyaltySettings = await LoyaltyRepository.getSettings();
-        const pointsToAdd = loyaltySettings.bookingPoints || 50;
+        const pointsToAdd = loyaltySettings.pointsRules?.bookingPoints || 50;
 
         if (pointsToAdd > 0) {
             await UserRepository.addPoints(userId, pointsToAdd);
@@ -2399,7 +3011,7 @@ app.post('/api/admin/bookings', authenticateAdmin, async (req, res) => {
                 userId,
                 points: pointsToAdd,
                 type: 'earned',
-                description: `Booking (created by admin): ${service.name}`
+                description: `Booking (Created by admin): ${service.name}`
             });
         }
 
@@ -2479,7 +3091,7 @@ app.patch('/api/admin/bookings/:id/confirm', authenticateAdmin, async (req, res)
 
         const updatedBooking = await BookingRepository.updateById(req.params.id, {
             confirmedTime: normalizedTime,
-            status: 'confirmed',
+            status: 'CONFIRMED',  // Use uppercase to match CHECK constraint
             updatedAt: new Date().toISOString()
         });
 
@@ -2490,13 +3102,15 @@ app.patch('/api/admin/bookings/:id/confirm', authenticateAdmin, async (req, res)
     }
 });
 
-// Update booking status (admin) - supports 'completed', 'cancelled', 'pending', 'confirmed'
+// Update booking status (admin) - supports 'COMPLETED', 'CANCELLED', 'REQUESTED', 'CONFIRMED'
 app.patch('/api/admin/bookings/:id/status', authenticateAdmin, async (req, res) => {
     try {
         const { status } = req.body;
-        const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+        // Accept both lowercase and uppercase, but convert to uppercase for database
+        const statusUpper = status ? status.toUpperCase() : null;
+        const validStatuses = ['REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED'];
 
-        if (!status || !validStatuses.includes(status)) {
+        if (!statusUpper || !validStatuses.includes(statusUpper)) {
             return res.status(400).json({
                 success: false,
                 message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
@@ -2509,12 +3123,12 @@ app.patch('/api/admin/bookings/:id/status', authenticateAdmin, async (req, res) 
         }
 
         const updateData = {
-            status: status,
+            status: statusUpper,  // Use uppercase for database
             updatedAt: new Date().toISOString()
         };
 
         // Add completion timestamp if marking as completed
-        if (status === 'completed') {
+        if (statusUpper === 'COMPLETED') {
             updateData.completedAt = new Date().toISOString();
         }
 
@@ -2524,6 +3138,120 @@ app.patch('/api/admin/bookings/:id/status', authenticateAdmin, async (req, res) 
     } catch (error) {
         console.error('Database error updating booking status:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
+});
+
+// Update booking details (admin) - full edit capability
+app.patch('/api/admin/bookings/:id', authenticateAdmin, async (req, res) => {
+    const {
+        serviceId,
+        stylistId,
+        status,
+        date,
+        time,
+        duration,
+        requestedDate,
+        requestedTimeWindow,
+        assignedStartTime,
+        assignedEndTime,
+        notes,
+        confirmedTime
+    } = req.body;
+
+    console.log(`📝 PATCH /api/admin/bookings/${req.params.id}:`, JSON.stringify(req.body, null, 2));
+
+    try {
+        const booking = await BookingRepository.findById(req.params.id);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        const updates = {};
+
+        // Service
+        if (serviceId !== undefined) {
+            updates.service_id = serviceId;
+            // Fetch service name if changing service
+            if (serviceId) {
+                const service = await ServiceRepository.findById(serviceId);
+                if (service) {
+                    updates.service_name = service.name;
+                    updates.service_price = service.price;
+                }
+            }
+        }
+
+        // Stylist
+        if (stylistId !== undefined) {
+            updates.stylist_id = stylistId || null;
+        }
+
+        // Status
+        if (status) {
+            const statusUpper = status.toUpperCase();
+            const validStatuses = ['REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED'];
+            if (!validStatuses.includes(statusUpper)) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+                });
+            }
+            updates.status = statusUpper;
+        }
+
+        // Date handling - support both new and legacy fields
+        const newDate = requestedDate || date;
+        if (newDate) {
+            updates.requested_date = newDate;
+            updates.date = newDate; // Keep legacy field
+        }
+
+        // Time window
+        if (requestedTimeWindow !== undefined) {
+            if (requestedTimeWindow !== null) {
+                const validWindows = ['MORNING', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING'];
+                if (!validWindows.includes(requestedTimeWindow)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Invalid time window. Must be one of: ${validWindows.join(', ')}`
+                    });
+                }
+            }
+            updates.requested_time_window = requestedTimeWindow;
+            updates.preferred_time_of_day = requestedTimeWindow; // Legacy field
+        }
+
+        // Assigned times
+        if (assignedStartTime !== undefined) {
+            updates.assigned_start_time = assignedStartTime;
+        }
+        if (assignedEndTime !== undefined) {
+            updates.assigned_end_time = assignedEndTime;
+        }
+
+        // Legacy time field
+        if (time !== undefined) {
+            updates.time = time;
+        }
+        if (confirmedTime !== undefined) {
+            updates.confirmed_time = confirmedTime;
+        }
+
+        // Notes
+        if (notes !== undefined) {
+            updates.notes = notes;
+        }
+
+        updates.updated_at = new Date().toISOString();
+
+        console.log(`✅ Admin updating booking with:`, JSON.stringify(updates, null, 2));
+
+        const updatedBooking = await BookingRepository.updateById(req.params.id, updates);
+
+        res.json({ success: true, booking: mapBookingResponse(updatedBooking) });
+    } catch (error) {
+        console.error('❌ Database error updating booking:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to update booking' });
     }
 });
 
@@ -2584,13 +3312,86 @@ app.patch('/api/admin/bookings/bulk-status', authenticateAdmin, async (req, res)
     }
 });
 
+// Assign exact time to a REQUESTED booking (admin) - NEW ENDPOINT
+app.post('/api/admin/bookings/:id/assign-time', authenticateAdmin, async (req, res) => {
+    try {
+        const { stylistId, assignedStartTime, assignedEndTime } = req.body;
+
+        // Validate inputs
+        if (!stylistId || !assignedStartTime || !assignedEndTime) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: stylistId, assignedStartTime, assignedEndTime'
+            });
+        }
+
+        // Verify booking exists and is in REQUESTED status
+        const booking = await BookingRepository.findById(req.params.id);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        if (booking.status !== 'REQUESTED' && booking.status !== 'pending') {
+            return res.status(400).json({
+                success: false,
+                message: `Booking is already ${booking.status}. Can only assign time to REQUESTED bookings.`
+            });
+        }
+
+        // Verify stylist exists
+        const stylist = await StylistRepository.findById(stylistId);
+        if (!stylist) {
+            return res.status(404).json({ success: false, message: 'Stylist not found' });
+        }
+
+        // Assign the time (this checks for conflicts)
+        const updatedBooking = await BookingRepository.assignTime(req.params.id, {
+            stylistId,
+            assignedStartTime,
+            assignedEndTime
+        });
+
+        // Send notification to customer
+        try {
+            const user = await UserRepository.findById(booking.user_id);
+            if (user && user.email) {
+                await emailService.sendBookingConfirmation(updatedBooking, user, stylist);
+                console.log(`✅ Confirmation email sent to ${user.email}`);
+            }
+        } catch (emailError) {
+            console.error('Failed to send confirmation email:', emailError.message);
+            // Don't fail the request if email fails
+        }
+
+        console.log(`✅ Time assigned to booking ${req.params.id}: ${assignedStartTime} with stylist ${stylist.name}`);
+
+        res.json({
+            success: true,
+            booking: mapBookingResponse(updatedBooking),
+            message: `Time assigned successfully! Booking confirmed for ${new Date(assignedStartTime).toLocaleString()}`
+        });
+
+    } catch (error) {
+        console.error('Assign time error:', error);
+        if (error.message.includes('conflict')) {
+            return res.status(409).json({ success: false, message: error.message });
+        }
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 // Get all orders (admin)
 app.get('/api/admin/orders', authenticateAdmin, async (req, res) => {
     try {
-        const { status } = req.query;
-        let orders = await OrderRepository.findAll();
-
-        if (status) orders = orders.filter(o => o.status === status);
+        const { status, deliveryMethod, date, dateFrom, dateTo } = req.query;
+        const filters = {
+            ...(status ? { status: status.toLowerCase() } : {}),
+            ...(deliveryMethod ? { deliveryMethod } : {}),
+            ...(date ? { date } : {}),
+            ...(dateFrom ? { dateFrom } : {}),
+            ...(dateTo ? { dateTo } : {})
+        };
+        let orders = await OrderRepository.findAll(filters);
 
         // Add customer info
         const ordersWithCustomers = await Promise.all(orders.map(async (o) => {
@@ -2679,6 +3480,72 @@ app.get('/api/admin/customers', authenticateAdmin, async (req, res) => {
     }
 });
 
+// Create customer (admin)
+app.post('/api/admin/customers', authenticateAdmin, async (req, res) => {
+    try {
+        const { name, email, phone, tier = 'bronze', points = 0, password } = req.body;
+
+        if (!name || !email) {
+            return res.status(400).json({ success: false, message: 'Name and email are required' });
+        }
+
+        const existing = await UserRepository.findByEmail(email);
+        if (existing) {
+            return res.status(400).json({ success: false, message: 'A user with this email already exists' });
+        }
+
+        const userId = uuidv4();
+        const passwordValue = password || Math.random().toString(36).slice(2, 10);
+        const passwordHash = await bcrypt.hash(passwordValue, 10);
+
+        await UserRepository.create({
+            id: userId,
+            email,
+            passwordHash,
+            name,
+            phone: phone || null,
+            role: 'customer',
+            points: points || 0,
+            tier
+        });
+
+        const created = await UserRepository.findById(userId);
+        res.status(201).json({ success: true, customer: created, generatedPassword: password ? undefined : passwordValue });
+    } catch (error) {
+        console.error('Error creating customer:', error.message);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// Update customer (admin)
+app.put('/api/admin/customers/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { name, phone, tier, points, password } = req.body;
+        const existing = await UserRepository.findById(req.params.id);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+
+        const updates = {
+            name: name !== undefined ? name : existing.name,
+            phone: phone !== undefined ? phone : existing.phone,
+            tier: tier !== undefined ? tier : existing.tier,
+            points: points !== undefined ? points : existing.points
+        };
+
+        if (password) {
+            updates.passwordHash = await bcrypt.hash(password, 10);
+        }
+
+        await UserRepository.update(req.params.id, updates);
+        const updated = await UserRepository.findById(req.params.id);
+        res.json({ success: true, customer: updated });
+    } catch (error) {
+        console.error('Error updating customer:', error.message);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
 // Staff management (admin)
 app.get('/api/admin/staff', authenticateAdmin, async (req, res) => {
     try {
@@ -2738,7 +3605,7 @@ app.patch('/api/admin/staff/:id', authenticateAdmin, async (req, res) => {
             }
         }
 
-        const updatedStylist = await StylistRepository.updateById(req.params.id, updateData);
+        const updatedStylist = await StylistRepository.update(req.params.id, updateData);
 
         res.json({ success: true, stylist: updatedStylist });
     } catch (error) {
@@ -2754,11 +3621,29 @@ app.delete('/api/admin/staff/:id', authenticateAdmin, async (req, res) => {
             return res.status(404).json({ success: false, message: 'Stylist not found' });
         }
 
-        await StylistRepository.deleteById(req.params.id);
+        await StylistRepository.delete(req.params.id);
 
         res.json({ success: true, message: 'Stylist deleted' });
     } catch (error) {
         console.error('Database error deleting stylist:', error.message);
+        return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
+});
+
+// Archive staff (soft delete)
+app.patch('/api/admin/staff/:id/archive', authenticateAdmin, async (req, res) => {
+    try {
+        const stylist = await StylistRepository.findById(req.params.id);
+        if (!stylist) {
+            return res.status(404).json({ success: false, message: 'Stylist not found' });
+        }
+
+        await StylistRepository.archive(req.params.id);
+        const updated = await StylistRepository.findById(req.params.id);
+
+        res.json({ success: true, stylist: updated, message: 'Stylist archived' });
+    } catch (error) {
+        console.error('Database error archiving stylist:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
@@ -2847,7 +3732,7 @@ app.get('/api/admin/promos', authenticateAdmin, async (req, res) => {
 app.post('/api/admin/promos', authenticateAdmin, async (req, res) => {
     try {
         const { code, description, discountType, discountValue, minOrder, expiresAt, usageLimit,
-                highlighted, badge, title, subtitle, priority } = req.body;
+                highlighted, badge, title, subtitle, priority, showInShopBanner } = req.body;
 
         if (!code || !discountType || !discountValue) {
             return res.status(400).json({ success: false, message: 'Code, discount type, and value are required' });
@@ -2856,6 +3741,14 @@ app.post('/api/admin/promos', authenticateAdmin, async (req, res) => {
         const existingPromos = await PromoRepository.findAll();
         if (existingPromos.find(p => p.code.toUpperCase() === code.toUpperCase())) {
             return res.status(409).json({ success: false, message: 'Promo code already exists' });
+        }
+
+        // If showInShopBanner is true, unset all other promos' shop banner flag
+        if (showInShopBanner === true) {
+            const currentShopBanner = existingPromos.find(p => p.show_in_shop_banner === 1);
+            if (currentShopBanner) {
+                await PromoRepository.update(currentShopBanner.id, { show_in_shop_banner: 0 });
+            }
         }
 
         const newPromo = {
@@ -2874,7 +3767,9 @@ app.post('/api/admin/promos', authenticateAdmin, async (req, res) => {
             badge: badge || '',
             title: title || '',
             subtitle: subtitle || '',
-            priority: typeof priority === 'number' ? priority : 0
+            priority: typeof priority === 'number' ? priority : 0,
+            // Shop Banner field
+            show_in_shop_banner: showInShopBanner === true ? 1 : 0
         };
 
         const createdPromo = await PromoRepository.create(newPromo);
@@ -2903,6 +3798,22 @@ app.patch('/api/admin/promos/:id', authenticateAdmin, async (req, res) => {
             }
         }
 
+        // Handle shop banner flag specially (only one promo can be shop banner)
+        if (req.body.showInShopBanner !== undefined) {
+            if (req.body.showInShopBanner === true) {
+                // Unset all other promos' shop banner flag
+                const allPromos = await PromoRepository.findAll();
+                for (const p of allPromos) {
+                    if (p.show_in_shop_banner === 1 && p.id !== req.params.id) {
+                        await PromoRepository.updateById(p.id, { show_in_shop_banner: 0 });
+                    }
+                }
+                updateData.show_in_shop_banner = 1;
+            } else {
+                updateData.show_in_shop_banner = 0;
+            }
+        }
+
         const updatedPromo = await PromoRepository.updateById(req.params.id, updateData);
 
         res.json({ success: true, promo: updatedPromo });
@@ -2925,6 +3836,28 @@ app.delete('/api/admin/promos/:id', authenticateAdmin, async (req, res) => {
     } catch (error) {
         console.error('Database error deleting promo:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
+});
+
+// Get active shop banner promo (public endpoint)
+app.get('/api/promo/shop-banner', async (req, res) => {
+    try {
+        const promos = await PromoRepository.findAll();
+        const shopBanner = promos.find(p => p.show_in_shop_banner === 1 && p.active === 1);
+
+        if (!shopBanner) {
+            return res.json({ success: true, promo: null });
+        }
+
+        // Check if promo is expired
+        if (shopBanner.expiresAt && new Date(shopBanner.expiresAt) < new Date()) {
+            return res.json({ success: true, promo: null });
+        }
+
+        res.json({ success: true, promo: shopBanner });
+    } catch (error) {
+        console.error('Error fetching shop banner:', error.message);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
@@ -3410,8 +4343,28 @@ const chatRateLimiter = {
     }
 };
 
-// In-memory storage for hair tips (transient data)
-let hairTipsStore = { tips: [] };
+const DEFAULT_HAIR_TIPS = [
+    { text: 'Sleep on a silk pillowcase to reduce friction and frizz.', category: 'care' },
+    { text: 'Use a sulfate-free shampoo to keep moisture locked in.', category: 'wash' },
+    { text: 'Deep condition once a week for softer, stronger strands.', category: 'treatment' },
+    { text: 'Trim your ends every 8-10 weeks to prevent split ends.', category: 'maintenance' },
+    { text: 'Avoid high heat; style on medium or low settings.', category: 'heat' },
+    { text: 'Always apply a heat protectant before blow-drying or ironing.', category: 'heat' },
+    { text: 'Rinse with cool water to boost shine and seal the cuticle.', category: 'wash' },
+    { text: 'Detangle from ends to roots using a wide-tooth comb.', category: 'detangle' },
+    { text: 'Massage your scalp for 2 minutes daily to encourage circulation.', category: 'scalp' },
+    { text: 'Don’t sleep with wet hair; it can cause breakage and tangles.', category: 'care' },
+    { text: 'Use a microfiber towel or cotton T-shirt to blot-dry gently.', category: 'drying' },
+    { text: 'Limit washing to 2-3 times a week to preserve natural oils.', category: 'wash' },
+    { text: 'Protect hair from sun with hats or UV-protectant sprays.', category: 'protection' },
+    { text: 'Keep extensions detangled with a soft bristle or loop brush.', category: 'extensions' },
+    { text: 'Avoid oils near tape/weft bonds to prevent slipping.', category: 'extensions' },
+    { text: 'Hydrate from within: drink water for scalp and hair health.', category: 'lifestyle' },
+    { text: 'Use a bond-building treatment monthly to reinforce strength.', category: 'treatment' },
+    { text: 'Switch to a wide satin scrunchie to avoid creases and breakage.', category: 'styling' },
+    { text: 'Clarify monthly to remove buildup, then follow with a mask.', category: 'wash' },
+    { text: 'Cold-pressed oils on mid-lengths and ends add shine—avoid the roots.', category: 'care' }
+];
 
 // Seed default services into DB if none exist
 async function seedServicesDefaults() {
@@ -3572,42 +4525,26 @@ async function seedStylistsDefaults() {
     }
 }
 
-// Seed default hair tips for customer app if none exist
-function seedHairTipsDefaults() {
-    if (hairTipsStore.tips && hairTipsStore.tips.length > 0) return;
-    const defaults = [
-        { text: 'Sleep on a silk pillowcase to reduce friction and frizz.', category: 'care' },
-        { text: 'Use a sulfate-free shampoo to keep moisture locked in.', category: 'wash' },
-        { text: 'Deep condition once a week for softer, stronger strands.', category: 'treatment' },
-        { text: 'Trim your ends every 8-10 weeks to prevent split ends.', category: 'maintenance' },
-        { text: 'Avoid high heat; style on medium or low settings.', category: 'heat' },
-        { text: 'Always apply a heat protectant before blow-drying or ironing.', category: 'heat' },
-        { text: 'Rinse with cool water to boost shine and seal the cuticle.', category: 'wash' },
-        { text: 'Detangle from ends to roots using a wide-tooth comb.', category: 'detangle' },
-        { text: 'Massage your scalp for 2 minutes daily to encourage circulation.', category: 'scalp' },
-        { text: 'Don’t sleep with wet hair; it can cause breakage and tangles.', category: 'care' },
-        { text: 'Use a microfiber towel or cotton T-shirt to blot-dry gently.', category: 'drying' },
-        { text: 'Limit washing to 2-3 times a week to preserve natural oils.', category: 'wash' },
-        { text: 'Protect hair from sun with hats or UV-protectant sprays.', category: 'protection' },
-        { text: 'Keep extensions detangled with a soft bristle or loop brush.', category: 'extensions' },
-        { text: 'Avoid oils near tape/weft bonds to prevent slipping.', category: 'extensions' },
-        { text: 'Hydrate from within: drink water for scalp and hair health.', category: 'lifestyle' },
-        { text: 'Use a bond-building treatment monthly to reinforce strength.', category: 'treatment' },
-        { text: 'Switch to a wide satin scrunchie to avoid creases and breakage.', category: 'styling' },
-        { text: 'Clarify monthly to remove buildup, then follow with a mask.', category: 'wash' },
-        { text: 'Cold-pressed oils on mid-lengths and ends add shine—avoid the roots.', category: 'care' }
-    ];
+// Seed default hair tips for customer app if none exist (persisted)
+async function seedHairTipsDefaults() {
+    try {
+        const existing = await HairTipRepository.findAll(true);
+        if (existing && existing.length > 0) return;
 
-    defaults.forEach((tip, idx) => {
-        hairTipsStore.tips.push({
-            id: `tip${idx + 1}`,
-            text: tip.text,
-            active: true,
-            category: tip.category || 'general',
-            priority: tip.priority || 1,
-            createdAt: new Date().toISOString()
-        });
-    });
+        for (let i = 0; i < DEFAULT_HAIR_TIPS.length; i++) {
+            const tip = DEFAULT_HAIR_TIPS[i];
+            await HairTipRepository.create({
+                id: `tip${i + 1}`,
+                text: tip.text,
+                category: tip.category || 'general',
+                priority: tip.priority || 1,
+                active: 1
+            });
+        }
+        console.log('Seeded default hair tips');
+    } catch (err) {
+        console.error('Failed to seed hair tips:', err.message);
+    }
 }
 
 seedHairTipsDefaults();
@@ -4329,24 +5266,16 @@ app.post('/api/admin/gallery/reorder', authenticateAdmin, async (req, res) => {
 // ============================================
 
 // Get random active tip (public)
-app.get('/api/hair-tips/random', (req, res) => {
+app.get('/api/hair-tips/random', async (req, res) => {
     try {
-        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
-            seedHairTipsDefaults();
-        }
-        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+        await seedHairTipsDefaults();
+        const tips = await HairTipRepository.findAll(false);
+        if (!tips || tips.length === 0) {
             return res.json({ tip: null });
         }
 
-        const activeTips = hairTipsStore.tips.filter(tip => tip.active);
-        if (activeTips.length === 0) {
-            return res.json({ tip: null });
-        }
-
-        const randomIndex = Math.floor(Math.random() * activeTips.length);
-        const randomTip = activeTips[randomIndex];
-
-        res.json({ tip: { id: randomTip.id, text: randomTip.text } });
+        const randomTip = tips[Math.floor(Math.random() * tips.length)];
+        res.json({ tip: { id: randomTip.id, text: randomTip.text, category: randomTip.category } });
     } catch (error) {
         console.error('Error getting random hair tip:', error);
         res.status(500).json({ tip: null });
@@ -4354,16 +5283,11 @@ app.get('/api/hair-tips/random', (req, res) => {
 });
 
 // Get all tips (public - for admin to list)
-app.get('/api/hair-tips', (req, res) => {
+app.get('/api/hair-tips', async (req, res) => {
     try {
-        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
-            seedHairTipsDefaults();
-        }
-        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
-            return res.json({ tips: [] });
-        }
-
-        res.json({ tips: hairTipsStore.tips });
+        await seedHairTipsDefaults();
+        const tips = await HairTipRepository.findAll(true);
+        res.json({ tips });
     } catch (error) {
         console.error('Error getting hair tips:', error);
         res.status(500).json({ tips: [] });
@@ -4373,14 +5297,9 @@ app.get('/api/hair-tips', (req, res) => {
 // Get all tips (admin)
 app.get('/api/admin/hair-tips', authenticateAdmin, async (req, res) => {
     try {
-        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
-            seedHairTipsDefaults();
-        }
-        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
-            return res.json({ tips: [] });
-        }
-
-        res.json({ tips: hairTipsStore.tips });
+        await seedHairTipsDefaults();
+        const tips = await HairTipRepository.findAll(true);
+        res.json({ tips });
     } catch (error) {
         console.error('Error getting admin hair tips:', error);
         res.status(500).json({ tips: [] });
@@ -4396,22 +5315,12 @@ app.post('/api/admin/hair-tips', authenticateAdmin, async (req, res) => {
             return res.status(400).json({ message: 'Tip text is required' });
         }
 
-        // Generate a new ID
-        const maxId = hairTipsStore.tips.reduce((max, tip) => {
-            const num = parseInt(tip.id.replace('tip', '')) || 0;
-            return Math.max(max, num);
-        }, 0);
-
-        const newTip = {
-            id: `tip${maxId + 1}`,
+        const newTip = await HairTipRepository.create({
             text: text.trim(),
-            active: true,
             category: category || 'general',
             priority: priority || 1,
-            createdAt: new Date().toISOString()
-        };
-
-        hairTipsStore.tips.push(newTip);
+            active: 1
+        });
 
         res.status(201).json({ message: 'Hair tip created', tip: newTip });
     } catch (error) {
@@ -4425,25 +5334,18 @@ app.put('/api/admin/hair-tips/:id', authenticateAdmin, async (req, res) => {
     try {
         const { text, category, priority, active } = req.body;
 
-        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
-            return res.status(404).json({ message: 'Hair tips data not found' });
-        }
+        const updated = await HairTipRepository.update(req.params.id, {
+            text: text !== undefined ? text.trim() : undefined,
+            category,
+            priority,
+            active
+        });
 
-        const tipIndex = hairTipsStore.tips.findIndex(tip => tip.id === req.params.id);
-        if (tipIndex === -1) {
+        if (!updated) {
             return res.status(404).json({ message: 'Hair tip not found' });
         }
 
-        const tip = hairTipsStore.tips[tipIndex];
-
-        if (text !== undefined) tip.text = text.trim();
-        if (category !== undefined) tip.category = category;
-        if (priority !== undefined) tip.priority = priority;
-        if (active !== undefined) tip.active = active;
-
-        tip.updatedAt = new Date().toISOString();
-
-        res.json({ message: 'Hair tip updated', tip });
+        res.json({ message: 'Hair tip updated', tip: updated });
     } catch (error) {
         console.error('Error updating hair tip:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -4453,19 +5355,12 @@ app.put('/api/admin/hair-tips/:id', authenticateAdmin, async (req, res) => {
 // Toggle hair tip active status (admin)
 app.patch('/api/admin/hair-tips/:id/toggle', authenticateAdmin, async (req, res) => {
     try {
-        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
-            return res.status(404).json({ message: 'Hair tips data not found' });
-        }
-
-        const tip = hairTipsStore.tips.find(tip => tip.id === req.params.id);
-        if (!tip) {
+        const toggled = await HairTipRepository.toggle(req.params.id);
+        if (!toggled) {
             return res.status(404).json({ message: 'Hair tip not found' });
         }
 
-        tip.active = !tip.active;
-        tip.updatedAt = new Date().toISOString();
-
-        res.json({ message: `Hair tip ${tip.active ? 'activated' : 'deactivated'}`, tip });
+        res.json({ message: `Hair tip ${toggled.active ? 'activated' : 'deactivated'}`, tip: toggled });
     } catch (error) {
         console.error('Error toggling hair tip:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -4475,16 +5370,12 @@ app.patch('/api/admin/hair-tips/:id/toggle', authenticateAdmin, async (req, res)
 // Delete hair tip (admin)
 app.delete('/api/admin/hair-tips/:id', authenticateAdmin, async (req, res) => {
     try {
-        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
-            return res.status(404).json({ message: 'Hair tips data not found' });
-        }
-
-        const tipIndex = hairTipsStore.tips.findIndex(tip => tip.id === req.params.id);
-        if (tipIndex === -1) {
+        const existing = await HairTipRepository.findById(req.params.id);
+        if (!existing) {
             return res.status(404).json({ message: 'Hair tip not found' });
         }
 
-        hairTipsStore.tips.splice(tipIndex, 1);
+        await HairTipRepository.delete(req.params.id);
 
         res.json({ message: 'Hair tip deleted' });
     } catch (error) {

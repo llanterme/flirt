@@ -172,11 +172,13 @@ const NotificationTemplates = {
 
 // Helper function to format date
 function formatDate(dateString) {
-    return new Date(dateString).toLocaleDateString('en-ZA', {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-GB', {
         weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-    });
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    }).format(date);
 }
 
 // ============================================

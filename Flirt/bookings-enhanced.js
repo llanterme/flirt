@@ -42,6 +42,24 @@ const bookingsState = {
     }
 };
 
+const formatAdminDate = (value, options = {}) => {
+    if (!value) return '';
+    const date = value instanceof Date ? value : new Date(value);
+    if (isNaN(date)) return '';
+    return new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        ...options
+    }).format(date);
+};
+
+const formatAdminDateWithTime = (value, timeText) => {
+    const formatted = formatAdminDate(value);
+    if (!formatted) return '';
+    return timeText ? `${formatted} ${timeText.startsWith('at') ? timeText : `at ${timeText}`}` : formatted;
+};
+
 // Debounce for search
 let searchDebounceTimer = null;
 
@@ -249,6 +267,27 @@ function renderBookingsTable() {
     }
 }
 
+function formatBookingTimeDisplay(booking) {
+    const windowLabels = {
+        MORNING: 'Morning',
+        AFTERNOON: 'Afternoon',
+        LATE_AFTERNOON: 'Late Afternoon',
+        EVENING: 'Evening'
+    };
+    if (booking.requestedTimeWindow && windowLabels[booking.requestedTimeWindow]) {
+        return windowLabels[booking.requestedTimeWindow];
+    }
+    const rawTime = booking.confirmedTime || booking.assignedStartTime || booking.time || booking.preferredTimeOfDay;
+    if (!rawTime) return 'TBC';
+    if (typeof rawTime === 'string' && rawTime.includes('T')) {
+        const d = new Date(rawTime);
+        if (!isNaN(d)) {
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+    }
+    return rawTime;
+}
+
 // Render flat list
 function renderFlatBookings(container) {
     container.innerHTML = adminBookingsFiltered.map(b => renderBookingRow(b)).join('');
@@ -268,8 +307,8 @@ function renderGroupedBookings(container) {
 
     sortedDates.forEach(dateKey => {
         const date = new Date(dateKey + 'T00:00:00');
-        const formattedDate = date.toLocaleDateString('en-US', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        const formattedDate = formatAdminDate(date, {
+            weekday: 'long'
         });
 
         html += `
@@ -290,17 +329,17 @@ function renderGroupedBookings(container) {
 
 // Render single booking row
 function renderBookingRow(b) {
-    const dateStr = new Date(b.date).toLocaleDateString();
-    const timeStr = b.confirmedTime || b.time || b.preferredTimeOfDay || 'TBC';
+    const dateStr = formatAdminDate(b.date);
+    const timeStr = formatBookingTimeDisplay(b);
     const shortId = b.id.substring(0, 8);
     const isSelected = bookingsState.selection.selected.has(b.id);
 
     // Status badge colors
     const statusColors = {
-        'pending': 'background: #fff3cd; color: #856404;',
-        'confirmed': 'background: #d4edda; color: #155724;',
-        'completed': 'background: #d1ecf1; color: #0c5460;',
-        'cancelled': 'background: #f8d7da; color: #721c24;'
+        'pending': 'background: rgba(255, 152, 0, 0.15); color: var(--warning);',
+        'confirmed': 'background: rgba(76, 175, 80, 0.15); color: var(--success);',
+        'completed': 'background: rgba(246, 117, 153, 0.2); color: var(--brand-pink);',
+        'cancelled': 'background: rgba(231, 76, 60, 0.18); color: var(--danger);'
     };
 
     return `
@@ -819,8 +858,8 @@ function showBookingsForDay(dateKey) {
     const title = document.getElementById('bookingsDayPopupTitle');
     const content = document.getElementById('bookingsDayPopupContent');
 
-    const formattedDate = new Date(dateKey + 'T00:00:00').toLocaleDateString('en-US', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    const formattedDate = formatAdminDate(dateKey + 'T00:00:00', {
+        weekday: 'long'
     });
     title.textContent = `Bookings for ${formattedDate}`;
 
