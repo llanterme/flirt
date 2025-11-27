@@ -104,13 +104,14 @@ CREATE TABLE IF NOT EXISTS bookings (
 );
 
 CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings(user_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_requested_date ON bookings(requested_date);
+CREATE INDEX IF NOT EXISTS idx_bookings_requested_time_window ON bookings(requested_time_window);
+CREATE INDEX IF NOT EXISTS idx_bookings_assigned_start_time ON bookings(assigned_start_time);
 CREATE INDEX IF NOT EXISTS idx_bookings_stylist ON bookings(stylist_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
 
 -- Legacy indexes (can be removed after migration)
 CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(date);
-
--- NOTE: Indexes for new booking columns (requested_date, requested_time_window, etc.)
--- are created in database.js migration logic after columns are added
 
 -- ============================================
 -- PRODUCTS TABLE
