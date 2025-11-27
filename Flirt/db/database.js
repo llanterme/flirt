@@ -128,6 +128,25 @@ async function initializeDatabase() {
         console.log('Legacy booking migration skipped (table may not exist yet):', error.message);
     }
 
+    // Migrate booking status values to uppercase format
+    try {
+        // Update existing status values from lowercase to uppercase
+        await dbRun(`
+            UPDATE bookings
+            SET status = CASE
+                WHEN status = 'pending' THEN 'REQUESTED'
+                WHEN status = 'confirmed' THEN 'CONFIRMED'
+                WHEN status = 'completed' THEN 'COMPLETED'
+                WHEN status = 'cancelled' THEN 'CANCELLED'
+                ELSE 'REQUESTED'
+            END
+            WHERE status IN ('pending', 'confirmed', 'completed', 'cancelled')
+        `);
+        console.log('Migrated booking status values to uppercase format');
+    } catch (error) {
+        console.log('Status migration skipped:', error.message);
+    }
+
     // Create indexes for new booking columns (only after columns exist)
     try {
         await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_requested_date ON bookings(requested_date)');
