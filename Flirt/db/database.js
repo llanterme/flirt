@@ -127,6 +127,17 @@ async function initializeDatabase() {
     } catch (error) {
         console.log('Legacy booking migration skipped (table may not exist yet):', error.message);
     }
+
+    // Create indexes for new booking columns (only after columns exist)
+    try {
+        await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_requested_date ON bookings(requested_date)');
+        await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_requested_time_window ON bookings(requested_time_window)');
+        await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_assigned_start_time ON bookings(assigned_start_time)');
+        await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status)');
+        console.log('Created indexes for new booking columns');
+    } catch (error) {
+        console.log('Index creation skipped:', error.message);
+    }
 }
 
 // Utilities for lightweight migrations (add missing columns safely)
