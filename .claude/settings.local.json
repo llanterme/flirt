@@ -1,28 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git push)",
-      "Bash(tasklist:*)",
-      "Bash(findstr:*)",
-      "Bash(netstat:*)",
-      "Bash(dir:*)",
-      "Bash(powershell:*)",
-      "Bash(npm start)",
-      "Bash(timeout:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(sqlite3:*)",
-      "Bash(node add-sample-promos.js:*)",
-      "Bash(node add-sample-notifications.js:*)",
-      "Bash(taskkill:*)",
-      "Bash(node:*)",
-      "Bash(curl:*)",
-      "Bash(cat:*)",
-      "Bash(del debug-bookings.js test-api.js check-users.js test-date-filter.js test-month-end.js test-month-calc.js)",
-      "Bash(del dbcheck-table.js dbcleanup.js dbfix-booking-constraint.js)",
-      "Bash(del dbshow-schema.js dbcheck-bookings.js)",
-      "Bash(del fix-calendar-popup.js)",
-      "Bash(Start-Sleep -Seconds 3)"
+      "Bash(DATABASE_PATH=./Flirt/db/test-production.db node:*)",
+      "Bash(DATABASE_PATH=./db/test-production.db node -e \"\nconst { initializeDatabase } = require(''./db/database'');\ninitializeDatabase().then(() => {\n  console.log(''✅ Success! Database migration worked.'');\n}).catch(err => {\n  console.error(''❌ Failed:'', err.message);\n  console.error(err.stack);\n});\n\")"
     ],
     "deny": [],
     "ask": []
