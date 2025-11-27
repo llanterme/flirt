@@ -12,6 +12,9 @@ node_modules/
 *.db
 *.db-journal
 
+# Exception: Allow seed database to be tracked
+!Flirt/db/flirt.db
+
 # Logs
 logs/
 *.log
