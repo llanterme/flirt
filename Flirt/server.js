@@ -20,7 +20,7 @@ const https = require('https');
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
-let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository;
+let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, PaymentRepository, PaymentSettingsRepository;
 
 try {
     const dbModule = require('./db/database');
@@ -34,6 +34,9 @@ try {
     ProductRepository = dbModule.ProductRepository;
     OrderRepository = dbModule.OrderRepository;
     PromoRepository = dbModule.PromoRepository;
+    PaymentRepository = dbModule.PaymentRepository;
+    PaymentSettingsRepository = dbModule.PaymentSettingsRepository;
+    NotificationRepository = dbModule.NotificationRepository;
 
     // Ensure database directory exists
     const dbDir = path.dirname(DATABASE_PATH);
@@ -56,6 +59,9 @@ try {
     process.exit(1);
 }
 
+// Payment services import
+const PaymentService = require('./services/payments');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -68,6 +74,8 @@ const JWT_SECRET = process.env.JWT_SECRET || (() => {
 
 // Admin seed password from environment
 const ADMIN_SEED_PASSWORD = process.env.ADMIN_SEED_PASSWORD || 'admin123';
+
+const IS_DEV = process.env.NODE_ENV !== 'production';
 
 // OAuth configuration (set these in environment for production)
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || 'GOOGLE_CLIENT_ID_HERE';
@@ -115,6 +123,7 @@ function recordLoginAttempt(identifier, success) {
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Needed for PayFast form callbacks
 app.use(express.static(__dirname));
 
 // ============================================
@@ -124,6 +133,22 @@ async function seedAdminUser() {
     try {
         // Initialize database first
         await db.initializeDatabase();
+
+        // Seed stylists into DB if missing
+        await seedStylistsDefaults();
+        // Seed services into DB if missing
+        await seedServicesDefaults();
+
+        // Load persisted payment configuration into runtime (if any)
+        try {
+            const storedPaymentConfig = await PaymentSettingsRepository.getConfig();
+            if (storedPaymentConfig) {
+                PaymentService.setRuntimeConfig(storedPaymentConfig);
+                console.log('Loaded payment configuration from database');
+            }
+        } catch (err) {
+            console.error('Warning: failed to load payment config from DB:', err.message);
+        }
 
         // Check if admin already exists
         const adminExists = await UserRepository.findByRole('admin');
@@ -852,6 +877,7 @@ app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
 
 app.get('/api/stylists', async (req, res) => {
     try {
+        await seedStylistsDefaults();
         const stylists = await StylistRepository.findAll();
         res.json({ success: true, stylists });
     } catch (error) {
@@ -1223,6 +1249,136 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Database error fetching user orders:', error.message);
         res.status(500).json({ success: false, message: 'Failed to fetch orders' });
+    }
+});
+
+// ============================================
+// PAYMENT ROUTES
+// ============================================
+
+// Initiate a payment for an order
+app.post('/api/payments/initiate', authenticateToken, async (req, res) => {
+    const { provider = 'payfast', orderId } = req.body;
+
+    if (!orderId) {
+        return res.status(400).json({ success: false, message: 'orderId is required' });
+    }
+
+    try {
+        const order = await OrderRepository.findById(orderId);
+        if (!order || order.user_id !== req.user.id) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        if (order.payment_status === 'paid') {
+            return res.status(400).json({ success: false, message: 'Order already paid' });
+        }
+
+        const customer = await UserRepository.findById(req.user.id);
+
+        const configStatus = PaymentService.getPaymentConfigStatus();
+        if (provider === 'payfast' && !configStatus.payfast.configured) {
+            return res.status(400).json({ success: false, message: 'PayFast is not configured' });
+        }
+        if (provider === 'yoco' && !configStatus.yoco.configured) {
+            return res.status(400).json({ success: false, message: 'Yoco is not configured' });
+        }
+
+        const paymentInit = await PaymentService.initializePayment(
+            provider,
+            { id: order.id, total: order.total, items: order.items || [] },
+            { id: customer.id, name: customer.name || customer.email, email: customer.email }
+        );
+
+        await PaymentRepository.create({
+            id: paymentInit.paymentId,
+            orderId: order.id,
+            userId: customer.id,
+            amount: order.total,
+            currency: 'ZAR',
+            provider,
+            status: 'pending',
+            metadata: { providerResponse: paymentInit }
+        });
+
+        await OrderRepository.updatePaymentStatus(order.id, 'pending');
+
+        res.json({ success: true, payment: paymentInit });
+    } catch (error) {
+        console.error('Error initiating payment:', error);
+        res.status(500).json({ success: false, message: error.message || 'Failed to start payment' });
+    }
+});
+
+// Check payment status
+app.get('/api/payments/:id/status', authenticateToken, async (req, res) => {
+    try {
+        const payment = await PaymentRepository.findById(req.params.id);
+        if (!payment || payment.user_id !== req.user.id) {
+            return res.status(404).json({ success: false, message: 'Payment not found' });
+        }
+        res.json({ success: true, payment });
+    } catch (error) {
+        console.error('Error fetching payment status:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch payment status' });
+    }
+});
+
+// PayFast ITN webhook
+app.post('/api/payments/webhook/payfast', async (req, res) => {
+    try {
+        const result = PaymentService.processWebhook('payfast', req.body, req.headers);
+
+        if (!result.valid) {
+            return res.status(400).json({ success: false, message: result.reason || 'Invalid ITN' });
+        }
+
+        const paymentStatus = result.completed ? 'paid' : (result.status || 'pending').toLowerCase();
+        const providerStatus = result.completed ? 'completed' : (result.status || 'processing').toLowerCase();
+
+        if (result.paymentId) {
+            await PaymentRepository.updateStatus(result.paymentId, providerStatus, result.pfPaymentId, { itn: result });
+        }
+        if (result.orderId) {
+            await OrderRepository.updatePaymentStatus(result.orderId, paymentStatus);
+            if (paymentStatus === 'paid') {
+                await OrderRepository.updateStatus(result.orderId, 'paid');
+            }
+        }
+
+        return res.send('OK');
+    } catch (error) {
+        console.error('PayFast webhook error:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// Yoco webhook
+app.post('/api/payments/webhook/yoco', async (req, res) => {
+    try {
+        const result = PaymentService.processWebhook('yoco', req.body, req.headers);
+
+        if (result.valid === false) {
+            return res.status(400).json({ success: false, message: result.reason || 'Invalid webhook' });
+        }
+
+        const paymentStatus = result.completed ? 'paid' : (result.status || 'pending').toLowerCase();
+        const providerStatus = result.completed ? 'completed' : (result.status || result.type || 'processing').toLowerCase();
+
+        if (result.paymentId) {
+            await PaymentRepository.updateStatus(result.paymentId, providerStatus, result.yocoPaymentId, { event: result });
+        }
+        if (result.orderId) {
+            await OrderRepository.updatePaymentStatus(result.orderId, paymentStatus);
+            if (paymentStatus === 'paid') {
+                await OrderRepository.updateStatus(result.orderId, 'paid');
+            }
+        }
+
+        return res.send('OK');
+    } catch (error) {
+        console.error('Yoco webhook error:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });
 
@@ -2050,6 +2206,65 @@ app.get('/api/admin/popular-services', authenticateAdmin, async (req, res) => {
     }
 });
 
+// Get payment configuration status (admin)
+app.get('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
+    try {
+        const configStatus = PaymentService.getPaymentConfigStatus();
+        const storedConfig = await PaymentSettingsRepository.getConfig();
+        res.json({
+            success: true,
+            config: configStatus,
+            storedConfig
+        });
+    } catch (error) {
+        console.error('Error fetching payment config:', error.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to fetch payment configuration'
+        });
+    }
+});
+
+// Update payment configuration (admin)
+app.put('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
+    try {
+        const { appUrl, apiBaseUrl, payfast = {}, yoco = {} } = req.body;
+
+        const newConfig = {
+            appUrl,
+            apiBaseUrl,
+            payfast: {
+                merchantId: payfast.merchantId,
+                merchantKey: payfast.merchantKey,
+                passphrase: payfast.passphrase,
+                sandbox: payfast.sandbox
+            },
+            yoco: {
+                secretKey: yoco.secretKey,
+                publicKey: yoco.publicKey,
+                webhookSecret: yoco.webhookSecret
+            }
+        };
+
+        await PaymentSettingsRepository.saveConfig(newConfig);
+        PaymentService.setRuntimeConfig(newConfig);
+
+        const configStatus = PaymentService.getPaymentConfigStatus();
+
+        res.json({
+            success: true,
+            message: 'Payment configuration updated',
+            config: configStatus
+        });
+    } catch (error) {
+        console.error('Error updating payment config:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to update payment configuration'
+        });
+    }
+});
+
 // Get all bookings (admin)
 app.get('/api/admin/bookings', authenticateAdmin, async (req, res) => {
     try {
@@ -2248,6 +2463,7 @@ app.get('/api/admin/customers', authenticateAdmin, async (req, res) => {
 // Staff management (admin)
 app.get('/api/admin/staff', authenticateAdmin, async (req, res) => {
     try {
+        await seedStylistsDefaults();
         const stylists = await StylistRepository.findAll();
         res.json({ success: true, staff: stylists });
     } catch (error) {
@@ -2848,14 +3064,7 @@ let notificationsStore = { notifications: [] };
 // Get active notifications (for client app)
 app.get('/api/notifications/active', async (req, res) => {
     try {
-        const now = new Date();
-        const active = notificationsStore.notifications.filter(n => {
-            if (!n.active) return false;
-            if (n.expiresAt && new Date(n.expiresAt) < now) return false;
-            if (n.startsAt && new Date(n.startsAt) > now) return false;
-            return true;
-        });
-
+        const active = await NotificationRepository.findActive();
         res.json({ notifications: active });
     } catch (error) {
         console.error('Error getting active notifications:', error.message);
@@ -2866,7 +3075,8 @@ app.get('/api/notifications/active', async (req, res) => {
 // Get all notifications (admin)
 app.get('/api/notifications', authenticateToken, async (req, res) => {
     try {
-        res.json(notificationsStore);
+        const notifications = await NotificationRepository.findAll();
+        res.json({ notifications });
     } catch (error) {
         console.error('Error getting notifications:', error.message);
         res.status(500).json({ success: false, message: 'Error loading notifications' });
@@ -2892,13 +3102,12 @@ app.post('/api/notifications', authenticateAdmin, async (req, res) => {
             active: true,
             startsAt: startsAt || new Date().toISOString(),
             expiresAt: expiresAt || null,
-            createdAt: new Date().toISOString(),
             createdBy: req.user.userId
         };
 
-        notificationsStore.notifications.unshift(notification);
+        const created = await NotificationRepository.create(notification);
 
-        res.status(201).json({ message: 'Notification created', notification });
+        res.status(201).json({ message: 'Notification created', notification: created });
     } catch (error) {
         console.error('Error creating notification:', error.message);
         res.status(500).json({ success: false, message: 'Error creating notification' });
@@ -2908,16 +3117,12 @@ app.post('/api/notifications', authenticateAdmin, async (req, res) => {
 // Update notification (admin only)
 app.put('/api/notifications/:id', authenticateAdmin, async (req, res) => {
     try {
-        const index = notificationsStore.notifications.findIndex(n => n.id === req.params.id);
-        if (index === -1) return res.status(404).json({ message: 'Notification not found' });
+        const notification = await NotificationRepository.findById(req.params.id);
+        if (!notification) return res.status(404).json({ message: 'Notification not found' });
 
-        notificationsStore.notifications[index] = {
-            ...notificationsStore.notifications[index],
-            ...req.body,
-            updatedAt: new Date().toISOString()
-        };
+        const updated = await NotificationRepository.update(req.params.id, req.body);
 
-        res.json({ message: 'Notification updated', notification: notificationsStore.notifications[index] });
+        res.json({ message: 'Notification updated', notification: updated });
     } catch (error) {
         console.error('Error updating notification:', error.message);
         res.status(500).json({ success: false, message: 'Error updating notification' });
@@ -2927,10 +3132,10 @@ app.put('/api/notifications/:id', authenticateAdmin, async (req, res) => {
 // Delete notification (admin only)
 app.delete('/api/notifications/:id', authenticateAdmin, async (req, res) => {
     try {
-        const index = notificationsStore.notifications.findIndex(n => n.id === req.params.id);
-        if (index === -1) return res.status(404).json({ message: 'Notification not found' });
+        const notification = await NotificationRepository.findById(req.params.id);
+        if (!notification) return res.status(404).json({ message: 'Notification not found' });
 
-        notificationsStore.notifications.splice(index, 1);
+        await NotificationRepository.delete(req.params.id);
 
         res.json({ message: 'Notification deleted' });
     } catch (error) {
@@ -2942,12 +3147,12 @@ app.delete('/api/notifications/:id', authenticateAdmin, async (req, res) => {
 // Toggle notification active status (admin only)
 app.patch('/api/notifications/:id/toggle', authenticateAdmin, async (req, res) => {
     try {
-        const notification = notificationsStore.notifications.find(n => n.id === req.params.id);
+        const notification = await NotificationRepository.findById(req.params.id);
         if (!notification) return res.status(404).json({ message: 'Notification not found' });
 
-        notification.active = !notification.active;
+        const updated = await NotificationRepository.toggleActive(req.params.id);
 
-        res.json({ message: `Notification ${notification.active ? 'activated' : 'deactivated'}`, notification });
+        res.json({ message: `Notification ${updated.active ? 'activated' : 'deactivated'}`, notification: updated });
     } catch (error) {
         console.error('Error toggling notification:', error.message);
         res.status(500).json({ success: false, message: 'Error toggling notification' });
@@ -2960,8 +3165,280 @@ app.patch('/api/notifications/:id/toggle', authenticateAdmin, async (req, res) =
 
 // In-memory storage for chat conversations (since these are transient support messages)
 let chatStore = { conversations: [] };
-let galleryStore = { items: [] };
+let galleryStore = { items: [], instagram: null };
 let hairTipsStore = { tips: [] };
+
+// Seed default services into DB if none exist
+async function seedServicesDefaults() {
+    try {
+        const existingHair = await ServiceRepository.findByType('hair');
+        const existingBeauty = await ServiceRepository.findByType('beauty');
+        if (existingHair.length > 0 && existingBeauty.length > 0) return;
+
+        const defaults = [
+            // Hair services
+            {
+                id: 'service_tape',
+                name: 'Tape Extensions',
+                description: 'Tape-in hair extension installation',
+                price: 2500,
+                duration: 150,
+                serviceType: 'hair',
+                category: 'extensions'
+            },
+            {
+                id: 'service_weft',
+                name: 'Weft Installation',
+                description: 'Weft extension installation',
+                price: 3200,
+                duration: 180,
+                serviceType: 'hair',
+                category: 'extensions'
+            },
+            {
+                id: 'service_color',
+                name: 'Color Matching',
+                description: 'Color match consultation',
+                price: 0,
+                duration: 30,
+                serviceType: 'hair',
+                category: 'consultation'
+            },
+            {
+                id: 'service_maintenance',
+                name: 'Maintenance',
+                description: 'Extension maintenance',
+                price: 800,
+                duration: 90,
+                serviceType: 'hair',
+                category: 'maintenance'
+            },
+            // Beauty (minimal seed)
+            {
+                id: 'service_manicure',
+                name: 'Manicure',
+                description: 'Manicure treatment',
+                price: 250,
+                duration: 45,
+                serviceType: 'beauty',
+                category: 'nails'
+            },
+            {
+                id: 'service_pedicure',
+                name: 'Pedicure',
+                description: 'Pedicure treatment',
+                price: 300,
+                duration: 60,
+                serviceType: 'beauty',
+                category: 'nails'
+            }
+        ];
+
+        for (const svc of defaults) {
+            const exists = await ServiceRepository.findById(svc.id);
+            if (exists) continue;
+            await ServiceRepository.create({
+                id: svc.id,
+                name: svc.name,
+                description: svc.description,
+                price: svc.price,
+                duration: svc.duration,
+                serviceType: svc.serviceType,
+                category: svc.category
+            });
+        }
+        console.log('Seeded default services');
+    } catch (err) {
+        console.error('Failed to seed services:', err.message);
+    }
+}
+
+// Seed default stylists into DB if none exist
+async function seedStylistsDefaults() {
+    try {
+        const existing = await StylistRepository.findAll();
+        if (existing && existing.length > 0) return;
+
+        const defaults = [
+            {
+                id: 'stylist_lisa',
+                name: 'Lisa Thompson',
+                specialty: 'Senior Stylist',
+                tagline: '8 years experience',
+                rating: 4.9,
+                reviewCount: 127,
+                clientsCount: 350,
+                yearsExperience: 8,
+                instagram: '@lisathompson',
+                color: '#F67599',
+                available: true,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg'
+            },
+            {
+                id: 'stylist_emma',
+                name: 'Emma Williams',
+                specialty: 'Extension Specialist',
+                tagline: 'Keratin Bonds, Volume',
+                rating: 4.8,
+                reviewCount: 94,
+                clientsCount: 280,
+                yearsExperience: 6,
+                instagram: '@emmaextensions',
+                color: '#414042',
+                available: true,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg'
+            },
+            {
+                id: 'stylist_sarah',
+                name: 'Sarah Martinez',
+                specialty: 'Color Expert',
+                tagline: 'Color Match, Balayage',
+                rating: 5.0,
+                reviewCount: 203,
+                clientsCount: 410,
+                yearsExperience: 10,
+                instagram: '@sarahcolor',
+                color: '#FFB6C1',
+                available: true,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg'
+            },
+            {
+                id: 'stylist_maya',
+                name: 'Maya Johnson',
+                specialty: 'Maintenance Expert',
+                tagline: 'Maintenance, Repairs',
+                rating: 4.9,
+                reviewCount: 156,
+                clientsCount: 320,
+                yearsExperience: 5,
+                instagram: '@mayamaintains',
+                color: '#6d6e70',
+                available: true,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images3.jpg'
+            }
+        ];
+
+        for (const stylist of defaults) {
+            await StylistRepository.create(stylist);
+        }
+        console.log('Seeded default stylists');
+    } catch (err) {
+        console.error('Failed to seed stylists:', err.message);
+    }
+}
+
+// Seed default hair tips for customer app if none exist
+function seedHairTipsDefaults() {
+    if (hairTipsStore.tips && hairTipsStore.tips.length > 0) return;
+    const defaults = [
+        { text: 'Sleep on a silk pillowcase to reduce friction and frizz.', category: 'care' },
+        { text: 'Use a sulfate-free shampoo to keep moisture locked in.', category: 'wash' },
+        { text: 'Deep condition once a week for softer, stronger strands.', category: 'treatment' },
+        { text: 'Trim your ends every 8-10 weeks to prevent split ends.', category: 'maintenance' },
+        { text: 'Avoid high heat; style on medium or low settings.', category: 'heat' },
+        { text: 'Always apply a heat protectant before blow-drying or ironing.', category: 'heat' },
+        { text: 'Rinse with cool water to boost shine and seal the cuticle.', category: 'wash' },
+        { text: 'Detangle from ends to roots using a wide-tooth comb.', category: 'detangle' },
+        { text: 'Massage your scalp for 2 minutes daily to encourage circulation.', category: 'scalp' },
+        { text: 'Don’t sleep with wet hair; it can cause breakage and tangles.', category: 'care' },
+        { text: 'Use a microfiber towel or cotton T-shirt to blot-dry gently.', category: 'drying' },
+        { text: 'Limit washing to 2-3 times a week to preserve natural oils.', category: 'wash' },
+        { text: 'Protect hair from sun with hats or UV-protectant sprays.', category: 'protection' },
+        { text: 'Keep extensions detangled with a soft bristle or loop brush.', category: 'extensions' },
+        { text: 'Avoid oils near tape/weft bonds to prevent slipping.', category: 'extensions' },
+        { text: 'Hydrate from within: drink water for scalp and hair health.', category: 'lifestyle' },
+        { text: 'Use a bond-building treatment monthly to reinforce strength.', category: 'treatment' },
+        { text: 'Switch to a wide satin scrunchie to avoid creases and breakage.', category: 'styling' },
+        { text: 'Clarify monthly to remove buildup, then follow with a mask.', category: 'wash' },
+        { text: 'Cold-pressed oils on mid-lengths and ends add shine—avoid the roots.', category: 'care' }
+    ];
+
+    defaults.forEach((tip, idx) => {
+        hairTipsStore.tips.push({
+            id: `tip${idx + 1}`,
+            text: tip.text,
+            active: true,
+            category: tip.category || 'general',
+            priority: tip.priority || 1,
+            createdAt: new Date().toISOString()
+        });
+    });
+}
+
+seedHairTipsDefaults();
+
+// Seed default gallery items from flirthair.co.za assets if gallery is empty
+function seedGalleryDefaults() {
+    if (galleryStore.items && galleryStore.items.length > 0) return;
+    if (!galleryStore.instagram) {
+        galleryStore.instagram = null;
+    }
+    const defaults = [
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg',
+            altText: 'Salon inspo 1',
+            label: 'Salon inspo',
+            category: 'inspiration'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg',
+            altText: 'Salon inspo 2',
+            label: 'Salon inspo',
+            category: 'inspiration'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg',
+            altText: 'Tape extensions',
+            label: 'Tape extensions',
+            category: 'services'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg',
+            altText: 'Weft installation',
+            label: 'Weft installation',
+            category: 'services'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg',
+            altText: 'Color matching',
+            label: 'Color matching',
+            category: 'services'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU249_PLUMPING.WASH_250ml-03-300x300.png',
+            altText: 'Plumping Wash',
+            label: 'Plumping Wash',
+            category: 'products'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU491_SESSION.SPRAY_FLEX_400ML_EU-02-300x300.png',
+            altText: 'Session Spray',
+            label: 'Session Spray',
+            category: 'products'
+        },
+        {
+            imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU291_STIMULATE-ME.WASH_250ml-03-300x300.png',
+            altText: 'Stimulate Me Wash',
+            label: 'Stimulate Me Wash',
+            category: 'products'
+        }
+    ];
+
+    defaults.forEach((item, idx) => {
+        galleryStore.items.push({
+            id: `seed_${idx + 1}`,
+            imageUrl: item.imageUrl,
+            altText: item.altText,
+            label: item.label,
+            category: item.category,
+            order: idx + 1,
+            active: true,
+            createdAt: new Date().toISOString()
+        });
+    });
+}
+
+seedGalleryDefaults();
 
 // Optional auth middleware - sets req.user if token is valid, but doesn't fail if not
 function optionalAuth(req, res, next) {
@@ -3358,29 +3835,69 @@ app.patch('/api/admin/chat/conversations/:id/status', authenticateAdmin, async (
 app.get('/api/gallery', (req, res) => {
     try {
         if (!galleryStore.items || galleryStore.items.length === 0) {
-            return res.json({ items: [] });
+            seedGalleryDefaults();
         }
 
         const activeItems = galleryStore.items
             .filter(item => item.active)
             .sort((a, b) => a.order - b.order);
 
-        res.json({ items: activeItems });
+        res.json({ items: activeItems, instagram: galleryStore.instagram || null });
     } catch (error) {
         console.error('Error getting gallery items:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
 
+// Dev-only: Auto-login as first user (useful when social logins are not configured)
+if (IS_DEV) {
+    app.get('/api/auth/dev-login', async (req, res) => {
+        try {
+            const users = await UserRepository.findAll();
+            let user = users && users.length > 0 ? users[0] : null;
+
+            if (!user) {
+                // Create a placeholder user if none exist
+                const userId = uuidv4();
+                const passwordHash = await bcrypt.hash('dev-user', 10);
+                user = await UserRepository.create({
+                    id: userId,
+                    email: 'devuser@flirthair.co.za',
+                    passwordHash,
+                    name: 'Dev User',
+                    phone: '',
+                    role: 'customer',
+                    points: 0,
+                    tier: 'bronze',
+                    referralCode: generateReferralCode('Dev User'),
+                    referredBy: null
+                });
+            }
+
+            const token = jwt.sign(
+                { id: user.id, email: user.email, role: user.role },
+                JWT_SECRET,
+                { expiresIn: '7d' }
+            );
+
+            const { passwordHash, password_hash, ...userResponse } = user;
+            res.json({ success: true, token, user: userResponse });
+        } catch (error) {
+            console.error('Dev login error:', error);
+            res.status(500).json({ success: false, message: 'Dev login failed' });
+        }
+    });
+}
+
 // Get all gallery items (admin)
 app.get('/api/admin/gallery', authenticateAdmin, async (req, res) => {
     try {
         if (!galleryStore.items || galleryStore.items.length === 0) {
-            return res.json({ items: [] });
+            seedGalleryDefaults();
         }
 
         const items = [...galleryStore.items].sort((a, b) => a.order - b.order);
-        res.json({ items });
+        res.json({ items, instagram: galleryStore.instagram || null });
     } catch (error) {
         console.error('Error getting admin gallery items:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -3416,6 +3933,79 @@ app.post('/api/admin/gallery', authenticateAdmin, async (req, res) => {
     } catch (error) {
         console.error('Error creating gallery item:', error);
         res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// Set Instagram feed configuration
+async function handleInstagramConfig(req, res) {
+    try {
+        const { username, embedUrl } = req.body || {};
+        if (!username && !embedUrl) {
+            return res.status(400).json({ message: 'username or embedUrl is required' });
+        }
+        const normalized = (username || '').replace('@', '').trim();
+        const url = embedUrl && embedUrl.trim()
+            ? embedUrl.trim()
+            : normalized
+                ? `https://www.instagram.com/${normalized}/embed`
+                : null;
+
+        galleryStore.instagram = {
+            username: normalized || null,
+            embedUrl: url
+        };
+
+        res.json({ success: true, instagram: galleryStore.instagram });
+    } catch (error) {
+        console.error('Error updating Instagram config:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+app.put('/api/admin/gallery/instagram', authenticateAdmin, handleInstagramConfig);
+app.post('/api/admin/gallery/instagram', authenticateAdmin, handleInstagramConfig);
+
+// Proxy Instagram feed (best-effort, public data)
+app.get('/api/instagram/:username', async (req, res) => {
+    const username = (req.params.username || '').trim();
+    if (!username) return res.status(400).json({ success: false, message: 'Username is required' });
+
+    try {
+        const igRes = await fetch(`https://www.instagram.com/${username}/?__a=1&__d=dis`, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; FlirtBot/1.0)'
+            }
+        });
+
+        if (!igRes.ok) {
+            return res.status(502).json({ success: false, message: 'Failed to fetch Instagram feed' });
+        }
+
+        const json = await igRes.json();
+        const edges =
+            json?.graphql?.user?.edge_owner_to_timeline_media?.edges ||
+            json?.items ||
+            [];
+
+        const images = edges
+            .slice(0, 9)
+            .map(edge => {
+                const node = edge.node || edge;
+                return {
+                    url: node.display_url || node.thumbnail_src || node.thumbnail_url,
+                    link: node.shortcode ? `https://www.instagram.com/p/${node.shortcode}/` : null
+                };
+            })
+            .filter(img => img.url);
+
+        if (!images.length) {
+            return res.status(204).json({ success: true, images: [] });
+        }
+
+        res.json({ success: true, images });
+    } catch (error) {
+        console.error('Instagram proxy error:', error.message);
+        res.status(500).json({ success: false, message: 'Instagram feed unavailable' });
     }
 });
 
@@ -3530,6 +4120,9 @@ app.post('/api/admin/gallery/reorder', authenticateAdmin, async (req, res) => {
 app.get('/api/hair-tips/random', (req, res) => {
     try {
         if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+            seedHairTipsDefaults();
+        }
+        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
             return res.json({ tip: null });
         }
 
@@ -3552,6 +4145,9 @@ app.get('/api/hair-tips/random', (req, res) => {
 app.get('/api/hair-tips', (req, res) => {
     try {
         if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+            seedHairTipsDefaults();
+        }
+        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
             return res.json({ tips: [] });
         }
 
@@ -3565,6 +4161,9 @@ app.get('/api/hair-tips', (req, res) => {
 // Get all tips (admin)
 app.get('/api/admin/hair-tips', authenticateAdmin, async (req, res) => {
     try {
+        if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
+            seedHairTipsDefaults();
+        }
         if (!hairTipsStore.tips || hairTipsStore.tips.length === 0) {
             return res.json({ tips: [] });
         }

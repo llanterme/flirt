@@ -1167,6 +1167,13 @@
                     </svg>
                     Hair Tracker Settings
                 </a>
+                <a class="nav-item" onclick="showSection('payment-settings')">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    Payment Settings
+                </a>
                 <a class="nav-item" onclick="showSection('settings')">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
@@ -1196,7 +1203,7 @@
                     </button>
                     <div class="admin-profile">
                         <div class="admin-avatar">A</div>
-                        <span style="font-weight: 500;">Admin</span>
+                        <span id="adminName" style="font-weight: 500;">Admin</span>
                     </div>
                 </div>
             </header>
@@ -1917,7 +1924,7 @@
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <div>
-                                    <div class="stat-value">3</div>
+                                    <div class="stat-value" id="promoActiveCount">0</div>
                                     <div class="stat-label">Active Promos</div>
                                 </div>
                                 <div class="stat-icon pink">🏷️</div>
@@ -1926,7 +1933,7 @@
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <div>
-                                    <div class="stat-value">156</div>
+                                    <div class="stat-value" id="promoCodesUsed">0</div>
                                     <div class="stat-label">Codes Used</div>
                                 </div>
                                 <div class="stat-icon gold">🎟️</div>
@@ -1935,7 +1942,7 @@
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <div>
-                                    <div class="stat-value">R4,680</div>
+                                    <div class="stat-value" id="promoDiscountsGiven">R0</div>
                                     <div class="stat-label">Discounts Given</div>
                                 </div>
                                 <div class="stat-icon green">💸</div>
@@ -1994,11 +2001,27 @@
                     <div class="data-card">
                         <div class="data-card-header">
                             <h3 class="data-card-title">Gallery Management</h3>
-                            <button class="btn btn-primary btn-small" onclick="showGalleryModal()">+ Add Image</button>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <button class="btn btn-outline btn-small" onclick="openInstagramModal()">Instagram Feed</button>
+                                <button class="btn btn-primary btn-small" onclick="showGalleryModal()">+ Add Image</button>
+                            </div>
                         </div>
                         <p style="color: var(--gray-medium); margin-bottom: 20px;">
                             Manage the gallery images displayed on the client app. Drag to reorder, toggle visibility, or add new images.
                         </p>
+
+                        <div class="data-card" style="margin-bottom: 15px;">
+                            <div class="data-card-header">
+                                <h4 class="data-card-title" style="font-size: 16px;">Instagram Feed</h4>
+                                <span id="instagramStatus" style="font-size: 12px; color: var(--gray-medium);"></span>
+                            </div>
+                            <div style="padding: 15px; color: var(--gray-medium);">
+                                Configure your Instagram handle to surface the feed in the client gallery.
+                                <div style="margin-top: 10px;">
+                                    <button class="btn btn-outline btn-small" onclick="openInstagramModal()">Configure</button>
+                                </div>
+                            </div>
+                        </div>
 
                         <div id="galleryList" class="gallery-admin-grid">
                             <!-- Gallery items will be loaded dynamically -->
@@ -2623,6 +2646,204 @@
                         <strong style="color: var(--success);">Settings saved successfully!</strong>
                     </div>
                 </section>
+
+                <!-- Payment Settings Section -->
+                <section id="payment-settings" class="page-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Payment Configuration</h2>
+                        <p style="color: var(--gray-medium); margin-top: 5px;">Manage PayFast and Yoco payment gateway settings</p>
+                        <button class="btn btn-primary" onclick="refreshPaymentConfig()" style="margin-top: 15px;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                            Refresh Status
+                        </button>
+                    </div>
+
+                    <!-- Editable Payment Settings -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Editable Settings</h3>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">App URL (used for return/cancel pages)</label>
+                                    <input type="text" id="paymentAppUrl" class="form-input" placeholder="https://flirthair.co.za">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">API Base URL (used for webhooks)</label>
+                                    <input type="text" id="paymentApiBaseUrl" class="form-input" placeholder="https://api.flirthair.co.za">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">PayFast Merchant ID</label>
+                                    <input type="text" id="payfastMerchantId" class="form-input" placeholder="e.g. 10000100">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">PayFast Merchant Key</label>
+                                    <input type="text" id="payfastMerchantKey" class="form-input" placeholder="e.g. 46f0cd694581a">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">PayFast Passphrase (recommended)</label>
+                                    <input type="text" id="payfastPassphrase" class="form-input" placeholder="Optional but recommended">
+                                </div>
+                                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 28px;">
+                                    <input type="checkbox" id="payfastSandbox" style="width: 18px; height: 18px;">
+                                    <label for="payfastSandbox" class="form-label" style="margin: 0;">Use Sandbox Mode</label>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Yoco Secret Key</label>
+                                    <input type="text" id="yocoSecretKey" class="form-input" placeholder="sk_test_xxx or sk_live_xxx">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Yoco Public Key</label>
+                                    <input type="text" id="yocoPublicKey" class="form-input" placeholder="pk_test_xxx or pk_live_xxx">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Yoco Webhook Secret</label>
+                                <input type="text" id="yocoWebhookSecret" class="form-input" placeholder="Webhook signing secret">
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                                <button class="btn btn-primary" onclick="savePaymentSettings()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                                    Save Payment Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- App URL Display -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Application URL</h3>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-group">
+                                <label class="form-label">Base URL (APP_URL)</label>
+                                <input type="text" id="paymentAppUrlDisplay" class="form-input" readonly style="background: var(--gray-light); cursor: not-allowed;">
+                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Set via APP_URL environment variable</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PayFast Configuration -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <h3 class="data-card-title">PayFast Configuration</h3>
+                                <span id="payfastStatusBadge" class="status-badge" style="display: none;"></span>
+                            </div>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Mode</label>
+                                    <input type="text" id="payfastMode" class="form-input" readonly style="background: var(--gray-light);">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Base URL</label>
+                                    <input type="text" id="payfastBaseUrl" class="form-input" readonly style="background: var(--gray-light);">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Notify URL (ITN Endpoint)</label>
+                                <input type="text" id="payfastNotifyUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Configure this URL in your PayFast account under Settings → Integration</p>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Return URL</label>
+                                    <input type="text" id="payfastReturnUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Cancel URL</label>
+                                    <input type="text" id="payfastCancelUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                                    Passphrase Configured
+                                    <span id="payfastPassphraseIcon"></span>
+                                </label>
+                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Set via PAYFAST_PASSPHRASE environment variable (recommended for production)</p>
+                            </div>
+                            <div id="payfastMissingVars" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255,152,0,0.1); border-radius: 8px; border-left: 4px solid var(--warning);">
+                                <strong style="color: var(--warning);">Missing Configuration:</strong>
+                                <ul id="payfastMissingVarsList" style="margin: 10px 0 0 20px; color: var(--gray-dark);"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Yoco Configuration -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <h3 class="data-card-title">Yoco Configuration</h3>
+                                <span id="yocoStatusBadge" class="status-badge" style="display: none;"></span>
+                            </div>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-group">
+                                <label class="form-label">Base URL</label>
+                                <input type="text" id="yocoBaseUrl" class="form-input" readonly style="background: var(--gray-light);">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Webhook URL</label>
+                                <input type="text" id="yocoWebhookUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Configure this URL in your Yoco Dashboard under Developers → Webhooks</p>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                                        Public Key
+                                        <span id="yocoPublicKeyIcon"></span>
+                                    </label>
+                                    <input type="text" id="yocoPublicKey" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                    <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Set via YOCO_PUBLIC_KEY environment variable</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                                        Webhook Secret Configured
+                                        <span id="yocoWebhookSecretIcon"></span>
+                                    </label>
+                                    <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Set via YOCO_WEBHOOK_SECRET environment variable (required for webhook verification)</p>
+                                </div>
+                            </div>
+                            <div id="yocoMissingVars" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255,152,0,0.1); border-radius: 8px; border-left: 4px solid var(--warning);">
+                                <strong style="color: var(--warning);">Missing Configuration:</strong>
+                                <ul id="yocoMissingVarsList" style="margin: 10px 0 0 20px; color: var(--gray-dark);"></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuration Guide -->
+                    <div class="data-card" style="background: var(--primary-light); border: 1px solid var(--primary);">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title" style="color: var(--primary);">Configuration Guide</h3>
+                        </div>
+                        <div style="padding: 25px; color: var(--gray-dark);">
+                            <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">Environment Variables Required:</h4>
+                            <ul style="margin-left: 20px; line-height: 1.8;">
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">APP_URL</code> - Your application's base URL (e.g., https://flirthair.co.za)</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">PAYFAST_MERCHANT_ID</code> - Your PayFast merchant ID</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">PAYFAST_MERCHANT_KEY</code> - Your PayFast merchant key</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">PAYFAST_PASSPHRASE</code> - (Optional) PayFast security passphrase</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">PAYFAST_SANDBOX</code> - Set to 'true' for sandbox mode</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">YOCO_SECRET_KEY</code> - Your Yoco secret key</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">YOCO_PUBLIC_KEY</code> - Your Yoco public key</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">YOCO_WEBHOOK_SECRET</code> - Your Yoco webhook secret</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
             </div>
         </main>
     </div>
@@ -3062,6 +3283,7 @@
             const token = getToken();
             const headers = {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 ...(token && { 'Authorization': `Bearer ${token}` })
             };
 
@@ -3070,7 +3292,13 @@
                     ...options,
                     headers: { ...headers, ...options.headers }
                 });
-                const data = await response.json();
+                const raw = await response.text();
+                let data;
+                try {
+                    data = raw ? JSON.parse(raw) : {};
+                } catch (e) {
+                    throw new Error(raw || 'API request failed (non-JSON response)');
+                }
                 if (!response.ok) throw new Error(data.message || 'API request failed');
                 apiConnected = true;
                 return data;
@@ -3114,7 +3342,10 @@
                     return false;
                 }
                 adminUser = data.user;
-                document.getElementById('adminName').textContent = data.user.name;
+                const adminNameEl = document.getElementById('adminName');
+                if (adminNameEl) {
+                    adminNameEl.textContent = data.user.name;
+                }
                 return true;
             } catch (error) {
                 showLoginPrompt();
@@ -3304,6 +3535,7 @@
                 case 'gallery': loadGallery(); break;
                 case 'loyalty-settings': loadLoyaltySettings(); break;
                 case 'hair-tracker-settings': loadHairTrackerSettings(); break;
+                case 'payment-settings': loadPaymentSettings(); break;
                 case 'chat': loadAdminConversations(); break;
                 case 'hair-tips': loadHairTips(); break;
             }
@@ -4086,19 +4318,41 @@
         async function loadPromos() {
             try {
                 const data = await apiCall('/admin/promos');
+                const promos = data.promos || [];
+
+                // Calculate stats
+                const activeCount = promos.filter(p => p.active).length;
+                const totalUsed = promos.reduce((sum, p) => sum + (p.times_used || 0), 0);
+
+                // Calculate total discounts given (this is an estimate based on orders table)
+                // For now, we'll fetch from orders API
+                let totalDiscounts = 0;
+                try {
+                    const ordersData = await apiCall('/admin/orders');
+                    totalDiscounts = (ordersData.orders || []).reduce((sum, o) => sum + (o.discount || 0), 0);
+                } catch (e) {
+                    console.log('Could not fetch orders for discount calculation');
+                }
+
+                // Update stat cards
+                document.getElementById('promoActiveCount').textContent = activeCount;
+                document.getElementById('promoCodesUsed').textContent = totalUsed;
+                document.getElementById('promoDiscountsGiven').textContent = 'R' + totalDiscounts.toLocaleString();
+
+                // Update table
                 const container = document.querySelector('#promotions .data-table tbody');
                 if (container) {
-                    if (data.promos.length > 0) {
-                        container.innerHTML = data.promos.map(p => `
+                    if (promos.length > 0) {
+                        container.innerHTML = promos.map(p => `
                             <tr>
                                 <td><code style="background: var(--gray-light); padding: 4px 8px; border-radius: 4px;">${p.code}</code></td>
                                 <td>
                                     <div style="font-weight: 500;">${p.title || p.description || '-'}</div>
                                     ${p.title && p.description ? `<div style="font-size: 12px; color: var(--gray-medium);">${p.description}</div>` : ''}
                                 </td>
-                                <td>${p.discountType === 'percentage' ? p.discountValue + '%' : 'R' + p.discountValue}</td>
-                                <td>${p.minOrder ? 'R' + p.minOrder : '-'}</td>
-                                <td>${p.timesUsed || 0}${p.usageLimit ? '/' + p.usageLimit : ''}</td>
+                                <td>${p.discount_type === 'percentage' ? p.discount_value + '%' : 'R' + p.discount_value}</td>
+                                <td>${p.min_order ? 'R' + p.min_order : '-'}</td>
+                                <td>${p.times_used || 0}${p.usage_limit ? '/' + p.usage_limit : ''}</td>
                                 <td>
                                     ${p.highlighted
                                         ? `<span class="status-badge" style="background: var(--brand-pink); color: white;" title="${p.badge || 'SPECIAL'}: ${p.subtitle || ''}">Yes</span>`
@@ -5581,6 +5835,19 @@
             try {
                 const data = await apiCall('/admin/gallery');
                 renderGallery(data.items || []);
+                window.instagramConfig = data.instagram || null;
+
+                const instaStatus = document.getElementById('instagramStatus');
+                if (instaStatus) {
+                    const insta = data.instagram;
+                    if (insta && insta.username) {
+                        instaStatus.textContent = `Connected to @${insta.username}`;
+                        instaStatus.style.color = 'var(--success)';
+                    } else {
+                        instaStatus.textContent = 'Not configured';
+                        instaStatus.style.color = 'var(--gray-medium)';
+                    }
+                }
             } catch (error) {
                 console.error('Error loading gallery:', error);
                 document.getElementById('galleryList').innerHTML = `
@@ -5588,6 +5855,27 @@
                         Failed to load gallery: ${error.message}
                     </div>
                 `;
+            }
+        }
+
+        function openInstagramModal() {
+            const existing = window.instagramConfig || {};
+            const username = prompt('Instagram handle (without @):', existing.username || '');
+            if (username === null) return;
+            const embedUrl = prompt('Custom embed URL (optional):', existing.embedUrl || '');
+            saveInstagramConfig(username.trim(), embedUrl ? embedUrl.trim() : '');
+        }
+
+        async function saveInstagramConfig(username, embedUrl) {
+            try {
+                await apiCall('/admin/gallery/instagram', {
+                    method: 'PUT',
+                    body: JSON.stringify({ username, embedUrl })
+                });
+                alert('Instagram feed updated');
+                loadGallery();
+            } catch (error) {
+                alert('Error saving Instagram config: ' + error.message);
             }
         }
 
@@ -5742,6 +6030,172 @@
                 loadGallery();
             } catch (error) {
                 alert('Error: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // PAYMENT SETTINGS
+        // ============================================
+        async function loadPaymentSettings() {
+            await refreshPaymentConfig();
+        }
+
+        async function refreshPaymentConfig() {
+            try {
+                const data = await apiCall('/admin/payment-config');
+                const config = data.config;
+                const stored = data.storedConfig || {};
+
+                // Update App URL
+                document.getElementById('paymentAppUrlDisplay').value = config.appUrl;
+
+                populatePaymentForm(config, stored);
+
+                // Update PayFast configuration
+                updatePayFastUI(config.payfast);
+
+                // Update Yoco configuration
+                updateYocoUI(config.yoco);
+
+            } catch (error) {
+                console.error('Error loading payment config:', error);
+                alert('Failed to load payment configuration: ' + error.message);
+            }
+        }
+
+        function populatePaymentForm(config, stored) {
+            document.getElementById('paymentAppUrl').value = stored.appUrl || config.appUrl || '';
+            document.getElementById('paymentApiBaseUrl').value = stored.apiBaseUrl || config.apiBaseUrl || '';
+
+            document.getElementById('payfastMerchantId').value = stored.payfast?.merchantId || '';
+            document.getElementById('payfastMerchantKey').value = stored.payfast?.merchantKey || '';
+            document.getElementById('payfastPassphrase').value = stored.payfast?.passphrase || '';
+            const sandboxDefault = config.payfast.mode === 'sandbox';
+            document.getElementById('payfastSandbox').checked = stored.payfast?.sandbox ?? sandboxDefault;
+
+            document.getElementById('yocoSecretKey').value = stored.yoco?.secretKey || '';
+            document.getElementById('yocoPublicKey').value = stored.yoco?.publicKey || '';
+            document.getElementById('yocoWebhookSecret').value = stored.yoco?.webhookSecret || '';
+        }
+
+        async function savePaymentSettings() {
+            const payload = {
+                appUrl: document.getElementById('paymentAppUrl').value.trim(),
+                apiBaseUrl: document.getElementById('paymentApiBaseUrl').value.trim(),
+                payfast: {
+                    merchantId: document.getElementById('payfastMerchantId').value.trim(),
+                    merchantKey: document.getElementById('payfastMerchantKey').value.trim(),
+                    passphrase: document.getElementById('payfastPassphrase').value.trim(),
+                    sandbox: document.getElementById('payfastSandbox').checked
+                },
+                yoco: {
+                    secretKey: document.getElementById('yocoSecretKey').value.trim(),
+                    publicKey: document.getElementById('yocoPublicKey').value.trim(),
+                    webhookSecret: document.getElementById('yocoWebhookSecret').value.trim()
+                }
+            };
+
+            try {
+                await apiCall('/admin/payment-config', {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+                alert('Payment settings saved');
+                await refreshPaymentConfig();
+            } catch (error) {
+                console.error('Error saving payment settings:', error);
+                alert('Failed to save payment settings: ' + error.message);
+            }
+        }
+
+        function updatePayFastUI(payfast) {
+            // Status badge
+            const statusBadge = document.getElementById('payfastStatusBadge');
+            if (payfast.configured) {
+                statusBadge.textContent = '✓ Configured';
+                statusBadge.style.background = 'var(--success)';
+                statusBadge.style.display = 'inline-block';
+            } else {
+                statusBadge.textContent = '⚠ Not Configured';
+                statusBadge.style.background = 'var(--warning)';
+                statusBadge.style.display = 'inline-block';
+            }
+
+            // Mode and URLs
+            document.getElementById('payfastMode').value = payfast.mode;
+            document.getElementById('payfastBaseUrl').value = payfast.baseUrl;
+            document.getElementById('payfastNotifyUrl').value = payfast.notifyUrl;
+            document.getElementById('payfastReturnUrl').value = payfast.returnUrl;
+            document.getElementById('payfastCancelUrl').value = payfast.cancelUrl;
+
+            // Passphrase indicator
+            const passphraseIcon = document.getElementById('payfastPassphraseIcon');
+            if (payfast.hasPassphrase) {
+                passphraseIcon.innerHTML = '<span style="color: var(--success);">✓</span>';
+            } else {
+                passphraseIcon.innerHTML = '<span style="color: var(--gray-medium);">✗</span>';
+            }
+
+            // Missing vars
+            const missingVarsDiv = document.getElementById('payfastMissingVars');
+            const missingVarsList = document.getElementById('payfastMissingVarsList');
+
+            if (payfast.missingEnvVars && payfast.missingEnvVars.length > 0) {
+                missingVarsDiv.style.display = 'block';
+                missingVarsList.innerHTML = payfast.missingEnvVars
+                    .map(v => `<li><code style="background: white; padding: 2px 6px; border-radius: 4px;">${v}</code></li>`)
+                    .join('');
+            } else {
+                missingVarsDiv.style.display = 'none';
+            }
+        }
+
+        function updateYocoUI(yoco) {
+            // Status badge
+            const statusBadge = document.getElementById('yocoStatusBadge');
+            if (yoco.configured) {
+                statusBadge.textContent = '✓ Configured';
+                statusBadge.style.background = 'var(--success)';
+                statusBadge.style.display = 'inline-block';
+            } else {
+                statusBadge.textContent = '⚠ Not Configured';
+                statusBadge.style.background = 'var(--warning)';
+                statusBadge.style.display = 'inline-block';
+            }
+
+            // Base URL and webhook
+            document.getElementById('yocoBaseUrl').value = yoco.baseUrl;
+            document.getElementById('yocoWebhookUrl').value = yoco.webhookUrl;
+
+            // Public key (truncated for security)
+            document.getElementById('yocoPublicKey').value = yoco.publicKey || 'Not configured';
+
+            // Icons for configured items
+            const publicKeyIcon = document.getElementById('yocoPublicKeyIcon');
+            if (yoco.hasPublicKey) {
+                publicKeyIcon.innerHTML = '<span style="color: var(--success);">✓</span>';
+            } else {
+                publicKeyIcon.innerHTML = '<span style="color: var(--gray-medium);">✗</span>';
+            }
+
+            const webhookSecretIcon = document.getElementById('yocoWebhookSecretIcon');
+            if (yoco.hasWebhookSecret) {
+                webhookSecretIcon.innerHTML = '<span style="color: var(--success);">✓</span>';
+            } else {
+                webhookSecretIcon.innerHTML = '<span style="color: var(--warning);">⚠</span>';
+            }
+
+            // Missing vars
+            const missingVarsDiv = document.getElementById('yocoMissingVars');
+            const missingVarsList = document.getElementById('yocoMissingVarsList');
+
+            if (yoco.missingEnvVars && yoco.missingEnvVars.length > 0) {
+                missingVarsDiv.style.display = 'block';
+                missingVarsList.innerHTML = yoco.missingEnvVars
+                    .map(v => `<li><code style="background: white; padding: 2px 6px; border-radius: 4px;">${v}</code></li>`)
+                    .join('');
+            } else {
+                missingVarsDiv.style.display = 'none';
             }
         }
 

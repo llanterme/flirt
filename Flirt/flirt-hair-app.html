@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Runtime-configurable client settings (override by replacing content) -->
+    <meta name="flirt-api-base" content="/api">
+    <meta name="flirt-support-whatsapp" content="27821234567">
+    <meta name="flirt-media-base" content="https://www.flirthair.co.za">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FL!RT - Premium Hair Extensions</title>
@@ -2677,20 +2681,20 @@
 
         <!-- Home Content -->
         <div id="home" class="content-area active">
-            <div class="welcome-banner">
-                <div class="welcome-title">Welcome back, Sarah! 👋</div>
-                <p>Your beauty journey continues...</p>
-                <div class="points-display">
+            <div class="welcome-banner" id="welcomeBanner">
+                <div class="welcome-title" id="welcomeTitle">Welcome to FL!RT 👋</div>
+                <p id="welcomeSubtitle">Discover premium hair extensions and book your transformation!</p>
+                <div class="points-display" id="pointsDisplay" style="display: none;">
                     <span class="points-icon">✨</span>
                     <div>
-                        <strong>1,250 Points</strong>
-                        <div style="font-size: 12px; opacity: 0.8;">Gold Tier Member</div>
+                        <strong id="bannerPoints">0 Points</strong>
+                        <div style="font-size: 12px; opacity: 0.8;" id="bannerTier">Bronze Member</div>
                     </div>
                 </div>
             </div>
 
             <div class="quick-actions">
-                <div class="action-card" onclick="switchTab('booking')">
+                <div class="action-card" onclick="navigateToSection('book')">
                     <div class="action-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="color: var(--brand-pink);">
                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -2777,11 +2781,22 @@
                 </div>
             </div>
 
+            <div id="instagramFeedContainer" style="margin-top: 20px; display: none;">
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 10px;">
+                    <h3 style="font-size: 18px; margin: 0; color: var(--brand-charcoal);">Instagram Highlights</h3>
+                    <a id="instagramCTA" href="#" target="_blank" style="display:none; font-size: 14px; color: var(--brand-pink); text-decoration: none;">Follow us</a>
+                </div>
+                <div id="instagramEmbed" style="width: 100%; min-height: 620px; background: var(--gray-light); border-radius: 12px; overflow: hidden;">
+                    <iframe id="instagramEmbedFrame" src="" style="width:100%; height:620px; border:0; overflow:hidden;" allowtransparency="true" allow="encrypted-media"></iframe>
+                </div>
+                <div id="instagramFallback" style="display:none; color: var(--gray-medium); margin-top: 10px;"></div>
+            </div>
+
             <div class="section-header">
                 <h2 class="section-title">Hair Care Tips</h2>
             </div>
 
-            <div class="card">
+            <div class="card" id="hairTipCard">
                 <strong>💡 Pro Tip:</strong>
                 <p id="hairTipText" style="margin-top: 10px; color: var(--gray-medium);">
                     Loading...
@@ -2919,7 +2934,7 @@
                 </div>
 
                 <div class="service-grid">
-                    <div class="service-card" onclick="selectService('tape')">
+                    <div class="service-card" onclick="selectService('tape', this)">
                         <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Tape Extensions" class="service-image">
                         <div class="service-content">
                             <div class="service-name">Tape Extensions</div>
@@ -2927,7 +2942,7 @@
                             <div class="service-price">R2,500</div>
                         </div>
                     </div>
-                    <div class="service-card" onclick="selectService('weft')">
+                    <div class="service-card" onclick="selectService('weft', this)">
                         <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg" alt="Weft Installation" class="service-image">
                         <div class="service-content">
                             <div class="service-name">Weft Installation</div>
@@ -2935,7 +2950,7 @@
                             <div class="service-price">R3,200</div>
                         </div>
                     </div>
-                    <div class="service-card" onclick="selectService('color')">
+                    <div class="service-card" onclick="selectService('color', this)">
                         <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg" alt="Color Matching" class="service-image">
                         <div class="service-content">
                             <div class="service-name">Color Matching</div>
@@ -2943,7 +2958,7 @@
                             <div class="service-price">Free</div>
                         </div>
                     </div>
-                    <div class="service-card" onclick="selectService('maintenance')">
+                    <div class="service-card" onclick="selectService('maintenance', this)">
                         <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories7.jpg" alt="Maintenance" class="service-image">
                         <div class="service-content">
                             <div class="service-name">Maintenance</div>
@@ -3400,7 +3415,7 @@
             <div class="team-grid">
                 <!-- Lisa Thompson -->
                 <div class="team-card">
-                    <img src="https://images.unsplash.com/photo-1595959183082-7b570b7e1dfa?w=400&h=350&fit=crop" alt="Lisa Thompson" class="team-photo">
+                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg" alt="Lisa Thompson" class="team-photo">
                     <div class="team-info">
                         <div class="team-avatar-overlay" style="background: linear-gradient(135deg, #F67599 0%, #e05a7f 100%);">L</div>
                         <div class="team-name">Lisa Thompson</div>
@@ -3557,19 +3572,19 @@
 
             <div class="inspo-gallery" id="inspoGallery">
                 <div class="inspo-item">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg" alt="Inspo 1">
+                        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg" alt="Inspo 1">
                     <div class="inspo-item-overlay">
                         <span class="inspo-label">Dream Length</span>
                     </div>
                 </div>
                 <div class="inspo-item">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg" alt="Inspo 2">
+                        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg" alt="Inspo 2">
                     <div class="inspo-item-overlay">
                         <span class="inspo-label">Color Goals</span>
                     </div>
                 </div>
                 <div class="inspo-item">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Inspo 3">
+                        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Inspo 3">
                     <div class="inspo-item-overlay">
                         <span class="inspo-label">Volume Vibes</span>
                     </div>
@@ -4236,6 +4251,10 @@
             </div>
             <div class="modal-body" style="padding: 20px;">
                 <p style="color: #666; margin-bottom: 20px; font-size: 14px;">Help us personalize your experience by telling us about your hair.</p>
+                <div id="hairProfileLoading" style="display: none; align-items: center; gap: 10px; color: var(--gray-medium); font-size: 14px; margin-bottom: 15px;">
+                    <span class="loading-spinner"></span>
+                    <span>Loading your hair profile...</span>
+                </div>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--gray-dark);">Hair Type</label>
                     <select id="hairProfileType" class="form-input" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px;">
@@ -4272,7 +4291,7 @@
                 <div id="hairProfileError" style="color: #e74c3c; font-size: 14px; margin-bottom: 15px; display: none;"></div>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn btn-outline" onclick="closeHairProfileModal()" style="flex: 1;">Cancel</button>
-                    <button class="btn btn-primary" onclick="saveHairProfile()" style="flex: 1; background: var(--brand-pink);">Save</button>
+                    <button id="hairProfileSaveBtn" class="btn btn-primary" onclick="saveHairProfile()" style="flex: 1; background: var(--brand-pink);">Save</button>
                 </div>
             </div>
         </div>
@@ -4346,7 +4365,7 @@
             <div class="modal-body" style="padding: 20px;">
                 <p style="color: #666; margin-bottom: 20px; font-size: 14px;">Need help? We're here for you!</p>
                 <div style="display: flex; flex-direction: column; gap: 15px;">
-                    <a href="https://wa.me/27821234567" target="_blank" style="display: flex; align-items: center; gap: 12px; padding: 15px; background: #f9f9f9; border-radius: 12px; text-decoration: none; color: inherit;">
+                    <a id="supportWhatsappLink" href="#" target="_blank" style="display: flex; align-items: center; gap: 12px; padding: 15px; background: #f9f9f9; border-radius: 12px; text-decoration: none; color: inherit;">
                         <div style="width: 40px; height: 40px; background: #25D366; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">💬</div>
                         <div>
                             <div style="font-weight: 500;">WhatsApp</div>
@@ -4571,18 +4590,29 @@
         // ============================================
         // API CONFIGURATION
         // ============================================
-        // Use relative URL for production compatibility
-        // Falls back to localhost only in development when origin is file:// or Live Server
+        // Prefer meta-injected base; fallback to relative /api or localhost for dev
         const API_BASE = (() => {
+            const meta = document.querySelector('meta[name="flirt-api-base"]');
+            if (meta && meta.content) return meta.content;
             const origin = window.location.origin;
             const port = window.location.port;
-            // If opened as a file or in dev environment without a server, or using Live Server (not port 3001)
             if (origin === 'null' || origin.startsWith('file://') || (port && port !== '3001')) {
                 console.warn('Running in dev mode - using localhost:3001 for API.');
                 return 'http://localhost:3001/api';
             }
-            // In production/staging, use relative path
             return '/api';
+        })();
+
+        // Client contact configuration (override via meta)
+        const SUPPORT_WHATSAPP = (() => {
+            const meta = document.querySelector('meta[name="flirt-support-whatsapp"]');
+            return meta && meta.content ? meta.content : '27821234567';
+        })();
+
+        // Media base URL for static assets (override via meta if CDN changes)
+        const MEDIA_BASE = (() => {
+            const meta = document.querySelector('meta[name="flirt-media-base"]');
+            return meta && meta.content ? meta.content.replace(/\/$/, '') : 'https://www.flirthair.co.za';
         })();
 
         // Get auth token from storage
@@ -4875,6 +4905,7 @@
             document.body.classList.add('logged-in');
             updateUserUI();
             loadUserData();
+            loadUpcomingAppointment();
         }
 
         async function checkAuthStatus() {
@@ -4886,6 +4917,8 @@
                 currentUser = data.user;
                 document.body.classList.add('logged-in');
                 updateUserUI();
+                await loadUserData();
+                await loadUpcomingAppointment();
             } catch (error) {
                 // Token was present but invalid/expired - clear it and notify user
                 localStorage.removeItem('flirt_token');
@@ -4902,17 +4935,51 @@
             }
         }
 
+        // Dev-only auto-login when running locally without a token
+        async function devAutoLoginIfNeeded() {
+            const hasToken = !!getToken();
+            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (hasToken || !isLocalhost) return;
+            try {
+                const res = await fetch(`${API_BASE}/auth/dev-login`);
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.token && data.user) {
+                    localStorage.setItem('flirt_token', data.token);
+                    currentUser = data.user;
+                    document.body.classList.add('logged-in');
+                    updateUserUI();
+                    await loadUserData();
+                    await loadUpcomingAppointment();
+                }
+            } catch (e) {
+                console.warn('Dev auto-login failed:', e);
+            }
+        }
+
         function updateUserUI() {
             // Update profile section - handles both logged-in and guest states
             const avatar = document.getElementById('profileAvatar');
             const name = document.getElementById('profileName');
             const tierText = document.getElementById('profileTierText');
 
+            // Update welcome banner
+            const welcomeTitle = document.getElementById('welcomeTitle');
+            const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+            const pointsDisplayBanner = document.getElementById('pointsDisplay');
+            const bannerPoints = document.getElementById('bannerPoints');
+            const bannerTier = document.getElementById('bannerTier');
+
             if (!currentUser) {
                 // Guest state
                 if (avatar) avatar.textContent = '?';
                 if (name) name.textContent = 'Guest';
                 if (tierText) tierText.textContent = 'Sign in to unlock rewards';
+
+                // Welcome banner for guests
+                if (welcomeTitle) welcomeTitle.textContent = 'Welcome to FL!RT 👋';
+                if (welcomeSubtitle) welcomeSubtitle.textContent = 'Discover premium hair extensions and book your transformation!';
+                if (pointsDisplayBanner) pointsDisplayBanner.style.display = 'none';
                 return;
             }
 
@@ -4923,6 +4990,20 @@
                 const tier = currentUser.tier || 'bronze';
                 const niceTier = tier.charAt(0).toUpperCase() + tier.slice(1);
                 tierText.textContent = `${niceTier} Tier Member`;
+            }
+
+            // Welcome banner for logged-in users
+            const firstName = currentUser.name?.split(' ')[0] || 'there';
+            if (welcomeTitle) welcomeTitle.textContent = `Welcome back, ${firstName}! 👋`;
+            if (welcomeSubtitle) welcomeSubtitle.textContent = 'Your beauty journey continues...';
+
+            // Show points display
+            if (pointsDisplayBanner) pointsDisplayBanner.style.display = 'flex';
+            if (bannerPoints) bannerPoints.textContent = `${(currentUser.points ?? 0).toLocaleString()} Points`;
+            if (bannerTier) {
+                const tier = currentUser.tier || 'bronze';
+                const niceTier = tier.charAt(0).toUpperCase() + tier.slice(1);
+                bannerTier.textContent = `${niceTier} Tier Member`;
             }
 
             // Update rewards section - use #userPoints which has class .stat-number
@@ -5009,12 +5090,24 @@
             }
         }
 
+        // Simple section navigator to booking tab or other anchors
+        function navigateToSection(section) {
+            if (section === 'book') {
+            switchTab('booking');
+            document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
+            } else if (section === 'my-bookings') {
+                switchTab('booking');
+                document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
         // ============================================
         // BOOKING STATE & DATA
         // ============================================
         let bookingType = null;
         let selectedStylist = null;
         let selectedService = null;
+        let selectedServiceId = null;
         let selectedDate = null;
         let selectedTime = null;
 
@@ -5022,6 +5115,7 @@
         let stylists = {};
         let services = {};
         let beautyServices = {};
+        let bookingDataLoaded = false;
 
         // Load data from API on init
         async function loadBookingData() {
@@ -5029,32 +5123,46 @@
                 // Load stylists
                 const stylistsData = await apiCall('/stylists');
                 stylistsData.stylists.forEach(s => {
-                    stylists[s.id] = {
+                    const entry = {
                         name: s.name,
                         specialty: s.specialty,
                         avatar: s.name.charAt(0),
                         color: `linear-gradient(135deg, ${s.color} 0%, ${s.color}99 100%)`
                     };
+                    // Store by full id and simple id (for legacy hardcoded cards like "lisa", "emma")
+                    stylists[s.id] = entry;
+                    const simpleId = s.id.replace(/^stylist_/, '').toLowerCase();
+                    stylists[simpleId] = entry;
                 });
 
                 // Load hair services
                 const hairData = await apiCall('/services/hair');
                 hairData.services.forEach(s => {
-                    services[s.id] = {
+                    const entry = {
+                        id: s.id,
                         name: s.name,
                         price: s.price === 0 ? 'Free' : `R${s.price.toLocaleString()}`
                     };
+                    services[s.id] = entry;
+                    const slug = s.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    services[slug] = entry;
+                    if (slug.includes('tape')) services['tape'] = entry;
+                    if (slug.includes('weft')) services['weft'] = entry;
+                    if (slug.includes('color')) services['color'] = entry;
+                    if (slug.includes('maint')) services['maintenance'] = entry;
                 });
 
                 // Load beauty services
                 const beautyData = await apiCall('/services/beauty');
                 beautyData.services.forEach(s => {
                     beautyServices[s.id] = {
+                        id: s.id,
                         name: s.name,
                         duration: `${s.durationMinutes} min`,
                         price: `R${s.price}`
                     };
                 });
+                bookingDataLoaded = true;
             } catch (error) {
                 console.log('Using fallback data:', error);
                 // Fallback to hardcoded data if API fails
@@ -5150,13 +5258,38 @@
         }
 
         // Service Selection
-        function selectService(serviceType) {
+        async function ensureBookingData() {
+            if (bookingDataLoaded) return;
+            try {
+                await loadBookingData();
+            } catch (e) {
+                console.error('Failed to refresh booking data:', e);
+            }
+        }
+
+        async function selectService(serviceType, el) {
+            await ensureBookingData();
+            // Find service from cache; if missing, build from the card DOM
+            let service = services[serviceType];
+            const targetCard = el ? el.closest('.service-card') : null;
+            if (!service && targetCard) {
+                const name = targetCard.querySelector('.service-name')?.textContent?.trim() || 'Selected Service';
+                const price = targetCard.querySelector('.service-price')?.textContent?.trim() || '';
+                service = { id: serviceType, name, price };
+                services[serviceType] = service;
+            }
+
+            if (!service) {
+                showToast({ type: 'error', title: 'Service unavailable', message: 'Please reload and try again.' });
+                return;
+            }
+
             selectedService = serviceType;
-            const service = services[serviceType];
+            selectedServiceId = service.id || serviceType;
 
             const cards = document.querySelectorAll('#serviceSelection .service-card');
             cards.forEach(card => card.classList.remove('selected'));
-            event.target.closest('.service-card').classList.add('selected');
+            if (targetCard) targetCard.classList.add('selected');
 
             // Update service name display
             document.getElementById('selectedServiceName').textContent = `${service.name} - ${service.price}`;
@@ -5184,17 +5317,24 @@
         }
 
         // Beauty Service Selection
-        function selectBeautyService(serviceType) {
+        async function selectBeautyService(serviceType, el) {
+            await ensureBookingData();
             selectedService = serviceType;
             const service = beautyServices[serviceType];
 
             const cards = document.querySelectorAll('#beautyBooking .service-card');
             cards.forEach(card => card.classList.remove('selected'));
-            event.target.closest('.service-card').classList.add('selected');
+            const targetCard = el ? el.closest('.service-card') : null;
+            if (targetCard) targetCard.classList.add('selected');
 
-            // Update service name display
-            document.getElementById('selectedBeautyServiceName').textContent = service.name;
-            document.getElementById('selectedBeautyServiceDetails').textContent = `${service.duration} - ${service.price}`;
+            if (service) {
+                selectedServiceId = service.id || serviceType;
+                // Update service name display
+                document.getElementById('selectedBeautyServiceName').textContent = service.name;
+                document.getElementById('selectedBeautyServiceDetails').textContent = `${service.duration} - ${service.price}`;
+            } else {
+                selectedServiceId = serviceType;
+            }
 
             // Show booking calendar
             setTimeout(() => {
@@ -5336,6 +5476,7 @@
 
         // Confirm Beauty Booking
         async function confirmBeautyBooking() {
+            await ensureBookingData();
             if (!selectedService || !selectedDateStr || !selectedTime) {
                 showToast({ type: 'error', title: 'Incomplete Booking', message: 'Please complete all booking steps' });
                 return;
@@ -5355,7 +5496,7 @@
                     method: 'POST',
                     body: JSON.stringify({
                         type: 'beauty',
-                        serviceId: selectedService,
+                        serviceId: selectedServiceId || selectedService,
                         date: selectedDateStr,
                         time: selectedTime
                     })
@@ -5371,6 +5512,7 @@
                 // Reset booking state
                 bookingType = null;
                 selectedService = null;
+                selectedServiceId = null;
                 selectedDate = null;
                 selectedDateStr = null;
                 selectedTime = null;
@@ -5406,6 +5548,7 @@
 
         // Booking Confirmation
         async function confirmBooking() {
+            await ensureBookingData();
             if (!selectedStylist || !selectedService || !selectedDateStr) {
                 showToast({ type: 'error', title: 'Incomplete Booking', message: 'Please select a stylist, service, and preferred date' });
                 return;
@@ -5435,7 +5578,7 @@
                     body: JSON.stringify({
                         type: 'hair',
                         stylistId: selectedStylist,
-                        serviceId: selectedService,
+                        serviceId: selectedServiceId || selectedService,
                         date: selectedDateStr,
                         preferredTimeOfDay: preferredTime || null,
                         notes
@@ -5452,6 +5595,7 @@
                 // Reset booking state
                 selectedStylist = null;
                 selectedService = null;
+                selectedServiceId = null;
                 selectedDate = null;
                 selectedDateStr = null;
                 selectedTime = null;
@@ -6211,7 +6355,26 @@
             if (!currentUser) { showAuthModal(); return; }
 
             const modal = document.getElementById('hairProfileModal');
-            document.getElementById('hairProfileError').style.display = 'none';
+            const errorEl = document.getElementById('hairProfileError');
+            const loadingEl = document.getElementById('hairProfileLoading');
+            const saveBtn = document.getElementById('hairProfileSaveBtn');
+            const formFields = [
+                document.getElementById('hairProfileType'),
+                document.getElementById('hairProfileExtension'),
+                document.getElementById('hairProfileStylist'),
+                document.getElementById('hairProfileNotes')
+            ];
+
+            const setLoadingState = (isLoading) => {
+                formFields.forEach(field => { if (field) field.disabled = isLoading; });
+                if (saveBtn) saveBtn.disabled = isLoading;
+                if (loadingEl) loadingEl.style.display = isLoading ? 'flex' : 'none';
+            };
+
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+            setLoadingState(true);
+            modal.classList.add('show');
 
             // Load stylists into dropdown
             try {
@@ -6224,7 +6387,16 @@
                     });
                 }
             } catch (e) {
-                console.log('Could not load stylists:', e);
+                const select = document.getElementById('hairProfileStylist');
+                if (select) {
+                    select.innerHTML = '<option value="">No preference</option>';
+                }
+                errorEl.textContent = e.message || 'Unable to load stylists right now. Please try again.';
+                errorEl.style.display = 'block';
+                formFields.forEach(field => { if (field) field.disabled = true; });
+                if (saveBtn) saveBtn.disabled = true;
+                if (loadingEl) loadingEl.style.display = 'none';
+                return;
             }
 
             // Load current hair profile
@@ -6236,10 +6408,15 @@
                 document.getElementById('hairProfileStylist').value = hp.preferredStylist || '';
                 document.getElementById('hairProfileNotes').value = hp.notes || '';
             } catch (e) {
-                console.log('Could not load hair profile:', e);
+                errorEl.textContent = e.message || 'Unable to load your hair profile right now. Please try again.';
+                errorEl.style.display = 'block';
+                formFields.forEach(field => { if (field) field.disabled = true; });
+                if (saveBtn) saveBtn.disabled = true;
+                if (loadingEl) loadingEl.style.display = 'none';
+                return;
             }
 
-            modal.classList.add('show');
+            setLoadingState(false);
         }
         function closeHairProfileModal() {
             document.getElementById('hairProfileModal').classList.remove('show');
@@ -6251,10 +6428,27 @@
             const preferredStylist = document.getElementById('hairProfileStylist').value;
             const notes = document.getElementById('hairProfileNotes').value.trim();
 
+            errorEl.style.display = 'none';
+
             try {
                 await apiCall('/hair-profile', {
                     method: 'PATCH',
                     body: JSON.stringify({ hairType, extensionType, preferredStylist, notes })
+                });
+
+                if (!currentUser) {
+                    currentUser = {};
+                }
+
+                if (!currentUser.hairProfile) {
+                    currentUser.hairProfile = {};
+                }
+
+                Object.assign(currentUser.hairProfile, {
+                    hairType,
+                    extensionType,
+                    preferredStylist,
+                    notes
                 });
                 closeHairProfileModal();
                 showToast({ type: 'success', title: 'Saved', message: 'Your hair profile has been updated.' });
@@ -6722,8 +6916,15 @@
 
                 if (!items.length) {
                     container.innerHTML = `
-                        <div class="gallery-item" style="display: flex; align-items: center; justify-content: center; background: var(--gray-light);">
-                            <span style="color: var(--gray-medium);">No gallery images</span>
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #fef5f8 0%, #fff 100%); border-radius: 15px; border: 2px dashed var(--brand-pink);">
+                            <div style="font-size: 60px; margin-bottom: 15px;">💇‍♀️</div>
+                            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 10px; color: var(--brand-charcoal);">Our Gallery is Coming Soon!</h3>
+                            <p style="color: var(--gray-medium); margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                                We're building an amazing collection of transformation photos. In the meantime, check out our services!
+                            </p>
+                            <button class="btn btn-primary" onclick="navigateToSection('book')" style="background: var(--brand-pink); border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: 600;">
+                                Explore Our Services
+                            </button>
                         </div>
                     `;
                     return;
@@ -6739,13 +6940,54 @@
                 // Store items for lightbox
                 window.galleryItems = items;
 
+                const instagram = data.instagram;
+                const instaContainer = document.getElementById('instagramFeedContainer');
+                const instaFallback = document.getElementById('instagramFallback');
+                const instaCTA = document.getElementById('instagramCTA');
+                const instaFrame = document.getElementById('instagramEmbedFrame');
+                if (instaContainer && instaFallback && instaCTA && instaFrame) {
+                    if (instagram && instagram.embedUrl) {
+                        instaContainer.style.display = 'block';
+                        instaFallback.style.display = 'none';
+                        instaCTA.style.display = 'inline';
+                        if (instagram.username) {
+                            instaCTA.href = `https://www.instagram.com/${instagram.username}/`;
+                            instaCTA.textContent = `@${instagram.username}`;
+                        }
+                        instaFrame.src = instagram.embedUrl;
+                    } else {
+                        instaContainer.style.display = 'block';
+                        instaFrame.src = '';
+                        instaCTA.style.display = instagram?.username ? 'inline' : 'none';
+                        instaFallback.style.display = 'block';
+                        instaFallback.innerHTML = instagram?.username
+                            ? `Follow us on Instagram: <a href="https://www.instagram.com/${instagram.username}/" target="_blank">@${instagram.username}</a>`
+                            : 'Follow us on Instagram for the latest looks.';
+                    }
+                }
+
             } catch (error) {
                 console.error('Failed to load gallery:', error);
                 container.innerHTML = `
-                    <div class="gallery-item" style="display: flex; align-items: center; justify-content: center; background: var(--gray-light);">
-                        <span style="color: var(--gray-medium);">Unable to load gallery</span>
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #fef5f8 0%, #fff 100%); border-radius: 15px; border: 2px dashed var(--brand-pink);">
+                        <div style="font-size: 60px; margin-bottom: 15px;">💇‍♀️</div>
+                        <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 10px; color: var(--brand-charcoal);">Our Gallery is Coming Soon!</h3>
+                        <p style="color: var(--gray-medium); margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                            We're building an amazing collection of transformation photos. In the meantime, check out our services!
+                        </p>
+                        <button class="btn btn-primary" onclick="navigateToSection('book')" style="background: var(--brand-pink); border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: 600;">
+                            Explore Our Services
+                        </button>
                     </div>
                 `;
+            }
+        }
+
+        function openInstagramConfigPrompt() {
+            const username = prompt('Follow us on Instagram! Enter handle to open profile:', 'flirthair');
+            if (username) {
+                const clean = username.replace('@','').trim();
+                window.open(`https://www.instagram.com/${clean}/`, '_blank');
             }
         }
 
@@ -6790,9 +7032,18 @@
         }
 
         // ========== HAIR TIPS FUNCTIONALITY ==========
+        const defaultHairTips = [
+            'Use a silk pillowcase to prevent tangling and maintain your extensions while you sleep. 💤',
+            'Avoid washing your hair in very hot water - lukewarm water helps preserve your extension bonds. 🚿',
+            'Brush your extensions from bottom to top using a loop brush to prevent shedding. 🪮',
+            'Apply hair oil or serum to the mid-lengths and ends daily to keep extensions smooth and shiny. ✨',
+            'Book regular maintenance appointments every 6-8 weeks to keep your extensions looking fresh. 📅'
+        ];
+
         async function loadHairTip() {
             const tipElement = document.getElementById('hairTipText');
-            if (!tipElement) return;
+            const tipCard = document.getElementById('hairTipCard');
+            if (!tipElement || !tipCard) return;
 
             try {
                 const response = await fetch(`${API_BASE}/hair-tips/random`);
@@ -6802,11 +7053,15 @@
                 if (data.tip && data.tip.text) {
                     tipElement.textContent = data.tip.text;
                 } else {
-                    tipElement.textContent = 'Use a silk pillowcase to prevent tangling and maintain your extensions while you sleep.';
+                    // Show random default tip
+                    const randomTip = defaultHairTips[Math.floor(Math.random() * defaultHairTips.length)];
+                    tipElement.textContent = randomTip;
                 }
             } catch (error) {
                 console.error('Failed to load hair tip:', error);
-                tipElement.textContent = 'Use a silk pillowcase to prevent tangling and maintain your extensions while you sleep.';
+                // Show random default tip on error
+                const randomTip = defaultHairTips[Math.floor(Math.random() * defaultHairTips.length)];
+                tipElement.textContent = randomTip;
             }
         }
 
@@ -6869,7 +7124,7 @@
                     price: price,
                     originalPrice: originalPrice,
                     qty: 1,
-                    image: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-Angel-300x300.png'
+                image: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-Angel-300x300.png'
                 });
             }
             saveCartToStorage(); // Persist cart
@@ -7086,21 +7341,50 @@
                     body: JSON.stringify(orderData)
                 });
 
-                const pointsEarned = Math.floor(data.order.total / 10);
-                alert(`🎉 Payment Successful!\n\nOrder Total: R${data.order.total}\n\nThank you for your purchase! You'll receive a confirmation email shortly.\n\n+${pointsEarned} loyalty points earned!`);
+                // Choose provider: prefer PayFast if configured, else Yoco
+                const preferredProvider = window.paymentConfig?.payfast?.configured ? 'payfast' : 'yoco';
 
+                const paymentInit = await apiCall('/payments/initiate', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        provider: preferredProvider,
+                        orderId: data.order.id
+                    })
+                });
+
+                if (paymentInit.payment?.provider === 'payfast') {
+                    const form = document.createElement('form');
+                    form.action = paymentInit.payment.formAction;
+                    form.method = 'POST';
+                    form.style.display = 'none';
+
+                    Object.entries(paymentInit.payment.formData || {}).forEach(([name, value]) => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = name;
+                        input.value = value;
+                        form.appendChild(input);
+                    });
+
+                    document.body.appendChild(form);
+                    form.submit();
+                } else if (paymentInit.payment?.provider === 'yoco' && paymentInit.payment.redirectUrl) {
+                    window.location.href = paymentInit.payment.redirectUrl;
+                } else {
+                    alert('Payment created, but no redirect URL returned. Please contact support.');
+                }
+
+                // Clear cart after redirect is triggered
                 closeModal('checkoutModal');
                 cart = [];
                 clearCartStorage(); // Clear persisted cart
                 discount = 0;
                 appliedPromoCode = null;
                 updateCartCount();
-                loadUserData(); // Refresh points
             } catch (error) {
                 alert('Error processing order: ' + error.message);
             }
         }
-
         // ========== CHAT FUNCTIONALITY ==========
         let chatOpen = false;
 
@@ -7424,8 +7708,19 @@
         }
 
         async function initApp() {
+            console.log('🚀 Initializing Flirt Hair & Beauty App...');
+            console.log('API_BASE:', API_BASE);
+
+            // Dev auto-login for localhost
+            await devAutoLoginIfNeeded();
+
             // Register service worker
             registerServiceWorker();
+            // Wire support WhatsApp link
+            const whatsappLink = document.getElementById('supportWhatsappLink');
+            if (whatsappLink) {
+                whatsappLink.href = `https://wa.me/${SUPPORT_WHATSAPP}`;
+            }
 
             // Setup auth input listeners for clearing errors
             setupAuthInputListeners();
@@ -7434,22 +7729,47 @@
             updateUserUI();
 
             // Check if user is already logged in (will update UI if logged in)
+            console.log('Checking auth status...');
             await checkAuthStatus();
 
-            // Load booking data from API
-            await loadBookingData();
+            // Load all data independently - errors in one section won't block others
+            console.log('Loading booking data...');
+            try {
+                await loadBookingData();
+            } catch (e) {
+                console.error('Booking data load failed:', e);
+            }
 
-            // Load special offers dynamically
-            await loadSpecialOffers();
+            console.log('Loading special offers...');
+            try {
+                await loadSpecialOffers();
+            } catch (e) {
+                console.error('Special offers load failed:', e);
+            }
 
-            // Load gallery dynamically
-            await loadGallery();
+            console.log('Loading gallery...');
+            try {
+                await loadGallery();
+                console.log('✅ Gallery loaded');
+            } catch (e) {
+                console.error('Gallery load failed:', e);
+            }
 
-            // Load random hair tip
-            await loadHairTip();
+            console.log('Loading hair tip...');
+            try {
+                await loadHairTip();
+                console.log('✅ Hair tip loaded');
+            } catch (e) {
+                console.error('Hair tip load failed:', e);
+            }
 
-            // Load upcoming appointments
-            await loadUpcomingAppointment();
+            console.log('Loading upcoming appointments...');
+            try {
+                await loadUpcomingAppointment();
+                console.log('✅ Upcoming appointments loaded');
+            } catch (e) {
+                console.error('Upcoming appointments load failed:', e);
+            }
 
             // Initialize cart from localStorage (cart is already loaded at declaration)
             // Just update the display

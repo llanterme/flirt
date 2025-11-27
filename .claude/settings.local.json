@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(netstat:*)",
+      "Bash(dir:*)",
+      "Bash(powershell:*)",
+      "Bash(npm start)",
+      "Bash(timeout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(sqlite3:*)",
+      "Bash(node add-sample-promos.js:*)",
+      "Bash(node add-sample-notifications.js:*)",
+      "Bash(taskkill:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
