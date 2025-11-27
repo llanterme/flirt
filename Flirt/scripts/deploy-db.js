@@ -12,10 +12,15 @@ const path = require('path');
 
 function deployDatabase() {
     console.log('🚀 Starting database deployment...');
+    console.log('📍 Current working directory:', process.cwd());
+    console.log('📍 Script directory:', __dirname);
 
     const sourceDb = path.join(__dirname, '..', 'db', 'flirt.db');
     const productionDir = '/app/data';
     const targetDb = path.join(productionDir, 'production.db');
+
+    console.log('📋 Source database path:', sourceDb);
+    console.log('📋 Target database path:', targetDb);
 
     try {
         // Check if source database exists
