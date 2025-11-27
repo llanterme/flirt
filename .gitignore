@@ -50,3 +50,6 @@ build/
 
 # Railway local files
 .railway/
+
+# Claude documentation cache
+.claude/docs/
