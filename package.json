@@ -1,17 +1,19 @@
 {
-  "name": "butterfly-effect-lab-backend",
-  "version": "1.0.0",
-  "description": "Email signup backend for The Butterfly Effect Lab",
-  "main": "server.js",
+  "name": "flirt-hair-beauty",
+  "version": "2.0.0",
+  "description": "Flirt Hair & Beauty - Salon booking and e-commerce platform",
+  "main": "Flirt/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "cd Flirt && node server.js",
+    "dev": "cd Flirt && node server.js",
+    "db:migrate": "cd Flirt && node db/run-migration.js",
+    "postinstall": "cd Flirt && npm install"
   },
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5"
   },
-  "keywords": ["email", "signup", "wellness", "supplements"],
-  "author": "The Butterfly Effect Lab",
+  "keywords": ["hair", "beauty", "salon", "booking", "pwa"],
+  "author": "Flirt Hair & Beauty",
   "license": "ISC"
 }
