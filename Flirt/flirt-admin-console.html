@@ -2321,17 +2321,19 @@
                             <thead>
                                 <tr>
                                     <th>Stylist</th>
-                                    <th>Basic Monthly Pay</th>
-                                    <th>Commission Rate</th>
+                                    <th>Basic Monthly Salary</th>
                                     <th style="width: 120px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="stylistPaySettingsBody">
                                 <tr>
-                                    <td colspan="4" style="text-align: center; padding: 20px; color: var(--gray-medium);">Loading...</td>
+                                    <td colspan="3" style="text-align: center; padding: 20px; color: var(--gray-medium);">Loading...</td>
                                 </tr>
                             </tbody>
                         </table>
+                        <p style="margin-top: 12px; font-size: 13px; color: var(--gray-medium);">
+                            Commission rates are configured per service in the Services section.
+                        </p>
                     </div>
                 </section>
 
@@ -2357,7 +2359,7 @@
                                     💰
                                 </div>
                                 <div>
-                                    <h3 style="margin: 0; font-size: 18px; font-weight: 600;">Compensation Settings</h3>
+                                    <h3 style="margin: 0; font-size: 18px; font-weight: 600;">Basic Salary Settings</h3>
                                     <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;" id="stylistPayNameHeader">Stylist Name</p>
                                 </div>
                             </div>
@@ -2368,7 +2370,7 @@
                             <input type="hidden" id="stylistPayName">
 
                             <!-- Basic Pay Section -->
-                            <div style="background: var(--gray-lightest); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+                            <div style="background: var(--gray-lightest); border-radius: 12px; padding: 20px;">
                                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
                                     <span style="font-size: 18px;">📋</span>
                                     <span style="font-weight: 600; color: var(--gray-dark);">Basic Monthly Salary</span>
@@ -2383,43 +2385,18 @@
                                 </p>
                             </div>
 
-                            <!-- Commission Section -->
-                            <div style="background: var(--gray-lightest); border-radius: 12px; padding: 20px;">
-                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                                    <span style="font-size: 18px;">📊</span>
-                                    <span style="font-weight: 600; color: var(--gray-dark);">Commission Rate</span>
-                                </div>
-                                <div style="position: relative;">
-                                    <input type="number" id="stylistCommissionRate" min="0" max="100" step="1" placeholder="0"
-                                           style="padding-right: 50px; font-size: 24px; font-weight: 600; height: 56px; border-radius: 10px; text-align: right;">
-                                    <span style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-weight: 600; color: var(--gray-medium); font-size: 16px;">%</span>
-                                </div>
-                                <div style="margin-top: 14px; padding: 12px; background: white; border-radius: 8px; border-left: 3px solid var(--primary);">
-                                    <p style="margin: 0; font-size: 12px; color: var(--gray-dark); line-height: 1.5;">
-                                        <strong>How it works:</strong> Commission is calculated on service revenue <em>excluding VAT</em>.
-                                        For example, a R1,150 service (incl. VAT) at 30% commission = R300.
-                                    </p>
-                                </div>
-
-                                <!-- Quick Select Buttons -->
-                                <div style="display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;">
-                                    <button type="button" onclick="document.getElementById('stylistCommissionRate').value='20'"
-                                            style="padding: 8px 16px; border: 1px solid var(--gray-light); border-radius: 20px; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s;">20%</button>
-                                    <button type="button" onclick="document.getElementById('stylistCommissionRate').value='25'"
-                                            style="padding: 8px 16px; border: 1px solid var(--gray-light); border-radius: 20px; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s;">25%</button>
-                                    <button type="button" onclick="document.getElementById('stylistCommissionRate').value='30'"
-                                            style="padding: 8px 16px; border: 1px solid var(--gray-light); border-radius: 20px; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s;">30%</button>
-                                    <button type="button" onclick="document.getElementById('stylistCommissionRate').value='35'"
-                                            style="padding: 8px 16px; border: 1px solid var(--gray-light); border-radius: 20px; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s;">35%</button>
-                                    <button type="button" onclick="document.getElementById('stylistCommissionRate').value='40'"
-                                            style="padding: 8px 16px; border: 1px solid var(--gray-light); border-radius: 20px; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s;">40%</button>
-                                </div>
+                            <!-- Info about commission -->
+                            <div style="margin-top: 16px; padding: 14px; background: #FFF8E1; border-radius: 10px; border-left: 3px solid #FFC107;">
+                                <p style="margin: 0; font-size: 13px; color: #5D4E37; line-height: 1.5;">
+                                    <strong>Note:</strong> Commission rates are configured per service in the <strong>Services</strong> section.
+                                    Each service can have its own commission rate.
+                                </p>
                             </div>
                         </div>
                         <div class="modal-footer" style="padding: 16px 24px 24px; border-top: none; gap: 12px;">
                             <button class="btn btn-outline" onclick="closeModal('stylistPayModal')" style="flex: 1;">Cancel</button>
                             <button class="btn btn-primary" onclick="saveStylistPay()" style="flex: 2;">
-                                <span style="margin-right: 6px;">✓</span> Save Settings
+                                <span style="margin-right: 6px;">✓</span> Save Salary
                             </button>
                         </div>
                     </div>
@@ -7294,7 +7271,7 @@
                 stylistsPayData = data.stylists || [];
 
                 if (stylistsPayData.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--gray-medium);">No stylists found</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: var(--gray-medium);">No stylists found</td></tr>';
                     return;
                 }
 
@@ -7302,7 +7279,6 @@
                     <tr>
                         <td><strong>${s.name}</strong></td>
                         <td>${formatCurrencyZAR(s.basic_monthly_pay || 0)}</td>
-                        <td>${((s.commission_rate || 0) * 100).toFixed(0)}%</td>
                         <td class="action-btns">
                             <button class="btn btn-sm btn-outline" onclick="openStylistPayModal('${s.id}')">Edit</button>
                         </td>
@@ -7311,7 +7287,7 @@
 
             } catch (error) {
                 console.error('Error loading stylist pay settings:', error);
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--danger);">Error loading data</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: var(--danger);">Error loading data</td></tr>';
             }
         }
 
@@ -7323,7 +7299,6 @@
             document.getElementById('stylistPayName').value = stylist.name;
             document.getElementById('stylistPayNameHeader').textContent = stylist.name;
             document.getElementById('stylistBasicPay').value = stylist.basic_monthly_pay || 0;
-            document.getElementById('stylistCommissionRate').value = ((stylist.commission_rate || 0) * 100).toFixed(0);
 
             document.getElementById('stylistPayModal').classList.add('show');
         }
@@ -7331,20 +7306,19 @@
         async function saveStylistPay() {
             const stylistId = document.getElementById('stylistPayId').value;
             const basicMonthlyPay = parseFloat(document.getElementById('stylistBasicPay').value) || 0;
-            const commissionRate = (parseFloat(document.getElementById('stylistCommissionRate').value) || 0) / 100;
 
             try {
                 await apiCall(`/admin/stylists/${stylistId}/pay`, {
                     method: 'PATCH',
-                    body: JSON.stringify({ basicMonthlyPay, commissionRate })
+                    body: JSON.stringify({ basicMonthlyPay })
                 });
 
                 closeModal('stylistPayModal');
                 await loadStylistPaySettings();
-                showToast('Pay settings updated successfully', 'success');
+                showToast('Salary updated successfully', 'success');
             } catch (error) {
                 console.error('Error saving stylist pay:', error);
-                showToast('Failed to save pay settings', 'error');
+                showToast('Failed to save salary', 'error');
             }
         }
 
