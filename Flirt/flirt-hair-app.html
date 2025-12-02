@@ -8998,8 +8998,9 @@ async function showNotifications() {
 
         function updateCartTotals() {
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const total = subtotal + deliveryFee - discount;
             document.getElementById('cartSubtotal').textContent = `R${subtotal}`;
-            document.getElementById('cartTotal').textContent = `R${subtotal}`;
+            document.getElementById('cartTotal').textContent = `R${total}`;
         }
 
         // ========== CHECKOUT FUNCTIONALITY ==========

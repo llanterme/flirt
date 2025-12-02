@@ -66,6 +66,9 @@ try {
 // Payment services import
 const PaymentService = require('./services/payments');
 
+// Email service import
+const emailService = require('./services/email');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -1517,6 +1520,18 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
             });
         }
 
+        // Send order confirmation email
+        try {
+            const user = await UserRepository.findById(req.user.id);
+            if (user && user.email) {
+                await emailService.sendOrderConfirmation(newOrder, user);
+                console.log(`✅ Order confirmation email sent to ${user.email}`);
+            }
+        } catch (emailError) {
+            console.error('Failed to send order confirmation email:', emailError.message);
+            // Don't fail the request if email fails
+        }
+
         res.status(201).json({
             success: true,
             message: 'Order placed successfully!',
@@ -1536,6 +1551,24 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Database error fetching user orders:', error.message);
         res.status(500).json({ success: false, message: 'Failed to fetch orders' });
+    }
+});
+
+// Get single order detail (user)
+app.get('/api/orders/:id', authenticateToken, async (req, res) => {
+    try {
+        const order = await OrderRepository.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+        // Ensure user can only view their own orders
+        if (order.user_id !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+        res.json({ success: true, order });
+    } catch (error) {
+        console.error('Database error fetching order:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch order' });
     }
 });
 
@@ -3474,6 +3507,28 @@ app.get('/api/admin/orders', authenticateAdmin, async (req, res) => {
     }
 });
 
+// Get single order detail (admin)
+app.get('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const order = await OrderRepository.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+        // Add customer info
+        const user = await UserRepository.findById(order.userId || order.user_id);
+        const orderWithCustomer = {
+            ...order,
+            customerName: user ? user.name : 'Unknown',
+            customerPhone: user ? user.phone : null,
+            customerEmail: user ? user.email : null
+        };
+        res.json({ success: true, order: orderWithCustomer });
+    } catch (error) {
+        console.error('Database error fetching order:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch order' });
+    }
+});
+
 // Update order status (admin)
 app.patch('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
     try {
@@ -3484,10 +3539,7 @@ app.patch('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
-        const updatedOrder = await OrderRepository.updateById(req.params.id, {
-            status: status,
-            updatedAt: new Date().toISOString()
-        });
+        const updatedOrder = await OrderRepository.updateStatus(req.params.id, status);
 
         res.json({ success: true, order: updatedOrder });
     } catch (error) {
