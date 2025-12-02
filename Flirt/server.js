@@ -3657,6 +3657,77 @@ app.post('/api/admin/payroll/generate', authenticateAdmin, async (req, res) => {
     }
 });
 
+// Export payroll to CSV
+// NOTE: This route MUST be defined before /api/admin/payroll/:id to avoid route conflicts
+app.get('/api/admin/payroll/export/csv', authenticateAdmin, async (req, res) => {
+    try {
+        const { year, month } = req.query;
+        const filters = {};
+        if (year) filters.year = parseInt(year);
+        if (month) filters.month = parseInt(month);
+
+        const records = await PayrollRepository.findAll(filters);
+
+        // Build CSV with proper escaping
+        const headers = [
+            'Stylist',
+            'Period',
+            'Basic Pay',
+            'Commission Rate',
+            'Bookings',
+            'Service Revenue (incl VAT)',
+            'Service Revenue (excl VAT)',
+            'Commission',
+            'Gross Pay',
+            'Status',
+            'Finalized At',
+            'Paid At'
+        ];
+
+        // Helper to escape CSV values (handle quotes and nulls)
+        const escapeCSV = (value) => {
+            if (value === null || value === undefined) return '';
+            const str = String(value);
+            // Escape double quotes by doubling them
+            return `"${str.replace(/"/g, '""')}"`;
+        };
+
+        const rows = await Promise.all(records.map(async (r) => {
+            const stylist = await StylistRepository.findById(r.stylist_id);
+            return [
+                stylist ? stylist.name : 'Unknown',
+                `${r.period_year}-${String(r.period_month).padStart(2, '0')}`,
+                (r.basic_pay || 0).toFixed(2),
+                ((r.commission_rate || 0) * 100).toFixed(1) + '%',
+                r.total_bookings || 0,
+                (r.total_service_revenue || 0).toFixed(2),
+                (r.total_service_revenue_ex_vat || 0).toFixed(2),
+                (r.commission_amount || 0).toFixed(2),
+                (r.gross_pay || 0).toFixed(2),
+                r.status || '',
+                r.finalized_at || '',
+                r.paid_at || ''
+            ];
+        }));
+
+        const csv = [
+            headers.map(h => escapeCSV(h)).join(','),
+            ...rows.map(row => row.map(cell => escapeCSV(cell)).join(','))
+        ].join('\n');
+
+        const filename = year && month
+            ? `payroll_${year}_${String(month).padStart(2, '0')}.csv`
+            : `payroll_all.csv`;
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(csv);
+    } catch (error) {
+        console.error('Error exporting payroll:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to export payroll' });
+    }
+});
+
 // Get single payroll record
 app.get('/api/admin/payroll/:id', authenticateAdmin, async (req, res) => {
     try {
@@ -3756,68 +3827,6 @@ app.delete('/api/admin/payroll/:id', authenticateAdmin, async (req, res) => {
     } catch (error) {
         console.error('Error deleting payroll:', error.message);
         res.status(500).json({ success: false, message: error.message || 'Failed to delete payroll' });
-    }
-});
-
-// Export payroll to CSV
-app.get('/api/admin/payroll/export/csv', authenticateAdmin, async (req, res) => {
-    try {
-        const { year, month } = req.query;
-        const filters = {};
-        if (year) filters.year = parseInt(year);
-        if (month) filters.month = parseInt(month);
-
-        const records = await PayrollRepository.findAll(filters);
-
-        // Build CSV
-        const headers = [
-            'Stylist',
-            'Period',
-            'Basic Pay',
-            'Commission Rate',
-            'Bookings',
-            'Service Revenue (incl VAT)',
-            'Service Revenue (excl VAT)',
-            'Commission',
-            'Gross Pay',
-            'Status',
-            'Finalized At',
-            'Paid At'
-        ];
-
-        const rows = await Promise.all(records.map(async (r) => {
-            const stylist = await StylistRepository.findById(r.stylist_id);
-            return [
-                stylist ? stylist.name : 'Unknown',
-                `${r.period_year}-${String(r.period_month).padStart(2, '0')}`,
-                r.basic_pay.toFixed(2),
-                (r.commission_rate * 100).toFixed(1) + '%',
-                r.total_bookings,
-                r.total_service_revenue.toFixed(2),
-                r.total_service_revenue_ex_vat.toFixed(2),
-                r.commission_amount.toFixed(2),
-                r.gross_pay.toFixed(2),
-                r.status,
-                r.finalized_at || '',
-                r.paid_at || ''
-            ];
-        }));
-
-        const csv = [
-            headers.join(','),
-            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-        ].join('\n');
-
-        const filename = year && month
-            ? `payroll_${year}_${String(month).padStart(2, '0')}.csv`
-            : `payroll_all.csv`;
-
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        res.send(csv);
-    } catch (error) {
-        console.error('Error exporting payroll:', error.message);
-        res.status(500).json({ success: false, message: 'Failed to export payroll' });
     }
 });
 
