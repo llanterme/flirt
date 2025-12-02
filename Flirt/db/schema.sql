@@ -371,3 +371,11 @@ CREATE TABLE IF NOT EXISTS hair_tips (
 
 CREATE INDEX IF NOT EXISTS idx_hair_tips_active ON hair_tips(active);
 CREATE INDEX IF NOT EXISTS idx_hair_tips_priority ON hair_tips(priority DESC, created_at DESC);
+
+-- ============================================
+-- HAIR TRACKER SETTINGS TABLE (admin-configurable)
+-- ============================================
+CREATE TABLE IF NOT EXISTS hair_tracker_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);

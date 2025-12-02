@@ -1927,46 +1927,95 @@ app.get('/api/referrals', authenticateToken, async (req, res) => {
 // ============================================
 
 // Get hair tracker config (public - no auth required)
+// Helper function to get hair tracker settings from database
+async function getHairTrackerSettings() {
+    const defaultConfig = {
+        defaultMaintenanceIntervalDays: 42,
+        washFrequencyDays: 3,
+        deepConditionFrequencyDays: 14,
+        extensionTypes: [
+            { id: 'clip-in', label: 'Clip-In Extensions', maintenanceDays: 1 },
+            { id: 'tape-in', label: 'Tape-In Extensions', maintenanceDays: 42 },
+            { id: 'sew-in', label: 'Sew-In Weave', maintenanceDays: 56 },
+            { id: 'micro-link', label: 'Micro-Link Extensions', maintenanceDays: 84 },
+            { id: 'fusion', label: 'Fusion Extensions', maintenanceDays: 84 },
+            { id: 'halo', label: 'Halo Extensions', maintenanceDays: 1 },
+            { id: 'ponytail', label: 'Ponytail Extensions', maintenanceDays: 14 },
+            { id: 'other', label: 'Other', maintenanceDays: 42 }
+        ],
+        healthScore: {
+            base: 100,
+            penalties: {
+                overMaintenanceByDay: 0.5,
+                noDeepConditionOverDays: 0.3,
+                tooManyWashesPerWeek: 1.0
+            }
+        },
+        copy: {
+            trackerTitle: 'Hair Care Journey',
+            trackerSubtitle: 'Keep your extensions healthy and on track',
+            nextWashLabel: 'Next Wash Day',
+            maintenanceLabel: 'Maintenance Due',
+            deepConditionLabel: 'Deep Condition',
+            noInstallMessage: 'Set up your hair tracker to get personalized care recommendations!',
+            setupButtonText: 'Set Up Tracker'
+        },
+        tips: [
+            'Use a silk pillowcase to reduce friction and tangling while you sleep.',
+            'Avoid applying heat directly to the bonds or tape areas.',
+            'Brush your extensions gently from the ends up, never from the roots.',
+            'Use sulfate-free shampoos to protect the bonds.',
+            'Deep condition every 2 weeks to keep extensions soft and manageable.'
+        ]
+    };
+
+    try {
+        // Try to get settings from database
+        const row = await dbGet('SELECT value FROM hair_tracker_settings WHERE key = ?', ['config']);
+        if (row && row.value) {
+            const savedConfig = JSON.parse(row.value);
+            // Merge with defaults to ensure all fields exist
+            return {
+                ...defaultConfig,
+                ...savedConfig,
+                healthScore: { ...defaultConfig.healthScore, ...savedConfig.healthScore },
+                copy: { ...defaultConfig.copy, ...savedConfig.copy }
+            };
+        }
+    } catch (error) {
+        console.log('No saved hair tracker settings, using defaults');
+    }
+
+    return defaultConfig;
+}
+
+// Helper function to save hair tracker settings to database
+async function saveHairTrackerSettings(config) {
+    await dbRun(
+        `INSERT OR REPLACE INTO hair_tracker_settings (key, value) VALUES (?, ?)`,
+        ['config', JSON.stringify(config)]
+    );
+}
+
 app.get('/api/hair-tracker/config', async (req, res) => {
     try {
-        // Hair tracker config is now stored in the database or use default values
-        const extensionTypeIntervals = {
-            'clip-in': 1,        // Daily removal
-            'tape-in': 42,       // 6 weeks
-            'sew-in': 56,        // 8 weeks
-            'micro-link': 84,    // 12 weeks
-            'fusion': 84,        // 12 weeks
-            'halo': 1,           // Daily removal
-            'ponytail': 14,      // 2 weeks
-            'other': 42          // Default 6 weeks
-        };
+        const config = await getHairTrackerSettings();
 
-        const extensionTypeLabels = {
-            'clip-in': 'Clip-In Extensions',
-            'tape-in': 'Tape-In Extensions',
-            'sew-in': 'Sew-In Weave',
-            'micro-link': 'Micro-Link Extensions',
-            'fusion': 'Fusion Extensions',
-            'halo': 'Halo Extensions',
-            'ponytail': 'Ponytail Extensions',
-            'other': 'Other'
-        };
+        // Build extensionTypeIntervals map for backward compatibility
+        const extensionTypeIntervals = {};
+        if (config.extensionTypes) {
+            config.extensionTypes.forEach(et => {
+                extensionTypeIntervals[et.id] = et.maintenanceDays;
+            });
+        }
 
-        // Convert to array of objects for frontend
-        const extensionTypes = Object.keys(extensionTypeIntervals).map(id => ({
-            id,
-            label: extensionTypeLabels[id],
-            maintenanceDays: extensionTypeIntervals[id]
-        }));
-
-        const config = {
-            washFrequencyDays: 3,
-            deepConditionFrequencyDays: 14,
-            defaultMaintenanceIntervalDays: 42,
-            extensionTypes,
-            extensionTypeIntervals // Keep for backward compatibility
-        };
-        res.json({ success: true, config });
+        res.json({
+            success: true,
+            config: {
+                ...config,
+                extensionTypeIntervals
+            }
+        });
     } catch (error) {
         console.error('Error loading hair tracker config:', error.message);
         res.status(500).json({ success: false, message: 'Database error - please try again later' });
@@ -3946,57 +3995,7 @@ app.post('/api/admin/loyalty/reset', authenticateAdmin, (req, res) => {
 // Get hair tracker settings for admin
 app.get('/api/admin/hair-tracker', authenticateAdmin, async (req, res) => {
     try {
-        // Return the hardcoded configuration used throughout the app
-        const config = {
-            defaultMaintenanceIntervalDays: 42,
-            washFrequencyDays: 3,
-            deepConditionFrequencyDays: 14,
-            extensionTypeIntervals: {
-                'clip-in': 1,
-                'tape-in': 42,
-                'sew-in': 56,
-                'micro-link': 84,
-                'fusion': 84,
-                'halo': 1,
-                'ponytail': 14,
-                'other': 42
-            },
-            extensionTypes: [
-                { id: 'clip-in', label: 'Clip-In Extensions', maintenanceDays: 1 },
-                { id: 'tape-in', label: 'Tape Extensions', maintenanceDays: 42 },
-                { id: 'sew-in', label: 'Sew-In Extensions', maintenanceDays: 56 },
-                { id: 'micro-link', label: 'Micro-Link Extensions', maintenanceDays: 84 },
-                { id: 'fusion', label: 'Fusion Extensions', maintenanceDays: 84 },
-                { id: 'halo', label: 'Halo Extensions', maintenanceDays: 1 },
-                { id: 'ponytail', label: 'Ponytail Extensions', maintenanceDays: 14 },
-                { id: 'other', label: 'Other Extensions', maintenanceDays: 42 }
-            ],
-            healthScore: {
-                base: 100,
-                penalties: {
-                    overMaintenanceByDay: 0.5,
-                    noDeepConditionOverDays: 0.3,
-                    tooManyWashesPerWeek: 1.0
-                }
-            },
-            copy: {
-                trackerTitle: 'Hair Care Journey',
-                trackerSubtitle: 'Keep your extensions healthy and on track',
-                nextWashLabel: 'Next Wash Day',
-                maintenanceLabel: 'Maintenance Due',
-                deepConditionLabel: 'Deep Condition',
-                noInstallMessage: 'Set up your hair tracker to get personalized care recommendations!',
-                setupButtonText: 'Set Up Tracker'
-            },
-            tips: [
-                'Your extensions are at optimal health! Keep up the great care routine.',
-                'Consider booking maintenance in the next 2 weeks for best results.',
-                'You\'re due for a deep conditioning treatment this week.',
-                'Use a silk pillowcase to reduce friction and tangling while you sleep.',
-                'Avoid applying heat directly to the bonds or tape areas.'
-            ]
-        };
-
+        const config = await getHairTrackerSettings();
         res.json({ success: true, ...config });
     } catch (error) {
         console.error('Database error loading hair tracker config:', error.message);
@@ -4011,7 +4010,6 @@ app.put('/api/admin/hair-tracker', authenticateAdmin, async (req, res) => {
             defaultMaintenanceIntervalDays,
             washFrequencyDays,
             deepConditionFrequencyDays,
-            extensionTypeIntervals,
             extensionTypes,
             healthScore,
             copy,
@@ -4034,32 +4032,13 @@ app.put('/api/admin/hair-tracker', authenticateAdmin, async (req, res) => {
             return res.status(400).json({ success: false, errors });
         }
 
-        // Since configuration is now hardcoded in the app code, we return the current config
-        const updatedConfig = {
-            defaultMaintenanceIntervalDays: 42,
-            washFrequencyDays: 3,
-            deepConditionFrequencyDays: 14,
-            extensionTypeIntervals: {
-                'clip-in': 1,
-                'tape-in': 42,
-                'sew-in': 56,
-                'micro-link': 84,
-                'fusion': 84,
-                'halo': 1,
-                'ponytail': 14,
-                'other': 42
-            },
-            extensionTypes: [
-                { id: 'clip-in', label: 'Clip-In Extensions', maintenanceDays: 1 },
-                { id: 'tape-in', label: 'Tape Extensions', maintenanceDays: 42 },
-                { id: 'sew-in', label: 'Sew-In Extensions', maintenanceDays: 56 },
-                { id: 'micro-link', label: 'Micro-Link Extensions', maintenanceDays: 84 },
-                { id: 'fusion', label: 'Fusion Extensions', maintenanceDays: 84 },
-                { id: 'halo', label: 'Halo Extensions', maintenanceDays: 1 },
-                { id: 'ponytail', label: 'Ponytail Extensions', maintenanceDays: 14 },
-                { id: 'other', label: 'Other Extensions', maintenanceDays: 42 }
-            ],
-            healthScore: {
+        // Build the config object to save
+        const configToSave = {
+            defaultMaintenanceIntervalDays: defaultMaintenanceIntervalDays || 42,
+            washFrequencyDays: washFrequencyDays || 3,
+            deepConditionFrequencyDays: deepConditionFrequencyDays || 14,
+            extensionTypes: extensionTypes || [],
+            healthScore: healthScore || {
                 base: 100,
                 penalties: {
                     overMaintenanceByDay: 0.5,
@@ -4067,28 +4046,17 @@ app.put('/api/admin/hair-tracker', authenticateAdmin, async (req, res) => {
                     tooManyWashesPerWeek: 1.0
                 }
             },
-            copy: {
-                trackerTitle: 'Hair Care Journey',
-                trackerSubtitle: 'Keep your extensions healthy and on track',
-                nextWashLabel: 'Next Wash Day',
-                maintenanceLabel: 'Maintenance Due',
-                deepConditionLabel: 'Deep Condition',
-                noInstallMessage: 'Set up your hair tracker to get personalized care recommendations!',
-                setupButtonText: 'Set Up Tracker'
-            },
-            tips: [
-                'Your extensions are at optimal health! Keep up the great care routine.',
-                'Consider booking maintenance in the next 2 weeks for best results.',
-                'You\'re due for a deep conditioning treatment this week.',
-                'Use a silk pillowcase to reduce friction and tangling while you sleep.',
-                'Avoid applying heat directly to the bonds or tape areas.'
-            ]
+            copy: copy || {},
+            tips: tips || []
         };
+
+        // Save to database
+        await saveHairTrackerSettings(configToSave);
 
         res.json({
             success: true,
-            message: 'Hair tracker settings updated successfully (configuration is now application-managed)',
-            ...updatedConfig
+            message: 'Hair tracker settings updated successfully',
+            ...configToSave
         });
     } catch (error) {
         console.error('Database error updating hair tracker settings:', error.message);
@@ -4099,59 +4067,15 @@ app.put('/api/admin/hair-tracker', authenticateAdmin, async (req, res) => {
 // Reset hair tracker settings to defaults
 app.post('/api/admin/hair-tracker/reset', authenticateAdmin, async (req, res) => {
     try {
-        const defaultConfig = {
-            defaultMaintenanceIntervalDays: 42,
-            washFrequencyDays: 3,
-            deepConditionFrequencyDays: 14,
-            extensionTypeIntervals: {
-                'clip-in': 1,
-                'tape-in': 42,
-                'sew-in': 56,
-                'micro-link': 84,
-                'fusion': 84,
-                'halo': 1,
-                'ponytail': 14,
-                'other': 42
-            },
-            extensionTypes: [
-                { id: 'clip-in', label: 'Clip-In Extensions', maintenanceDays: 1 },
-                { id: 'tape-in', label: 'Tape Extensions', maintenanceDays: 42 },
-                { id: 'sew-in', label: 'Sew-In Extensions', maintenanceDays: 56 },
-                { id: 'micro-link', label: 'Micro-Link Extensions', maintenanceDays: 84 },
-                { id: 'fusion', label: 'Fusion Extensions', maintenanceDays: 84 },
-                { id: 'halo', label: 'Halo Extensions', maintenanceDays: 1 },
-                { id: 'ponytail', label: 'Ponytail Extensions', maintenanceDays: 14 },
-                { id: 'other', label: 'Other Extensions', maintenanceDays: 42 }
-            ],
-            healthScore: {
-                base: 100,
-                penalties: {
-                    overMaintenanceByDay: 0.5,
-                    noDeepConditionOverDays: 0.3,
-                    tooManyWashesPerWeek: 1.0
-                }
-            },
-            copy: {
-                trackerTitle: 'Hair Care Journey',
-                trackerSubtitle: 'Keep your extensions healthy and on track',
-                nextWashLabel: 'Next Wash Day',
-                maintenanceLabel: 'Maintenance Due',
-                deepConditionLabel: 'Deep Condition',
-                noInstallMessage: 'Set up your hair tracker to get personalized care recommendations!',
-                setupButtonText: 'Set Up Tracker'
-            },
-            tips: [
-                'Your extensions are at optimal health! Keep up the great care routine.',
-                'Consider booking maintenance in the next 2 weeks for best results.',
-                'You\'re due for a deep conditioning treatment this week.',
-                'Use a silk pillowcase to reduce friction and tangling while you sleep.',
-                'Avoid applying heat directly to the bonds or tape areas.'
-            ]
-        };
+        // Delete the saved config to revert to defaults
+        await dbRun('DELETE FROM hair_tracker_settings WHERE key = ?', ['config']);
+
+        // Get the default config
+        const defaultConfig = await getHairTrackerSettings();
 
         res.json({
             success: true,
-            message: 'Hair tracker settings reset to defaults (configuration is now application-managed)',
+            message: 'Hair tracker settings reset to defaults',
             ...defaultConfig
         });
     } catch (error) {
