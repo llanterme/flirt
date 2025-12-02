@@ -20,7 +20,7 @@ const https = require('https');
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
-let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository;
+let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository, PayrollRepository;
 
 try {
     const dbModule = require('./db/database');
@@ -41,6 +41,7 @@ try {
     NotificationRepository = dbModule.NotificationRepository;
     ChatRepository = dbModule.ChatRepository;
     HairTipRepository = dbModule.HairTipRepository;
+    PayrollRepository = dbModule.PayrollRepository;
 
     // Ensure database directory exists
     const dbDir = path.dirname(DATABASE_PATH);
@@ -3545,6 +3546,297 @@ app.patch('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
     } catch (error) {
         console.error('Database error updating order status:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
+});
+
+// ============================================
+// PAYROLL ROUTES (Admin)
+// ============================================
+
+// Get payroll summary for a period
+app.get('/api/admin/payroll', authenticateAdmin, async (req, res) => {
+    try {
+        const { year, month, status } = req.query;
+        const filters = {};
+        if (year) filters.year = parseInt(year);
+        if (month) filters.month = parseInt(month);
+        if (status) filters.status = status;
+
+        const records = await PayrollRepository.findAll(filters);
+
+        // Enrich with stylist names
+        const enrichedRecords = await Promise.all(records.map(async (r) => {
+            const stylist = await StylistRepository.findById(r.stylist_id);
+            return {
+                ...r,
+                stylistName: stylist ? stylist.name : 'Unknown'
+            };
+        }));
+
+        res.json({ success: true, records: enrichedRecords });
+    } catch (error) {
+        console.error('Error fetching payroll records:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch payroll records' });
+    }
+});
+
+// Get period summary (all stylists for a month)
+app.get('/api/admin/payroll/summary', authenticateAdmin, async (req, res) => {
+    try {
+        const year = parseInt(req.query.year) || new Date().getFullYear();
+        const month = parseInt(req.query.month) || new Date().getMonth() + 1;
+
+        const summary = await PayrollRepository.getPeriodSummary(year, month);
+        res.json({ success: true, summary });
+    } catch (error) {
+        console.error('Error fetching payroll summary:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch payroll summary' });
+    }
+});
+
+// Calculate payroll for a stylist (preview without saving)
+app.get('/api/admin/payroll/calculate/:stylistId', authenticateAdmin, async (req, res) => {
+    try {
+        const year = parseInt(req.query.year) || new Date().getFullYear();
+        const month = parseInt(req.query.month) || new Date().getMonth() + 1;
+
+        const calculation = await PayrollRepository.calculatePayroll(req.params.stylistId, year, month);
+        res.json({ success: true, calculation });
+    } catch (error) {
+        console.error('Error calculating payroll:', error.message);
+        res.status(500).json({ success: false, message: error.message || 'Failed to calculate payroll' });
+    }
+});
+
+// Calculate and save payroll for all stylists for a period
+app.post('/api/admin/payroll/generate', authenticateAdmin, async (req, res) => {
+    try {
+        const { year, month } = req.body;
+        if (!year || !month) {
+            return res.status(400).json({ success: false, message: 'Year and month are required' });
+        }
+
+        const stylists = await StylistRepository.findAll();
+        const results = [];
+
+        for (const stylist of stylists) {
+            try {
+                const calculation = await PayrollRepository.calculatePayroll(stylist.id, year, month);
+                const record = await PayrollRepository.upsert(calculation);
+                results.push({
+                    stylistId: stylist.id,
+                    stylistName: stylist.name,
+                    success: true,
+                    record
+                });
+            } catch (err) {
+                results.push({
+                    stylistId: stylist.id,
+                    stylistName: stylist.name,
+                    success: false,
+                    error: err.message
+                });
+            }
+        }
+
+        res.json({ success: true, results });
+    } catch (error) {
+        console.error('Error generating payroll:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to generate payroll' });
+    }
+});
+
+// Get single payroll record
+app.get('/api/admin/payroll/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const record = await PayrollRepository.findById(req.params.id);
+        if (!record) {
+            return res.status(404).json({ success: false, message: 'Payroll record not found' });
+        }
+
+        const stylist = await StylistRepository.findById(record.stylist_id);
+        res.json({
+            success: true,
+            record: {
+                ...record,
+                stylistName: stylist ? stylist.name : 'Unknown'
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching payroll record:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch payroll record' });
+    }
+});
+
+// Recalculate a payroll record
+app.post('/api/admin/payroll/:id/recalculate', authenticateAdmin, async (req, res) => {
+    try {
+        const record = await PayrollRepository.findById(req.params.id);
+        if (!record) {
+            return res.status(404).json({ success: false, message: 'Payroll record not found' });
+        }
+        if (record.status === 'paid') {
+            return res.status(400).json({ success: false, message: 'Cannot recalculate a paid record' });
+        }
+
+        const calculation = await PayrollRepository.calculatePayroll(
+            record.stylist_id,
+            record.period_year,
+            record.period_month
+        );
+        const updated = await PayrollRepository.upsert(calculation);
+
+        const stylist = await StylistRepository.findById(record.stylist_id);
+        res.json({
+            success: true,
+            record: {
+                ...updated,
+                stylistName: stylist ? stylist.name : 'Unknown'
+            }
+        });
+    } catch (error) {
+        console.error('Error recalculating payroll:', error.message);
+        res.status(500).json({ success: false, message: error.message || 'Failed to recalculate payroll' });
+    }
+});
+
+// Finalize payroll record
+app.post('/api/admin/payroll/:id/finalize', authenticateAdmin, async (req, res) => {
+    try {
+        const record = await PayrollRepository.finalize(req.params.id);
+        const stylist = await StylistRepository.findById(record.stylist_id);
+        res.json({
+            success: true,
+            record: {
+                ...record,
+                stylistName: stylist ? stylist.name : 'Unknown'
+            }
+        });
+    } catch (error) {
+        console.error('Error finalizing payroll:', error.message);
+        res.status(500).json({ success: false, message: error.message || 'Failed to finalize payroll' });
+    }
+});
+
+// Mark payroll as paid
+app.post('/api/admin/payroll/:id/pay', authenticateAdmin, async (req, res) => {
+    try {
+        const { notes } = req.body;
+        const record = await PayrollRepository.markAsPaid(req.params.id, notes);
+        const stylist = await StylistRepository.findById(record.stylist_id);
+        res.json({
+            success: true,
+            record: {
+                ...record,
+                stylistName: stylist ? stylist.name : 'Unknown'
+            }
+        });
+    } catch (error) {
+        console.error('Error marking payroll as paid:', error.message);
+        res.status(500).json({ success: false, message: error.message || 'Failed to mark payroll as paid' });
+    }
+});
+
+// Delete payroll record
+app.delete('/api/admin/payroll/:id', authenticateAdmin, async (req, res) => {
+    try {
+        await PayrollRepository.delete(req.params.id);
+        res.json({ success: true, message: 'Payroll record deleted' });
+    } catch (error) {
+        console.error('Error deleting payroll:', error.message);
+        res.status(500).json({ success: false, message: error.message || 'Failed to delete payroll' });
+    }
+});
+
+// Export payroll to CSV
+app.get('/api/admin/payroll/export/csv', authenticateAdmin, async (req, res) => {
+    try {
+        const { year, month } = req.query;
+        const filters = {};
+        if (year) filters.year = parseInt(year);
+        if (month) filters.month = parseInt(month);
+
+        const records = await PayrollRepository.findAll(filters);
+
+        // Build CSV
+        const headers = [
+            'Stylist',
+            'Period',
+            'Basic Pay',
+            'Commission Rate',
+            'Bookings',
+            'Service Revenue (incl VAT)',
+            'Service Revenue (excl VAT)',
+            'Commission',
+            'Gross Pay',
+            'Status',
+            'Finalized At',
+            'Paid At'
+        ];
+
+        const rows = await Promise.all(records.map(async (r) => {
+            const stylist = await StylistRepository.findById(r.stylist_id);
+            return [
+                stylist ? stylist.name : 'Unknown',
+                `${r.period_year}-${String(r.period_month).padStart(2, '0')}`,
+                r.basic_pay.toFixed(2),
+                (r.commission_rate * 100).toFixed(1) + '%',
+                r.total_bookings,
+                r.total_service_revenue.toFixed(2),
+                r.total_service_revenue_ex_vat.toFixed(2),
+                r.commission_amount.toFixed(2),
+                r.gross_pay.toFixed(2),
+                r.status,
+                r.finalized_at || '',
+                r.paid_at || ''
+            ];
+        }));
+
+        const csv = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        const filename = year && month
+            ? `payroll_${year}_${String(month).padStart(2, '0')}.csv`
+            : `payroll_all.csv`;
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(csv);
+    } catch (error) {
+        console.error('Error exporting payroll:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to export payroll' });
+    }
+});
+
+// Update stylist pay settings
+app.patch('/api/admin/stylists/:id/pay', authenticateAdmin, async (req, res) => {
+    try {
+        const { basicMonthlyPay, commissionRate } = req.body;
+        const stylist = await StylistRepository.findById(req.params.id);
+
+        if (!stylist) {
+            return res.status(404).json({ success: false, message: 'Stylist not found' });
+        }
+
+        // Update stylist with new pay settings
+        const updates = {};
+        if (basicMonthlyPay !== undefined) updates.basic_monthly_pay = basicMonthlyPay;
+        if (commissionRate !== undefined) updates.commission_rate = commissionRate;
+
+        await db.dbRun(`
+            UPDATE stylists SET
+                basic_monthly_pay = COALESCE(?, basic_monthly_pay),
+                commission_rate = COALESCE(?, commission_rate)
+            WHERE id = ?
+        `, [updates.basic_monthly_pay, updates.commission_rate, req.params.id]);
+
+        const updated = await StylistRepository.findById(req.params.id);
+        res.json({ success: true, stylist: updated });
+    } catch (error) {
+        console.error('Error updating stylist pay:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to update stylist pay settings' });
     }
 });
 

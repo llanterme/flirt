@@ -1580,6 +1580,259 @@ const ChatRepository = {
     }
 };
 
+// ============================================
+// PAYROLL REPOSITORY
+// ============================================
+const PayrollRepository = {
+    VAT_RATE: 0.15,
+
+    async findById(id) {
+        return dbGet('SELECT * FROM payroll_records WHERE id = ?', [id]);
+    },
+
+    async findByPeriod(year, month) {
+        return dbAll(
+            'SELECT * FROM payroll_records WHERE period_year = ? AND period_month = ? ORDER BY created_at DESC',
+            [year, month]
+        );
+    },
+
+    async findByStylistAndPeriod(stylistId, year, month) {
+        return dbGet(
+            'SELECT * FROM payroll_records WHERE stylist_id = ? AND period_year = ? AND period_month = ?',
+            [stylistId, year, month]
+        );
+    },
+
+    async findAll(filters = {}) {
+        let sql = 'SELECT * FROM payroll_records WHERE 1=1';
+        const params = [];
+
+        if (filters.stylistId) {
+            sql += ' AND stylist_id = ?';
+            params.push(filters.stylistId);
+        }
+        if (filters.year) {
+            sql += ' AND period_year = ?';
+            params.push(filters.year);
+        }
+        if (filters.month) {
+            sql += ' AND period_month = ?';
+            params.push(filters.month);
+        }
+        if (filters.status) {
+            sql += ' AND status = ?';
+            params.push(filters.status);
+        }
+
+        sql += ' ORDER BY period_year DESC, period_month DESC, created_at DESC';
+        return dbAll(sql, params);
+    },
+
+    // Calculate payroll for a stylist for a given month
+    async calculatePayroll(stylistId, year, month) {
+        // Get stylist info
+        const stylist = await StylistRepository.findById(stylistId);
+        if (!stylist) {
+            throw new Error('Stylist not found');
+        }
+
+        // Get completed bookings for this stylist in the period
+        const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+        const endDate = month === 12
+            ? `${year + 1}-01-01`
+            : `${year}-${String(month + 1).padStart(2, '0')}-01`;
+
+        const bookings = await dbAll(`
+            SELECT * FROM bookings
+            WHERE stylist_id = ?
+            AND status = 'COMPLETED'
+            AND (
+                (requested_date >= ? AND requested_date < ?)
+                OR (date >= ? AND date < ?)
+            )
+        `, [stylistId, startDate, endDate, startDate, endDate]);
+
+        // Calculate totals
+        const totalBookings = bookings.length;
+        const totalServiceRevenue = bookings.reduce((sum, b) => sum + (b.service_price || 0), 0);
+        const totalServiceRevenueExVat = totalServiceRevenue / (1 + this.VAT_RATE);
+        const commissionRate = stylist.commission_rate || 0;
+        const commissionAmount = totalServiceRevenueExVat * commissionRate;
+        const basicPay = stylist.basic_monthly_pay || 0;
+        const grossPay = basicPay + commissionAmount;
+
+        return {
+            stylistId,
+            stylistName: stylist.name,
+            periodYear: year,
+            periodMonth: month,
+            basicPay,
+            commissionRate,
+            totalBookings,
+            totalServiceRevenue,
+            totalServiceRevenueExVat,
+            commissionAmount,
+            grossPay,
+            bookings: bookings.map(b => ({
+                id: b.id,
+                serviceName: b.service_name,
+                servicePrice: b.service_price,
+                date: b.requested_date || b.date
+            }))
+        };
+    },
+
+    // Create or update payroll record
+    async upsert(record) {
+        const existing = await this.findByStylistAndPeriod(
+            record.stylistId,
+            record.periodYear,
+            record.periodMonth
+        );
+
+        if (existing) {
+            // Don't update if already paid
+            if (existing.status === 'paid') {
+                throw new Error('Cannot update a paid payroll record');
+            }
+
+            await dbRun(`
+                UPDATE payroll_records SET
+                    basic_pay = ?,
+                    commission_rate = ?,
+                    total_bookings = ?,
+                    total_service_revenue = ?,
+                    total_service_revenue_ex_vat = ?,
+                    commission_amount = ?,
+                    gross_pay = ?,
+                    status = ?,
+                    updated_at = datetime('now')
+                WHERE id = ?
+            `, [
+                record.basicPay,
+                record.commissionRate,
+                record.totalBookings,
+                record.totalServiceRevenue,
+                record.totalServiceRevenueExVat,
+                record.commissionAmount,
+                record.grossPay,
+                record.status || existing.status,
+                existing.id
+            ]);
+
+            return this.findById(existing.id);
+        } else {
+            const id = require('uuid').v4();
+            await dbRun(`
+                INSERT INTO payroll_records (
+                    id, stylist_id, period_year, period_month,
+                    basic_pay, commission_rate, total_bookings,
+                    total_service_revenue, total_service_revenue_ex_vat,
+                    commission_amount, gross_pay, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                id,
+                record.stylistId,
+                record.periodYear,
+                record.periodMonth,
+                record.basicPay,
+                record.commissionRate,
+                record.totalBookings,
+                record.totalServiceRevenue,
+                record.totalServiceRevenueExVat,
+                record.commissionAmount,
+                record.grossPay,
+                record.status || 'draft'
+            ]);
+
+            return this.findById(id);
+        }
+    },
+
+    async finalize(id) {
+        const record = await this.findById(id);
+        if (!record) {
+            throw new Error('Payroll record not found');
+        }
+        if (record.status === 'paid') {
+            throw new Error('Cannot finalize a paid record');
+        }
+
+        await dbRun(`
+            UPDATE payroll_records SET
+                status = 'finalized',
+                finalized_at = datetime('now'),
+                updated_at = datetime('now')
+            WHERE id = ?
+        `, [id]);
+
+        return this.findById(id);
+    },
+
+    async markAsPaid(id, notes = null) {
+        const record = await this.findById(id);
+        if (!record) {
+            throw new Error('Payroll record not found');
+        }
+
+        await dbRun(`
+            UPDATE payroll_records SET
+                status = 'paid',
+                paid_at = datetime('now'),
+                notes = COALESCE(?, notes),
+                updated_at = datetime('now')
+            WHERE id = ?
+        `, [notes, id]);
+
+        return this.findById(id);
+    },
+
+    async delete(id) {
+        const record = await this.findById(id);
+        if (!record) {
+            throw new Error('Payroll record not found');
+        }
+        if (record.status === 'paid') {
+            throw new Error('Cannot delete a paid payroll record');
+        }
+
+        await dbRun('DELETE FROM payroll_records WHERE id = ?', [id]);
+        return { success: true };
+    },
+
+    // Get summary for a period (all stylists)
+    async getPeriodSummary(year, month) {
+        const records = await this.findByPeriod(year, month);
+        const stylists = await StylistRepository.findAll();
+
+        const summary = {
+            period: { year, month },
+            totalBasicPay: 0,
+            totalCommission: 0,
+            totalGrossPay: 0,
+            stylistCount: 0,
+            records: []
+        };
+
+        for (const stylist of stylists) {
+            const record = records.find(r => r.stylist_id === stylist.id);
+            if (record) {
+                summary.totalBasicPay += record.basic_pay || 0;
+                summary.totalCommission += record.commission_amount || 0;
+                summary.totalGrossPay += record.gross_pay || 0;
+                summary.stylistCount++;
+                summary.records.push({
+                    ...record,
+                    stylistName: stylist.name
+                });
+            }
+        }
+
+        return summary;
+    }
+};
+
 module.exports = {
     getDb,
     dbRun,
@@ -1601,5 +1854,6 @@ module.exports = {
     PushSubscriptionRepository,
     PaymentRepository,
     PaymentSettingsRepository,
-    ChatRepository
+    ChatRepository,
+    PayrollRepository
 };

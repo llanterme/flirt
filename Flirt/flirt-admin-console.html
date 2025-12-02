@@ -1329,6 +1329,13 @@
                     </svg>
                     Staff
                 </a>
+                <a class="nav-item" onclick="showSection('payroll', event)">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    Payroll
+                </a>
                 <a class="nav-item" onclick="showSection('services', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
@@ -2181,6 +2188,189 @@
                         </table>
                     </div>
                 </section>
+
+                <!-- Payroll Section -->
+                <section id="payroll" class="page-section">
+                    <div class="section-header">
+                        <h2>Payroll Management</h2>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-outline" onclick="exportPayrollCSV()">Export CSV</button>
+                            <button class="btn btn-primary" onclick="generatePayroll()">Generate Payroll</button>
+                        </div>
+                    </div>
+
+                    <!-- Period Selector -->
+                    <div class="card" style="margin-bottom: 20px;">
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <div>
+                                <label style="font-size: 14px; color: var(--gray-medium); display: block; margin-bottom: 5px;">Year</label>
+                                <select id="payrollYear" class="filter-select" onchange="loadPayroll()">
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 14px; color: var(--gray-medium); display: block; margin-bottom: 5px;">Month</label>
+                                <select id="payrollMonth" class="filter-select" onchange="loadPayroll()">
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 14px; color: var(--gray-medium); display: block; margin-bottom: 5px;">Status</label>
+                                <select id="payrollStatus" class="filter-select" onchange="loadPayroll()">
+                                    <option value="">All</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="finalized">Finalized</option>
+                                    <option value="paid">Paid</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="stats-grid" id="payrollSummaryCards">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <div class="stat-value" id="payrollTotalBasic">R0</div>
+                                    <div class="stat-label">Total Basic Pay</div>
+                                </div>
+                                <div class="stat-icon blue">💵</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <div class="stat-value" id="payrollTotalCommission">R0</div>
+                                    <div class="stat-label">Total Commission</div>
+                                </div>
+                                <div class="stat-icon green">📈</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <div class="stat-value" id="payrollTotalGross">R0</div>
+                                    <div class="stat-label">Total Gross Pay</div>
+                                </div>
+                                <div class="stat-icon pink">💰</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <div class="stat-value" id="payrollStylistCount">0</div>
+                                    <div class="stat-label">Stylists</div>
+                                </div>
+                                <div class="stat-icon gold">👩‍🎨</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payroll Table -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Payroll Records</h3>
+                            <span style="color: var(--gray-medium);" id="payrollRecordsCount">0 records</span>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Stylist</th>
+                                    <th>Basic Pay</th>
+                                    <th>Commission Rate</th>
+                                    <th>Bookings</th>
+                                    <th>Revenue (ex VAT)</th>
+                                    <th>Commission</th>
+                                    <th>Gross Pay</th>
+                                    <th>Status</th>
+                                    <th style="width: 180px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payrollTableBody">
+                                <tr>
+                                    <td colspan="9" style="text-align: center; padding: 40px; color: var(--gray-medium);">
+                                        Select a period and click "Generate Payroll" to calculate
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Stylist Pay Settings -->
+                    <div class="data-card" style="margin-top: 20px;">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Stylist Pay Settings</h3>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Stylist</th>
+                                    <th>Basic Monthly Pay</th>
+                                    <th>Commission Rate</th>
+                                    <th style="width: 120px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stylistPaySettingsBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px; color: var(--gray-medium);">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Payroll Detail Modal -->
+                <div id="payrollDetailModal" class="modal-overlay">
+                    <div class="modal" style="max-width: 600px; width: 90%;">
+                        <div class="modal-header">
+                            <h3>Payroll Details</h3>
+                            <button class="modal-close" onclick="closeModal('payrollDetailModal')">&times;</button>
+                        </div>
+                        <div class="modal-body" id="payrollDetailContent">
+                            <!-- Content will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stylist Pay Edit Modal -->
+                <div id="stylistPayModal" class="modal-overlay">
+                    <div class="modal" style="max-width: 400px; width: 90%;">
+                        <div class="modal-header">
+                            <h3>Edit Pay Settings</h3>
+                            <button class="modal-close" onclick="closeModal('stylistPayModal')">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="stylistPayId">
+                            <div class="form-group">
+                                <label>Stylist</label>
+                                <input type="text" id="stylistPayName" disabled style="background: var(--gray-lightest);">
+                            </div>
+                            <div class="form-group">
+                                <label>Basic Monthly Pay (R)</label>
+                                <input type="number" id="stylistBasicPay" min="0" step="100" placeholder="e.g., 8000">
+                            </div>
+                            <div class="form-group">
+                                <label>Commission Rate (%)</label>
+                                <input type="number" id="stylistCommissionRate" min="0" max="100" step="1" placeholder="e.g., 30">
+                                <small style="color: var(--gray-medium);">Commission is calculated on service revenue excluding VAT</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-outline" onclick="closeModal('stylistPayModal')">Cancel</button>
+                            <button class="btn btn-primary" onclick="saveStylistPay()">Save Settings</button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Customers Section -->
                 <section id="customers" class="page-section">
@@ -4288,6 +4478,7 @@
                 'dashboard': 'Dashboard',
                 'bookings': 'Bookings',
                 'staff': 'Staff Management',
+                'payroll': 'Payroll Management',
                 'services': 'Service Management',
                 'customers': 'Customers',
                 'products': 'Products & Inventory',
@@ -4314,6 +4505,11 @@
                     }
                     break;
                 case 'staff': loadStaff(); break;
+                case 'payroll':
+                    initPayrollYearSelector();
+                    loadPayroll();
+                    loadStylistPaySettings();
+                    break;
                 case 'services': loadServices(); break;
                 case 'customers': loadCustomers(); break;
                 case 'products': loadProducts(); break;
@@ -6908,6 +7104,305 @@
                 .join(' ');
         };
 
+        // ========== PAYROLL MANAGEMENT ==========
+        let payrollRecords = [];
+        let stylistsPayData = [];
+
+        function initPayrollYearSelector() {
+            const yearSelect = document.getElementById('payrollYear');
+            if (!yearSelect) return;
+
+            const currentYear = new Date().getFullYear();
+            yearSelect.innerHTML = '';
+            for (let y = currentYear; y >= currentYear - 2; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearSelect.appendChild(opt);
+            }
+            yearSelect.value = currentYear;
+
+            // Set current month
+            const monthSelect = document.getElementById('payrollMonth');
+            if (monthSelect) {
+                monthSelect.value = new Date().getMonth() + 1;
+            }
+        }
+
+        async function loadPayroll() {
+            const year = document.getElementById('payrollYear')?.value;
+            const month = document.getElementById('payrollMonth')?.value;
+            const status = document.getElementById('payrollStatus')?.value;
+
+            if (!year || !month) return;
+
+            const tbody = document.getElementById('payrollTableBody');
+            const countEl = document.getElementById('payrollRecordsCount');
+
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: var(--gray-medium);">Loading...</td></tr>';
+            }
+
+            try {
+                const params = new URLSearchParams({ year, month });
+                if (status) params.append('status', status);
+
+                const data = await apiCall(`/admin/payroll?${params.toString()}`);
+                payrollRecords = data.records || [];
+
+                // Update summary cards
+                let totalBasic = 0, totalCommission = 0, totalGross = 0;
+                payrollRecords.forEach(r => {
+                    totalBasic += r.basic_pay || 0;
+                    totalCommission += r.commission_amount || 0;
+                    totalGross += r.gross_pay || 0;
+                });
+
+                document.getElementById('payrollTotalBasic').textContent = formatCurrencyZAR(totalBasic);
+                document.getElementById('payrollTotalCommission').textContent = formatCurrencyZAR(totalCommission);
+                document.getElementById('payrollTotalGross').textContent = formatCurrencyZAR(totalGross);
+                document.getElementById('payrollStylistCount').textContent = payrollRecords.length;
+
+                if (countEl) {
+                    countEl.textContent = `${payrollRecords.length} record${payrollRecords.length !== 1 ? 's' : ''}`;
+                }
+
+                if (!tbody) return;
+
+                if (payrollRecords.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--gray-medium);">No payroll records for this period. Click "Generate Payroll" to calculate.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = payrollRecords.map(r => {
+                    const statusClass = r.status === 'paid' ? 'status-confirmed' :
+                                       r.status === 'finalized' ? 'status-pending' : 'status-draft';
+                    const statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+
+                    const actions = [];
+                    if (r.status !== 'paid') {
+                        actions.push(`<button class="btn btn-sm btn-outline" onclick="recalculatePayroll('${r.id}')" title="Recalculate">🔄</button>`);
+                    }
+                    if (r.status === 'draft') {
+                        actions.push(`<button class="btn btn-sm" onclick="finalizePayroll('${r.id}')">Finalize</button>`);
+                    }
+                    if (r.status === 'finalized') {
+                        actions.push(`<button class="btn btn-sm btn-primary" onclick="markPayrollPaid('${r.id}')">Mark Paid</button>`);
+                    }
+                    if (r.status !== 'paid') {
+                        actions.push(`<button class="btn btn-sm btn-outline" onclick="deletePayroll('${r.id}')" style="color: var(--danger);" title="Delete">🗑️</button>`);
+                    }
+
+                    return `
+                        <tr>
+                            <td><strong>${r.stylistName || 'Unknown'}</strong></td>
+                            <td>${formatCurrencyZAR(r.basic_pay)}</td>
+                            <td>${((r.commission_rate || 0) * 100).toFixed(0)}%</td>
+                            <td>${r.total_bookings || 0}</td>
+                            <td>${formatCurrencyZAR(r.total_service_revenue_ex_vat)}</td>
+                            <td>${formatCurrencyZAR(r.commission_amount)}</td>
+                            <td><strong>${formatCurrencyZAR(r.gross_pay)}</strong></td>
+                            <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                            <td class="action-btns" style="gap: 4px;">${actions.join(' ')}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error loading payroll:', error);
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: var(--danger);">Error loading payroll data</td></tr>';
+                }
+            }
+        }
+
+        async function loadStylistPaySettings() {
+            const tbody = document.getElementById('stylistPaySettingsBody');
+            if (!tbody) return;
+
+            try {
+                const data = await apiCall('/stylists');
+                stylistsPayData = data.stylists || [];
+
+                if (stylistsPayData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--gray-medium);">No stylists found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = stylistsPayData.map(s => `
+                    <tr>
+                        <td><strong>${s.name}</strong></td>
+                        <td>${formatCurrencyZAR(s.basic_monthly_pay || 0)}</td>
+                        <td>${((s.commission_rate || 0) * 100).toFixed(0)}%</td>
+                        <td class="action-btns">
+                            <button class="btn btn-sm btn-outline" onclick="openStylistPayModal('${s.id}')">Edit</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading stylist pay settings:', error);
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--danger);">Error loading data</td></tr>';
+            }
+        }
+
+        function openStylistPayModal(stylistId) {
+            const stylist = stylistsPayData.find(s => s.id === stylistId);
+            if (!stylist) return;
+
+            document.getElementById('stylistPayId').value = stylistId;
+            document.getElementById('stylistPayName').value = stylist.name;
+            document.getElementById('stylistBasicPay').value = stylist.basic_monthly_pay || 0;
+            document.getElementById('stylistCommissionRate').value = ((stylist.commission_rate || 0) * 100).toFixed(0);
+
+            document.getElementById('stylistPayModal').classList.add('show');
+        }
+
+        async function saveStylistPay() {
+            const stylistId = document.getElementById('stylistPayId').value;
+            const basicMonthlyPay = parseFloat(document.getElementById('stylistBasicPay').value) || 0;
+            const commissionRate = (parseFloat(document.getElementById('stylistCommissionRate').value) || 0) / 100;
+
+            try {
+                await apiCall(`/admin/stylists/${stylistId}/pay`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ basicMonthlyPay, commissionRate })
+                });
+
+                closeModal('stylistPayModal');
+                await loadStylistPaySettings();
+                showToast('Pay settings updated successfully', 'success');
+            } catch (error) {
+                console.error('Error saving stylist pay:', error);
+                showToast('Failed to save pay settings', 'error');
+            }
+        }
+
+        async function generatePayroll() {
+            const year = parseInt(document.getElementById('payrollYear')?.value);
+            const month = parseInt(document.getElementById('payrollMonth')?.value);
+
+            if (!year || !month) {
+                showToast('Please select year and month', 'error');
+                return;
+            }
+
+            const monthName = document.getElementById('payrollMonth')?.options[month - 1]?.text || month;
+            const proceed = await openConfirmDialog({
+                title: 'Generate Payroll?',
+                message: `This will calculate payroll for all stylists for ${monthName} ${year}. Existing draft records will be updated.`,
+                confirmText: 'Generate',
+                tone: 'neutral'
+            });
+
+            if (!proceed) return;
+
+            try {
+                const data = await apiCall('/admin/payroll/generate', {
+                    method: 'POST',
+                    body: JSON.stringify({ year, month })
+                });
+
+                const successCount = data.results?.filter(r => r.success).length || 0;
+                showToast(`Generated payroll for ${successCount} stylists`, 'success');
+                await loadPayroll();
+            } catch (error) {
+                console.error('Error generating payroll:', error);
+                showToast('Failed to generate payroll', 'error');
+            }
+        }
+
+        async function recalculatePayroll(recordId) {
+            try {
+                await apiCall(`/admin/payroll/${recordId}/recalculate`, { method: 'POST' });
+                showToast('Payroll recalculated', 'success');
+                await loadPayroll();
+            } catch (error) {
+                console.error('Error recalculating payroll:', error);
+                showToast(error.message || 'Failed to recalculate', 'error');
+            }
+        }
+
+        async function finalizePayroll(recordId) {
+            const proceed = await openConfirmDialog({
+                title: 'Finalize Payroll?',
+                message: 'This will mark the payroll as finalized. You can still recalculate it until marked as paid.',
+                confirmText: 'Finalize',
+                tone: 'neutral'
+            });
+
+            if (!proceed) return;
+
+            try {
+                await apiCall(`/admin/payroll/${recordId}/finalize`, { method: 'POST' });
+                showToast('Payroll finalized', 'success');
+                await loadPayroll();
+            } catch (error) {
+                console.error('Error finalizing payroll:', error);
+                showToast(error.message || 'Failed to finalize', 'error');
+            }
+        }
+
+        async function markPayrollPaid(recordId) {
+            const proceed = await openConfirmDialog({
+                title: 'Mark as Paid?',
+                message: 'This will lock the payroll record. It cannot be modified after this.',
+                confirmText: 'Mark Paid',
+                tone: 'neutral'
+            });
+
+            if (!proceed) return;
+
+            try {
+                await apiCall(`/admin/payroll/${recordId}/pay`, { method: 'POST' });
+                showToast('Payroll marked as paid', 'success');
+                await loadPayroll();
+            } catch (error) {
+                console.error('Error marking payroll as paid:', error);
+                showToast(error.message || 'Failed to mark as paid', 'error');
+            }
+        }
+
+        async function deletePayroll(recordId) {
+            const proceed = await openConfirmDialog({
+                title: 'Delete Payroll Record?',
+                message: 'This action cannot be undone.',
+                confirmText: 'Delete',
+                tone: 'danger'
+            });
+
+            if (!proceed) return;
+
+            try {
+                await apiCall(`/admin/payroll/${recordId}`, { method: 'DELETE' });
+                showToast('Payroll record deleted', 'success');
+                await loadPayroll();
+            } catch (error) {
+                console.error('Error deleting payroll:', error);
+                showToast(error.message || 'Failed to delete', 'error');
+            }
+        }
+
+        function exportPayrollCSV() {
+            const year = document.getElementById('payrollYear')?.value;
+            const month = document.getElementById('payrollMonth')?.value;
+
+            let url = `${API_BASE}/admin/payroll/export/csv`;
+            const params = new URLSearchParams();
+            if (year) params.append('year', year);
+            if (month) params.append('month', month);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            // Add auth token
+            const token = localStorage.getItem('flirtAdminToken');
+            if (token) {
+                url += (url.includes('?') ? '&' : '?') + `token=${token}`;
+            }
+
+            window.open(url, '_blank');
+        }
+
+        // ========== ORDERS MANAGEMENT ==========
         async function loadOrders() {
             initOrderFilters();
             const container = document.getElementById('ordersTableBody');

@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS stylists (
     color TEXT DEFAULT '#FF6B9D',
     available INTEGER DEFAULT 1,
     image_url TEXT,
+    basic_monthly_pay REAL DEFAULT 0,
+    commission_rate REAL DEFAULT 0, -- e.g., 0.30 for 30%
     created_at TEXT DEFAULT (datetime('now'))
 );
 
@@ -381,3 +383,31 @@ CREATE TABLE IF NOT EXISTS hair_tracker_settings (
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
+
+-- ============================================
+-- PAYROLL RECORDS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS payroll_records (
+    id TEXT PRIMARY KEY,
+    stylist_id TEXT NOT NULL REFERENCES stylists(id),
+    period_year INTEGER NOT NULL,
+    period_month INTEGER NOT NULL, -- 1-12
+    basic_pay REAL NOT NULL,
+    commission_rate REAL NOT NULL, -- snapshot of rate at time of calculation
+    total_bookings INTEGER DEFAULT 0,
+    total_service_revenue REAL DEFAULT 0, -- VAT-inclusive total
+    total_service_revenue_ex_vat REAL DEFAULT 0, -- pre-VAT total
+    commission_amount REAL DEFAULT 0,
+    gross_pay REAL DEFAULT 0, -- basic + commission
+    status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'finalized', 'paid')),
+    finalized_at TEXT,
+    paid_at TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT,
+    UNIQUE(stylist_id, period_year, period_month)
+);
+
+CREATE INDEX IF NOT EXISTS idx_payroll_stylist ON payroll_records(stylist_id);
+CREATE INDEX IF NOT EXISTS idx_payroll_period ON payroll_records(period_year, period_month);
+CREATE INDEX IF NOT EXISTS idx_payroll_status ON payroll_records(status);
