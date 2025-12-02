@@ -89,74 +89,6 @@ async function initializeDatabase() {
     await ensureColumn('promos', 'title', 'TEXT');
     await ensureColumn('promos', 'subtitle', 'TEXT');
     await ensureColumn('promos', 'priority', 'INTEGER DEFAULT 0');
-
-    // Booking table migrations for two-step booking flow
-    await ensureColumn('bookings', 'requested_date', "TEXT DEFAULT '2024-01-01'");
-    await ensureColumn('bookings', 'requested_time_window', "TEXT DEFAULT 'MORNING' CHECK(requested_time_window IN ('MORNING', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING'))");
-    await ensureColumn('bookings', 'assigned_start_time', 'TEXT');
-    await ensureColumn('bookings', 'assigned_end_time', 'TEXT');
-
-    // Update existing bookings to have proper status values
-    await ensureColumnWithUpdate('bookings', 'status',
-        "TEXT DEFAULT 'REQUESTED' CHECK(status IN ('REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED'))",
-        "'REQUESTED'"
-    );
-
-    // Migrate existing booking data to new fields
-    try {
-        // Update requested_date from legacy date field where available
-        await dbRun(`
-            UPDATE bookings
-            SET requested_date = COALESCE(date, '2024-01-01')
-            WHERE requested_date = '2024-01-01' AND date IS NOT NULL
-        `);
-
-        // Update requested_time_window from legacy preferred_time_of_day
-        await dbRun(`
-            UPDATE bookings
-            SET requested_time_window = CASE
-                WHEN preferred_time_of_day = 'morning' THEN 'MORNING'
-                WHEN preferred_time_of_day = 'afternoon' THEN 'AFTERNOON'
-                WHEN preferred_time_of_day = 'evening' THEN 'EVENING'
-                ELSE 'MORNING'
-            END
-            WHERE requested_time_window = 'MORNING' AND preferred_time_of_day IS NOT NULL
-        `);
-
-        console.log('Migrated legacy booking data to new fields');
-    } catch (error) {
-        console.log('Legacy booking migration skipped (table may not exist yet):', error.message);
-    }
-
-    // Migrate booking status values to uppercase format
-    try {
-        // Update existing status values from lowercase to uppercase
-        await dbRun(`
-            UPDATE bookings
-            SET status = CASE
-                WHEN status = 'pending' THEN 'REQUESTED'
-                WHEN status = 'confirmed' THEN 'CONFIRMED'
-                WHEN status = 'completed' THEN 'COMPLETED'
-                WHEN status = 'cancelled' THEN 'CANCELLED'
-                ELSE 'REQUESTED'
-            END
-            WHERE status IN ('pending', 'confirmed', 'completed', 'cancelled')
-        `);
-        console.log('Migrated booking status values to uppercase format');
-    } catch (error) {
-        console.log('Status migration skipped:', error.message);
-    }
-
-    // Create indexes for new booking columns (only after columns exist)
-    try {
-        await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_requested_date ON bookings(requested_date)');
-        await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_requested_time_window ON bookings(requested_time_window)');
-        await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_assigned_start_time ON bookings(assigned_start_time)');
-        await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status)');
-        console.log('Created indexes for new booking columns');
-    } catch (error) {
-        console.log('Index creation skipped:', error.message);
-    }
 }
 
 // Utilities for lightweight migrations (add missing columns safely)
@@ -166,22 +98,6 @@ async function ensureColumn(table, column, definition) {
     if (!hasColumn) {
         await dbRun(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
         console.log(`Added missing column ${column} to ${table}`);
-    }
-}
-
-// Ensure column exists and update existing records if needed
-async function ensureColumnWithUpdate(table, column, definition, defaultValue) {
-    const info = await dbAll(`PRAGMA table_info(${table})`);
-    const hasColumn = info.some(col => col.name === column);
-    if (!hasColumn) {
-        await dbRun(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
-        console.log(`Added missing column ${column} to ${table}`);
-
-        // Update existing records with the default value
-        if (defaultValue) {
-            await dbRun(`UPDATE ${table} SET ${column} = ${defaultValue} WHERE ${column} IS NULL`);
-            console.log(`Updated existing ${table} records with default ${column} value`);
-        }
     }
 }
 
@@ -448,8 +364,8 @@ const ServiceRepository = {
 
     async create(service) {
         const sql = `
-            INSERT INTO services (id, name, description, price, duration, service_type, category, image_url, active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO services (id, name, description, price, duration, service_type, category, image_url, display_order, commission_rate, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         await dbRun(sql, [
             service.id,
@@ -460,6 +376,8 @@ const ServiceRepository = {
             service.service_type || service.serviceType,  // Support both snake_case and camelCase
             service.category || null,
             service.image_url || service.imageUrl || null,  // Support both snake_case and camelCase
+            service.display_order || 0,
+            service.commission_rate !== undefined ? service.commission_rate : null,
             service.active !== undefined ? service.active : 1
         ]);
         return this.findById(service.id);
@@ -469,8 +387,8 @@ const ServiceRepository = {
         const sql = `
             UPDATE services
             SET name = ?, description = ?, price = ?, duration = ?,
-                service_type = ?, category = ?, image_url = ?, active = ?,
-                updated_at = datetime('now')
+                service_type = ?, category = ?, image_url = ?, display_order = ?,
+                commission_rate = ?, active = ?, updated_at = datetime('now')
             WHERE id = ?
         `;
         await dbRun(sql, [
@@ -481,6 +399,8 @@ const ServiceRepository = {
             service.service_type || service.serviceType,  // Support both snake_case and camelCase
             service.category || null,
             service.image_url || service.imageUrl || null,  // Support both snake_case and camelCase
+            service.display_order || 0,
+            service.commission_rate !== undefined ? service.commission_rate : null,
             service.active !== undefined ? service.active : 1,
             id
         ]);
@@ -1664,6 +1584,299 @@ const ChatRepository = {
     }
 };
 
+// ============================================
+// PAYROLL REPOSITORY
+// ============================================
+const PayrollRepository = {
+    VAT_RATE: 0.15,
+
+    async findById(id) {
+        return dbGet('SELECT * FROM payroll_records WHERE id = ?', [id]);
+    },
+
+    async findByPeriod(year, month) {
+        return dbAll(
+            'SELECT * FROM payroll_records WHERE period_year = ? AND period_month = ? ORDER BY created_at DESC',
+            [year, month]
+        );
+    },
+
+    async findByStylistAndPeriod(stylistId, year, month) {
+        return dbGet(
+            'SELECT * FROM payroll_records WHERE stylist_id = ? AND period_year = ? AND period_month = ?',
+            [stylistId, year, month]
+        );
+    },
+
+    async findAll(filters = {}) {
+        let sql = 'SELECT * FROM payroll_records WHERE 1=1';
+        const params = [];
+
+        if (filters.stylistId) {
+            sql += ' AND stylist_id = ?';
+            params.push(filters.stylistId);
+        }
+        if (filters.year) {
+            sql += ' AND period_year = ?';
+            params.push(filters.year);
+        }
+        if (filters.month) {
+            sql += ' AND period_month = ?';
+            params.push(filters.month);
+        }
+        if (filters.status) {
+            sql += ' AND status = ?';
+            params.push(filters.status);
+        }
+
+        sql += ' ORDER BY period_year DESC, period_month DESC, created_at DESC';
+        return dbAll(sql, params);
+    },
+
+    // Calculate payroll for a stylist for a given month
+    // Commission priority: booking.commission_rate > service.commission_rate > stylist.commission_rate
+    async calculatePayroll(stylistId, year, month) {
+        // Get stylist info
+        const stylist = await StylistRepository.findById(stylistId);
+        if (!stylist) {
+            throw new Error('Stylist not found');
+        }
+
+        const stylistDefaultRate = stylist.commission_rate || 0;
+
+        // Get completed bookings for this stylist in the period
+        const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+        const endDate = month === 12
+            ? `${year + 1}-01-01`
+            : `${year}-${String(month + 1).padStart(2, '0')}-01`;
+
+        // Join with services to get service-level commission rate
+        const bookings = await dbAll(`
+            SELECT b.*, s.commission_rate as service_commission_rate
+            FROM bookings b
+            LEFT JOIN services s ON b.service_id = s.id
+            WHERE b.stylist_id = ?
+            AND b.status = 'COMPLETED'
+            AND (
+                (b.requested_date >= ? AND b.requested_date < ?)
+                OR (b.date >= ? AND b.date < ?)
+            )
+        `, [stylistId, startDate, endDate, startDate, endDate]);
+
+        // Calculate totals with per-booking commission
+        const totalBookings = bookings.length;
+        const totalServiceRevenue = bookings.reduce((sum, b) => sum + (b.service_price || 0), 0);
+        const totalServiceRevenueExVat = totalServiceRevenue / (1 + this.VAT_RATE);
+
+        // Calculate commission for each booking based on priority
+        let totalCommission = 0;
+        const bookingDetails = bookings.map(b => {
+            const priceExVat = (b.service_price || 0) / (1 + this.VAT_RATE);
+
+            // Priority: booking override > service rate > stylist default
+            let effectiveRate;
+            let rateSource;
+            if (b.commission_rate !== null && b.commission_rate !== undefined) {
+                effectiveRate = b.commission_rate;
+                rateSource = 'booking';
+            } else if (b.service_commission_rate !== null && b.service_commission_rate !== undefined) {
+                effectiveRate = b.service_commission_rate;
+                rateSource = 'service';
+            } else {
+                effectiveRate = stylistDefaultRate;
+                rateSource = 'stylist';
+            }
+
+            const bookingCommission = priceExVat * effectiveRate;
+            totalCommission += bookingCommission;
+
+            return {
+                id: b.id,
+                serviceName: b.service_name,
+                servicePrice: b.service_price,
+                priceExVat: priceExVat,
+                date: b.requested_date || b.date,
+                commissionRate: effectiveRate,
+                commissionAmount: bookingCommission,
+                rateSource: rateSource
+            };
+        });
+
+        const basicPay = stylist.basic_monthly_pay || 0;
+        const grossPay = basicPay + totalCommission;
+
+        // Calculate average commission rate for display (weighted by revenue)
+        const avgCommissionRate = totalServiceRevenueExVat > 0
+            ? totalCommission / totalServiceRevenueExVat
+            : stylistDefaultRate;
+
+        return {
+            stylistId,
+            stylistName: stylist.name,
+            periodYear: year,
+            periodMonth: month,
+            basicPay,
+            commissionRate: avgCommissionRate, // weighted average for display
+            stylistDefaultRate: stylistDefaultRate,
+            totalBookings,
+            totalServiceRevenue,
+            totalServiceRevenueExVat,
+            commissionAmount: totalCommission,
+            grossPay,
+            bookings: bookingDetails
+        };
+    },
+
+    // Create or update payroll record
+    async upsert(record) {
+        const existing = await this.findByStylistAndPeriod(
+            record.stylistId,
+            record.periodYear,
+            record.periodMonth
+        );
+
+        if (existing) {
+            // Don't update if already paid
+            if (existing.status === 'paid') {
+                throw new Error('Cannot update a paid payroll record');
+            }
+
+            await dbRun(`
+                UPDATE payroll_records SET
+                    basic_pay = ?,
+                    commission_rate = ?,
+                    total_bookings = ?,
+                    total_service_revenue = ?,
+                    total_service_revenue_ex_vat = ?,
+                    commission_amount = ?,
+                    gross_pay = ?,
+                    status = ?,
+                    updated_at = datetime('now')
+                WHERE id = ?
+            `, [
+                record.basicPay,
+                record.commissionRate,
+                record.totalBookings,
+                record.totalServiceRevenue,
+                record.totalServiceRevenueExVat,
+                record.commissionAmount,
+                record.grossPay,
+                record.status || existing.status,
+                existing.id
+            ]);
+
+            return this.findById(existing.id);
+        } else {
+            const id = require('uuid').v4();
+            await dbRun(`
+                INSERT INTO payroll_records (
+                    id, stylist_id, period_year, period_month,
+                    basic_pay, commission_rate, total_bookings,
+                    total_service_revenue, total_service_revenue_ex_vat,
+                    commission_amount, gross_pay, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                id,
+                record.stylistId,
+                record.periodYear,
+                record.periodMonth,
+                record.basicPay,
+                record.commissionRate,
+                record.totalBookings,
+                record.totalServiceRevenue,
+                record.totalServiceRevenueExVat,
+                record.commissionAmount,
+                record.grossPay,
+                record.status || 'draft'
+            ]);
+
+            return this.findById(id);
+        }
+    },
+
+    async finalize(id) {
+        const record = await this.findById(id);
+        if (!record) {
+            throw new Error('Payroll record not found');
+        }
+        if (record.status === 'paid') {
+            throw new Error('Cannot finalize a paid record');
+        }
+
+        await dbRun(`
+            UPDATE payroll_records SET
+                status = 'finalized',
+                finalized_at = datetime('now'),
+                updated_at = datetime('now')
+            WHERE id = ?
+        `, [id]);
+
+        return this.findById(id);
+    },
+
+    async markAsPaid(id, notes = null) {
+        const record = await this.findById(id);
+        if (!record) {
+            throw new Error('Payroll record not found');
+        }
+
+        await dbRun(`
+            UPDATE payroll_records SET
+                status = 'paid',
+                paid_at = datetime('now'),
+                notes = COALESCE(?, notes),
+                updated_at = datetime('now')
+            WHERE id = ?
+        `, [notes, id]);
+
+        return this.findById(id);
+    },
+
+    async delete(id) {
+        const record = await this.findById(id);
+        if (!record) {
+            throw new Error('Payroll record not found');
+        }
+        if (record.status === 'paid') {
+            throw new Error('Cannot delete a paid payroll record');
+        }
+
+        await dbRun('DELETE FROM payroll_records WHERE id = ?', [id]);
+        return { success: true };
+    },
+
+    // Get summary for a period (all stylists)
+    async getPeriodSummary(year, month) {
+        const records = await this.findByPeriod(year, month);
+        const stylists = await StylistRepository.findAll();
+
+        const summary = {
+            period: { year, month },
+            totalBasicPay: 0,
+            totalCommission: 0,
+            totalGrossPay: 0,
+            stylistCount: 0,
+            records: []
+        };
+
+        for (const stylist of stylists) {
+            const record = records.find(r => r.stylist_id === stylist.id);
+            if (record) {
+                summary.totalBasicPay += record.basic_pay || 0;
+                summary.totalCommission += record.commission_amount || 0;
+                summary.totalGrossPay += record.gross_pay || 0;
+                summary.stylistCount++;
+                summary.records.push({
+                    ...record,
+                    stylistName: stylist.name
+                });
+            }
+        }
+
+        return summary;
+    }
+};
+
 module.exports = {
     getDb,
     dbRun,
@@ -1685,5 +1898,6 @@ module.exports = {
     PushSubscriptionRepository,
     PaymentRepository,
     PaymentSettingsRepository,
-    ChatRepository
+    ChatRepository,
+    PayrollRepository
 };

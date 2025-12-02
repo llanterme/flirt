@@ -263,6 +263,116 @@
             font-weight: bold;
         }
 
+        .admin-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            min-width: 180px;
+            z-index: 1000;
+            padding: 8px 0;
+        }
+
+        .admin-dropdown.show {
+            display: block;
+        }
+
+        .admin-dropdown button {
+            display: block;
+            width: 100%;
+            padding: 10px 16px;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--brand-charcoal);
+        }
+
+        .admin-dropdown button:hover {
+            background: var(--gray-light);
+        }
+
+        .top-bar-actions {
+            position: relative;
+        }
+
+        .search-results {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+            margin-top: 5px;
+            min-width: 300px;
+        }
+
+        .search-results.show {
+            display: block;
+        }
+
+        .search-result-group {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .search-result-group:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-group-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 4px 12px;
+            text-transform: uppercase;
+        }
+
+        .search-result-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-result-item:hover {
+            background: var(--gray-light);
+        }
+
+        .search-result-item .icon {
+            font-size: 16px;
+        }
+
+        .search-result-item .details {
+            flex: 1;
+        }
+
+        .search-result-item .name {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .search-result-item .meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .search-no-results {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
         /* Content Area */
         .content-area {
             padding: 30px;
@@ -1187,7 +1297,7 @@
                 <div class="nav-section">
                     <div class="nav-section-title">Overview</div>
                 </div>
-                <a class="nav-item active" onclick="showSection('dashboard')">
+                <a class="nav-item active" onclick="showSection('dashboard', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7"></rect>
                         <rect x="14" y="3" width="7" height="7"></rect>
@@ -1200,7 +1310,7 @@
                 <div class="nav-section" style="margin-top: 20px;">
                     <div class="nav-section-title">Management</div>
                 </div>
-                <a class="nav-item" onclick="showSection('bookings')">
+                <a class="nav-item" onclick="showSection('bookings', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                         <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -1210,7 +1320,7 @@
                     Bookings
                     <span class="nav-badge" id="bookingsNavBadge">0</span>
                 </a>
-                <a class="nav-item" onclick="showSection('staff')">
+                <a class="nav-item" onclick="showSection('staff', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
@@ -1219,28 +1329,35 @@
                     </svg>
                     Staff
                 </a>
-                <a class="nav-item" onclick="showSection('services')">
+                <a class="nav-item" onclick="showSection('payroll', event)">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    Payroll
+                </a>
+                <a class="nav-item" onclick="showSection('services', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                     </svg>
                     Services
                 </a>
-                <a class="nav-item" onclick="showSection('customers')">
+                <a class="nav-item" onclick="showSection('customers', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                     Customers
                 </a>
-                <a class="nav-item" onclick="showSection('products')">
+                <a class="nav-item" onclick="showSection('products', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
                         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                     </svg>
                     Products
                 </a>
-                <a class="nav-item" onclick="showSection('orders')">
+                <a class="nav-item" onclick="showSection('orders', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
@@ -1253,20 +1370,20 @@
                 <div class="nav-section" style="margin-top: 20px;">
                     <div class="nav-section-title">Marketing</div>
                 </div>
-                <a class="nav-item" onclick="showSection('promotions')">
+                <a class="nav-item" onclick="showSection('promotions', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                     </svg>
                     Promotions
                 </a>
-                <a class="nav-item" onclick="showSection('notifications')">
+                <a class="nav-item" onclick="showSection('notifications', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                         <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                     </svg>
                     Push Notifications
                 </a>
-                <a class="nav-item" onclick="showSection('gallery')">
+                <a class="nav-item" onclick="showSection('gallery', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                         <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -1274,14 +1391,14 @@
                     </svg>
                     Gallery
                 </a>
-                <a class="nav-item" onclick="showSection('chat')">
+                <a class="nav-item" onclick="showSection('chat', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
                     Chat
                     <span class="nav-badge">3</span>
                 </a>
-                <a class="nav-item" onclick="showSection('hair-tips')">
+                <a class="nav-item" onclick="showSection('hair-tips', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -1293,27 +1410,27 @@
                 <div class="nav-section" style="margin-top: 20px;">
                     <div class="nav-section-title">Settings</div>
                 </div>
-                <a class="nav-item" onclick="showSection('loyalty-settings')">
+                <a class="nav-item" onclick="showSection('loyalty-settings', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                     </svg>
                     Loyalty Settings
                 </a>
-                <a class="nav-item" onclick="showSection('hair-tracker-settings')">
+                <a class="nav-item" onclick="showSection('hair-tracker-settings', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
                         <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
                     </svg>
                     Hair Tracker Settings
                 </a>
-                <a class="nav-item" onclick="showSection('payment-settings')">
+                <a class="nav-item" onclick="showSection('payment-settings', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                         <line x1="1" y1="10" x2="23" y2="10"></line>
                     </svg>
                     Payment Settings
                 </a>
-                <a class="nav-item" onclick="showSection('settings')">
+                <a class="nav-item" onclick="showSection('settings', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -1328,21 +1445,29 @@
             <!-- Top Bar -->
             <header class="top-bar">
                 <div style="display: flex; align-items: center; gap: 20px;">
-                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰>Edit</button>
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
                     <h1 class="page-title" id="pageTitle">Dashboard</h1>
                 </div>
                 <div class="top-bar-actions">
-                    <div class="search-box">
+                    <div class="search-box" style="position: relative;">
                         <span>🔍</span>
-                        <input type="search" placeholder="Search..." autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Search">
+                        <input type="search" id="globalSearch" placeholder="Search customers, bookings..." autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Search" oninput="handleGlobalSearch(event)" onkeydown="handleSearchKeydown(event)">
+                        <div class="search-results" id="searchResults"></div>
                     </div>
-                    <button class="notification-btn">
+                    <button class="notification-btn" onclick="showSection('notifications')" title="View Notifications">
                         🔔
-                        <span class="notification-dot"></span>
-                    >Edit</button>
-                    <div class="admin-profile">
-                        <div class="admin-avatar">A</div>
+                        <span class="notification-dot" id="notificationDot"></span>
+                    </button>
+                    <div class="admin-profile" onclick="toggleAdminMenu()" title="Account Menu">
+                        <div class="admin-avatar" id="adminAvatar">A</div>
                         <span id="adminName" style="font-weight: 500;">Admin</span>
+                        <span style="font-size: 10px;">▼</span>
+                    </div>
+                    <div class="admin-dropdown" id="adminDropdown">
+                        <button onclick="showPasswordChangeModal()">🔑 Change Password</button>
+                        <button onclick="showSection('settings')">⚙️ Settings</button>
+                        <hr style="margin: 5px 0; border: none; border-top: 1px solid var(--border-soft);">
+                        <button onclick="logout()" style="color: var(--danger);">🚪 Logout</button>
                     </div>
                 </div>
             </header>
@@ -1404,26 +1529,26 @@
                         <button class="quick-action-btn" onclick="openAdminBookingModal()">
                             <div class="quick-action-icon">➕</div>
                             <div class="quick-action-text">New Booking</div>
-                        >Edit</button>
+                        </button>
                         <button class="quick-action-btn" onclick="openAddProductModal()">
                             <div class="quick-action-icon">📦</div>
                             <div class="quick-action-text">Add Product</div>
-                        >Edit</button>
+                        </button>
                         <button class="quick-action-btn" onclick="openModal('addPromoModal')">
                             <div class="quick-action-icon">🏷️</div>
                             <div class="quick-action-text">Create Promo</div>
-                        >Edit</button>
+                        </button>
                         <button class="quick-action-btn" onclick="showSection('chat')">
                             <div class="quick-action-icon">💬</div>
                             <div class="quick-action-text">View Messages</div>
-                        >Edit</button>
+                        </button>
                     </div>
 
                     <!-- Today's Bookings -->
                     <div class="data-card">
                         <div class="data-card-header">
                             <h3 class="data-card-title">Today's Bookings</h3>
-                            <button class="btn btn-outline btn-sm" onclick="viewTodayBookings()">View All>Edit</button>
+                            <button class="btn btn-outline btn-sm" onclick="viewTodayBookings()">View All</button>
                         </div>
                         <table class="data-table" id="todayBookingsTable">
                             <thead>
@@ -1483,30 +1608,30 @@
                     <!-- View Toggle & Actions Bar -->
                     <div class="filters-bar">
                         <div style="display: flex; gap: 10px; margin-right: auto;">
-                            <button class="btn btn-sm" id="bookingsListViewBtn" onclick="setBookingsView('list')" style="background: var(--primary); color: white;">List>Edit</button>
-                            <button class="btn btn-sm btn-outline" id="bookingsCalendarViewBtn" onclick="setBookingsView('calendar')">Calendar>Edit</button>
+                            <button class="btn btn-sm" id="bookingsListViewBtn" onclick="setBookingsView('list')" style="background: var(--primary); color: white;">List</button>
+                            <button class="btn btn-sm btn-outline" id="bookingsCalendarViewBtn" onclick="setBookingsView('calendar')">Calendar</button>
                         </div>
-                        <button class="btn btn-outline btn-sm" onclick="exportBookingsToCSV()" title="Export filtered results to CSV">📥 Export CSV>Edit</button>
-                        <button class="btn btn-primary" onclick="openAdminBookingModal()">+ New Booking>Edit</button>
+                        <button class="btn btn-outline btn-sm" onclick="exportBookingsToCSV()" title="Export filtered results to CSV">📥 Export CSV</button>
+                        <button class="btn btn-primary" onclick="openAdminBookingModal()">+ New Booking</button>
                     </div>
 
                     <!-- Status Filter Tabs -->
                     <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border-soft); overflow-x: auto;">
                         <button class="status-filter-tab active" data-status="all" onclick="filterByStatus('all')">
                             All <span class="filter-count" id="count-all">0</span>
-                        >Edit</button>
+                        </button>
                         <button class="status-filter-tab" data-status="REQUESTED" onclick="filterByStatus('REQUESTED')">
                             ⏳ Requested <span class="filter-count" id="count-requested">0</span>
-                        >Edit</button>
+                        </button>
                         <button class="status-filter-tab" data-status="CONFIRMED" onclick="filterByStatus('CONFIRMED')">
                             ✓ Confirmed <span class="filter-count" id="count-confirmed">0</span>
-                        >Edit</button>
+                        </button>
                         <button class="status-filter-tab" data-status="COMPLETED" onclick="filterByStatus('COMPLETED')">
                             ✓✓ Completed <span class="filter-count" id="count-completed">0</span>
-                        >Edit</button>
+                        </button>
                         <button class="status-filter-tab" data-status="CANCELLED" onclick="filterByStatus('CANCELLED')">
                             ✗ Cancelled <span class="filter-count" id="count-cancelled">0</span>
-                        >Edit</button>
+                        </button>
                     </div>
 
                     <!-- Advanced Filters Bar -->
@@ -1586,7 +1711,7 @@
 
                             <!-- Clear Filters Button -->
                             <div>
-                                <button class="btn btn-outline" onclick="clearAllBookingsFilters()" style="width: 100%;">Clear All>Edit</button>
+                                <button class="btn btn-outline" onclick="clearAllBookingsFilters()" style="width: 100%;">Clear All</button>
                             </div>
                         </div>
                     </div>
@@ -1597,10 +1722,10 @@
                         <div id="bookingsBulkActionsBar" class="data-card" style="display: none; margin-bottom: 15px; padding: 15px; background: var(--primary-light); border: 2px solid var(--primary);">
                             <div style="display: flex; align-items: center; gap: 15px;">
                                 <span style="font-weight: 600; color: var(--primary);" id="bookingsSelectedCount">0 selected</span>
-                                <button class="btn btn-sm" onclick="bulkConfirmBookings()" style="background: var(--success); color: white;">✓ Confirm Selected>Edit</button>
-                                <button class="btn btn-sm" onclick="bulkCompleteBookings()" style="background: var(--info); color: white;">✓ Complete Selected>Edit</button>
-                                <button class="btn btn-sm btn-outline" onclick="bulkCancelBookings()" style="color: var(--danger); border-color: var(--danger);">✗ Cancel Selected>Edit</button>
-                                <button class="btn btn-sm btn-outline" onclick="deselectAllBookings()" style="margin-left: auto;">Deselect All>Edit</button>
+                                <button class="btn btn-sm" onclick="bulkConfirmBookings()" style="background: var(--success); color: white;">✓ Confirm Selected</button>
+                                <button class="btn btn-sm" onclick="bulkCompleteBookings()" style="background: var(--info); color: white;">✓ Complete Selected</button>
+                                <button class="btn btn-sm btn-outline" onclick="bulkCancelBookings()" style="color: var(--danger); border-color: var(--danger);">✗ Cancel Selected</button>
+                                <button class="btn btn-sm btn-outline" onclick="deselectAllBookings()" style="margin-left: auto;">Deselect All</button>
                             </div>
                         </div>
 
@@ -1660,11 +1785,11 @@
                                     Showing 1-50 of 125
                                 </div>
                                 <div style="display: flex; gap: 5px;">
-                                    <button class="btn btn-sm btn-outline" id="bookingsPrevPage" onclick="goToBookingsPage('prev')" disabled>← Previous>Edit</button>
+                                    <button class="btn btn-sm btn-outline" id="bookingsPrevPage" onclick="goToBookingsPage('prev')" disabled>← Previous</button>
                                     <div id="bookingsPaginationPages" style="display: flex; gap: 5px;">
                                         <!-- Page numbers rendered dynamically -->
                                     </div>
-                                    <button class="btn btn-sm btn-outline" id="bookingsNextPage" onclick="goToBookingsPage('next')">Next →>Edit</button>
+                                    <button class="btn btn-sm btn-outline" id="bookingsNextPage" onclick="goToBookingsPage('next')">Next →</button>
                                 </div>
                                 <div>
                                     <select id="bookingsPageSize" class="form-input" onchange="onBookingsPageSizeChange()" style="width: auto; padding: 5px 10px; font-size: 13px;">
@@ -1682,17 +1807,17 @@
                         <div class="data-card">
                             <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
-                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(-1)">◀>Edit</button>
+                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(-1)">◀</button>
                                     <h3 class="data-card-title" id="bookingsCalendarLabel" style="min-width: 200px; text-align: center;">November 2025</h3>
-                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(1)">▶>Edit</button>
+                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(1)">▶</button>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <div style="display: flex; border: 1px solid var(--gray-light); border-radius: 6px; overflow: hidden;">
-                                        <button id="calendarDayBtn" class="btn btn-sm" style="border-radius: 0; border: none;" onclick="setCalendarView('day')">Day>Edit</button>
-                                        <button id="calendarWeekBtn" class="btn btn-sm btn-outline" style="border-radius: 0; border: none; border-left: 1px solid var(--gray-light);" onclick="setCalendarView('week')">Week>Edit</button>
-                                        <button id="calendarMonthBtn" class="btn btn-sm btn-outline" style="border-radius: 0; border: none; border-left: 1px solid var(--gray-light);" onclick="setCalendarView('month')">Month>Edit</button>
+                                        <button id="calendarDayBtn" class="btn btn-sm" style="border-radius: 0; border: none;" onclick="setCalendarView('day')">Day</button>
+                                        <button id="calendarWeekBtn" class="btn btn-sm btn-outline" style="border-radius: 0; border: none; border-left: 1px solid var(--gray-light);" onclick="setCalendarView('week')">Week</button>
+                                        <button id="calendarMonthBtn" class="btn btn-sm btn-outline" style="border-radius: 0; border: none; border-left: 1px solid var(--gray-light);" onclick="setCalendarView('month')">Month</button>
                                     </div>
-                                    <button class="btn btn-sm btn-outline" onclick="goToCalendarToday()">Today>Edit</button>
+                                    <button class="btn btn-sm btn-outline" onclick="goToCalendarToday()">Today</button>
                                 </div>
                             </div>
                             <div style="padding: 20px;">
@@ -1759,7 +1884,7 @@
                         <div class="modal-content" style="max-width: 500px;">
                             <div class="modal-header">
                                 <h3 id="bookingsDayPopupTitle">Bookings for June 15</h3>
-                                <button class="modal-close" onclick="closeBookingsDayPopup()">&times;>Edit</button>
+                                <button class="modal-close" onclick="closeBookingsDayPopup()">&times;</button>
                             </div>
                             <div class="modal-body" id="bookingsDayPopupContent">
                                 <!-- Bookings for selected day -->
@@ -1772,7 +1897,7 @@
                         <div class="modal" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
                             <div class="modal-header">
                                 <h3 class="modal-title">Edit Booking</h3>
-                                <button class="modal-close" onclick="closeModal('editBookingModal')">&times;>Edit</button>
+                                <button class="modal-close" onclick="closeModal('editBookingModal')">&times;</button>
                             </div>
                             <div class="modal-body" style="flex: 1; overflow-y: auto;">
                                 <div class="form-group">
@@ -1824,6 +1949,12 @@
                                 </div>
 
                                 <div class="form-group">
+                                    <label class="form-label">Commission Rate Override (%)</label>
+                                    <input type="number" id="editBookingCommissionRate" class="form-input" min="0" max="100" step="1" placeholder="Leave blank for default">
+                                    <small style="color: var(--text-subtle);">Override the service/stylist default commission for this booking</small>
+                                </div>
+
+                                <div class="form-group">
                                     <label class="form-label">Notes</label>
                                     <textarea id="editBookingNotes" class="form-input" rows="3" placeholder="Special requests or notes..."></textarea>
                                 </div>
@@ -1831,8 +1962,8 @@
                                 <div id="editBookingError" style="color: var(--danger); margin-bottom: 15px; display: none;"></div>
 
                                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                                    <button class="btn btn-outline" onclick="closeModal('editBookingModal')">Cancel>Edit</button>
-                                    <button class="btn btn-primary" onclick="saveBookingEdit()">Save Changes>Edit</button>
+                                    <button class="btn btn-outline" onclick="closeModal('editBookingModal')">Cancel</button>
+                                    <button class="btn btn-primary" onclick="saveBookingEdit()">Save Changes</button>
                                 </div>
                             </div>
                         </div>
@@ -1843,7 +1974,7 @@
                         <div class="modal" style="max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
                             <div class="modal-header">
                                 <h3 class="modal-title">Assign Appointment Time</h3>
-                                <button class="modal-close" onclick="closeModal('assignTimeModal')">&times;>Edit</button>
+                                <button class="modal-close" onclick="closeModal('assignTimeModal')">&times;</button>
                             </div>
                             <div class="modal-body" style="flex: 1; overflow-y: auto;">
                                 <!-- Booking Summary -->
@@ -1900,8 +2031,8 @@
                                 <div id="assignTimeError" style="color: var(--danger); margin-bottom: 15px; display: none;"></div>
 
                                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                                    <button class="btn btn-outline" onclick="closeModal('assignTimeModal')">Cancel>Edit</button>
-                                    <button class="btn btn-primary" onclick="confirmAssignTime()">Assign Time & Confirm>Edit</button>
+                                    <button class="btn btn-outline" onclick="closeModal('assignTimeModal')">Cancel</button>
+                                    <button class="btn btn-primary" onclick="confirmAssignTime()">Assign Time & Confirm</button>
                                 </div>
                             </div>
                         </div>
@@ -1912,7 +2043,7 @@
                 <section id="staff" class="page-section">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3>Staff Members</h3>
-                        <button class="btn btn-primary" onclick="openAddStaffModal()">+ Add Staff Member>Edit</button>
+                        <button class="btn btn-primary" onclick="openAddStaffModal()">+ Add Staff Member</button>
                     </div>
 
                     <div class="stats-grid">
@@ -1980,8 +2111,8 @@
                                         </label>
                                     </td>
                                     <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline" onclick="editStaff(1)">✏️>Edit</button>
-                                        <button class="btn btn-icon btn-outline">📊>Edit</button>
+                                        <button class="btn btn-icon btn-outline" onclick="editStaff(1)">✏️</button>
+                                        <button class="btn btn-icon btn-outline">📊</button>
                                     </td>
                                 </tr>
                                 <tr>
@@ -2005,8 +2136,8 @@
                                         </label>
                                     </td>
                                     <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️>Edit</button>
-                                        <button class="btn btn-icon btn-outline">📊>Edit</button>
+                                        <button class="btn btn-icon btn-outline">✏️</button>
+                                        <button class="btn btn-icon btn-outline">📊</button>
                                     </td>
                                 </tr>
                                 <tr>
@@ -2030,8 +2161,8 @@
                                         </label>
                                     </td>
                                     <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️>Edit</button>
-                                        <button class="btn btn-icon btn-outline">📊>Edit</button>
+                                        <button class="btn btn-icon btn-outline">✏️</button>
+                                        <button class="btn btn-icon btn-outline">📊</button>
                                     </td>
                                 </tr>
                                 <tr>
@@ -2055,14 +2186,197 @@
                                         </label>
                                     </td>
                                     <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️>Edit</button>
-                                        <button class="btn btn-icon btn-outline">📊>Edit</button>
+                                        <button class="btn btn-icon btn-outline">✏️</button>
+                                        <button class="btn btn-icon btn-outline">📊</button>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </section>
+
+                <!-- Payroll Section -->
+                <section id="payroll" class="page-section">
+                    <div class="section-header">
+                        <h2>Payroll Management</h2>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-outline" onclick="exportPayrollCSV()">Export CSV</button>
+                            <button class="btn btn-primary" onclick="generatePayroll()">Generate Payroll</button>
+                        </div>
+                    </div>
+
+                    <!-- Period Selector -->
+                    <div class="card" style="margin-bottom: 20px;">
+                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <div>
+                                <label style="font-size: 14px; color: var(--gray-medium); display: block; margin-bottom: 5px;">Year</label>
+                                <select id="payrollYear" class="filter-select" onchange="loadPayroll()">
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 14px; color: var(--gray-medium); display: block; margin-bottom: 5px;">Month</label>
+                                <select id="payrollMonth" class="filter-select" onchange="loadPayroll()">
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 14px; color: var(--gray-medium); display: block; margin-bottom: 5px;">Status</label>
+                                <select id="payrollStatus" class="filter-select" onchange="loadPayroll()">
+                                    <option value="">All</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="finalized">Finalized</option>
+                                    <option value="paid">Paid</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="stats-grid" id="payrollSummaryCards">
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <div class="stat-value" id="payrollTotalBasic">R0</div>
+                                    <div class="stat-label">Total Basic Pay</div>
+                                </div>
+                                <div class="stat-icon blue">💵</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <div class="stat-value" id="payrollTotalCommission">R0</div>
+                                    <div class="stat-label">Total Commission</div>
+                                </div>
+                                <div class="stat-icon green">📈</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <div class="stat-value" id="payrollTotalGross">R0</div>
+                                    <div class="stat-label">Total Gross Pay</div>
+                                </div>
+                                <div class="stat-icon pink">💰</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-header">
+                                <div>
+                                    <div class="stat-value" id="payrollStylistCount">0</div>
+                                    <div class="stat-label">Stylists</div>
+                                </div>
+                                <div class="stat-icon gold">👩‍🎨</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payroll Table -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Payroll Records</h3>
+                            <span style="color: var(--gray-medium);" id="payrollRecordsCount">0 records</span>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Stylist</th>
+                                    <th>Basic Pay</th>
+                                    <th>Commission Rate</th>
+                                    <th>Bookings</th>
+                                    <th>Revenue (ex VAT)</th>
+                                    <th>Commission</th>
+                                    <th>Gross Pay</th>
+                                    <th>Status</th>
+                                    <th style="width: 180px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payrollTableBody">
+                                <tr>
+                                    <td colspan="9" style="text-align: center; padding: 40px; color: var(--gray-medium);">
+                                        Select a period and click "Generate Payroll" to calculate
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Stylist Pay Settings -->
+                    <div class="data-card" style="margin-top: 20px;">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Stylist Pay Settings</h3>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Stylist</th>
+                                    <th>Basic Monthly Pay</th>
+                                    <th>Commission Rate</th>
+                                    <th style="width: 120px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stylistPaySettingsBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px; color: var(--gray-medium);">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Payroll Detail Modal -->
+                <div id="payrollDetailModal" class="modal-overlay">
+                    <div class="modal" style="max-width: 600px; width: 90%;">
+                        <div class="modal-header">
+                            <h3>Payroll Details</h3>
+                            <button class="modal-close" onclick="closeModal('payrollDetailModal')">&times;</button>
+                        </div>
+                        <div class="modal-body" id="payrollDetailContent">
+                            <!-- Content will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stylist Pay Edit Modal -->
+                <div id="stylistPayModal" class="modal-overlay">
+                    <div class="modal" style="max-width: 400px; width: 90%;">
+                        <div class="modal-header">
+                            <h3>Edit Pay Settings</h3>
+                            <button class="modal-close" onclick="closeModal('stylistPayModal')">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" id="stylistPayId">
+                            <div class="form-group">
+                                <label>Stylist</label>
+                                <input type="text" id="stylistPayName" disabled style="background: var(--gray-lightest);">
+                            </div>
+                            <div class="form-group">
+                                <label>Basic Monthly Pay (R)</label>
+                                <input type="number" id="stylistBasicPay" min="0" step="100" placeholder="e.g., 8000">
+                            </div>
+                            <div class="form-group">
+                                <label>Commission Rate (%)</label>
+                                <input type="number" id="stylistCommissionRate" min="0" max="100" step="1" placeholder="e.g., 30">
+                                <small style="color: var(--gray-medium);">Commission is calculated on service revenue excluding VAT</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-outline" onclick="closeModal('stylistPayModal')">Cancel</button>
+                            <button class="btn btn-primary" onclick="saveStylistPay()">Save Settings</button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Customers Section -->
                 <section id="customers" class="page-section">
@@ -2079,8 +2393,8 @@
                             <option>Bronze</option>
                         </select>
                         <div style="display: flex; gap: 10px; align-items: center;">
-                            <button class="btn btn-primary" onclick="openCustomerModal()">+ Add Customer>Edit</button>
-                            <button class="btn btn-outline">Export CSV>Edit</button>
+                            <button class="btn btn-primary" onclick="openCustomerModal()">+ Add Customer</button>
+                            <button class="btn btn-outline">Export CSV</button>
                         </div>
                     </div>
 
@@ -2113,7 +2427,7 @@
                     <div class="modal" style="max-width: 520px; width: 90%;">
                         <div class="modal-header">
                             <h3 class="modal-title" id="customerModalTitle">Add Customer</h3>
-                            <button class="modal-close" onclick="closeCustomerModal()">&times;>Edit</button>
+                            <button class="modal-close" onclick="closeCustomerModal()">&times;</button>
                         </div>
                         <div class="modal-body">
                             <input type="hidden" id="editingCustomerId">
@@ -2150,8 +2464,8 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn-outline" onclick="closeCustomerModal()">Cancel>Edit</button>
-                            <button class="btn btn-primary" onclick="saveCustomer()">Save Customer>Edit</button>
+                            <button class="btn btn-outline" onclick="closeCustomerModal()">Cancel</button>
+                            <button class="btn btn-primary" onclick="saveCustomer()">Save Customer</button>
                         </div>
                     </div>
                 </div>
@@ -2171,7 +2485,7 @@
                             <option>Low Stock</option>
                             <option>Out of Stock</option>
                         </select>
-                        <button class="btn btn-primary" onclick="openAddProductModal()">+ Add Product>Edit</button>
+                        <button class="btn btn-primary" onclick="openAddProductModal()">+ Add Product</button>
                     </div>
 
                     <div class="stats-grid">
@@ -2247,7 +2561,7 @@
                             <option value="express courier">Express Courier</option>
                         </select>
                         <input type="date" class="filter-select" id="orderDateFilter" aria-label="Filter orders by date">
-                        <button class="btn btn-outline btn-small" id="orderFiltersClear" type="button">Clear>Edit</button>
+                        <button class="btn btn-outline btn-small" id="orderFiltersClear" type="button">Clear</button>
                     </div>
 
                     <div class="data-card">
@@ -2280,7 +2594,7 @@
                 <section id="promotions" class="page-section">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3>Active Promotions</h3>
-                        <button class="btn btn-primary" onclick="openModal('addPromoModal')">+ Create Promotion>Edit</button>
+                        <button class="btn btn-primary" onclick="openModal('addPromoModal')">+ Create Promotion</button>
                     </div>
 
                     <div class="stats-grid">
@@ -2339,7 +2653,7 @@
                     <div class="data-card">
                         <div class="data-card-header">
                             <h3 class="data-card-title">Push Notifications</h3>
-                            <button class="btn btn-primary btn-small" onclick="showCreateNotificationModal()">+ Create Notification>Edit</button>
+                            <button class="btn btn-primary btn-small" onclick="showCreateNotificationModal()">+ Create Notification</button>
                         </div>
                         <p style="color: var(--gray-medium); margin-bottom: 20px;">
                             Send branded notifications to all app users. Notifications appear as elegant toast messages in the client app.
@@ -2365,8 +2679,8 @@
                         <div class="data-card-header">
                             <h3 class="data-card-title">Gallery Management</h3>
                             <div style="display:flex; gap:10px; align-items:center;">
-                                <button class="btn btn-outline btn-small" onclick="openInstagramModal()">Instagram Feed>Edit</button>
-                                <button class="btn btn-primary btn-small" onclick="showGalleryModal()">+ Add Image>Edit</button>
+                                <button class="btn btn-outline btn-small" onclick="openInstagramModal()">Instagram Feed</button>
+                                <button class="btn btn-primary btn-small" onclick="showGalleryModal()">+ Add Image</button>
                             </div>
                         </div>
                         <p style="color: var(--gray-medium); margin-bottom: 20px;">
@@ -2381,7 +2695,7 @@
                             <div style="padding: 15px; color: var(--gray-medium);">
                                 Configure your Instagram handle to surface the feed in the client gallery.
                                 <div style="margin-top: 10px;">
-                                    <button class="btn btn-outline btn-small" onclick="openInstagramModal()">Configure>Edit</button>
+                                    <button class="btn btn-outline btn-small" onclick="openInstagramModal()">Configure</button>
                                 </div>
                             </div>
                         </div>
@@ -2425,7 +2739,7 @@
                                     </div>
                                 </div>
                                 <div class="action-btns" id="chatActions" style="display: none;">
-                                    <button class="btn btn-outline btn-sm" onclick="closeConversation()">Close Chat>Edit</button>
+                                    <button class="btn btn-outline btn-sm" onclick="closeConversation()">Close Chat</button>
                                 </div>
                             </div>
                             <div style="flex: 1; padding: 20px; overflow-y: auto; background: var(--gray-light);" id="chatMessagesAdmin">
@@ -2438,7 +2752,7 @@
                             </div>
                             <div style="padding: 15px; border-top: 1px solid var(--gray-light); display: flex; gap: 10px;" id="chatInputArea">
                                 <input type="text" class="form-input" id="adminChatInput" placeholder="Type a message..." style="flex: 1;" onkeydown="handleAdminChatKeypress(event)" disabled>
-                                <button class="btn btn-primary" id="adminSendBtn" onclick="sendAdminChatMessage()" disabled>Send>Edit</button>
+                                <button class="btn btn-primary" id="adminSendBtn" onclick="sendAdminChatMessage()" disabled>Send</button>
                             </div>
                         </div>
                     </div>
@@ -2449,7 +2763,7 @@
                     <div class="data-card">
                         <div class="data-card-header">
                             <h3 class="data-card-title">Hair Care Tips</h3>
-                            <button class="btn btn-primary btn-sm" onclick="openHairTipModal()">+ Add Tip>Edit</button>
+                            <button class="btn btn-primary btn-sm" onclick="openHairTipModal()">+ Add Tip</button>
                         </div>
                         <div style="padding: 20px;">
                             <p style="color: var(--gray-medium); margin-bottom: 20px;">
@@ -2469,7 +2783,7 @@
                     <div class="modal" style="max-width: 520px; width: 90%;">
                         <div class="modal-header">
                             <h3 id="hairTipModalTitle">Add New Hair Tip</h3>
-                            <button class="modal-close" onclick="closeHairTipModal()">&times;>Edit</button>
+                            <button class="modal-close" onclick="closeHairTipModal()">&times;</button>
                         </div>
                         <div class="modal-body">
                             <input type="hidden" id="editHairTipId">
@@ -2507,8 +2821,8 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button class="btn btn-outline" onclick="closeHairTipModal()">Cancel>Edit</button>
-                            <button class="btn btn-primary" onclick="saveHairTip()">Save Tip>Edit</button>
+                            <button class="btn btn-outline" onclick="closeHairTipModal()">Cancel</button>
+                            <button class="btn btn-primary" onclick="saveHairTip()">Save Tip</button>
                         </div>
                     </div>
                 </div>
@@ -2573,14 +2887,14 @@
                                     </div>
                                 </div>
                             </div>
-                            <button class="btn btn-primary">Save Settings>Edit</button>
+                            <button class="btn btn-primary">Save Settings</button>
                         </div>
                     </div>
 
                     <div class="data-card">
                         <div class="data-card-header">
                             <h3 class="data-card-title">Service Pricing</h3>
-                            <button class="btn btn-outline btn-sm">+ Add Service>Edit</button>
+                            <button class="btn btn-outline btn-sm">+ Add Service</button>
                         </div>
                         <table class="data-table">
                             <thead>
@@ -2597,8 +2911,8 @@
                                     <td>2-3 hours</td>
                                     <td><input type="text" class="form-input" value="R2,500" style="width: 100px;"></td>
                                     <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️>Edit</button>
-                                        <button class="btn btn-icon btn-outline">🗑️>Edit</button>
+                                        <button class="btn btn-icon btn-outline">✏️</button>
+                                        <button class="btn btn-icon btn-outline">🗑️</button>
                                     </td>
                                 </tr>
                                 <tr>
@@ -2606,8 +2920,8 @@
                                     <td>3-4 hours</td>
                                     <td><input type="text" class="form-input" value="R3,200" style="width: 100px;"></td>
                                     <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️>Edit</button>
-                                        <button class="btn btn-icon btn-outline">🗑️>Edit</button>
+                                        <button class="btn btn-icon btn-outline">✏️</button>
+                                        <button class="btn btn-icon btn-outline">🗑️</button>
                                     </td>
                                 </tr>
                                 <tr>
@@ -2615,8 +2929,8 @@
                                     <td>1-2 hours</td>
                                     <td><input type="text" class="form-input" value="R800" style="width: 100px;"></td>
                                     <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️>Edit</button>
-                                        <button class="btn btn-icon btn-outline">🗑️>Edit</button>
+                                        <button class="btn btn-icon btn-outline">✏️</button>
+                                        <button class="btn btn-icon btn-outline">🗑️</button>
                                     </td>
                                 </tr>
                                 <tr>
@@ -2624,8 +2938,8 @@
                                     <td>30 min</td>
                                     <td><input type="text" class="form-input" value="Free" style="width: 100px;"></td>
                                     <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️>Edit</button>
-                                        <button class="btn btn-icon btn-outline">🗑️>Edit</button>
+                                        <button class="btn btn-icon btn-outline">✏️</button>
+                                        <button class="btn btn-icon btn-outline">🗑️</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -2652,7 +2966,7 @@
                                 <input type="text" class="form-input" value="R500" style="max-width: 200px;">
                                 <p style="font-size: 13px; color: var(--gray-medium); margin-top: 5px;">Orders above this amount get free standard delivery</p>
                             </div>
-                            <button class="btn btn-primary">Save Delivery Settings>Edit</button>
+                            <button class="btn btn-primary">Save Delivery Settings</button>
                         </div>
                     </div>
                 </section>
@@ -2837,11 +3151,11 @@
                         <button class="btn btn-primary" onclick="saveLoyaltySettings()" style="flex: 1;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                             Save Changes
-                        >Edit</button>
+                        </button>
                         <button class="btn btn-outline" onclick="resetLoyaltySettings()" style="flex: 1;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
                             Reset to Defaults
-                        >Edit</button>
+                        </button>
                     </div>
 
                     <!-- Validation Errors -->
@@ -2992,7 +3306,7 @@
                             </div>
                             <button class="btn btn-outline" onclick="addTrackerTip()" style="margin-top: 15px;">
                                 + Add Tip
-                            >Edit</button>
+                            </button>
                         </div>
                     </div>
 
@@ -3001,11 +3315,11 @@
                         <button class="btn btn-primary" onclick="saveHairTrackerSettings()" style="flex: 1;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                             Save Changes
-                        >Edit</button>
+                        </button>
                         <button class="btn btn-outline" onclick="resetHairTrackerSettings()" style="flex: 1;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
                             Reset to Defaults
-                        >Edit</button>
+                        </button>
                     </div>
 
                     <!-- Status Messages -->
@@ -3026,7 +3340,7 @@
                         <button class="btn btn-primary" onclick="refreshPaymentConfig()" style="margin-top: 15px;">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
                             Refresh Status
-                        >Edit</button>
+                        </button>
                     </div>
 
                     <!-- Editable Payment Settings -->
@@ -3086,7 +3400,7 @@
                                 <button class="btn btn-primary" onclick="savePaymentSettings()">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                                     Save Payment Settings
-                                >Edit</button>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -3222,7 +3536,7 @@
                         <h2>Service Management</h2>
                         <button class="btn btn-primary" onclick="openServiceModal()">
                             <span style="margin-right: 5px;">+</span> Add New Service
-                        >Edit</button>
+                        </button>
                     </div>
 
                     <!-- Filters -->
@@ -3282,7 +3596,7 @@
         <div class="modal" style="max-width: 500px;">
             <div class="modal-header">
                 <h3 class="modal-title">Create Push Notification</h3>
-                <button class="modal-close" onclick="closeNotificationModal()">&times;>Edit</button>
+                <button class="modal-close" onclick="closeNotificationModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -3329,8 +3643,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeNotificationModal()">Cancel>Edit</button>
-                <button class="btn btn-primary" onclick="createNotification()">Send Notification>Edit</button>
+                <button class="btn btn-outline" onclick="closeNotificationModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="createNotification()">Send Notification</button>
             </div>
         </div>
     </div>
@@ -3340,7 +3654,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h3 class="modal-title" id="serviceModalTitle">Add New Service</h3>
-                <button class="modal-close" onclick="closeServiceModal()">&times;>Edit</button>
+                <button class="modal-close" onclick="closeServiceModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <form id="serviceForm" onsubmit="saveService(event)">
@@ -3386,8 +3700,27 @@
                     <div class="form-group">
                         <label class="form-label">Image URL</label>
                         <input type="url" id="serviceImageUrl" class="form-input"
-                               placeholder="https://example.com/image.jpg">
+                               placeholder="https://example.com/image.jpg"
+                               oninput="updateServiceImagePreview()">
                         <small style="color: var(--text-subtle);">URL to service image</small>
+                        <div id="serviceImagePreview" style="margin-top: 10px; display: none;">
+                            <img id="serviceImagePreviewImg" src="" alt="Preview" style="max-width: 100%; max-height: 150px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-color);">
+                            <div id="serviceImagePreviewError" style="display: none; color: var(--danger); font-size: 12px; margin-top: 5px;">Failed to load image</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Display Order</label>
+                            <input type="number" id="serviceDisplayOrder" class="form-input" min="0" step="1" placeholder="0">
+                            <small style="color: var(--text-subtle);">Lower numbers appear first</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Commission Rate (%)</label>
+                            <input type="number" id="serviceCommissionRate" class="form-input" min="0" max="100" step="1" placeholder="Leave blank for stylist default">
+                            <small style="color: var(--text-subtle);">Overrides stylist default rate for this service</small>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -3399,8 +3732,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeServiceModal()">Cancel>Edit</button>
-                <button class="btn btn-primary" onclick="document.getElementById('serviceForm').requestSubmit()">Save Service>Edit</button>
+                <button class="btn btn-outline" onclick="closeServiceModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="document.getElementById('serviceForm').requestSubmit()">Save Service</button>
             </div>
         </div>
     </div>
@@ -3410,14 +3743,14 @@
         <div class="modal" style="max-width: 420px; width: 90%;">
             <div class="modal-header">
                 <h3 class="modal-title" id="confirmTitle">Please Confirm</h3>
-                <button class="modal-close" onclick="resolveConfirm(false)">&times;>Edit</button>
+                <button class="modal-close" onclick="resolveConfirm(false)">&times;</button>
             </div>
             <div class="modal-body">
                 <p id="confirmMessage" style="font-size: 15px; color: var(--brand-charcoal); margin: 0;"></p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" id="confirmCancelBtn" onclick="resolveConfirm(false)">Cancel>Edit</button>
-                <button class="btn btn-primary" id="confirmConfirmBtn" onclick="resolveConfirm(true)">Confirm>Edit</button>
+                <button class="btn btn-outline" id="confirmCancelBtn" onclick="resolveConfirm(false)">Cancel</button>
+                <button class="btn btn-primary" id="confirmConfirmBtn" onclick="resolveConfirm(true)">Confirm</button>
             </div>
         </div>
     </div>
@@ -3429,7 +3762,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h3 class="modal-title">Add Staff Member</h3>
-                <button class="modal-close" onclick="closeModal('addStaffModal')">&times;>Edit</button>
+                <button class="modal-close" onclick="closeModal('addStaffModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="image-upload" onclick="document.getElementById('staffPhoto').click()">
@@ -3473,12 +3806,12 @@
                     <label class="form-label">Services Offered</label>
                     <button type="button" class="btn btn-outline" onclick="openStaffServicesModal(editingStaffId)" style="width: 100%;">
                         Manage Services & Pricing
-                    >Edit</button>
+                    </button>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('addStaffModal')">Cancel>Edit</button>
-                <button class="btn btn-primary" id="staffSaveBtn" onclick="saveStaff()">Add Staff Member>Edit</button>
+                <button class="btn btn-outline" onclick="closeModal('addStaffModal')">Cancel</button>
+                <button class="btn btn-primary" id="staffSaveBtn" onclick="saveStaff()">Add Staff Member</button>
             </div>
         </div>
     </div>
@@ -3488,7 +3821,7 @@
         <div class="modal" style="max-width: 900px;">
             <div class="modal-header">
                 <h3 class="modal-title" id="staffServicesModalTitle">Manage Staff Services</h3>
-                <button class="modal-close" onclick="closeStaffServicesModal()">&times;>Edit</button>
+                <button class="modal-close" onclick="closeStaffServicesModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -3515,7 +3848,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeStaffServicesModal()">Done>Edit</button>
+                <button class="btn btn-outline" onclick="closeStaffServicesModal()">Done</button>
             </div>
         </div>
     </div>
@@ -3525,7 +3858,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h3 class="modal-title">Add Product</h3>
-                <button class="modal-close" onclick="closeModal('addProductModal')">&times;>Edit</button>
+                <button class="modal-close" onclick="closeModal('addProductModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="image-upload" onclick="document.getElementById('productPhoto').click()">
@@ -3581,8 +3914,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('addProductModal')">Cancel>Edit</button>
-                <button class="btn btn-primary" id="productSaveBtn" onclick="saveProduct()">Add Product>Edit</button>
+                <button class="btn btn-outline" onclick="closeModal('addProductModal')">Cancel</button>
+                <button class="btn btn-primary" id="productSaveBtn" onclick="saveProduct()">Add Product</button>
             </div>
         </div>
     </div>
@@ -3592,7 +3925,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h3 class="modal-title">New Booking</h3>
-                <button class="modal-close" onclick="closeModal('addBookingModal')">&times;>Edit</button>
+                <button class="modal-close" onclick="closeModal('addBookingModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -3639,8 +3972,8 @@
                 <div id="adminBookingError" style="color: var(--danger); font-size: 13px;"></div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('addBookingModal')">Cancel>Edit</button>
-                <button class="btn btn-primary" onclick="saveBooking()">Create Booking>Edit</button>
+                <button class="btn btn-outline" onclick="closeModal('addBookingModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveBooking()">Create Booking</button>
             </div>
         </div>
     </div>
@@ -3650,7 +3983,7 @@
         <div class="modal" style="max-width: 600px;">
             <div class="modal-header">
                 <h3 class="modal-title">Create Promotion</h3>
-                <button class="modal-close" onclick="closeModal('addPromoModal')">&times;>Edit</button>
+                <button class="modal-close" onclick="closeModal('addPromoModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-row">
@@ -3738,8 +4071,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('addPromoModal')">Cancel>Edit</button>
-                <button class="btn btn-primary" onclick="savePromo()">Create Promotion>Edit</button>
+                <button class="btn btn-outline" onclick="closeModal('addPromoModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="savePromo()">Create Promotion</button>
             </div>
         </div>
     </div>
@@ -3776,8 +4109,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="logout()">Logout Instead>Edit</button>
-                <button class="btn btn-primary" onclick="submitPasswordChange()">Change Password>Edit</button>
+                <button class="btn btn-outline" onclick="logout()">Logout Instead</button>
+                <button class="btn btn-primary" onclick="submitPasswordChange()">Change Password</button>
             </div>
         </div>
     </div>
@@ -3787,7 +4120,7 @@
         <div class="modal" style="max-width: 500px;">
             <div class="modal-header">
                 <h3 class="modal-title" id="galleryModalTitle">Add Gallery Image</h3>
-                <button class="modal-close" onclick="closeGalleryModal()">&times;>Edit</button>
+                <button class="modal-close" onclick="closeGalleryModal()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -3823,8 +4156,8 @@
                 <input type="hidden" id="galleryEditId">
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeGalleryModal()">Cancel>Edit</button>
-                <button class="btn btn-primary" id="gallerySubmitBtn" onclick="submitGalleryItem()">Add Image>Edit</button>
+                <button class="btn btn-outline" onclick="closeGalleryModal()">Cancel</button>
+                <button class="btn btn-primary" id="gallerySubmitBtn" onclick="submitGalleryItem()">Add Image</button>
             </div>
         </div>
     </div>
@@ -4132,7 +4465,7 @@
         // ============================================
         // NAVIGATION
         // ============================================
-        function showSection(sectionId) {
+        function showSection(sectionId, evt) {
             document.querySelectorAll('.page-section').forEach(section => {
                 section.classList.remove('active');
             });
@@ -4141,12 +4474,25 @@
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
             });
-            event.target.closest('.nav-item').classList.add('active');
+            // Find the nav item for this section and mark it active
+            const navEvent = evt || window.event;
+            if (navEvent && navEvent.target) {
+                const navItem = navEvent.target.closest('.nav-item');
+                if (navItem) navItem.classList.add('active');
+            } else {
+                // Fallback: find nav item by section id
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    if (item.getAttribute('onclick')?.includes(`'${sectionId}'`)) {
+                        item.classList.add('active');
+                    }
+                });
+            }
 
             const titles = {
                 'dashboard': 'Dashboard',
                 'bookings': 'Bookings',
                 'staff': 'Staff Management',
+                'payroll': 'Payroll Management',
                 'services': 'Service Management',
                 'customers': 'Customers',
                 'products': 'Products & Inventory',
@@ -4173,6 +4519,11 @@
                     }
                     break;
                 case 'staff': loadStaff(); break;
+                case 'payroll':
+                    initPayrollYearSelector();
+                    loadPayroll();
+                    loadStylistPaySettings();
+                    break;
                 case 'services': loadServices(); break;
                 case 'customers': loadCustomers(); break;
                 case 'products': loadProducts(); break;
@@ -4195,6 +4546,140 @@
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
         }
+
+        // ============================================
+        // ADMIN MENU & GLOBAL SEARCH
+        // ============================================
+        function toggleAdminMenu() {
+            const dropdown = document.getElementById('adminDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('adminDropdown');
+            const profile = document.querySelector('.admin-profile');
+            if (dropdown && profile && !profile.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        let searchDebounceTimer = null;
+
+        function handleGlobalSearch(event) {
+            const query = event.target.value.trim().toLowerCase();
+            const resultsContainer = document.getElementById('searchResults');
+
+            if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+
+            if (query.length < 2) {
+                resultsContainer.classList.remove('show');
+                return;
+            }
+
+            searchDebounceTimer = setTimeout(() => performGlobalSearch(query), 300);
+        }
+
+        function handleSearchKeydown(event) {
+            if (event.key === 'Escape') {
+                document.getElementById('searchResults').classList.remove('show');
+                event.target.blur();
+            }
+        }
+
+        async function performGlobalSearch(query) {
+            const resultsContainer = document.getElementById('searchResults');
+            let html = '';
+
+            try {
+                // Search customers
+                const customersRes = await fetch(`${API_BASE}/admin/users?search=${encodeURIComponent(query)}&limit=5`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('flirt_admin_token')}` }
+                });
+                if (customersRes.ok) {
+                    const customersData = await customersRes.json();
+                    const customers = customersData.users || customersData || [];
+                    if (customers.length > 0) {
+                        html += `<div class="search-result-group">
+                            <div class="search-result-group-title">Customers</div>
+                            ${customers.slice(0, 5).map(c => `
+                                <div class="search-result-item" onclick="selectSearchResult('customers', '${c.id}')">
+                                    <span class="icon">👤</span>
+                                    <div class="details">
+                                        <div class="name">${c.name || 'Unknown'}</div>
+                                        <div class="meta">${c.email || ''}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>`;
+                    }
+                }
+
+                // Search bookings
+                const bookingsRes = await fetch(`${API_BASE}/admin/bookings?search=${encodeURIComponent(query)}&limit=5`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('flirt_admin_token')}` }
+                });
+                if (bookingsRes.ok) {
+                    const bookingsData = await bookingsRes.json();
+                    const bookings = bookingsData.bookings || bookingsData || [];
+                    if (bookings.length > 0) {
+                        html += `<div class="search-result-group">
+                            <div class="search-result-group-title">Bookings</div>
+                            ${bookings.slice(0, 5).map(b => `
+                                <div class="search-result-item" onclick="selectSearchResult('bookings', '${b.id}')">
+                                    <span class="icon">📅</span>
+                                    <div class="details">
+                                        <div class="name">${b.customerName || b.customer_name || 'Guest'}</div>
+                                        <div class="meta">${b.serviceName || b.service_name || 'Service'} - ${b.date || ''}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>`;
+                    }
+                }
+
+                // Quick navigation
+                html += `<div class="search-result-group">
+                    <div class="search-result-group-title">Quick Navigation</div>
+                    <div class="search-result-item" onclick="selectSearchResult('customers'); filterCustomersByQuery('${query.replace(/'/g, "\\'")}')">
+                        <span class="icon">🔍</span>
+                        <div class="details">
+                            <div class="name">Search all customers for "${query}"</div>
+                        </div>
+                    </div>
+                </div>`;
+
+                resultsContainer.innerHTML = html;
+                resultsContainer.classList.add('show');
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        }
+
+        function selectSearchResult(section, id) {
+            document.getElementById('searchResults').classList.remove('show');
+            document.getElementById('globalSearch').value = '';
+            showSection(section);
+        }
+
+        function filterCustomersByQuery(query) {
+            setTimeout(() => {
+                const searchInput = document.querySelector('#customers input[type="text"], #customers input[type="search"]');
+                if (searchInput) {
+                    searchInput.value = query;
+                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }, 100);
+        }
+
+        // Close search results when clicking outside
+        document.addEventListener('click', function(e) {
+            const searchBox = document.querySelector('.search-box');
+            const resultsContainer = document.getElementById('searchResults');
+            if (searchBox && resultsContainer && !searchBox.contains(e.target)) {
+                resultsContainer.classList.remove('show');
+            }
+        });
 
         // ============================================
         // DASHBOARD
@@ -4317,12 +4802,12 @@
                             <td><span class="status-badge status-${b.status}">${b.status}</span></td>
                             <td class="action-btns">
                                 ${b.status === 'pending' ? `
-                                    <button class="btn btn-icon btn-outline booking-confirm-btn" data-booking-id="${b.id}" title="Confirm">✅>Edit</button>
+                                    <button class="btn btn-icon btn-outline booking-confirm-btn" data-booking-id="${b.id}" title="Confirm">✅</button>
                                 ` : ''}
                                 ${b.status === 'confirmed' ? `
-                                    <button class="btn btn-icon btn-outline booking-complete-btn" data-booking-id="${b.id}" title="Complete">✔️>Edit</button>
+                                    <button class="btn btn-icon btn-outline booking-complete-btn" data-booking-id="${b.id}" title="Complete">✔️</button>
                                 ` : ''}
-                                <button class="btn btn-icon btn-outline" title="View" onclick="showSection('bookings')">👁️>Edit</button>
+                                <button class="btn btn-icon btn-outline" title="View" onclick="showSection('bookings')">👁️</button>
                             </td>
                         </tr>
                     `;
@@ -4825,6 +5310,321 @@
             document.getElementById('count-cancelled').textContent = counts.CANCELLED;
         }
 
+        // ============================================
+        // BOOKINGS: SORTING, PAGINATION, BULK ACTIONS
+        // ============================================
+        let bookingsSortField = 'date';
+        let bookingsSortDirection = 'desc';
+        let bookingsCurrentPage = 1;
+        let bookingsPageSize = 50;
+        let selectedBookingIds = new Set();
+        let bookingsGroupByDate = false;
+
+        function sortBookingsBy(field) {
+            if (bookingsSortField === field) {
+                // Toggle direction
+                bookingsSortDirection = bookingsSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                bookingsSortField = field;
+                bookingsSortDirection = 'asc';
+            }
+
+            // Update sort icons
+            ['customer', 'service', 'stylist', 'date', 'status'].forEach(f => {
+                const icon = document.getElementById(`sortIcon${f.charAt(0).toUpperCase() + f.slice(1)}`);
+                if (icon) {
+                    icon.textContent = f === field ? (bookingsSortDirection === 'asc' ? '↑' : '↓') : '↕';
+                }
+            });
+
+            // Sort adminBookings
+            adminBookings.sort((a, b) => {
+                let valA, valB;
+                switch (field) {
+                    case 'customer':
+                        valA = (a.customerName || '').toLowerCase();
+                        valB = (b.customerName || '').toLowerCase();
+                        break;
+                    case 'service':
+                        valA = (a.serviceName || '').toLowerCase();
+                        valB = (b.serviceName || '').toLowerCase();
+                        break;
+                    case 'stylist':
+                        valA = (a.stylistName || '').toLowerCase();
+                        valB = (b.stylistName || '').toLowerCase();
+                        break;
+                    case 'date':
+                        valA = a.requestedDate || a.date || '';
+                        valB = b.requestedDate || b.date || '';
+                        break;
+                    case 'status':
+                        valA = (a.status || '').toLowerCase();
+                        valB = (b.status || '').toLowerCase();
+                        break;
+                    default:
+                        valA = '';
+                        valB = '';
+                }
+
+                if (valA < valB) return bookingsSortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return bookingsSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            bookingsCurrentPage = 1;
+            renderBookingsTable();
+        }
+
+        function goToBookingsPage(direction) {
+            const totalPages = Math.ceil(adminBookings.length / bookingsPageSize);
+
+            if (direction === 'prev' && bookingsCurrentPage > 1) {
+                bookingsCurrentPage--;
+            } else if (direction === 'next' && bookingsCurrentPage < totalPages) {
+                bookingsCurrentPage++;
+            } else if (typeof direction === 'number') {
+                bookingsCurrentPage = direction;
+            }
+
+            renderBookingsTable();
+            updateBookingsPagination();
+        }
+
+        function onBookingsPageSizeChange() {
+            const select = document.getElementById('bookingsPageSize');
+            if (select) {
+                bookingsPageSize = parseInt(select.value) || 50;
+                bookingsCurrentPage = 1;
+                renderBookingsTable();
+                updateBookingsPagination();
+            }
+        }
+
+        function updateBookingsPagination() {
+            const total = adminBookings.length;
+            const totalPages = Math.ceil(total / bookingsPageSize);
+            const start = (bookingsCurrentPage - 1) * bookingsPageSize + 1;
+            const end = Math.min(bookingsCurrentPage * bookingsPageSize, total);
+
+            const paginationEl = document.getElementById('bookingsPagination');
+            if (paginationEl) {
+                paginationEl.style.display = total > bookingsPageSize ? 'flex' : 'none';
+            }
+
+            const infoEl = document.getElementById('bookingsPaginationInfo');
+            if (infoEl) {
+                infoEl.textContent = `Showing ${start}-${end} of ${total}`;
+            }
+
+            const prevBtn = document.getElementById('bookingsPrevPage');
+            const nextBtn = document.getElementById('bookingsNextPage');
+            if (prevBtn) prevBtn.disabled = bookingsCurrentPage <= 1;
+            if (nextBtn) nextBtn.disabled = bookingsCurrentPage >= totalPages;
+
+            // Render page numbers
+            const pagesEl = document.getElementById('bookingsPaginationPages');
+            if (pagesEl && totalPages > 1) {
+                let pagesHtml = '';
+                for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+                    const isActive = i === bookingsCurrentPage;
+                    pagesHtml += `<button class="btn btn-sm ${isActive ? '' : 'btn-outline'}"
+                                   onclick="goToBookingsPage(${i})"
+                                   style="${isActive ? 'background: var(--primary); color: white;' : ''}">${i}</button>`;
+                }
+                if (totalPages > 5) {
+                    pagesHtml += `<span style="padding: 0 8px;">...</span>`;
+                    pagesHtml += `<button class="btn btn-sm btn-outline" onclick="goToBookingsPage(${totalPages})">${totalPages}</button>`;
+                }
+                pagesEl.innerHTML = pagesHtml;
+            }
+        }
+
+        function toggleSelectAllBookings() {
+            const selectAllCheckbox = document.getElementById('bookingsSelectAll');
+            const checkboxes = document.querySelectorAll('#bookingsTableBody input[type="checkbox"]');
+
+            if (selectAllCheckbox && selectAllCheckbox.checked) {
+                // Select all visible bookings
+                const start = (bookingsCurrentPage - 1) * bookingsPageSize;
+                const end = Math.min(start + bookingsPageSize, adminBookings.length);
+                for (let i = start; i < end; i++) {
+                    selectedBookingIds.add(adminBookings[i].id);
+                }
+                checkboxes.forEach(cb => cb.checked = true);
+            } else {
+                // Deselect all
+                selectedBookingIds.clear();
+                checkboxes.forEach(cb => cb.checked = false);
+            }
+
+            updateBulkActionsBar();
+        }
+
+        function toggleBookingSelection(bookingId) {
+            if (selectedBookingIds.has(bookingId)) {
+                selectedBookingIds.delete(bookingId);
+            } else {
+                selectedBookingIds.add(bookingId);
+            }
+            updateBulkActionsBar();
+        }
+
+        function deselectAllBookings() {
+            selectedBookingIds.clear();
+            document.querySelectorAll('#bookingsTableBody input[type="checkbox"]').forEach(cb => cb.checked = false);
+            const selectAllCheckbox = document.getElementById('bookingsSelectAll');
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            updateBulkActionsBar();
+        }
+
+        function updateBulkActionsBar() {
+            const bar = document.getElementById('bookingsBulkActionsBar');
+            const countEl = document.getElementById('bookingsSelectedCount');
+
+            if (bar) {
+                bar.style.display = selectedBookingIds.size > 0 ? 'block' : 'none';
+            }
+            if (countEl) {
+                countEl.textContent = `${selectedBookingIds.size} selected`;
+            }
+        }
+
+        async function bulkConfirmBookings() {
+            if (selectedBookingIds.size === 0) return;
+
+            const confirmed = await openConfirmDialog({
+                title: 'Confirm Bookings',
+                message: `Are you sure you want to confirm ${selectedBookingIds.size} booking(s)?`,
+                confirmText: 'Confirm All',
+                tone: 'neutral'
+            });
+
+            if (!confirmed) return;
+
+            let successCount = 0;
+            for (const id of selectedBookingIds) {
+                try {
+                    await apiCall(`/admin/bookings/${id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ status: 'CONFIRMED' })
+                    });
+                    successCount++;
+                } catch (error) {
+                    console.error(`Failed to confirm booking ${id}:`, error);
+                }
+            }
+
+            showAdminToast(`${successCount} booking(s) confirmed`, 'success');
+            deselectAllBookings();
+            loadBookings();
+        }
+
+        async function bulkCompleteBookings() {
+            if (selectedBookingIds.size === 0) return;
+
+            const confirmed = await openConfirmDialog({
+                title: 'Complete Bookings',
+                message: `Are you sure you want to mark ${selectedBookingIds.size} booking(s) as completed?`,
+                confirmText: 'Complete All',
+                tone: 'neutral'
+            });
+
+            if (!confirmed) return;
+
+            let successCount = 0;
+            for (const id of selectedBookingIds) {
+                try {
+                    await apiCall(`/admin/bookings/${id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ status: 'COMPLETED' })
+                    });
+                    successCount++;
+                } catch (error) {
+                    console.error(`Failed to complete booking ${id}:`, error);
+                }
+            }
+
+            showAdminToast(`${successCount} booking(s) marked as completed`, 'success');
+            deselectAllBookings();
+            loadBookings();
+        }
+
+        async function bulkCancelBookings() {
+            if (selectedBookingIds.size === 0) return;
+
+            const confirmed = await openConfirmDialog({
+                title: 'Cancel Bookings',
+                message: `Are you sure you want to cancel ${selectedBookingIds.size} booking(s)? This cannot be undone.`,
+                confirmText: 'Cancel All',
+                tone: 'danger'
+            });
+
+            if (!confirmed) return;
+
+            let successCount = 0;
+            for (const id of selectedBookingIds) {
+                try {
+                    await apiCall(`/admin/bookings/${id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ status: 'CANCELLED' })
+                    });
+                    successCount++;
+                } catch (error) {
+                    console.error(`Failed to cancel booking ${id}:`, error);
+                }
+            }
+
+            showAdminToast(`${successCount} booking(s) cancelled`, 'success');
+            deselectAllBookings();
+            loadBookings();
+        }
+
+        function toggleBookingsGrouping() {
+            const checkbox = document.getElementById('bookingsGroupByDate');
+            bookingsGroupByDate = checkbox ? checkbox.checked : false;
+            renderBookingsTable();
+        }
+
+        function exportBookingsToCSV() {
+            if (adminBookings.length === 0) {
+                showAdminToast('No bookings to export', 'error');
+                return;
+            }
+
+            // Build CSV content
+            const headers = ['ID', 'Customer', 'Email', 'Phone', 'Service', 'Stylist', 'Date', 'Time', 'Status', 'Notes'];
+            const rows = adminBookings.map(b => [
+                b.id,
+                b.customerName || 'Guest',
+                b.customerEmail || '',
+                b.customerPhone || '',
+                b.serviceName || '',
+                b.stylistName || 'Any',
+                b.requestedDate || b.date || '',
+                b.assignedStartTime || b.confirmedTime || b.time || b.preferredTimeOfDay || '',
+                b.status || '',
+                (b.notes || '').replace(/"/g, '""')
+            ]);
+
+            let csv = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `bookings-export-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showAdminToast(`Exported ${adminBookings.length} booking(s) to CSV`, 'success');
+        }
+
         function renderBookingsTable() {
             const container = document.getElementById('bookingsTableBody');
             if (!container) return;
@@ -4837,12 +5637,35 @@
                         </td>
                     </tr>
                 `;
+                updateBookingsPagination();
                 return;
             }
 
-            container.innerHTML = adminBookings.map(b => {
+            // Apply pagination
+            const start = (bookingsCurrentPage - 1) * bookingsPageSize;
+            const end = Math.min(start + bookingsPageSize, adminBookings.length);
+            const paginatedBookings = adminBookings.slice(start, end);
+
+            // Optional: Group by date
+            let html = '';
+            let lastDate = null;
+
+            paginatedBookings.forEach(b => {
                 // Use new schema fields with fallback to legacy
                 const dateStr = formatDateDisplay(b.requestedDate || b.date);
+                const rawDate = (b.requestedDate || b.date || '').split('T')[0];
+
+                // Add date separator if grouping is enabled
+                if (bookingsGroupByDate && rawDate !== lastDate) {
+                    html += `
+                        <tr style="background: var(--gray-light);">
+                            <td colspan="9" style="padding: 10px 20px; font-weight: 600; color: var(--brand-charcoal);">
+                                ${formatDateDisplay(rawDate + 'T00:00:00', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+                            </td>
+                        </tr>
+                    `;
+                    lastDate = rawDate;
+                }
 
                 // Format time display based on booking status
                 let timeStr = 'TBC';
@@ -4857,11 +5680,16 @@
                 }
 
                 const shortId = b.id.substring(0, 8);
+                const isSelected = selectedBookingIds.has(b.id);
 
-                return `
-                    <tr>
+                html += `
+                    <tr${isSelected ? ' style="background: var(--primary-light);"' : ''}>
                         <td>
-                            <input type="checkbox" disabled style="opacity: 0.3;" title="Enable in enhanced mode">
+                            <input type="checkbox"
+                                   data-booking-id="${b.id}"
+                                   ${isSelected ? 'checked' : ''}
+                                   onchange="toggleBookingSelection('${b.id}')"
+                                   title="Select booking">
                         </td>
                         <td>
                             <code style="font-size: 11px; background: var(--gray-light); padding: 2px 6px; border-radius: 3px;" title="${b.id}">${shortId}</code>
@@ -4877,20 +5705,25 @@
                         <td><span class="status-badge status-${b.status}">${b.status}</span></td>
                         <td class="action-btns">
                             ${(b.status === 'REQUESTED' || b.status === 'pending') && !b.assignedStartTime ? `
-                                <button class="btn btn-sm btn-primary booking-assign-btn" data-booking-id="${b.id}" title="Assign Time">⏰ Assign>Edit</button>
+                                <button class="btn btn-sm btn-primary booking-assign-btn" data-booking-id="${b.id}" title="Assign Time">⏰ Assign</button>
                             ` : `
-                                <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}" title="Edit booking">✏️>Edit</button>
+                                <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}" title="Edit booking">✏️</button>
                             `}
                             ${b.status === 'CONFIRMED' || b.status === 'confirmed' ? `
-                                <button class="btn btn-sm booking-complete-btn" data-booking-id="${b.id}" title="Complete">✓>Edit</button>
+                                <button class="btn btn-sm booking-complete-btn" data-booking-id="${b.id}" title="Complete">✓</button>
                             ` : ''}
                             ${(b.status === 'REQUESTED' || b.status === 'CONFIRMED' || b.status === 'pending' || b.status === 'confirmed') ? `
-                                <button class="btn btn-sm btn-outline booking-cancel-btn" data-booking-id="${b.id}" title="Cancel">✗>Edit</button>
+                                <button class="btn btn-sm btn-outline booking-cancel-btn" data-booking-id="${b.id}" title="Cancel">✗</button>
                             ` : ''}
                         </td>
                     </tr>
                 `;
-            }).join('');
+            });
+
+            container.innerHTML = html;
+
+            // Update pagination controls
+            updateBookingsPagination();
 
             // Add event listeners for booking action buttons
             attachBookingActionListeners();
@@ -5081,17 +5914,17 @@
                             ${b.stylistName ? `<div style="font-size: 14px; margin-bottom: 5px;"><strong>Stylist:</strong> ${b.stylistName}</div>` : ''}
                             ${b.notes ? `<div style="font-size: 12px; color: var(--gray-medium); margin-top: 8px; padding: 8px; background: var(--gray-light); border-radius: 4px;"><strong>Notes:</strong> ${b.notes}</div>` : ''}
                             <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                                <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}">✏️ Edit>Edit</button>
+                                <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}">✏️ Edit</button>
                                 ${b.status === 'pending' ? `
-                                    <button class="btn btn-sm btn-primary booking-confirm-close-btn" data-booking-id="${b.id}">✓ Confirm>Edit</button>
+                                    <button class="btn btn-sm btn-primary booking-confirm-close-btn" data-booking-id="${b.id}">✓ Confirm</button>
                                 ` : ''}
                                 ${b.status === 'confirmed' ? `
-                                    <button class="btn btn-sm btn-primary booking-complete-close-btn" data-booking-id="${b.id}">✓ Complete>Edit</button>
+                                    <button class="btn btn-sm btn-primary booking-complete-close-btn" data-booking-id="${b.id}">✓ Complete</button>
                                 ` : ''}
                                 ${(b.status === 'pending' || b.status === 'confirmed') ? `
-                                    <button class="btn btn-sm btn-outline booking-cancel-close-btn" data-booking-id="${b.id}">✗ Cancel>Edit</button>
+                                    <button class="btn btn-sm btn-outline booking-cancel-close-btn" data-booking-id="${b.id}">✗ Cancel</button>
                                 ` : ''}
-                                <button class="btn btn-sm booking-delete-btn" data-booking-id="${b.id}" style="background: var(--danger); color: white; margin-left: auto;">🗑️ Delete>Edit</button>
+                                <button class="btn btn-sm booking-delete-btn" data-booking-id="${b.id}" style="background: var(--danger); color: white; margin-left: auto;">🗑️ Delete</button>
                             </div>
                         </div>
                     `;
@@ -5485,6 +6318,9 @@
             document.getElementById('editBookingTime').value = booking.confirmedTime || booking.time || '';
             document.getElementById('editBookingDuration').value = booking.duration || 60;
             document.getElementById('editBookingStatus').value = booking.status;
+            document.getElementById('editBookingCommissionRate').value = booking.commission_rate !== null && booking.commission_rate !== undefined
+                ? (booking.commission_rate * 100).toFixed(0)
+                : '';
             document.getElementById('editBookingNotes').value = booking.notes || '';
 
             // Clear error
@@ -5516,6 +6352,7 @@
                 const duration = document.getElementById('editBookingDuration').value;
                 const status = document.getElementById('editBookingStatus').value;
                 const notes = document.getElementById('editBookingNotes').value;
+                const commissionRateInput = document.getElementById('editBookingCommissionRate').value.trim();
 
                 if (!date) {
                     throw new Error('Date is required');
@@ -5530,6 +6367,9 @@
                     throw new Error('Invalid service selected');
                 }
 
+                // Parse commission rate: convert from percentage to decimal, or null if empty
+                const commissionRate = commissionRateInput !== '' ? parseFloat(commissionRateInput) / 100 : null;
+
                 const updateData = {
                     serviceId: serviceId,
                     serviceName: service.name,
@@ -5541,6 +6381,7 @@
                     duration: duration ? parseInt(duration) : null,
                     status: status,
                     notes: notes || null,
+                    commissionRate: commissionRate,
                     updatedAt: new Date().toISOString()
                 };
 
@@ -5871,9 +6712,9 @@
                             <td>${s.clientsCount} clients</td>
                             <td><span class="status-badge status-${s.available ? 'confirmed' : 'cancelled'}">${s.available ? 'Active' : 'Inactive'}</span></td>
                             <td>
-                                <button class="btn btn-sm" onclick="editStaff('${s.id}')">Edit>Edit</button>
-                                <button class="btn btn-sm btn-outline" onclick="archiveStaff('${s.id}')" style="margin-left:6px;">Archive>Edit</button>
-                                <button class="btn btn-sm btn-outline" onclick="deleteStaff('${s.id}')" style="margin-left:6px; color: var(--danger);">Delete>Edit</button>
+                                <button class="btn btn-sm" onclick="editStaff('${s.id}')">Edit</button>
+                                <button class="btn btn-sm btn-outline" onclick="archiveStaff('${s.id}')" style="margin-left:6px;">Archive</button>
+                                <button class="btn btn-sm btn-outline" onclick="deleteStaff('${s.id}')" style="margin-left:6px; color: var(--danger);">Delete</button>
                             </td>
                         </tr>
                     `).join('');
@@ -5996,7 +6837,7 @@
                                 <td>R${(c.totalSpent || 0).toLocaleString()}</td>
                                 <td>${lastVisit}</td>
                                 <td class="action-btns">
-                                    <button class="btn btn-icon btn-outline" title="Edit" onclick="editCustomer('${c.id}')">✏️>Edit</button>
+                                    <button class="btn btn-icon btn-outline" title="Edit" onclick="editCustomer('${c.id}')">✏️</button>
                                 </td>
                             </tr>
                         `;
@@ -6150,7 +6991,7 @@
                                     <td ${stockClass}>${p.stock}${stockBadge}</td>
                                     <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
                                     <td class="action-btns" style="gap: 6px;">
-                                        <button class="btn btn-sm" onclick="editProduct('${p.id}')" title="Edit product">Edit</button>
+                                        <button class="btn btn-sm" onclick="editProduct('${p.id}')" title="Edit product">✏️ Edit</button>
                                         <button class="btn btn-sm" onclick="deleteProduct('${p.id}')" title="Delete product" style="color: var(--danger);">Delete</button>
                                     </td>
                                 </tr>
@@ -6285,6 +7126,305 @@
                 .join(' ');
         };
 
+        // ========== PAYROLL MANAGEMENT ==========
+        let payrollRecords = [];
+        let stylistsPayData = [];
+
+        function initPayrollYearSelector() {
+            const yearSelect = document.getElementById('payrollYear');
+            if (!yearSelect) return;
+
+            const currentYear = new Date().getFullYear();
+            yearSelect.innerHTML = '';
+            for (let y = currentYear; y >= currentYear - 2; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearSelect.appendChild(opt);
+            }
+            yearSelect.value = currentYear;
+
+            // Set current month
+            const monthSelect = document.getElementById('payrollMonth');
+            if (monthSelect) {
+                monthSelect.value = new Date().getMonth() + 1;
+            }
+        }
+
+        async function loadPayroll() {
+            const year = document.getElementById('payrollYear')?.value;
+            const month = document.getElementById('payrollMonth')?.value;
+            const status = document.getElementById('payrollStatus')?.value;
+
+            if (!year || !month) return;
+
+            const tbody = document.getElementById('payrollTableBody');
+            const countEl = document.getElementById('payrollRecordsCount');
+
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: var(--gray-medium);">Loading...</td></tr>';
+            }
+
+            try {
+                const params = new URLSearchParams({ year, month });
+                if (status) params.append('status', status);
+
+                const data = await apiCall(`/admin/payroll?${params.toString()}`);
+                payrollRecords = data.records || [];
+
+                // Update summary cards
+                let totalBasic = 0, totalCommission = 0, totalGross = 0;
+                payrollRecords.forEach(r => {
+                    totalBasic += r.basic_pay || 0;
+                    totalCommission += r.commission_amount || 0;
+                    totalGross += r.gross_pay || 0;
+                });
+
+                document.getElementById('payrollTotalBasic').textContent = formatCurrencyZAR(totalBasic);
+                document.getElementById('payrollTotalCommission').textContent = formatCurrencyZAR(totalCommission);
+                document.getElementById('payrollTotalGross').textContent = formatCurrencyZAR(totalGross);
+                document.getElementById('payrollStylistCount').textContent = payrollRecords.length;
+
+                if (countEl) {
+                    countEl.textContent = `${payrollRecords.length} record${payrollRecords.length !== 1 ? 's' : ''}`;
+                }
+
+                if (!tbody) return;
+
+                if (payrollRecords.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--gray-medium);">No payroll records for this period. Click "Generate Payroll" to calculate.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = payrollRecords.map(r => {
+                    const statusClass = r.status === 'paid' ? 'status-confirmed' :
+                                       r.status === 'finalized' ? 'status-pending' : 'status-draft';
+                    const statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+
+                    const actions = [];
+                    if (r.status !== 'paid') {
+                        actions.push(`<button class="btn btn-sm btn-outline" onclick="recalculatePayroll('${r.id}')" title="Recalculate">🔄</button>`);
+                    }
+                    if (r.status === 'draft') {
+                        actions.push(`<button class="btn btn-sm" onclick="finalizePayroll('${r.id}')">Finalize</button>`);
+                    }
+                    if (r.status === 'finalized') {
+                        actions.push(`<button class="btn btn-sm btn-primary" onclick="markPayrollPaid('${r.id}')">Mark Paid</button>`);
+                    }
+                    if (r.status !== 'paid') {
+                        actions.push(`<button class="btn btn-sm btn-outline" onclick="deletePayroll('${r.id}')" style="color: var(--danger);" title="Delete">🗑️</button>`);
+                    }
+
+                    return `
+                        <tr>
+                            <td><strong>${r.stylistName || 'Unknown'}</strong></td>
+                            <td>${formatCurrencyZAR(r.basic_pay)}</td>
+                            <td>${((r.commission_rate || 0) * 100).toFixed(0)}%</td>
+                            <td>${r.total_bookings || 0}</td>
+                            <td>${formatCurrencyZAR(r.total_service_revenue_ex_vat)}</td>
+                            <td>${formatCurrencyZAR(r.commission_amount)}</td>
+                            <td><strong>${formatCurrencyZAR(r.gross_pay)}</strong></td>
+                            <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                            <td class="action-btns" style="gap: 4px;">${actions.join(' ')}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error loading payroll:', error);
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: var(--danger);">Error loading payroll data</td></tr>';
+                }
+            }
+        }
+
+        async function loadStylistPaySettings() {
+            const tbody = document.getElementById('stylistPaySettingsBody');
+            if (!tbody) return;
+
+            try {
+                const data = await apiCall('/stylists');
+                stylistsPayData = data.stylists || [];
+
+                if (stylistsPayData.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--gray-medium);">No stylists found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = stylistsPayData.map(s => `
+                    <tr>
+                        <td><strong>${s.name}</strong></td>
+                        <td>${formatCurrencyZAR(s.basic_monthly_pay || 0)}</td>
+                        <td>${((s.commission_rate || 0) * 100).toFixed(0)}%</td>
+                        <td class="action-btns">
+                            <button class="btn btn-sm btn-outline" onclick="openStylistPayModal('${s.id}')">Edit</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading stylist pay settings:', error);
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--danger);">Error loading data</td></tr>';
+            }
+        }
+
+        function openStylistPayModal(stylistId) {
+            const stylist = stylistsPayData.find(s => s.id === stylistId);
+            if (!stylist) return;
+
+            document.getElementById('stylistPayId').value = stylistId;
+            document.getElementById('stylistPayName').value = stylist.name;
+            document.getElementById('stylistBasicPay').value = stylist.basic_monthly_pay || 0;
+            document.getElementById('stylistCommissionRate').value = ((stylist.commission_rate || 0) * 100).toFixed(0);
+
+            document.getElementById('stylistPayModal').classList.add('show');
+        }
+
+        async function saveStylistPay() {
+            const stylistId = document.getElementById('stylistPayId').value;
+            const basicMonthlyPay = parseFloat(document.getElementById('stylistBasicPay').value) || 0;
+            const commissionRate = (parseFloat(document.getElementById('stylistCommissionRate').value) || 0) / 100;
+
+            try {
+                await apiCall(`/admin/stylists/${stylistId}/pay`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ basicMonthlyPay, commissionRate })
+                });
+
+                closeModal('stylistPayModal');
+                await loadStylistPaySettings();
+                showToast('Pay settings updated successfully', 'success');
+            } catch (error) {
+                console.error('Error saving stylist pay:', error);
+                showToast('Failed to save pay settings', 'error');
+            }
+        }
+
+        async function generatePayroll() {
+            const year = parseInt(document.getElementById('payrollYear')?.value);
+            const month = parseInt(document.getElementById('payrollMonth')?.value);
+
+            if (!year || !month) {
+                showToast('Please select year and month', 'error');
+                return;
+            }
+
+            const monthName = document.getElementById('payrollMonth')?.options[month - 1]?.text || month;
+            const proceed = await openConfirmDialog({
+                title: 'Generate Payroll?',
+                message: `This will calculate payroll for all stylists for ${monthName} ${year}. Existing draft records will be updated.`,
+                confirmText: 'Generate',
+                tone: 'neutral'
+            });
+
+            if (!proceed) return;
+
+            try {
+                const data = await apiCall('/admin/payroll/generate', {
+                    method: 'POST',
+                    body: JSON.stringify({ year, month })
+                });
+
+                const successCount = data.results?.filter(r => r.success).length || 0;
+                showToast(`Generated payroll for ${successCount} stylists`, 'success');
+                await loadPayroll();
+            } catch (error) {
+                console.error('Error generating payroll:', error);
+                showToast('Failed to generate payroll', 'error');
+            }
+        }
+
+        async function recalculatePayroll(recordId) {
+            try {
+                await apiCall(`/admin/payroll/${recordId}/recalculate`, { method: 'POST' });
+                showToast('Payroll recalculated', 'success');
+                await loadPayroll();
+            } catch (error) {
+                console.error('Error recalculating payroll:', error);
+                showToast(error.message || 'Failed to recalculate', 'error');
+            }
+        }
+
+        async function finalizePayroll(recordId) {
+            const proceed = await openConfirmDialog({
+                title: 'Finalize Payroll?',
+                message: 'This will mark the payroll as finalized. You can still recalculate it until marked as paid.',
+                confirmText: 'Finalize',
+                tone: 'neutral'
+            });
+
+            if (!proceed) return;
+
+            try {
+                await apiCall(`/admin/payroll/${recordId}/finalize`, { method: 'POST' });
+                showToast('Payroll finalized', 'success');
+                await loadPayroll();
+            } catch (error) {
+                console.error('Error finalizing payroll:', error);
+                showToast(error.message || 'Failed to finalize', 'error');
+            }
+        }
+
+        async function markPayrollPaid(recordId) {
+            const proceed = await openConfirmDialog({
+                title: 'Mark as Paid?',
+                message: 'This will lock the payroll record. It cannot be modified after this.',
+                confirmText: 'Mark Paid',
+                tone: 'neutral'
+            });
+
+            if (!proceed) return;
+
+            try {
+                await apiCall(`/admin/payroll/${recordId}/pay`, { method: 'POST' });
+                showToast('Payroll marked as paid', 'success');
+                await loadPayroll();
+            } catch (error) {
+                console.error('Error marking payroll as paid:', error);
+                showToast(error.message || 'Failed to mark as paid', 'error');
+            }
+        }
+
+        async function deletePayroll(recordId) {
+            const proceed = await openConfirmDialog({
+                title: 'Delete Payroll Record?',
+                message: 'This action cannot be undone.',
+                confirmText: 'Delete',
+                tone: 'danger'
+            });
+
+            if (!proceed) return;
+
+            try {
+                await apiCall(`/admin/payroll/${recordId}`, { method: 'DELETE' });
+                showToast('Payroll record deleted', 'success');
+                await loadPayroll();
+            } catch (error) {
+                console.error('Error deleting payroll:', error);
+                showToast(error.message || 'Failed to delete', 'error');
+            }
+        }
+
+        function exportPayrollCSV() {
+            const year = document.getElementById('payrollYear')?.value;
+            const month = document.getElementById('payrollMonth')?.value;
+
+            let url = `${API_BASE}/admin/payroll/export/csv`;
+            const params = new URLSearchParams();
+            if (year) params.append('year', year);
+            if (month) params.append('month', month);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            // Add auth token
+            const token = localStorage.getItem('flirtAdminToken');
+            if (token) {
+                url += (url.includes('?') ? '&' : '?') + `token=${token}`;
+            }
+
+            window.open(url, '_blank');
+        }
+
+        // ========== ORDERS MANAGEMENT ==========
         async function loadOrders() {
             initOrderFilters();
             const container = document.getElementById('ordersTableBody');
@@ -6334,16 +7474,16 @@
 
                     const actions = [];
                     if (statusKey !== 'processing' && statusKey !== 'cancelled' && statusKey !== 'delivered') {
-                        actions.push(`<button class="btn btn-sm" onclick="updateOrderStatus('${o.id}', 'processing')">Process>Edit</button>`);
+                        actions.push(`<button class="btn btn-sm" onclick="updateOrderStatus('${o.id}', 'processing')">Process</button>`);
                     }
                     if (statusKey !== 'shipped' && statusKey !== 'cancelled' && statusKey !== 'delivered') {
-                        actions.push(`<button class="btn btn-sm" onclick="updateOrderStatus('${o.id}', 'shipped')">Ship>Edit</button>`);
+                        actions.push(`<button class="btn btn-sm" onclick="updateOrderStatus('${o.id}', 'shipped')">Ship</button>`);
                     }
                     if (statusKey !== 'delivered') {
-                        actions.push(`<button class="btn btn-sm btn-outline" onclick="updateOrderStatus('${o.id}', 'delivered')">Mark Delivered>Edit</button>`);
+                        actions.push(`<button class="btn btn-sm btn-outline" onclick="updateOrderStatus('${o.id}', 'delivered')">Mark Delivered</button>`);
                     }
                     if (statusKey !== 'cancelled' && statusKey !== 'delivered') {
-                        actions.push(`<button class="btn btn-sm btn-outline" style="color: var(--danger);" onclick="updateOrderStatus('${o.id}', 'cancelled')">Cancel>Edit</button>`);
+                        actions.push(`<button class="btn btn-sm btn-outline" style="color: var(--danger);" onclick="updateOrderStatus('${o.id}', 'cancelled')">Cancel</button>`);
                     }
 
                     return `
@@ -6443,11 +7583,11 @@
                                 </td>
                                 <td><span class="status-badge status-${p.active ? 'confirmed' : 'cancelled'}">${p.active ? 'Active' : 'Inactive'}</span></td>
                                 <td class="action-btns" style="display: flex; gap: 4px;">
-                                    <button class="btn btn-sm" onclick="togglePromo('${p.id}', ${!p.active})">${p.active ? 'Disable' : 'Enable'}>Edit</button>
+                                    <button class="btn btn-sm" onclick="togglePromo('${p.id}', ${!p.active})">${p.active ? 'Disable' : 'Enable'}</button>
                                     <button class="btn btn-sm btn-outline" onclick="toggleHighlighted('${p.id}', ${!p.highlighted})" title="${p.highlighted ? 'Remove from' : 'Add to'} Special Offers">
                                         ${p.highlighted ? '⭐' : '☆'}
-                                    >Edit</button>
-                                    <button class="btn btn-sm btn-outline" onclick="editPromo('${p.id}')" title="Edit">✏️>Edit</button>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline" onclick="editPromo('${p.id}')" title="Edit">✏️</button>
                                 </td>
                             </tr>
                         `).join('');
@@ -6956,7 +8096,7 @@
                     <input type="text" class="form-input ext-id" value="${et.id || ''}" placeholder="ID (e.g. tapes)" style="flex: 1;">
                     <input type="text" class="form-input ext-label" value="${et.label || ''}" placeholder="Label (e.g. Tape Extensions)" style="flex: 2;">
                     <input type="number" class="form-input ext-days" value="${et.maintenanceDays || 0}" placeholder="Days" min="0" style="width: 100px;">
-                    <button class="btn btn-outline" onclick="removeExtensionType(${index})" style="padding: 8px 12px;">×>Edit</button>
+                    <button class="btn btn-outline" onclick="removeExtensionType(${index})" style="padding: 8px 12px;">×</button>
                 </div>
             `).join('');
 
@@ -6964,7 +8104,7 @@
             container.innerHTML += `
                 <button class="btn btn-outline" onclick="addExtensionType()" style="margin-top: 10px;">
                     + Add Extension Type
-                >Edit</button>
+                </button>
             `;
         }
 
@@ -6997,7 +8137,7 @@
             container.innerHTML = tips.map((tip, index) => `
                 <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;" data-tip-index="${index}">
                     <input type="text" class="form-input tip-text" value="${tip}" placeholder="Enter care tip..." style="flex: 1;">
-                    <button class="btn btn-outline" onclick="removeTrackerTip(${index})" style="padding: 8px 12px;">×>Edit</button>
+                    <button class="btn btn-outline" onclick="removeTrackerTip(${index})" style="padding: 8px 12px;">×</button>
                 </div>
             `).join('');
         }
@@ -7161,7 +8301,7 @@
             toast.className = `admin-toast ${tone === 'error' ? 'error' : tone === 'success' ? 'success' : ''}`;
             toast.innerHTML = `
                 <span>${message}</span>
-                <button class="toast-close" aria-label="Close" onclick="this.closest('.admin-toast').remove()">×>Edit</button>
+                <button class="toast-close" aria-label="Close" onclick="this.closest('.admin-toast').remove()">×</button>
             `;
             container.appendChild(toast);
             setTimeout(() => {
@@ -7346,7 +8486,7 @@
                         <strong>${service.name}</strong><br>
                         <small style="color: var(--text-subtle);">${service.category} - R${service.price} - ${service.duration}min</small>
                     </div>
-                    <button class="btn btn-sm btn-primary" onclick="addServiceToStaff('${service.id}')">Add>Edit</button>
+                    <button class="btn btn-sm btn-primary" onclick="addServiceToStaff('${service.id}')">Add</button>
                 </div>
             `).join('');
         }
@@ -7368,7 +8508,7 @@
                             <small style="color: var(--text-subtle);">${ss.category}</small>
                         </div>
                         <button class="btn btn-sm btn-outline" onclick="removeServiceFromStaff('${ss.service_id}')"
-                                style="color: var(--danger);">Remove>Edit</button>
+                                style="color: var(--danger);">Remove</button>
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -7549,11 +8689,11 @@
                         </span>
                     </td>
                     <td>
-                        <button class="btn btn-sm" onclick="editService('${service.id}')">Edit>Edit</button>
+                        <button class="btn btn-sm" onclick="editService('${service.id}')">Edit</button>
                         <button class="btn btn-sm btn-outline" onclick="toggleServiceActive('${service.id}')" style="margin-left: 6px;">
                             ${service.active ? 'Deactivate' : 'Activate'}
-                        >Edit</button>
-                        <button class="btn btn-sm btn-outline" onclick="deleteService('${service.id}')" style="margin-left: 6px; color: var(--danger);">Delete>Edit</button>
+                        </button>
+                        <button class="btn btn-sm btn-outline" onclick="deleteService('${service.id}')" style="margin-left: 6px; color: var(--danger);">Delete</button>
                     </td>
                 </tr>
             `).join('');
@@ -7564,13 +8704,45 @@
             document.getElementById('serviceModalTitle').textContent = 'Add New Service';
             document.getElementById('serviceForm').reset();
             document.getElementById('serviceId').value = '';
+            document.getElementById('serviceDisplayOrder').value = '0';
+            document.getElementById('serviceCommissionRate').value = '';
             document.getElementById('serviceActive').checked = true;
+            document.getElementById('serviceImagePreview').style.display = 'none';
             document.getElementById('serviceModal').style.display = 'flex';
         }
 
         function closeServiceModal() {
             document.getElementById('serviceModal').style.display = 'none';
+            document.getElementById('serviceImagePreview').style.display = 'none';
             editingServiceId = null;
+        }
+
+        // Update image preview when URL changes
+        function updateServiceImagePreview() {
+            const url = document.getElementById('serviceImageUrl').value.trim();
+            const preview = document.getElementById('serviceImagePreview');
+            const img = document.getElementById('serviceImagePreviewImg');
+            const error = document.getElementById('serviceImagePreviewError');
+
+            if (!url) {
+                preview.style.display = 'none';
+                return;
+            }
+
+            // Show preview container
+            preview.style.display = 'block';
+            error.style.display = 'none';
+
+            // Test if image loads
+            img.onload = () => {
+                img.style.display = 'block';
+                error.style.display = 'none';
+            };
+            img.onerror = () => {
+                img.style.display = 'none';
+                error.style.display = 'block';
+            };
+            img.src = url;
         }
 
         async function editService(id) {
@@ -7587,13 +8759,23 @@
             document.getElementById('servicePrice').value = service.price;
             document.getElementById('serviceDuration').value = service.duration || '';
             document.getElementById('serviceImageUrl').value = service.image_url || '';
+            document.getElementById('serviceDisplayOrder').value = service.display_order || 0;
+            document.getElementById('serviceCommissionRate').value = service.commission_rate !== null && service.commission_rate !== undefined
+                ? (service.commission_rate * 100).toFixed(0)
+                : '';
             document.getElementById('serviceActive').checked = service.active === 1;
+
+            // Update image preview
+            updateServiceImagePreview();
 
             document.getElementById('serviceModal').style.display = 'flex';
         }
 
         async function saveService(event) {
             event.preventDefault();
+
+            const commissionRateInput = document.getElementById('serviceCommissionRate').value.trim();
+            const commissionRate = commissionRateInput !== '' ? parseFloat(commissionRateInput) / 100 : null;
 
             const serviceData = {
                 name: document.getElementById('serviceName').value.trim(),
@@ -7603,6 +8785,8 @@
                 price: parseFloat(document.getElementById('servicePrice').value),
                 duration: parseInt(document.getElementById('serviceDuration').value) || null,
                 image_url: document.getElementById('serviceImageUrl').value.trim() || null,
+                display_order: parseInt(document.getElementById('serviceDisplayOrder').value) || 0,
+                commission_rate: commissionRate,
                 active: document.getElementById('serviceActive').checked ? 1 : 0
             };
 
@@ -7729,7 +8913,7 @@
         }
 
         // Reset staff modal for adding new
-function openAddStaffModal() {
+        function openAddStaffModal() {
             editingStaffId = null;
             document.getElementById('staffName').value = '';
             document.getElementById('staffRole').value = 'Senior Stylist';
@@ -7809,13 +8993,6 @@ function openAddStaffModal() {
             }
         }
 
-        function selectChat(id) {
-            document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('unread'));
-        }
-
-        // ============================================
-        // INITIALIZATION
-        // ============================================
         // ============================================
         // PUSH NOTIFICATIONS
         // ============================================
@@ -7920,13 +9097,13 @@ function openAddStaffModal() {
                             ${n.active ?
                                 `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>` :
                                 `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`}
-                        >Edit</button>
+                        </button>
                         <button onclick="deleteNotification('${n.id}')" class="btn btn-icon btn-outline" title="Delete" style="color: var(--danger);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                             </svg>
-                        >Edit</button>
+                        </button>
                     </div>
                 </div>
             `).join('');
@@ -8409,13 +9586,13 @@ function openAddStaffModal() {
                         <div style="display: flex; gap: 8px; flex-shrink: 0;">
                             <button class="btn btn-sm btn-outline" onclick="toggleHairTip('${tip.id}')" title="${tip.active ? 'Deactivate' : 'Activate'}">
                                 ${tip.active ? '👁️' : '👁️‍🗨️'}
-                            >Edit</button>
+                            </button>
                             <button class="btn btn-sm btn-outline" onclick="editHairTip('${tip.id}')" title="Edit">
                                 ✏️
-                            >Edit</button>
+                            </button>
                             <button class="btn btn-sm btn-outline" onclick="deleteHairTip('${tip.id}')" title="Delete" style="color: var(--danger);">
                                 🗑️
-                            >Edit</button>
+                            </button>
                         </div>
                     </div>
                 `).join('')}
@@ -8616,7 +9793,7 @@ function openAddStaffModal() {
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                             </svg>
-                        >Edit</button>
+                        </button>
                         <button class="gallery-action-btn toggle" onclick="toggleGalleryItem('${item.id}')" title="${item.active ? 'Hide' : 'Show'}">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 ${item.active ?
@@ -8624,13 +9801,13 @@ function openAddStaffModal() {
                                     '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>'
                                 }
                             </svg>
-                        >Edit</button>
+                        </button>
                         <button class="gallery-action-btn delete" onclick="deleteGalleryItem('${item.id}')" title="Delete">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="3 6 5 6 21 6"></polyline>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                             </svg>
-                        >Edit</button>
+                        </button>
                     </div>
                 </div>
             `).join('');

@@ -20,7 +20,7 @@ const https = require('https');
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
-let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository;
+let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository, PayrollRepository;
 
 try {
     const dbModule = require('./db/database');
@@ -41,6 +41,7 @@ try {
     NotificationRepository = dbModule.NotificationRepository;
     ChatRepository = dbModule.ChatRepository;
     HairTipRepository = dbModule.HairTipRepository;
+    PayrollRepository = dbModule.PayrollRepository;
 
     // Ensure database directory exists
     const dbDir = path.dirname(DATABASE_PATH);
@@ -65,6 +66,9 @@ try {
 
 // Payment services import
 const PaymentService = require('./services/payments');
+
+// Email service import
+const emailService = require('./services/email');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -1013,6 +1017,9 @@ function mapBookingResponse(row) {
         confirmedTime: row.confirmed_time ?? row.confirmedTime ?? null,
         status: row.status,
         notes: row.notes ?? null,
+        // Commission fields
+        commissionRate: row.commission_rate ?? null,
+        commissionAmount: row.commission_amount ?? null,
         createdAt: row.created_at ?? row.createdAt ?? null,
         updatedAt: row.updated_at ?? row.updatedAt ?? null,
         customerName: row.customer_name ?? row.customerName ?? null,
@@ -1517,6 +1524,18 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
             });
         }
 
+        // Send order confirmation email
+        try {
+            const user = await UserRepository.findById(req.user.id);
+            if (user && user.email) {
+                await emailService.sendOrderConfirmation(newOrder, user);
+                console.log(`✅ Order confirmation email sent to ${user.email}`);
+            }
+        } catch (emailError) {
+            console.error('Failed to send order confirmation email:', emailError.message);
+            // Don't fail the request if email fails
+        }
+
         res.status(201).json({
             success: true,
             message: 'Order placed successfully!',
@@ -1536,6 +1555,24 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Database error fetching user orders:', error.message);
         res.status(500).json({ success: false, message: 'Failed to fetch orders' });
+    }
+});
+
+// Get single order detail (user)
+app.get('/api/orders/:id', authenticateToken, async (req, res) => {
+    try {
+        const order = await OrderRepository.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+        // Ensure user can only view their own orders
+        if (order.user_id !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+        res.json({ success: true, order });
+    } catch (error) {
+        console.error('Database error fetching order:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch order' });
     }
 });
 
@@ -1927,46 +1964,95 @@ app.get('/api/referrals', authenticateToken, async (req, res) => {
 // ============================================
 
 // Get hair tracker config (public - no auth required)
+// Helper function to get hair tracker settings from database
+async function getHairTrackerSettings() {
+    const defaultConfig = {
+        defaultMaintenanceIntervalDays: 42,
+        washFrequencyDays: 3,
+        deepConditionFrequencyDays: 14,
+        extensionTypes: [
+            { id: 'clip-in', label: 'Clip-In Extensions', maintenanceDays: 1 },
+            { id: 'tape-in', label: 'Tape-In Extensions', maintenanceDays: 42 },
+            { id: 'sew-in', label: 'Sew-In Weave', maintenanceDays: 56 },
+            { id: 'micro-link', label: 'Micro-Link Extensions', maintenanceDays: 84 },
+            { id: 'fusion', label: 'Fusion Extensions', maintenanceDays: 84 },
+            { id: 'halo', label: 'Halo Extensions', maintenanceDays: 1 },
+            { id: 'ponytail', label: 'Ponytail Extensions', maintenanceDays: 14 },
+            { id: 'other', label: 'Other', maintenanceDays: 42 }
+        ],
+        healthScore: {
+            base: 100,
+            penalties: {
+                overMaintenanceByDay: 0.5,
+                noDeepConditionOverDays: 0.3,
+                tooManyWashesPerWeek: 1.0
+            }
+        },
+        copy: {
+            trackerTitle: 'Hair Care Journey',
+            trackerSubtitle: 'Keep your extensions healthy and on track',
+            nextWashLabel: 'Next Wash Day',
+            maintenanceLabel: 'Maintenance Due',
+            deepConditionLabel: 'Deep Condition',
+            noInstallMessage: 'Set up your hair tracker to get personalized care recommendations!',
+            setupButtonText: 'Set Up Tracker'
+        },
+        tips: [
+            'Use a silk pillowcase to reduce friction and tangling while you sleep.',
+            'Avoid applying heat directly to the bonds or tape areas.',
+            'Brush your extensions gently from the ends up, never from the roots.',
+            'Use sulfate-free shampoos to protect the bonds.',
+            'Deep condition every 2 weeks to keep extensions soft and manageable.'
+        ]
+    };
+
+    try {
+        // Try to get settings from database
+        const row = await dbGet('SELECT value FROM hair_tracker_settings WHERE key = ?', ['config']);
+        if (row && row.value) {
+            const savedConfig = JSON.parse(row.value);
+            // Merge with defaults to ensure all fields exist
+            return {
+                ...defaultConfig,
+                ...savedConfig,
+                healthScore: { ...defaultConfig.healthScore, ...savedConfig.healthScore },
+                copy: { ...defaultConfig.copy, ...savedConfig.copy }
+            };
+        }
+    } catch (error) {
+        console.log('No saved hair tracker settings, using defaults');
+    }
+
+    return defaultConfig;
+}
+
+// Helper function to save hair tracker settings to database
+async function saveHairTrackerSettings(config) {
+    await dbRun(
+        `INSERT OR REPLACE INTO hair_tracker_settings (key, value) VALUES (?, ?)`,
+        ['config', JSON.stringify(config)]
+    );
+}
+
 app.get('/api/hair-tracker/config', async (req, res) => {
     try {
-        // Hair tracker config is now stored in the database or use default values
-        const extensionTypeIntervals = {
-            'clip-in': 1,        // Daily removal
-            'tape-in': 42,       // 6 weeks
-            'sew-in': 56,        // 8 weeks
-            'micro-link': 84,    // 12 weeks
-            'fusion': 84,        // 12 weeks
-            'halo': 1,           // Daily removal
-            'ponytail': 14,      // 2 weeks
-            'other': 42          // Default 6 weeks
-        };
+        const config = await getHairTrackerSettings();
 
-        const extensionTypeLabels = {
-            'clip-in': 'Clip-In Extensions',
-            'tape-in': 'Tape-In Extensions',
-            'sew-in': 'Sew-In Weave',
-            'micro-link': 'Micro-Link Extensions',
-            'fusion': 'Fusion Extensions',
-            'halo': 'Halo Extensions',
-            'ponytail': 'Ponytail Extensions',
-            'other': 'Other'
-        };
+        // Build extensionTypeIntervals map for backward compatibility
+        const extensionTypeIntervals = {};
+        if (config.extensionTypes) {
+            config.extensionTypes.forEach(et => {
+                extensionTypeIntervals[et.id] = et.maintenanceDays;
+            });
+        }
 
-        // Convert to array of objects for frontend
-        const extensionTypes = Object.keys(extensionTypeIntervals).map(id => ({
-            id,
-            label: extensionTypeLabels[id],
-            maintenanceDays: extensionTypeIntervals[id]
-        }));
-
-        const config = {
-            washFrequencyDays: 3,
-            deepConditionFrequencyDays: 14,
-            defaultMaintenanceIntervalDays: 42,
-            extensionTypes,
-            extensionTypeIntervals // Keep for backward compatibility
-        };
-        res.json({ success: true, config });
+        res.json({
+            success: true,
+            config: {
+                ...config,
+                extensionTypeIntervals
+            }
+        });
     } catch (error) {
         console.error('Error loading hair tracker config:', error.message);
         res.status(500).json({ success: false, message: 'Database error - please try again later' });
@@ -2451,6 +2537,8 @@ app.post('/api/admin/services', authenticateAdmin, async (req, res) => {
             service_type: service_type.trim().toLowerCase(),
             category: category ? category.trim() : null,
             image_url: image_url ? image_url.trim() : null,
+            display_order: req.body.display_order || 0,
+            commission_rate: req.body.commission_rate !== undefined ? req.body.commission_rate : null,
             active: 1,
             created_at: new Date().toISOString()
         };
@@ -2468,7 +2556,7 @@ app.post('/api/admin/services', authenticateAdmin, async (req, res) => {
 app.put('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, price, duration, service_type, category, image_url, active } = req.body;
+        const { name, description, price, duration, service_type, category, image_url, display_order, active } = req.body;
 
         // Check if service exists
         const existing = await ServiceRepository.findById(id);
@@ -2492,6 +2580,8 @@ app.put('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
             service_type: service_type !== undefined ? service_type.trim().toLowerCase() : existing.service_type,
             category: category !== undefined ? (category ? category.trim() : null) : existing.category,
             image_url: image_url !== undefined ? (image_url ? image_url.trim() : null) : existing.image_url,
+            display_order: display_order !== undefined ? display_order : (existing.display_order || 0),
+            commission_rate: req.body.commission_rate !== undefined ? req.body.commission_rate : existing.commission_rate,
             active: active !== undefined ? (active ? 1 : 0) : existing.active
         };
 
@@ -3155,7 +3245,8 @@ app.patch('/api/admin/bookings/:id', authenticateAdmin, async (req, res) => {
         assignedStartTime,
         assignedEndTime,
         notes,
-        confirmedTime
+        confirmedTime,
+        commissionRate
     } = req.body;
 
     console.log(`📝 PATCH /api/admin/bookings/${req.params.id}:`, JSON.stringify(req.body, null, 2));
@@ -3240,6 +3331,11 @@ app.patch('/api/admin/bookings/:id', authenticateAdmin, async (req, res) => {
         // Notes
         if (notes !== undefined) {
             updates.notes = notes;
+        }
+
+        // Commission rate override (null to use service/stylist default, or decimal like 0.30 for 30%)
+        if (commissionRate !== undefined) {
+            updates.commission_rate = commissionRate;
         }
 
         updates.updated_at = new Date().toISOString();
@@ -3423,6 +3519,28 @@ app.get('/api/admin/orders', authenticateAdmin, async (req, res) => {
     }
 });
 
+// Get single order detail (admin)
+app.get('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const order = await OrderRepository.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+        // Add customer info
+        const user = await UserRepository.findById(order.userId || order.user_id);
+        const orderWithCustomer = {
+            ...order,
+            customerName: user ? user.name : 'Unknown',
+            customerPhone: user ? user.phone : null,
+            customerEmail: user ? user.email : null
+        };
+        res.json({ success: true, order: orderWithCustomer });
+    } catch (error) {
+        console.error('Database error fetching order:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch order' });
+    }
+});
+
 // Update order status (admin)
 app.patch('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
     try {
@@ -3433,15 +3551,303 @@ app.patch('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
-        const updatedOrder = await OrderRepository.updateById(req.params.id, {
-            status: status,
-            updatedAt: new Date().toISOString()
-        });
+        const updatedOrder = await OrderRepository.updateStatus(req.params.id, status);
 
         res.json({ success: true, order: updatedOrder });
     } catch (error) {
         console.error('Database error updating order status:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
+    }
+});
+
+// ============================================
+// PAYROLL ROUTES (Admin)
+// ============================================
+
+// Get payroll summary for a period
+app.get('/api/admin/payroll', authenticateAdmin, async (req, res) => {
+    try {
+        const { year, month, status } = req.query;
+        const filters = {};
+        if (year) filters.year = parseInt(year);
+        if (month) filters.month = parseInt(month);
+        if (status) filters.status = status;
+
+        const records = await PayrollRepository.findAll(filters);
+
+        // Enrich with stylist names
+        const enrichedRecords = await Promise.all(records.map(async (r) => {
+            const stylist = await StylistRepository.findById(r.stylist_id);
+            return {
+                ...r,
+                stylistName: stylist ? stylist.name : 'Unknown'
+            };
+        }));
+
+        res.json({ success: true, records: enrichedRecords });
+    } catch (error) {
+        console.error('Error fetching payroll records:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch payroll records' });
+    }
+});
+
+// Get period summary (all stylists for a month)
+app.get('/api/admin/payroll/summary', authenticateAdmin, async (req, res) => {
+    try {
+        const year = parseInt(req.query.year) || new Date().getFullYear();
+        const month = parseInt(req.query.month) || new Date().getMonth() + 1;
+
+        const summary = await PayrollRepository.getPeriodSummary(year, month);
+        res.json({ success: true, summary });
+    } catch (error) {
+        console.error('Error fetching payroll summary:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch payroll summary' });
+    }
+});
+
+// Calculate payroll for a stylist (preview without saving)
+app.get('/api/admin/payroll/calculate/:stylistId', authenticateAdmin, async (req, res) => {
+    try {
+        const year = parseInt(req.query.year) || new Date().getFullYear();
+        const month = parseInt(req.query.month) || new Date().getMonth() + 1;
+
+        const calculation = await PayrollRepository.calculatePayroll(req.params.stylistId, year, month);
+        res.json({ success: true, calculation });
+    } catch (error) {
+        console.error('Error calculating payroll:', error.message);
+        res.status(500).json({ success: false, message: error.message || 'Failed to calculate payroll' });
+    }
+});
+
+// Calculate and save payroll for all stylists for a period
+app.post('/api/admin/payroll/generate', authenticateAdmin, async (req, res) => {
+    try {
+        const { year, month } = req.body;
+        if (!year || !month) {
+            return res.status(400).json({ success: false, message: 'Year and month are required' });
+        }
+
+        const stylists = await StylistRepository.findAll();
+        const results = [];
+
+        for (const stylist of stylists) {
+            try {
+                const calculation = await PayrollRepository.calculatePayroll(stylist.id, year, month);
+                const record = await PayrollRepository.upsert(calculation);
+                results.push({
+                    stylistId: stylist.id,
+                    stylistName: stylist.name,
+                    success: true,
+                    record
+                });
+            } catch (err) {
+                results.push({
+                    stylistId: stylist.id,
+                    stylistName: stylist.name,
+                    success: false,
+                    error: err.message
+                });
+            }
+        }
+
+        res.json({ success: true, results });
+    } catch (error) {
+        console.error('Error generating payroll:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to generate payroll' });
+    }
+});
+
+// Get single payroll record
+app.get('/api/admin/payroll/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const record = await PayrollRepository.findById(req.params.id);
+        if (!record) {
+            return res.status(404).json({ success: false, message: 'Payroll record not found' });
+        }
+
+        const stylist = await StylistRepository.findById(record.stylist_id);
+        res.json({
+            success: true,
+            record: {
+                ...record,
+                stylistName: stylist ? stylist.name : 'Unknown'
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching payroll record:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to fetch payroll record' });
+    }
+});
+
+// Recalculate a payroll record
+app.post('/api/admin/payroll/:id/recalculate', authenticateAdmin, async (req, res) => {
+    try {
+        const record = await PayrollRepository.findById(req.params.id);
+        if (!record) {
+            return res.status(404).json({ success: false, message: 'Payroll record not found' });
+        }
+        if (record.status === 'paid') {
+            return res.status(400).json({ success: false, message: 'Cannot recalculate a paid record' });
+        }
+
+        const calculation = await PayrollRepository.calculatePayroll(
+            record.stylist_id,
+            record.period_year,
+            record.period_month
+        );
+        const updated = await PayrollRepository.upsert(calculation);
+
+        const stylist = await StylistRepository.findById(record.stylist_id);
+        res.json({
+            success: true,
+            record: {
+                ...updated,
+                stylistName: stylist ? stylist.name : 'Unknown'
+            }
+        });
+    } catch (error) {
+        console.error('Error recalculating payroll:', error.message);
+        res.status(500).json({ success: false, message: error.message || 'Failed to recalculate payroll' });
+    }
+});
+
+// Finalize payroll record
+app.post('/api/admin/payroll/:id/finalize', authenticateAdmin, async (req, res) => {
+    try {
+        const record = await PayrollRepository.finalize(req.params.id);
+        const stylist = await StylistRepository.findById(record.stylist_id);
+        res.json({
+            success: true,
+            record: {
+                ...record,
+                stylistName: stylist ? stylist.name : 'Unknown'
+            }
+        });
+    } catch (error) {
+        console.error('Error finalizing payroll:', error.message);
+        res.status(500).json({ success: false, message: error.message || 'Failed to finalize payroll' });
+    }
+});
+
+// Mark payroll as paid
+app.post('/api/admin/payroll/:id/pay', authenticateAdmin, async (req, res) => {
+    try {
+        const { notes } = req.body;
+        const record = await PayrollRepository.markAsPaid(req.params.id, notes);
+        const stylist = await StylistRepository.findById(record.stylist_id);
+        res.json({
+            success: true,
+            record: {
+                ...record,
+                stylistName: stylist ? stylist.name : 'Unknown'
+            }
+        });
+    } catch (error) {
+        console.error('Error marking payroll as paid:', error.message);
+        res.status(500).json({ success: false, message: error.message || 'Failed to mark payroll as paid' });
+    }
+});
+
+// Delete payroll record
+app.delete('/api/admin/payroll/:id', authenticateAdmin, async (req, res) => {
+    try {
+        await PayrollRepository.delete(req.params.id);
+        res.json({ success: true, message: 'Payroll record deleted' });
+    } catch (error) {
+        console.error('Error deleting payroll:', error.message);
+        res.status(500).json({ success: false, message: error.message || 'Failed to delete payroll' });
+    }
+});
+
+// Export payroll to CSV
+app.get('/api/admin/payroll/export/csv', authenticateAdmin, async (req, res) => {
+    try {
+        const { year, month } = req.query;
+        const filters = {};
+        if (year) filters.year = parseInt(year);
+        if (month) filters.month = parseInt(month);
+
+        const records = await PayrollRepository.findAll(filters);
+
+        // Build CSV
+        const headers = [
+            'Stylist',
+            'Period',
+            'Basic Pay',
+            'Commission Rate',
+            'Bookings',
+            'Service Revenue (incl VAT)',
+            'Service Revenue (excl VAT)',
+            'Commission',
+            'Gross Pay',
+            'Status',
+            'Finalized At',
+            'Paid At'
+        ];
+
+        const rows = await Promise.all(records.map(async (r) => {
+            const stylist = await StylistRepository.findById(r.stylist_id);
+            return [
+                stylist ? stylist.name : 'Unknown',
+                `${r.period_year}-${String(r.period_month).padStart(2, '0')}`,
+                r.basic_pay.toFixed(2),
+                (r.commission_rate * 100).toFixed(1) + '%',
+                r.total_bookings,
+                r.total_service_revenue.toFixed(2),
+                r.total_service_revenue_ex_vat.toFixed(2),
+                r.commission_amount.toFixed(2),
+                r.gross_pay.toFixed(2),
+                r.status,
+                r.finalized_at || '',
+                r.paid_at || ''
+            ];
+        }));
+
+        const csv = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        const filename = year && month
+            ? `payroll_${year}_${String(month).padStart(2, '0')}.csv`
+            : `payroll_all.csv`;
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.send(csv);
+    } catch (error) {
+        console.error('Error exporting payroll:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to export payroll' });
+    }
+});
+
+// Update stylist pay settings
+app.patch('/api/admin/stylists/:id/pay', authenticateAdmin, async (req, res) => {
+    try {
+        const { basicMonthlyPay, commissionRate } = req.body;
+        const stylist = await StylistRepository.findById(req.params.id);
+
+        if (!stylist) {
+            return res.status(404).json({ success: false, message: 'Stylist not found' });
+        }
+
+        // Update stylist with new pay settings
+        const updates = {};
+        if (basicMonthlyPay !== undefined) updates.basic_monthly_pay = basicMonthlyPay;
+        if (commissionRate !== undefined) updates.commission_rate = commissionRate;
+
+        await db.dbRun(`
+            UPDATE stylists SET
+                basic_monthly_pay = COALESCE(?, basic_monthly_pay),
+                commission_rate = COALESCE(?, commission_rate)
+            WHERE id = ?
+        `, [updates.basic_monthly_pay, updates.commission_rate, req.params.id]);
+
+        const updated = await StylistRepository.findById(req.params.id);
+        res.json({ success: true, stylist: updated });
+    } catch (error) {
+        console.error('Error updating stylist pay:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to update stylist pay settings' });
     }
 });
 
@@ -3946,57 +4352,7 @@ app.post('/api/admin/loyalty/reset', authenticateAdmin, (req, res) => {
 // Get hair tracker settings for admin
 app.get('/api/admin/hair-tracker', authenticateAdmin, async (req, res) => {
     try {
-        // Return the hardcoded configuration used throughout the app
-        const config = {
-            defaultMaintenanceIntervalDays: 42,
-            washFrequencyDays: 3,
-            deepConditionFrequencyDays: 14,
-            extensionTypeIntervals: {
-                'clip-in': 1,
-                'tape-in': 42,
-                'sew-in': 56,
-                'micro-link': 84,
-                'fusion': 84,
-                'halo': 1,
-                'ponytail': 14,
-                'other': 42
-            },
-            extensionTypes: [
-                { id: 'clip-in', label: 'Clip-In Extensions', maintenanceDays: 1 },
-                { id: 'tape-in', label: 'Tape Extensions', maintenanceDays: 42 },
-                { id: 'sew-in', label: 'Sew-In Extensions', maintenanceDays: 56 },
-                { id: 'micro-link', label: 'Micro-Link Extensions', maintenanceDays: 84 },
-                { id: 'fusion', label: 'Fusion Extensions', maintenanceDays: 84 },
-                { id: 'halo', label: 'Halo Extensions', maintenanceDays: 1 },
-                { id: 'ponytail', label: 'Ponytail Extensions', maintenanceDays: 14 },
-                { id: 'other', label: 'Other Extensions', maintenanceDays: 42 }
-            ],
-            healthScore: {
-                base: 100,
-                penalties: {
-                    overMaintenanceByDay: 0.5,
-                    noDeepConditionOverDays: 0.3,
-                    tooManyWashesPerWeek: 1.0
-                }
-            },
-            copy: {
-                trackerTitle: 'Hair Care Journey',
-                trackerSubtitle: 'Keep your extensions healthy and on track',
-                nextWashLabel: 'Next Wash Day',
-                maintenanceLabel: 'Maintenance Due',
-                deepConditionLabel: 'Deep Condition',
-                noInstallMessage: 'Set up your hair tracker to get personalized care recommendations!',
-                setupButtonText: 'Set Up Tracker'
-            },
-            tips: [
-                'Your extensions are at optimal health! Keep up the great care routine.',
-                'Consider booking maintenance in the next 2 weeks for best results.',
-                'You\'re due for a deep conditioning treatment this week.',
-                'Use a silk pillowcase to reduce friction and tangling while you sleep.',
-                'Avoid applying heat directly to the bonds or tape areas.'
-            ]
-        };
-
+        const config = await getHairTrackerSettings();
         res.json({ success: true, ...config });
     } catch (error) {
         console.error('Database error loading hair tracker config:', error.message);
@@ -4011,7 +4367,6 @@ app.put('/api/admin/hair-tracker', authenticateAdmin, async (req, res) => {
             defaultMaintenanceIntervalDays,
             washFrequencyDays,
             deepConditionFrequencyDays,
-            extensionTypeIntervals,
             extensionTypes,
             healthScore,
             copy,
@@ -4034,32 +4389,13 @@ app.put('/api/admin/hair-tracker', authenticateAdmin, async (req, res) => {
             return res.status(400).json({ success: false, errors });
         }
 
-        // Since configuration is now hardcoded in the app code, we return the current config
-        const updatedConfig = {
-            defaultMaintenanceIntervalDays: 42,
-            washFrequencyDays: 3,
-            deepConditionFrequencyDays: 14,
-            extensionTypeIntervals: {
-                'clip-in': 1,
-                'tape-in': 42,
-                'sew-in': 56,
-                'micro-link': 84,
-                'fusion': 84,
-                'halo': 1,
-                'ponytail': 14,
-                'other': 42
-            },
-            extensionTypes: [
-                { id: 'clip-in', label: 'Clip-In Extensions', maintenanceDays: 1 },
-                { id: 'tape-in', label: 'Tape Extensions', maintenanceDays: 42 },
-                { id: 'sew-in', label: 'Sew-In Extensions', maintenanceDays: 56 },
-                { id: 'micro-link', label: 'Micro-Link Extensions', maintenanceDays: 84 },
-                { id: 'fusion', label: 'Fusion Extensions', maintenanceDays: 84 },
-                { id: 'halo', label: 'Halo Extensions', maintenanceDays: 1 },
-                { id: 'ponytail', label: 'Ponytail Extensions', maintenanceDays: 14 },
-                { id: 'other', label: 'Other Extensions', maintenanceDays: 42 }
-            ],
-            healthScore: {
+        // Build the config object to save
+        const configToSave = {
+            defaultMaintenanceIntervalDays: defaultMaintenanceIntervalDays || 42,
+            washFrequencyDays: washFrequencyDays || 3,
+            deepConditionFrequencyDays: deepConditionFrequencyDays || 14,
+            extensionTypes: extensionTypes || [],
+            healthScore: healthScore || {
                 base: 100,
                 penalties: {
                     overMaintenanceByDay: 0.5,
@@ -4067,28 +4403,17 @@ app.put('/api/admin/hair-tracker', authenticateAdmin, async (req, res) => {
                     tooManyWashesPerWeek: 1.0
                 }
             },
-            copy: {
-                trackerTitle: 'Hair Care Journey',
-                trackerSubtitle: 'Keep your extensions healthy and on track',
-                nextWashLabel: 'Next Wash Day',
-                maintenanceLabel: 'Maintenance Due',
-                deepConditionLabel: 'Deep Condition',
-                noInstallMessage: 'Set up your hair tracker to get personalized care recommendations!',
-                setupButtonText: 'Set Up Tracker'
-            },
-            tips: [
-                'Your extensions are at optimal health! Keep up the great care routine.',
-                'Consider booking maintenance in the next 2 weeks for best results.',
-                'You\'re due for a deep conditioning treatment this week.',
-                'Use a silk pillowcase to reduce friction and tangling while you sleep.',
-                'Avoid applying heat directly to the bonds or tape areas.'
-            ]
+            copy: copy || {},
+            tips: tips || []
         };
+
+        // Save to database
+        await saveHairTrackerSettings(configToSave);
 
         res.json({
             success: true,
-            message: 'Hair tracker settings updated successfully (configuration is now application-managed)',
-            ...updatedConfig
+            message: 'Hair tracker settings updated successfully',
+            ...configToSave
         });
     } catch (error) {
         console.error('Database error updating hair tracker settings:', error.message);
@@ -4099,59 +4424,15 @@ app.put('/api/admin/hair-tracker', authenticateAdmin, async (req, res) => {
 // Reset hair tracker settings to defaults
 app.post('/api/admin/hair-tracker/reset', authenticateAdmin, async (req, res) => {
     try {
-        const defaultConfig = {
-            defaultMaintenanceIntervalDays: 42,
-            washFrequencyDays: 3,
-            deepConditionFrequencyDays: 14,
-            extensionTypeIntervals: {
-                'clip-in': 1,
-                'tape-in': 42,
-                'sew-in': 56,
-                'micro-link': 84,
-                'fusion': 84,
-                'halo': 1,
-                'ponytail': 14,
-                'other': 42
-            },
-            extensionTypes: [
-                { id: 'clip-in', label: 'Clip-In Extensions', maintenanceDays: 1 },
-                { id: 'tape-in', label: 'Tape Extensions', maintenanceDays: 42 },
-                { id: 'sew-in', label: 'Sew-In Extensions', maintenanceDays: 56 },
-                { id: 'micro-link', label: 'Micro-Link Extensions', maintenanceDays: 84 },
-                { id: 'fusion', label: 'Fusion Extensions', maintenanceDays: 84 },
-                { id: 'halo', label: 'Halo Extensions', maintenanceDays: 1 },
-                { id: 'ponytail', label: 'Ponytail Extensions', maintenanceDays: 14 },
-                { id: 'other', label: 'Other Extensions', maintenanceDays: 42 }
-            ],
-            healthScore: {
-                base: 100,
-                penalties: {
-                    overMaintenanceByDay: 0.5,
-                    noDeepConditionOverDays: 0.3,
-                    tooManyWashesPerWeek: 1.0
-                }
-            },
-            copy: {
-                trackerTitle: 'Hair Care Journey',
-                trackerSubtitle: 'Keep your extensions healthy and on track',
-                nextWashLabel: 'Next Wash Day',
-                maintenanceLabel: 'Maintenance Due',
-                deepConditionLabel: 'Deep Condition',
-                noInstallMessage: 'Set up your hair tracker to get personalized care recommendations!',
-                setupButtonText: 'Set Up Tracker'
-            },
-            tips: [
-                'Your extensions are at optimal health! Keep up the great care routine.',
-                'Consider booking maintenance in the next 2 weeks for best results.',
-                'You\'re due for a deep conditioning treatment this week.',
-                'Use a silk pillowcase to reduce friction and tangling while you sleep.',
-                'Avoid applying heat directly to the bonds or tape areas.'
-            ]
-        };
+        // Delete the saved config to revert to defaults
+        await dbRun('DELETE FROM hair_tracker_settings WHERE key = ?', ['config']);
+
+        // Get the default config
+        const defaultConfig = await getHairTrackerSettings();
 
         res.json({
             success: true,
-            message: 'Hair tracker settings reset to defaults (configuration is now application-managed)',
+            message: 'Hair tracker settings reset to defaults',
             ...defaultConfig
         });
     } catch (error) {
@@ -4920,6 +5201,7 @@ app.get('/api/admin/chat/conversations/:id', authenticateAdmin, async (req, res)
 app.post('/api/admin/chat/message', authenticateAdmin, async (req, res) => {
     try {
         const { conversationId, text } = req.body;
+        console.log('Admin chat message request:', { conversationId, text: text?.substring(0, 50), userId: req.user?.id });
 
         if (!conversationId) {
             return res.status(400).json({ success: false, message: 'Conversation ID is required' });
@@ -4934,8 +5216,11 @@ app.post('/api/admin/chat/message', authenticateAdmin, async (req, res) => {
         }
 
         const now = new Date().toISOString();
+        const messageId = 'msg_' + uuidv4().substring(0, 8);
+        console.log('Creating message with ID:', messageId);
+
         const newMessage = await ChatRepository.createMessage({
-            id: 'msg_' + uuidv4().substring(0, 8),
+            id: messageId,
             conversationId,
             fromType: 'agent',
             text: text.trim(),
@@ -4944,6 +5229,11 @@ app.post('/api/admin/chat/message', authenticateAdmin, async (req, res) => {
             readByUser: 0,
             createdAt: now
         });
+
+        if (!newMessage) {
+            console.error('Failed to create message - no message returned');
+            return res.status(500).json({ success: false, message: 'Failed to create message' });
+        }
 
         // Assign conversation if needed
         if (!conversation.assigned_to) {
@@ -4961,7 +5251,8 @@ app.post('/api/admin/chat/message', authenticateAdmin, async (req, res) => {
         }});
     } catch (error) {
         console.error('Error sending admin chat message:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        console.error('Stack:', error.stack);
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
     }
 });
 

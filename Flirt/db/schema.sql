@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS stylists (
     color TEXT DEFAULT '#FF6B9D',
     available INTEGER DEFAULT 1,
     image_url TEXT,
+    basic_monthly_pay REAL DEFAULT 0,
+    commission_rate REAL DEFAULT 0, -- e.g., 0.30 for 30%
     created_at TEXT DEFAULT (datetime('now'))
 );
 
@@ -65,8 +67,11 @@ CREATE TABLE IF NOT EXISTS services (
     description TEXT,
     price REAL NOT NULL,
     duration INTEGER, -- in minutes
-    service_type TEXT NOT NULL CHECK(service_type IN ('hair', 'beauty')),
+    service_type TEXT NOT NULL, -- e.g., 'hair', 'beauty', 'spa', 'nails' (validated in application)
     category TEXT,
+    image_url TEXT,
+    display_order INTEGER DEFAULT 0,
+    commission_rate REAL, -- per-service commission rate (e.g., 0.30 for 30%), NULL = use stylist default
     active INTEGER DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
 );
@@ -98,19 +103,24 @@ CREATE TABLE IF NOT EXISTS bookings (
     time TEXT,
     confirmed_time TEXT,
 
+    -- Commission tracking
+    commission_rate REAL, -- override commission rate for this booking, NULL = use service/stylist default
+    commission_amount REAL, -- calculated commission amount (snapshot when completed)
+
     notes TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings(user_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_requested_date ON bookings(requested_date);
+CREATE INDEX IF NOT EXISTS idx_bookings_requested_time_window ON bookings(requested_time_window);
+CREATE INDEX IF NOT EXISTS idx_bookings_assigned_start_time ON bookings(assigned_start_time);
 CREATE INDEX IF NOT EXISTS idx_bookings_stylist ON bookings(stylist_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
 
 -- Legacy indexes (can be removed after migration)
 CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(date);
-
--- NOTE: Indexes for new booking columns (requested_date, requested_time_window, etc.)
--- are created in database.js migration logic after columns are added
 
 -- ============================================
 -- PRODUCTS TABLE
@@ -370,3 +380,39 @@ CREATE TABLE IF NOT EXISTS hair_tips (
 
 CREATE INDEX IF NOT EXISTS idx_hair_tips_active ON hair_tips(active);
 CREATE INDEX IF NOT EXISTS idx_hair_tips_priority ON hair_tips(priority DESC, created_at DESC);
+
+-- ============================================
+-- HAIR TRACKER SETTINGS TABLE (admin-configurable)
+-- ============================================
+CREATE TABLE IF NOT EXISTS hair_tracker_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+-- ============================================
+-- PAYROLL RECORDS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS payroll_records (
+    id TEXT PRIMARY KEY,
+    stylist_id TEXT NOT NULL REFERENCES stylists(id),
+    period_year INTEGER NOT NULL,
+    period_month INTEGER NOT NULL, -- 1-12
+    basic_pay REAL NOT NULL,
+    commission_rate REAL NOT NULL, -- snapshot of rate at time of calculation
+    total_bookings INTEGER DEFAULT 0,
+    total_service_revenue REAL DEFAULT 0, -- VAT-inclusive total
+    total_service_revenue_ex_vat REAL DEFAULT 0, -- pre-VAT total
+    commission_amount REAL DEFAULT 0,
+    gross_pay REAL DEFAULT 0, -- basic + commission
+    status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'finalized', 'paid')),
+    finalized_at TEXT,
+    paid_at TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT,
+    UNIQUE(stylist_id, period_year, period_month)
+);
+
+CREATE INDEX IF NOT EXISTS idx_payroll_stylist ON payroll_records(stylist_id);
+CREATE INDEX IF NOT EXISTS idx_payroll_period ON payroll_records(period_year, period_month);
+CREATE INDEX IF NOT EXISTS idx_payroll_status ON payroll_records(status);
