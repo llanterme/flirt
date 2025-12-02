@@ -1634,15 +1634,13 @@ const PayrollRepository = {
     },
 
     // Calculate payroll for a stylist for a given month
-    // Commission priority: booking.commission_rate > service.commission_rate > stylist.commission_rate
+    // Commission priority: booking.commission_rate > service.commission_rate (no stylist default)
     async calculatePayroll(stylistId, year, month) {
         // Get stylist info
         const stylist = await StylistRepository.findById(stylistId);
         if (!stylist) {
             throw new Error('Stylist not found');
         }
-
-        const stylistDefaultRate = stylist.commission_rate || 0;
 
         // Get completed bookings for this stylist in the period
         const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -1673,7 +1671,7 @@ const PayrollRepository = {
         const bookingDetails = bookings.map(b => {
             const priceExVat = (b.service_price || 0) / (1 + this.VAT_RATE);
 
-            // Priority: booking override > service rate > stylist default
+            // Priority: booking override > service rate (no stylist default - commission must be set on service)
             let effectiveRate;
             let rateSource;
             if (b.commission_rate !== null && b.commission_rate !== undefined) {
@@ -1683,8 +1681,9 @@ const PayrollRepository = {
                 effectiveRate = b.service_commission_rate;
                 rateSource = 'service';
             } else {
-                effectiveRate = stylistDefaultRate;
-                rateSource = 'stylist';
+                // No commission configured for this service - default to 0
+                effectiveRate = 0;
+                rateSource = 'none';
             }
 
             const bookingCommission = priceExVat * effectiveRate;
@@ -1708,7 +1707,7 @@ const PayrollRepository = {
         // Calculate average commission rate for display (weighted by revenue)
         const avgCommissionRate = totalServiceRevenueExVat > 0
             ? totalCommission / totalServiceRevenueExVat
-            : stylistDefaultRate;
+            : 0;
 
         return {
             stylistId,
