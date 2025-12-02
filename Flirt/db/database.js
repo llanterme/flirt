@@ -1716,7 +1716,6 @@ const PayrollRepository = {
             periodMonth: month,
             basicPay,
             commissionRate: avgCommissionRate, // weighted average for display
-            stylistDefaultRate: stylistDefaultRate,
             totalBookings,
             totalServiceRevenue,
             totalServiceRevenueExVat,
@@ -1800,6 +1799,9 @@ const PayrollRepository = {
         }
         if (record.status === 'paid') {
             throw new Error('Cannot finalize a paid record');
+        }
+        if (record.status === 'finalized') {
+            throw new Error('Record is already finalized');
         }
 
         await dbRun(`
