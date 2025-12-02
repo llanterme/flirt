@@ -65,8 +65,10 @@ CREATE TABLE IF NOT EXISTS services (
     description TEXT,
     price REAL NOT NULL,
     duration INTEGER, -- in minutes
-    service_type TEXT NOT NULL CHECK(service_type IN ('hair', 'beauty')),
+    service_type TEXT NOT NULL, -- e.g., 'hair', 'beauty', 'spa', 'nails' (validated in application)
     category TEXT,
+    image_url TEXT,
+    display_order INTEGER DEFAULT 0,
     active INTEGER DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
 );

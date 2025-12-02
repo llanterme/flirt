@@ -2500,6 +2500,7 @@ app.post('/api/admin/services', authenticateAdmin, async (req, res) => {
             service_type: service_type.trim().toLowerCase(),
             category: category ? category.trim() : null,
             image_url: image_url ? image_url.trim() : null,
+            display_order: req.body.display_order || 0,
             active: 1,
             created_at: new Date().toISOString()
         };
@@ -2517,7 +2518,7 @@ app.post('/api/admin/services', authenticateAdmin, async (req, res) => {
 app.put('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, price, duration, service_type, category, image_url, active } = req.body;
+        const { name, description, price, duration, service_type, category, image_url, display_order, active } = req.body;
 
         // Check if service exists
         const existing = await ServiceRepository.findById(id);
@@ -2541,6 +2542,7 @@ app.put('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
             service_type: service_type !== undefined ? service_type.trim().toLowerCase() : existing.service_type,
             category: category !== undefined ? (category ? category.trim() : null) : existing.category,
             image_url: image_url !== undefined ? (image_url ? image_url.trim() : null) : existing.image_url,
+            display_order: display_order !== undefined ? display_order : (existing.display_order || 0),
             active: active !== undefined ? (active ? 1 : 0) : existing.active
         };
 

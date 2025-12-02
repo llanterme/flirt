@@ -3415,38 +3415,10 @@
                     <button class="btn btn-small btn-outline" onclick="changeBookingType()">Change Type</button>
                 </div>
 
-                <div class="service-grid">
-                    <div class="service-card" onclick="selectHairService('tape', this)">
-                        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Tape Extensions" class="service-image">
-                        <div class="service-content">
-                            <div class="service-name">Tape Extensions</div>
-                            <div class="service-duration">2-3 hours</div>
-                            <div class="service-price">R2,500</div>
-                        </div>
-                    </div>
-                    <div class="service-card" onclick="selectHairService('weft', this)">
-                        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg" alt="Weft Installation" class="service-image">
-                        <div class="service-content">
-                            <div class="service-name">Weft Installation</div>
-                            <div class="service-duration">3-4 hours</div>
-                            <div class="service-price">R3,200</div>
-                        </div>
-                    </div>
-                    <div class="service-card" onclick="selectHairService('color', this)">
-                        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg" alt="Color Matching" class="service-image">
-                        <div class="service-content">
-                            <div class="service-name">Color Matching</div>
-                            <div class="service-duration">30 min</div>
-                            <div class="service-price">Free</div>
-                        </div>
-                    </div>
-                    <div class="service-card" onclick="selectHairService('maintenance', this)">
-                        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories7.jpg" alt="Maintenance" class="service-image">
-                        <div class="service-content">
-                            <div class="service-name">Maintenance</div>
-                            <div class="service-duration">1-2 hours</div>
-                            <div class="service-price">R800</div>
-                        </div>
+                <div class="service-grid" id="hairServicesGrid">
+                    <!-- Dynamically populated from API -->
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--gray-medium);">
+                        Loading services...
                     </div>
                 </div>
             </div>
@@ -5702,7 +5674,79 @@
         let stylists = {};
         let services = {};
         let beautyServices = {};
+        let hairServicesRaw = []; // Raw service data from API
         let bookingDataLoaded = false;
+
+        // Default images for services (fallback when no image_url)
+        const defaultServiceImages = {
+            'tape': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg',
+            'weft': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg',
+            'color': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg',
+            'maintenance': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories7.jpg',
+            'default': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg'
+        };
+
+        // Format duration in minutes to human-readable string
+        function formatDuration(minutes) {
+            if (!minutes || minutes <= 0) return '';
+            if (minutes < 60) return `${minutes} min`;
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            if (mins === 0) return `${hours}h`;
+            return `${hours}h ${mins}min`;
+        }
+
+        // Format price for display
+        function formatServicePrice(price) {
+            if (price === 0 || price === null || price === undefined) return 'Free';
+            return `R${price.toLocaleString()}`;
+        }
+
+        // Get service image URL with fallback
+        function getServiceImage(service) {
+            if (service.image_url) return service.image_url;
+            const slug = (service.name || '').toLowerCase();
+            if (slug.includes('tape')) return defaultServiceImages['tape'];
+            if (slug.includes('weft')) return defaultServiceImages['weft'];
+            if (slug.includes('color')) return defaultServiceImages['color'];
+            if (slug.includes('maint')) return defaultServiceImages['maintenance'];
+            return defaultServiceImages['default'];
+        }
+
+        // Render hair services grid from API data
+        function renderHairServicesGrid() {
+            const grid = document.getElementById('hairServicesGrid');
+            if (!grid) return;
+
+            if (hairServicesRaw.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--gray-medium);">
+                        No hair services available at the moment.
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = hairServicesRaw
+                .filter(s => s.active !== 0) // Only show active services
+                .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                .map(service => {
+                    const imageUrl = getServiceImage(service);
+                    const durationText = formatDuration(service.duration);
+                    const priceText = formatServicePrice(service.price);
+
+                    return `
+                        <div class="service-card" onclick="selectHairService('${service.id}', this)">
+                            <img src="${imageUrl}" alt="${service.name}" class="service-image" onerror="this.src='${defaultServiceImages['default']}'">
+                            <div class="service-content">
+                                <div class="service-name">${service.name}</div>
+                                ${durationText ? `<div class="service-duration">${durationText}</div>` : ''}
+                                <div class="service-price">${priceText}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+        }
 
         // Load data from API on init
         async function loadBookingData() {
@@ -5724,11 +5768,14 @@
 
                 // Load hair services
                 const hairData = await apiCall('/services/hair');
+                hairServicesRaw = hairData.services || [];
                 hairData.services.forEach(s => {
                     const entry = {
                         id: s.id,
                         name: s.name,
-                        price: s.price === 0 ? 'Free' : `R${s.price.toLocaleString()}`
+                        price: s.price === 0 ? 'Free' : `R${s.price.toLocaleString()}`,
+                        duration: s.duration,
+                        image_url: s.image_url
                     };
                     services[s.id] = entry;
                     const slug = s.name.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -5738,6 +5785,9 @@
                     if (slug.includes('color')) services['color'] = entry;
                     if (slug.includes('maint')) services['maintenance'] = entry;
                 });
+
+                // Render the hair services grid
+                renderHairServicesGrid();
 
                 // Load beauty services
                 const beautyData = await apiCall('/services/beauty');
@@ -5760,11 +5810,20 @@
                     'maya': { name: 'Maya Johnson', specialty: 'Maintenance Expert', avatar: 'M', color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }
                 };
                 services = {
-                    'tape': { name: 'Tape Extensions', price: 'R2,500' },
-                    'weft': { name: 'Weft Installation', price: 'R3,200' },
-                    'color': { name: 'Color Matching', price: 'Free' },
-                    'maintenance': { name: 'Maintenance', price: 'R800' }
+                    'tape': { id: 'tape', name: 'Tape Extensions', price: 'R2,500', duration: 150 },
+                    'weft': { id: 'weft', name: 'Weft Installation', price: 'R3,200', duration: 210 },
+                    'color': { id: 'color', name: 'Color Matching', price: 'Free', duration: 30 },
+                    'maintenance': { id: 'maintenance', name: 'Maintenance', price: 'R800', duration: 90 }
                 };
+                // Also populate hairServicesRaw for grid rendering
+                hairServicesRaw = [
+                    { id: 'tape', name: 'Tape Extensions', price: 2500, duration: 150, active: 1 },
+                    { id: 'weft', name: 'Weft Installation', price: 3200, duration: 210, active: 1 },
+                    { id: 'color', name: 'Color Matching', price: 0, duration: 30, active: 1 },
+                    { id: 'maintenance', name: 'Maintenance', price: 800, duration: 90, active: 1 }
+                ];
+                renderHairServicesGrid();
+
                 beautyServices = {
                     'facial': { name: 'Facial Treatment', duration: '60 min', price: 'R450' },
                     'manicure': { name: 'Manicure', duration: '45 min', price: 'R250' },
@@ -5800,18 +5859,16 @@
                 const response = await fetch(`/api/stylists/${actualStylistId}/services?type=${serviceType}`);
                 const data = await response.json();
 
-                if (data.success && data.services) {
-                    // Clear existing services
-                    services = {};
-                    beautyServices = {};
-
+                if (data.success && data.services && data.services.length > 0) {
+                    // Only clear the relevant service cache, not both
                     // Populate services based on type
                     data.services.forEach(s => {
                         const entry = {
                             id: s.id,
                             name: s.name,
                             price: s.price === 0 ? 'Free' : `R${s.price.toLocaleString()}`,
-                            duration: s.duration
+                            duration: s.duration,
+                            image_url: s.image_url
                         };
 
                         if (serviceType === 'hair') {
@@ -5835,9 +5892,9 @@
 
                     console.log(`Loaded ${data.services.length} ${serviceType} services for stylist ${stylistId}`);
                 } else {
-                    console.log('No services found for this stylist, falling back to all services');
-                    // Fallback to loading all services if stylist has none assigned
-                    await loadBookingData();
+                    console.log('No services found for this stylist, using all services from cache');
+                    // Don't reload all data - just use what's already cached
+                    // This prevents clearing services when stylist has no specific services assigned
                 }
             } catch (error) {
                 console.error('Error loading stylist services:', error);
