@@ -1949,6 +1949,12 @@
                                 </div>
 
                                 <div class="form-group">
+                                    <label class="form-label">Commission Rate Override (%)</label>
+                                    <input type="number" id="editBookingCommissionRate" class="form-input" min="0" max="100" step="1" placeholder="Leave blank for default">
+                                    <small style="color: var(--text-subtle);">Override the service/stylist default commission for this booking</small>
+                                </div>
+
+                                <div class="form-group">
                                     <label class="form-label">Notes</label>
                                     <textarea id="editBookingNotes" class="form-input" rows="3" placeholder="Special requests or notes..."></textarea>
                                 </div>
@@ -3703,10 +3709,18 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Display Order</label>
-                        <input type="number" id="serviceDisplayOrder" class="form-input" min="0" step="1" placeholder="0">
-                        <small style="color: var(--text-subtle);">Lower numbers appear first</small>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Display Order</label>
+                            <input type="number" id="serviceDisplayOrder" class="form-input" min="0" step="1" placeholder="0">
+                            <small style="color: var(--text-subtle);">Lower numbers appear first</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Commission Rate (%)</label>
+                            <input type="number" id="serviceCommissionRate" class="form-input" min="0" max="100" step="1" placeholder="Leave blank for stylist default">
+                            <small style="color: var(--text-subtle);">Overrides stylist default rate for this service</small>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -6304,6 +6318,9 @@
             document.getElementById('editBookingTime').value = booking.confirmedTime || booking.time || '';
             document.getElementById('editBookingDuration').value = booking.duration || 60;
             document.getElementById('editBookingStatus').value = booking.status;
+            document.getElementById('editBookingCommissionRate').value = booking.commission_rate !== null && booking.commission_rate !== undefined
+                ? (booking.commission_rate * 100).toFixed(0)
+                : '';
             document.getElementById('editBookingNotes').value = booking.notes || '';
 
             // Clear error
@@ -6335,6 +6352,7 @@
                 const duration = document.getElementById('editBookingDuration').value;
                 const status = document.getElementById('editBookingStatus').value;
                 const notes = document.getElementById('editBookingNotes').value;
+                const commissionRateInput = document.getElementById('editBookingCommissionRate').value.trim();
 
                 if (!date) {
                     throw new Error('Date is required');
@@ -6349,6 +6367,9 @@
                     throw new Error('Invalid service selected');
                 }
 
+                // Parse commission rate: convert from percentage to decimal, or null if empty
+                const commissionRate = commissionRateInput !== '' ? parseFloat(commissionRateInput) / 100 : null;
+
                 const updateData = {
                     serviceId: serviceId,
                     serviceName: service.name,
@@ -6360,6 +6381,7 @@
                     duration: duration ? parseInt(duration) : null,
                     status: status,
                     notes: notes || null,
+                    commissionRate: commissionRate,
                     updatedAt: new Date().toISOString()
                 };
 
@@ -8683,6 +8705,7 @@
             document.getElementById('serviceForm').reset();
             document.getElementById('serviceId').value = '';
             document.getElementById('serviceDisplayOrder').value = '0';
+            document.getElementById('serviceCommissionRate').value = '';
             document.getElementById('serviceActive').checked = true;
             document.getElementById('serviceImagePreview').style.display = 'none';
             document.getElementById('serviceModal').style.display = 'flex';
@@ -8737,6 +8760,9 @@
             document.getElementById('serviceDuration').value = service.duration || '';
             document.getElementById('serviceImageUrl').value = service.image_url || '';
             document.getElementById('serviceDisplayOrder').value = service.display_order || 0;
+            document.getElementById('serviceCommissionRate').value = service.commission_rate !== null && service.commission_rate !== undefined
+                ? (service.commission_rate * 100).toFixed(0)
+                : '';
             document.getElementById('serviceActive').checked = service.active === 1;
 
             // Update image preview
@@ -8748,6 +8774,9 @@
         async function saveService(event) {
             event.preventDefault();
 
+            const commissionRateInput = document.getElementById('serviceCommissionRate').value.trim();
+            const commissionRate = commissionRateInput !== '' ? parseFloat(commissionRateInput) / 100 : null;
+
             const serviceData = {
                 name: document.getElementById('serviceName').value.trim(),
                 description: document.getElementById('serviceDescription').value.trim() || null,
@@ -8757,6 +8786,7 @@
                 duration: parseInt(document.getElementById('serviceDuration').value) || null,
                 image_url: document.getElementById('serviceImageUrl').value.trim() || null,
                 display_order: parseInt(document.getElementById('serviceDisplayOrder').value) || 0,
+                commission_rate: commissionRate,
                 active: document.getElementById('serviceActive').checked ? 1 : 0
             };
 

@@ -364,8 +364,8 @@ const ServiceRepository = {
 
     async create(service) {
         const sql = `
-            INSERT INTO services (id, name, description, price, duration, service_type, category, image_url, active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO services (id, name, description, price, duration, service_type, category, image_url, display_order, commission_rate, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         await dbRun(sql, [
             service.id,
@@ -376,6 +376,8 @@ const ServiceRepository = {
             service.service_type || service.serviceType,  // Support both snake_case and camelCase
             service.category || null,
             service.image_url || service.imageUrl || null,  // Support both snake_case and camelCase
+            service.display_order || 0,
+            service.commission_rate !== undefined ? service.commission_rate : null,
             service.active !== undefined ? service.active : 1
         ]);
         return this.findById(service.id);
@@ -385,8 +387,8 @@ const ServiceRepository = {
         const sql = `
             UPDATE services
             SET name = ?, description = ?, price = ?, duration = ?,
-                service_type = ?, category = ?, image_url = ?, active = ?,
-                updated_at = datetime('now')
+                service_type = ?, category = ?, image_url = ?, display_order = ?,
+                commission_rate = ?, active = ?, updated_at = datetime('now')
             WHERE id = ?
         `;
         await dbRun(sql, [
@@ -397,6 +399,8 @@ const ServiceRepository = {
             service.service_type || service.serviceType,  // Support both snake_case and camelCase
             service.category || null,
             service.image_url || service.imageUrl || null,  // Support both snake_case and camelCase
+            service.display_order || 0,
+            service.commission_rate !== undefined ? service.commission_rate : null,
             service.active !== undefined ? service.active : 1,
             id
         ]);
@@ -1630,6 +1634,7 @@ const PayrollRepository = {
     },
 
     // Calculate payroll for a stylist for a given month
+    // Commission priority: booking.commission_rate > service.commission_rate > stylist.commission_rate
     async calculatePayroll(stylistId, year, month) {
         // Get stylist info
         const stylist = await StylistRepository.findById(stylistId);
@@ -1637,30 +1642,73 @@ const PayrollRepository = {
             throw new Error('Stylist not found');
         }
 
+        const stylistDefaultRate = stylist.commission_rate || 0;
+
         // Get completed bookings for this stylist in the period
         const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
         const endDate = month === 12
             ? `${year + 1}-01-01`
             : `${year}-${String(month + 1).padStart(2, '0')}-01`;
 
+        // Join with services to get service-level commission rate
         const bookings = await dbAll(`
-            SELECT * FROM bookings
-            WHERE stylist_id = ?
-            AND status = 'COMPLETED'
+            SELECT b.*, s.commission_rate as service_commission_rate
+            FROM bookings b
+            LEFT JOIN services s ON b.service_id = s.id
+            WHERE b.stylist_id = ?
+            AND b.status = 'COMPLETED'
             AND (
-                (requested_date >= ? AND requested_date < ?)
-                OR (date >= ? AND date < ?)
+                (b.requested_date >= ? AND b.requested_date < ?)
+                OR (b.date >= ? AND b.date < ?)
             )
         `, [stylistId, startDate, endDate, startDate, endDate]);
 
-        // Calculate totals
+        // Calculate totals with per-booking commission
         const totalBookings = bookings.length;
         const totalServiceRevenue = bookings.reduce((sum, b) => sum + (b.service_price || 0), 0);
         const totalServiceRevenueExVat = totalServiceRevenue / (1 + this.VAT_RATE);
-        const commissionRate = stylist.commission_rate || 0;
-        const commissionAmount = totalServiceRevenueExVat * commissionRate;
+
+        // Calculate commission for each booking based on priority
+        let totalCommission = 0;
+        const bookingDetails = bookings.map(b => {
+            const priceExVat = (b.service_price || 0) / (1 + this.VAT_RATE);
+
+            // Priority: booking override > service rate > stylist default
+            let effectiveRate;
+            let rateSource;
+            if (b.commission_rate !== null && b.commission_rate !== undefined) {
+                effectiveRate = b.commission_rate;
+                rateSource = 'booking';
+            } else if (b.service_commission_rate !== null && b.service_commission_rate !== undefined) {
+                effectiveRate = b.service_commission_rate;
+                rateSource = 'service';
+            } else {
+                effectiveRate = stylistDefaultRate;
+                rateSource = 'stylist';
+            }
+
+            const bookingCommission = priceExVat * effectiveRate;
+            totalCommission += bookingCommission;
+
+            return {
+                id: b.id,
+                serviceName: b.service_name,
+                servicePrice: b.service_price,
+                priceExVat: priceExVat,
+                date: b.requested_date || b.date,
+                commissionRate: effectiveRate,
+                commissionAmount: bookingCommission,
+                rateSource: rateSource
+            };
+        });
+
         const basicPay = stylist.basic_monthly_pay || 0;
-        const grossPay = basicPay + commissionAmount;
+        const grossPay = basicPay + totalCommission;
+
+        // Calculate average commission rate for display (weighted by revenue)
+        const avgCommissionRate = totalServiceRevenueExVat > 0
+            ? totalCommission / totalServiceRevenueExVat
+            : stylistDefaultRate;
 
         return {
             stylistId,
@@ -1668,18 +1716,14 @@ const PayrollRepository = {
             periodYear: year,
             periodMonth: month,
             basicPay,
-            commissionRate,
+            commissionRate: avgCommissionRate, // weighted average for display
+            stylistDefaultRate: stylistDefaultRate,
             totalBookings,
             totalServiceRevenue,
             totalServiceRevenueExVat,
-            commissionAmount,
+            commissionAmount: totalCommission,
             grossPay,
-            bookings: bookings.map(b => ({
-                id: b.id,
-                serviceName: b.service_name,
-                servicePrice: b.service_price,
-                date: b.requested_date || b.date
-            }))
+            bookings: bookingDetails
         };
     },
 

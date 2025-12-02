@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS services (
     category TEXT,
     image_url TEXT,
     display_order INTEGER DEFAULT 0,
+    commission_rate REAL, -- per-service commission rate (e.g., 0.30 for 30%), NULL = use stylist default
     active INTEGER DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
 );
@@ -101,6 +102,10 @@ CREATE TABLE IF NOT EXISTS bookings (
     preferred_time_of_day TEXT,
     time TEXT,
     confirmed_time TEXT,
+
+    -- Commission tracking
+    commission_rate REAL, -- override commission rate for this booking, NULL = use service/stylist default
+    commission_amount REAL, -- calculated commission amount (snapshot when completed)
 
     notes TEXT,
     created_at TEXT DEFAULT (datetime('now')),

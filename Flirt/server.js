@@ -1017,6 +1017,9 @@ function mapBookingResponse(row) {
         confirmedTime: row.confirmed_time ?? row.confirmedTime ?? null,
         status: row.status,
         notes: row.notes ?? null,
+        // Commission fields
+        commissionRate: row.commission_rate ?? null,
+        commissionAmount: row.commission_amount ?? null,
         createdAt: row.created_at ?? row.createdAt ?? null,
         updatedAt: row.updated_at ?? row.updatedAt ?? null,
         customerName: row.customer_name ?? row.customerName ?? null,
@@ -2535,6 +2538,7 @@ app.post('/api/admin/services', authenticateAdmin, async (req, res) => {
             category: category ? category.trim() : null,
             image_url: image_url ? image_url.trim() : null,
             display_order: req.body.display_order || 0,
+            commission_rate: req.body.commission_rate !== undefined ? req.body.commission_rate : null,
             active: 1,
             created_at: new Date().toISOString()
         };
@@ -2577,6 +2581,7 @@ app.put('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
             category: category !== undefined ? (category ? category.trim() : null) : existing.category,
             image_url: image_url !== undefined ? (image_url ? image_url.trim() : null) : existing.image_url,
             display_order: display_order !== undefined ? display_order : (existing.display_order || 0),
+            commission_rate: req.body.commission_rate !== undefined ? req.body.commission_rate : existing.commission_rate,
             active: active !== undefined ? (active ? 1 : 0) : existing.active
         };
 
@@ -3240,7 +3245,8 @@ app.patch('/api/admin/bookings/:id', authenticateAdmin, async (req, res) => {
         assignedStartTime,
         assignedEndTime,
         notes,
-        confirmedTime
+        confirmedTime,
+        commissionRate
     } = req.body;
 
     console.log(`📝 PATCH /api/admin/bookings/${req.params.id}:`, JSON.stringify(req.body, null, 2));
@@ -3325,6 +3331,11 @@ app.patch('/api/admin/bookings/:id', authenticateAdmin, async (req, res) => {
         // Notes
         if (notes !== undefined) {
             updates.notes = notes;
+        }
+
+        // Commission rate override (null to use service/stylist default, or decimal like 0.30 for 30%)
+        if (commissionRate !== undefined) {
+            updates.commission_rate = commissionRate;
         }
 
         updates.updated_at = new Date().toISOString();
