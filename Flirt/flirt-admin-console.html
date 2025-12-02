@@ -2350,30 +2350,77 @@
 
                 <!-- Stylist Pay Edit Modal -->
                 <div id="stylistPayModal" class="modal-overlay">
-                    <div class="modal" style="max-width: 400px; width: 90%;">
-                        <div class="modal-header">
-                            <h3>Edit Pay Settings</h3>
-                            <button class="modal-close" onclick="closeModal('stylistPayModal')">&times;</button>
+                    <div class="modal" style="max-width: 480px; width: 95%;">
+                        <div class="modal-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; border-radius: 12px 12px 0 0; padding: 20px 24px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 44px; height: 44px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                                    💰
+                                </div>
+                                <div>
+                                    <h3 style="margin: 0; font-size: 18px; font-weight: 600;">Compensation Settings</h3>
+                                    <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;" id="stylistPayNameHeader">Stylist Name</p>
+                                </div>
+                            </div>
+                            <button class="modal-close" onclick="closeModal('stylistPayModal')" style="color: white; opacity: 0.8;">&times;</button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body" style="padding: 24px;">
                             <input type="hidden" id="stylistPayId">
-                            <div class="form-group">
-                                <label>Stylist</label>
-                                <input type="text" id="stylistPayName" disabled style="background: var(--gray-lightest);">
+                            <input type="hidden" id="stylistPayName">
+
+                            <!-- Basic Pay Section -->
+                            <div style="background: var(--gray-lightest); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                                    <span style="font-size: 18px;">📋</span>
+                                    <span style="font-weight: 600; color: var(--gray-dark);">Basic Monthly Salary</span>
+                                </div>
+                                <div style="position: relative;">
+                                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-weight: 600; color: var(--gray-medium); font-size: 16px;">R</span>
+                                    <input type="number" id="stylistBasicPay" min="0" step="100" placeholder="0.00"
+                                           style="padding-left: 36px; font-size: 24px; font-weight: 600; height: 56px; border-radius: 10px;">
+                                </div>
+                                <p style="margin: 10px 0 0 0; font-size: 12px; color: var(--gray-medium);">
+                                    Fixed monthly amount paid regardless of bookings
+                                </p>
                             </div>
-                            <div class="form-group">
-                                <label>Basic Monthly Pay (R)</label>
-                                <input type="number" id="stylistBasicPay" min="0" step="100" placeholder="e.g., 8000">
-                            </div>
-                            <div class="form-group">
-                                <label>Commission Rate (%)</label>
-                                <input type="number" id="stylistCommissionRate" min="0" max="100" step="1" placeholder="e.g., 30">
-                                <small style="color: var(--gray-medium);">Commission is calculated on service revenue excluding VAT</small>
+
+                            <!-- Commission Section -->
+                            <div style="background: var(--gray-lightest); border-radius: 12px; padding: 20px;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                                    <span style="font-size: 18px;">📊</span>
+                                    <span style="font-weight: 600; color: var(--gray-dark);">Commission Rate</span>
+                                </div>
+                                <div style="position: relative;">
+                                    <input type="number" id="stylistCommissionRate" min="0" max="100" step="1" placeholder="0"
+                                           style="padding-right: 50px; font-size: 24px; font-weight: 600; height: 56px; border-radius: 10px; text-align: right;">
+                                    <span style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-weight: 600; color: var(--gray-medium); font-size: 16px;">%</span>
+                                </div>
+                                <div style="margin-top: 14px; padding: 12px; background: white; border-radius: 8px; border-left: 3px solid var(--primary);">
+                                    <p style="margin: 0; font-size: 12px; color: var(--gray-dark); line-height: 1.5;">
+                                        <strong>How it works:</strong> Commission is calculated on service revenue <em>excluding VAT</em>.
+                                        For example, a R1,150 service (incl. VAT) at 30% commission = R300.
+                                    </p>
+                                </div>
+
+                                <!-- Quick Select Buttons -->
+                                <div style="display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap;">
+                                    <button type="button" onclick="document.getElementById('stylistCommissionRate').value='20'"
+                                            style="padding: 8px 16px; border: 1px solid var(--gray-light); border-radius: 20px; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s;">20%</button>
+                                    <button type="button" onclick="document.getElementById('stylistCommissionRate').value='25'"
+                                            style="padding: 8px 16px; border: 1px solid var(--gray-light); border-radius: 20px; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s;">25%</button>
+                                    <button type="button" onclick="document.getElementById('stylistCommissionRate').value='30'"
+                                            style="padding: 8px 16px; border: 1px solid var(--gray-light); border-radius: 20px; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s;">30%</button>
+                                    <button type="button" onclick="document.getElementById('stylistCommissionRate').value='35'"
+                                            style="padding: 8px 16px; border: 1px solid var(--gray-light); border-radius: 20px; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s;">35%</button>
+                                    <button type="button" onclick="document.getElementById('stylistCommissionRate').value='40'"
+                                            style="padding: 8px 16px; border: 1px solid var(--gray-light); border-radius: 20px; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s;">40%</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-outline" onclick="closeModal('stylistPayModal')">Cancel</button>
-                            <button class="btn btn-primary" onclick="saveStylistPay()">Save Settings</button>
+                        <div class="modal-footer" style="padding: 16px 24px 24px; border-top: none; gap: 12px;">
+                            <button class="btn btn-outline" onclick="closeModal('stylistPayModal')" style="flex: 1;">Cancel</button>
+                            <button class="btn btn-primary" onclick="saveStylistPay()" style="flex: 2;">
+                                <span style="margin-right: 6px;">✓</span> Save Settings
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -7274,6 +7321,7 @@
 
             document.getElementById('stylistPayId').value = stylistId;
             document.getElementById('stylistPayName').value = stylist.name;
+            document.getElementById('stylistPayNameHeader').textContent = stylist.name;
             document.getElementById('stylistBasicPay').value = stylist.basic_monthly_pay || 0;
             document.getElementById('stylistCommissionRate').value = ((stylist.commission_rate || 0) * 100).toFixed(0);
 
