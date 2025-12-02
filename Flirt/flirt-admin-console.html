@@ -1297,7 +1297,7 @@
                 <div class="nav-section">
                     <div class="nav-section-title">Overview</div>
                 </div>
-                <a class="nav-item active" onclick="showSection('dashboard')">
+                <a class="nav-item active" onclick="showSection('dashboard', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="7" height="7"></rect>
                         <rect x="14" y="3" width="7" height="7"></rect>
@@ -1310,7 +1310,7 @@
                 <div class="nav-section" style="margin-top: 20px;">
                     <div class="nav-section-title">Management</div>
                 </div>
-                <a class="nav-item" onclick="showSection('bookings')">
+                <a class="nav-item" onclick="showSection('bookings', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                         <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -1320,7 +1320,7 @@
                     Bookings
                     <span class="nav-badge" id="bookingsNavBadge">0</span>
                 </a>
-                <a class="nav-item" onclick="showSection('staff')">
+                <a class="nav-item" onclick="showSection('staff', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
@@ -1329,28 +1329,28 @@
                     </svg>
                     Staff
                 </a>
-                <a class="nav-item" onclick="showSection('services')">
+                <a class="nav-item" onclick="showSection('services', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
                         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
                     </svg>
                     Services
                 </a>
-                <a class="nav-item" onclick="showSection('customers')">
+                <a class="nav-item" onclick="showSection('customers', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                     Customers
                 </a>
-                <a class="nav-item" onclick="showSection('products')">
+                <a class="nav-item" onclick="showSection('products', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
                         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                     </svg>
                     Products
                 </a>
-                <a class="nav-item" onclick="showSection('orders')">
+                <a class="nav-item" onclick="showSection('orders', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
@@ -1363,20 +1363,20 @@
                 <div class="nav-section" style="margin-top: 20px;">
                     <div class="nav-section-title">Marketing</div>
                 </div>
-                <a class="nav-item" onclick="showSection('promotions')">
+                <a class="nav-item" onclick="showSection('promotions', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                     </svg>
                     Promotions
                 </a>
-                <a class="nav-item" onclick="showSection('notifications')">
+                <a class="nav-item" onclick="showSection('notifications', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                         <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                     </svg>
                     Push Notifications
                 </a>
-                <a class="nav-item" onclick="showSection('gallery')">
+                <a class="nav-item" onclick="showSection('gallery', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                         <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -1384,14 +1384,14 @@
                     </svg>
                     Gallery
                 </a>
-                <a class="nav-item" onclick="showSection('chat')">
+                <a class="nav-item" onclick="showSection('chat', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
                     Chat
                     <span class="nav-badge">3</span>
                 </a>
-                <a class="nav-item" onclick="showSection('hair-tips')">
+                <a class="nav-item" onclick="showSection('hair-tips', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -1403,27 +1403,27 @@
                 <div class="nav-section" style="margin-top: 20px;">
                     <div class="nav-section-title">Settings</div>
                 </div>
-                <a class="nav-item" onclick="showSection('loyalty-settings')">
+                <a class="nav-item" onclick="showSection('loyalty-settings', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                     </svg>
                     Loyalty Settings
                 </a>
-                <a class="nav-item" onclick="showSection('hair-tracker-settings')">
+                <a class="nav-item" onclick="showSection('hair-tracker-settings', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
                         <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
                     </svg>
                     Hair Tracker Settings
                 </a>
-                <a class="nav-item" onclick="showSection('payment-settings')">
+                <a class="nav-item" onclick="showSection('payment-settings', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                         <line x1="1" y1="10" x2="23" y2="10"></line>
                     </svg>
                     Payment Settings
                 </a>
-                <a class="nav-item" onclick="showSection('settings')">
+                <a class="nav-item" onclick="showSection('settings', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -4250,7 +4250,7 @@
         // ============================================
         // NAVIGATION
         // ============================================
-        function showSection(sectionId) {
+        function showSection(sectionId, evt) {
             document.querySelectorAll('.page-section').forEach(section => {
                 section.classList.remove('active');
             });
@@ -4259,7 +4259,19 @@
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
             });
-            event.target.closest('.nav-item').classList.add('active');
+            // Find the nav item for this section and mark it active
+            const navEvent = evt || window.event;
+            if (navEvent && navEvent.target) {
+                const navItem = navEvent.target.closest('.nav-item');
+                if (navItem) navItem.classList.add('active');
+            } else {
+                // Fallback: find nav item by section id
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    if (item.getAttribute('onclick')?.includes(`'${sectionId}'`)) {
+                        item.classList.add('active');
+                    }
+                });
+            }
 
             const titles = {
                 'dashboard': 'Dashboard',
@@ -5077,6 +5089,321 @@
             document.getElementById('count-cancelled').textContent = counts.CANCELLED;
         }
 
+        // ============================================
+        // BOOKINGS: SORTING, PAGINATION, BULK ACTIONS
+        // ============================================
+        let bookingsSortField = 'date';
+        let bookingsSortDirection = 'desc';
+        let bookingsCurrentPage = 1;
+        let bookingsPageSize = 50;
+        let selectedBookingIds = new Set();
+        let bookingsGroupByDate = false;
+
+        function sortBookingsBy(field) {
+            if (bookingsSortField === field) {
+                // Toggle direction
+                bookingsSortDirection = bookingsSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                bookingsSortField = field;
+                bookingsSortDirection = 'asc';
+            }
+
+            // Update sort icons
+            ['customer', 'service', 'stylist', 'date', 'status'].forEach(f => {
+                const icon = document.getElementById(`sortIcon${f.charAt(0).toUpperCase() + f.slice(1)}`);
+                if (icon) {
+                    icon.textContent = f === field ? (bookingsSortDirection === 'asc' ? '↑' : '↓') : '↕';
+                }
+            });
+
+            // Sort adminBookings
+            adminBookings.sort((a, b) => {
+                let valA, valB;
+                switch (field) {
+                    case 'customer':
+                        valA = (a.customerName || '').toLowerCase();
+                        valB = (b.customerName || '').toLowerCase();
+                        break;
+                    case 'service':
+                        valA = (a.serviceName || '').toLowerCase();
+                        valB = (b.serviceName || '').toLowerCase();
+                        break;
+                    case 'stylist':
+                        valA = (a.stylistName || '').toLowerCase();
+                        valB = (b.stylistName || '').toLowerCase();
+                        break;
+                    case 'date':
+                        valA = a.requestedDate || a.date || '';
+                        valB = b.requestedDate || b.date || '';
+                        break;
+                    case 'status':
+                        valA = (a.status || '').toLowerCase();
+                        valB = (b.status || '').toLowerCase();
+                        break;
+                    default:
+                        valA = '';
+                        valB = '';
+                }
+
+                if (valA < valB) return bookingsSortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return bookingsSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            bookingsCurrentPage = 1;
+            renderBookingsTable();
+        }
+
+        function goToBookingsPage(direction) {
+            const totalPages = Math.ceil(adminBookings.length / bookingsPageSize);
+
+            if (direction === 'prev' && bookingsCurrentPage > 1) {
+                bookingsCurrentPage--;
+            } else if (direction === 'next' && bookingsCurrentPage < totalPages) {
+                bookingsCurrentPage++;
+            } else if (typeof direction === 'number') {
+                bookingsCurrentPage = direction;
+            }
+
+            renderBookingsTable();
+            updateBookingsPagination();
+        }
+
+        function onBookingsPageSizeChange() {
+            const select = document.getElementById('bookingsPageSize');
+            if (select) {
+                bookingsPageSize = parseInt(select.value) || 50;
+                bookingsCurrentPage = 1;
+                renderBookingsTable();
+                updateBookingsPagination();
+            }
+        }
+
+        function updateBookingsPagination() {
+            const total = adminBookings.length;
+            const totalPages = Math.ceil(total / bookingsPageSize);
+            const start = (bookingsCurrentPage - 1) * bookingsPageSize + 1;
+            const end = Math.min(bookingsCurrentPage * bookingsPageSize, total);
+
+            const paginationEl = document.getElementById('bookingsPagination');
+            if (paginationEl) {
+                paginationEl.style.display = total > bookingsPageSize ? 'flex' : 'none';
+            }
+
+            const infoEl = document.getElementById('bookingsPaginationInfo');
+            if (infoEl) {
+                infoEl.textContent = `Showing ${start}-${end} of ${total}`;
+            }
+
+            const prevBtn = document.getElementById('bookingsPrevPage');
+            const nextBtn = document.getElementById('bookingsNextPage');
+            if (prevBtn) prevBtn.disabled = bookingsCurrentPage <= 1;
+            if (nextBtn) nextBtn.disabled = bookingsCurrentPage >= totalPages;
+
+            // Render page numbers
+            const pagesEl = document.getElementById('bookingsPaginationPages');
+            if (pagesEl && totalPages > 1) {
+                let pagesHtml = '';
+                for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+                    const isActive = i === bookingsCurrentPage;
+                    pagesHtml += `<button class="btn btn-sm ${isActive ? '' : 'btn-outline'}"
+                                   onclick="goToBookingsPage(${i})"
+                                   style="${isActive ? 'background: var(--primary); color: white;' : ''}">${i}</button>`;
+                }
+                if (totalPages > 5) {
+                    pagesHtml += `<span style="padding: 0 8px;">...</span>`;
+                    pagesHtml += `<button class="btn btn-sm btn-outline" onclick="goToBookingsPage(${totalPages})">${totalPages}</button>`;
+                }
+                pagesEl.innerHTML = pagesHtml;
+            }
+        }
+
+        function toggleSelectAllBookings() {
+            const selectAllCheckbox = document.getElementById('bookingsSelectAll');
+            const checkboxes = document.querySelectorAll('#bookingsTableBody input[type="checkbox"]');
+
+            if (selectAllCheckbox && selectAllCheckbox.checked) {
+                // Select all visible bookings
+                const start = (bookingsCurrentPage - 1) * bookingsPageSize;
+                const end = Math.min(start + bookingsPageSize, adminBookings.length);
+                for (let i = start; i < end; i++) {
+                    selectedBookingIds.add(adminBookings[i].id);
+                }
+                checkboxes.forEach(cb => cb.checked = true);
+            } else {
+                // Deselect all
+                selectedBookingIds.clear();
+                checkboxes.forEach(cb => cb.checked = false);
+            }
+
+            updateBulkActionsBar();
+        }
+
+        function toggleBookingSelection(bookingId) {
+            if (selectedBookingIds.has(bookingId)) {
+                selectedBookingIds.delete(bookingId);
+            } else {
+                selectedBookingIds.add(bookingId);
+            }
+            updateBulkActionsBar();
+        }
+
+        function deselectAllBookings() {
+            selectedBookingIds.clear();
+            document.querySelectorAll('#bookingsTableBody input[type="checkbox"]').forEach(cb => cb.checked = false);
+            const selectAllCheckbox = document.getElementById('bookingsSelectAll');
+            if (selectAllCheckbox) selectAllCheckbox.checked = false;
+            updateBulkActionsBar();
+        }
+
+        function updateBulkActionsBar() {
+            const bar = document.getElementById('bookingsBulkActionsBar');
+            const countEl = document.getElementById('bookingsSelectedCount');
+
+            if (bar) {
+                bar.style.display = selectedBookingIds.size > 0 ? 'block' : 'none';
+            }
+            if (countEl) {
+                countEl.textContent = `${selectedBookingIds.size} selected`;
+            }
+        }
+
+        async function bulkConfirmBookings() {
+            if (selectedBookingIds.size === 0) return;
+
+            const confirmed = await openConfirmDialog({
+                title: 'Confirm Bookings',
+                message: `Are you sure you want to confirm ${selectedBookingIds.size} booking(s)?`,
+                confirmText: 'Confirm All',
+                tone: 'neutral'
+            });
+
+            if (!confirmed) return;
+
+            let successCount = 0;
+            for (const id of selectedBookingIds) {
+                try {
+                    await apiCall(`/admin/bookings/${id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ status: 'CONFIRMED' })
+                    });
+                    successCount++;
+                } catch (error) {
+                    console.error(`Failed to confirm booking ${id}:`, error);
+                }
+            }
+
+            showAdminToast(`${successCount} booking(s) confirmed`, 'success');
+            deselectAllBookings();
+            loadBookings();
+        }
+
+        async function bulkCompleteBookings() {
+            if (selectedBookingIds.size === 0) return;
+
+            const confirmed = await openConfirmDialog({
+                title: 'Complete Bookings',
+                message: `Are you sure you want to mark ${selectedBookingIds.size} booking(s) as completed?`,
+                confirmText: 'Complete All',
+                tone: 'neutral'
+            });
+
+            if (!confirmed) return;
+
+            let successCount = 0;
+            for (const id of selectedBookingIds) {
+                try {
+                    await apiCall(`/admin/bookings/${id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ status: 'COMPLETED' })
+                    });
+                    successCount++;
+                } catch (error) {
+                    console.error(`Failed to complete booking ${id}:`, error);
+                }
+            }
+
+            showAdminToast(`${successCount} booking(s) marked as completed`, 'success');
+            deselectAllBookings();
+            loadBookings();
+        }
+
+        async function bulkCancelBookings() {
+            if (selectedBookingIds.size === 0) return;
+
+            const confirmed = await openConfirmDialog({
+                title: 'Cancel Bookings',
+                message: `Are you sure you want to cancel ${selectedBookingIds.size} booking(s)? This cannot be undone.`,
+                confirmText: 'Cancel All',
+                tone: 'danger'
+            });
+
+            if (!confirmed) return;
+
+            let successCount = 0;
+            for (const id of selectedBookingIds) {
+                try {
+                    await apiCall(`/admin/bookings/${id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ status: 'CANCELLED' })
+                    });
+                    successCount++;
+                } catch (error) {
+                    console.error(`Failed to cancel booking ${id}:`, error);
+                }
+            }
+
+            showAdminToast(`${successCount} booking(s) cancelled`, 'success');
+            deselectAllBookings();
+            loadBookings();
+        }
+
+        function toggleBookingsGrouping() {
+            const checkbox = document.getElementById('bookingsGroupByDate');
+            bookingsGroupByDate = checkbox ? checkbox.checked : false;
+            renderBookingsTable();
+        }
+
+        function exportBookingsToCSV() {
+            if (adminBookings.length === 0) {
+                showAdminToast('No bookings to export', 'error');
+                return;
+            }
+
+            // Build CSV content
+            const headers = ['ID', 'Customer', 'Email', 'Phone', 'Service', 'Stylist', 'Date', 'Time', 'Status', 'Notes'];
+            const rows = adminBookings.map(b => [
+                b.id,
+                b.customerName || 'Guest',
+                b.customerEmail || '',
+                b.customerPhone || '',
+                b.serviceName || '',
+                b.stylistName || 'Any',
+                b.requestedDate || b.date || '',
+                b.assignedStartTime || b.confirmedTime || b.time || b.preferredTimeOfDay || '',
+                b.status || '',
+                (b.notes || '').replace(/"/g, '""')
+            ]);
+
+            let csv = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `bookings-export-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showAdminToast(`Exported ${adminBookings.length} booking(s) to CSV`, 'success');
+        }
+
         function renderBookingsTable() {
             const container = document.getElementById('bookingsTableBody');
             if (!container) return;
@@ -5089,12 +5416,35 @@
                         </td>
                     </tr>
                 `;
+                updateBookingsPagination();
                 return;
             }
 
-            container.innerHTML = adminBookings.map(b => {
+            // Apply pagination
+            const start = (bookingsCurrentPage - 1) * bookingsPageSize;
+            const end = Math.min(start + bookingsPageSize, adminBookings.length);
+            const paginatedBookings = adminBookings.slice(start, end);
+
+            // Optional: Group by date
+            let html = '';
+            let lastDate = null;
+
+            paginatedBookings.forEach(b => {
                 // Use new schema fields with fallback to legacy
                 const dateStr = formatDateDisplay(b.requestedDate || b.date);
+                const rawDate = (b.requestedDate || b.date || '').split('T')[0];
+
+                // Add date separator if grouping is enabled
+                if (bookingsGroupByDate && rawDate !== lastDate) {
+                    html += `
+                        <tr style="background: var(--gray-light);">
+                            <td colspan="9" style="padding: 10px 20px; font-weight: 600; color: var(--brand-charcoal);">
+                                ${formatDateDisplay(rawDate + 'T00:00:00', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
+                            </td>
+                        </tr>
+                    `;
+                    lastDate = rawDate;
+                }
 
                 // Format time display based on booking status
                 let timeStr = 'TBC';
@@ -5109,11 +5459,16 @@
                 }
 
                 const shortId = b.id.substring(0, 8);
+                const isSelected = selectedBookingIds.has(b.id);
 
-                return `
-                    <tr>
+                html += `
+                    <tr${isSelected ? ' style="background: var(--primary-light);"' : ''}>
                         <td>
-                            <input type="checkbox" disabled style="opacity: 0.3;" title="Enable in enhanced mode">
+                            <input type="checkbox"
+                                   data-booking-id="${b.id}"
+                                   ${isSelected ? 'checked' : ''}
+                                   onchange="toggleBookingSelection('${b.id}')"
+                                   title="Select booking">
                         </td>
                         <td>
                             <code style="font-size: 11px; background: var(--gray-light); padding: 2px 6px; border-radius: 3px;" title="${b.id}">${shortId}</code>
@@ -5142,7 +5497,12 @@
                         </td>
                     </tr>
                 `;
-            }).join('');
+            });
+
+            container.innerHTML = html;
+
+            // Update pagination controls
+            updateBookingsPagination();
 
             // Add event listeners for booking action buttons
             attachBookingActionListeners();
@@ -7981,7 +8341,7 @@
         }
 
         // Reset staff modal for adding new
-function openAddStaffModal() {
+        function openAddStaffModal() {
             editingStaffId = null;
             document.getElementById('staffName').value = '';
             document.getElementById('staffRole').value = 'Senior Stylist';
@@ -8061,13 +8421,6 @@ function openAddStaffModal() {
             }
         }
 
-        function selectChat(id) {
-            document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('unread'));
-        }
-
-        // ============================================
-        // INITIALIZATION
-        // ============================================
         // ============================================
         // PUSH NOTIFICATIONS
         // ============================================
