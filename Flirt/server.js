@@ -2850,8 +2850,8 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
             const bookingDate = b.requestedDate || b.date;
             return bookingDate === today;
         }).length;
-        const pendingBookings = allBookings.filter(b => b.status === 'pending').length;
-        const pendingOrders = allOrders.filter(o => o.status === 'pending').length;
+        const pendingBookings = allBookings.filter(b => b.status === 'REQUESTED').length;
+        const pendingOrders = allOrders.filter(o => o.status === 'pending').length; // Orders use lowercase status
 
         res.json({
             success: true,
@@ -4544,7 +4544,7 @@ app.post('/api/notifications', authenticateAdmin, async (req, res) => {
             active: true,
             startsAt: startsAt || new Date().toISOString(),
             expiresAt: expiresAt || null,
-            createdBy: req.user.userId
+            createdBy: req.user.id
         };
 
         const created = await NotificationRepository.create(notification);

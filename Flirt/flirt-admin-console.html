@@ -4825,10 +4825,10 @@
                             <td>${displayTime}</td>
                             <td><span class="status-badge status-${b.status}">${b.status}</span></td>
                             <td class="action-btns">
-                                ${b.status === 'pending' ? `
+                                ${b.status === 'REQUESTED' ? `
                                     <button class="btn btn-icon btn-outline booking-confirm-btn" data-booking-id="${b.id}" title="Confirm">✅</button>
                                 ` : ''}
-                                ${b.status === 'confirmed' ? `
+                                ${b.status === 'CONFIRMED' ? `
                                     <button class="btn btn-icon btn-outline booking-complete-btn" data-booking-id="${b.id}" title="Complete">✔️</button>
                                 ` : ''}
                                 <button class="btn btn-icon btn-outline" title="View" onclick="showSection('bookings')">👁️</button>
@@ -5693,9 +5693,9 @@
 
                 // Format time display based on booking status
                 let timeStr = 'TBC';
-                if (b.status === 'CONFIRMED' || b.status === 'confirmed') {
+                if (b.status === 'CONFIRMED') {
                     timeStr = b.assignedStartTime || b.confirmedTime || b.time || 'TBC';
-                } else if (b.status === 'REQUESTED' || b.status === 'pending') {
+                } else if (b.status === 'REQUESTED') {
                     // Show time window for requested bookings
                     const timeWindow = window.BookingConstants?.getTimeWindow(b.requestedTimeWindow || b.preferredTimeOfDay);
                     timeStr = timeWindow ? `${timeWindow.icon} ${timeWindow.label}` : (b.preferredTimeOfDay || 'TBC');
@@ -5728,15 +5728,15 @@
                         <td>${timeStr}</td>
                         <td><span class="status-badge status-${b.status}">${b.status}</span></td>
                         <td class="action-btns">
-                            ${(b.status === 'REQUESTED' || b.status === 'pending') && !b.assignedStartTime ? `
+                            ${b.status === 'REQUESTED' && !b.assignedStartTime ? `
                                 <button class="btn btn-sm btn-primary booking-assign-btn" data-booking-id="${b.id}" title="Assign Time">⏰ Assign</button>
                             ` : `
                                 <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}" title="Edit booking">✏️</button>
                             `}
-                            ${b.status === 'CONFIRMED' || b.status === 'confirmed' ? `
+                            ${b.status === 'CONFIRMED' ? `
                                 <button class="btn btn-sm booking-complete-btn" data-booking-id="${b.id}" title="Complete">✓</button>
                             ` : ''}
-                            ${(b.status === 'REQUESTED' || b.status === 'CONFIRMED' || b.status === 'pending' || b.status === 'confirmed') ? `
+                            ${(b.status === 'REQUESTED' || b.status === 'CONFIRMED') ? `
                                 <button class="btn btn-sm btn-outline booking-cancel-btn" data-booking-id="${b.id}" title="Cancel">✗</button>
                             ` : ''}
                         </td>
@@ -5939,13 +5939,13 @@
                             ${b.notes ? `<div style="font-size: 12px; color: var(--gray-medium); margin-top: 8px; padding: 8px; background: var(--gray-light); border-radius: 4px;"><strong>Notes:</strong> ${b.notes}</div>` : ''}
                             <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
                                 <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}">✏️ Edit</button>
-                                ${b.status === 'pending' ? `
+                                ${b.status === 'REQUESTED' ? `
                                     <button class="btn btn-sm btn-primary booking-confirm-close-btn" data-booking-id="${b.id}">✓ Confirm</button>
                                 ` : ''}
-                                ${b.status === 'confirmed' ? `
+                                ${b.status === 'CONFIRMED' ? `
                                     <button class="btn btn-sm btn-primary booking-complete-close-btn" data-booking-id="${b.id}">✓ Complete</button>
                                 ` : ''}
-                                ${(b.status === 'pending' || b.status === 'confirmed') ? `
+                                ${(b.status === 'REQUESTED' || b.status === 'CONFIRMED') ? `
                                     <button class="btn btn-sm btn-outline booking-cancel-close-btn" data-booking-id="${b.id}">✗ Cancel</button>
                                 ` : ''}
                                 <button class="btn btn-sm booking-delete-btn" data-booking-id="${b.id}" style="background: var(--danger); color: white; margin-left: auto;">🗑️ Delete</button>
@@ -6637,7 +6637,7 @@
                 .filter(b =>
                     b.stylistId === stylistId &&
                     (b.requestedDate || b.date) === date &&
-                    (b.status === 'CONFIRMED' || b.status === 'confirmed') &&
+                    b.status === 'CONFIRMED' &&
                     b.assignedStartTime
                 )
                 .map(b => b.assignedStartTime);

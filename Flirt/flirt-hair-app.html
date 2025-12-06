@@ -7769,10 +7769,11 @@ async function showNotifications() {
 
                     // Format time display with new two-step booking logic
                     let timeDisplay = 'TBC';
-                    if (booking.status === 'CONFIRMED' || booking.status === 'confirmed') {
+                    const statusUpper = (booking.status || '').toUpperCase();
+                    if (statusUpper === 'CONFIRMED') {
                         // Confirmed bookings have exact time
                         timeDisplay = booking.assignedStartTime || booking.confirmedTime || booking.time || 'TBC';
-                    } else if (booking.status === 'REQUESTED' || booking.status === 'pending') {
+                    } else if (statusUpper === 'REQUESTED') {
                         // Requested bookings show time window
                         const timeWindow = window.BookingConstants?.getTimeWindow(booking.requestedTimeWindow || booking.preferredTimeOfDay);
                         if (timeWindow) {
@@ -7790,10 +7791,9 @@ async function showNotifications() {
 
                     // Status badge with new statuses
                     let statusBadge = '';
-                    const statusUpper = (booking.status || '').toUpperCase();
-                    if (statusUpper === 'CONFIRMED' || booking.status === 'confirmed') {
+                    if (statusUpper === 'CONFIRMED') {
                         statusBadge = '<span style="background: var(--success); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">✓ Confirmed</span>';
-                    } else if (statusUpper === 'REQUESTED' || booking.status === 'pending') {
+                    } else if (statusUpper === 'REQUESTED') {
                         statusBadge = '<span style="background: #FFC107; color: var(--brand-charcoal); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">⏳ Pending Time</span>';
                     } else {
                         statusBadge = '<span style="background: var(--warning); color: var(--brand-charcoal); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">Pending</span>';

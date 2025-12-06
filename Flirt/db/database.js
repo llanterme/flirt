@@ -210,7 +210,7 @@ const UserRepository = {
     },
 
     async updateHairTracker(userId, data) {
-        const existing = this.getHairTracker(userId);
+        const existing = await this.getHairTracker(userId);
         if (existing) {
             await dbRun(
                 `UPDATE hair_tracker SET last_install_date = ?, extension_type = ?, updated_at = datetime('now') WHERE user_id = ?`,
@@ -222,7 +222,7 @@ const UserRepository = {
                 [userId, data.lastInstallDate, data.extensionType]
             );
         }
-        return this.getHairTracker(userId);
+        return await this.getHairTracker(userId);
     },
 
     async getAllCustomersWithStats() {
@@ -290,7 +290,8 @@ const StylistRepository = {
             name: 'name', specialty: 'specialty', tagline: 'tagline',
             rating: 'rating', reviewCount: 'review_count', clientsCount: 'clients_count',
             yearsExperience: 'years_experience', instagram: 'instagram',
-            color: 'color', available: 'available', imageUrl: 'image_url'
+            color: 'color', available: 'available', imageUrl: 'image_url',
+            basicMonthlyPay: 'basic_monthly_pay', commissionRate: 'commission_rate'
         };
 
         for (const [key, dbField] of Object.entries(fieldMap)) {
@@ -812,6 +813,7 @@ const OrderRepository = {
 
         for (const order of orders) {
             order.items = await dbAll('SELECT * FROM order_items WHERE order_id = ?', [order.id]);
+            order.userId = order.userId || order.user_id;
             order.paymentStatus = order.payment_status || order.paymentStatus || 'unpaid';
             order.deliveryMethod = order.deliveryMethod || order.delivery_method;
             order.createdAt = order.createdAt || order.created_at;
@@ -1026,7 +1028,7 @@ const GalleryRepository = {
     async setInstagram(config) {
         const payload = JSON.stringify(config || {});
         await dbRun('INSERT OR REPLACE INTO gallery_settings (key, value) VALUES (?, ?)', ['instagram', payload]);
-        return this.getInstagram();
+        return await this.getInstagram();
     }
 };
 
