@@ -3069,9 +3069,34 @@ app.patch('/api/admin/bookings/:id/status', authenticateAdmin, async (req, res) 
             updatedAt: new Date().toISOString()
         };
 
-        // Add completion timestamp if marking as completed
+        // Add completion timestamp and snapshot commission if marking as completed
         if (statusUpper === 'COMPLETED') {
             updateData.completedAt = new Date().toISOString();
+
+            // Snapshot the commission amount at completion time
+            // This prevents retroactive changes if service rates are modified later
+            const VAT_RATE = 0.15;
+            const priceExVat = (booking.service_price || 0) / (1 + VAT_RATE);
+
+            // Priority: booking override > service rate > 0
+            let effectiveRate;
+            if (booking.commission_rate !== null && booking.commission_rate !== undefined) {
+                effectiveRate = booking.commission_rate;
+            } else {
+                // Fetch service commission rate
+                const service = await ServiceRepository.findById(booking.service_id);
+                if (service && service.commission_rate !== null && service.commission_rate !== undefined) {
+                    effectiveRate = service.commission_rate;
+                } else {
+                    effectiveRate = 0;
+                }
+            }
+
+            // Store the snapshot - commission_rate used and calculated amount
+            if (booking.commission_rate === null || booking.commission_rate === undefined) {
+                updateData.commissionRate = effectiveRate;
+            }
+            updateData.commissionAmount = priceExVat * effectiveRate;
         }
 
         const updatedBooking = await BookingRepository.updateById(req.params.id, updateData);
@@ -3124,8 +3149,31 @@ app.patch('/api/admin/bookings/:id', authenticateAdmin, async (req, res) => {
             }
         }
 
-        // Stylist
+        // Stylist - validate that stylist offers the service
         if (stylistId !== undefined) {
+            if (stylistId) {
+                // Get the service ID (either from this update or from existing booking)
+                const effectiveServiceId = serviceId || booking.service_id;
+
+                // Check if stylist offers this service
+                const staffServiceRow = await new Promise((resolve, reject) => {
+                    db.get(
+                        'SELECT id FROM staff_services WHERE staff_id = ? AND service_id = ? AND active = 1',
+                        [stylistId, effectiveServiceId],
+                        (err, row) => err ? reject(err) : resolve(row)
+                    );
+                });
+
+                if (!staffServiceRow) {
+                    // Fetch stylist and service names for better error message
+                    const stylist = await StylistRepository.findById(stylistId);
+                    const service = await ServiceRepository.findById(effectiveServiceId);
+                    return res.status(400).json({
+                        success: false,
+                        message: `${stylist?.name || 'This stylist'} does not offer ${service?.name || 'this service'}. Please assign a different stylist or update their service offerings first.`
+                    });
+                }
+            }
             updates.stylist_id = stylistId || null;
         }
 

@@ -416,3 +416,22 @@ CREATE TABLE IF NOT EXISTS payroll_records (
 CREATE INDEX IF NOT EXISTS idx_payroll_stylist ON payroll_records(stylist_id);
 CREATE INDEX IF NOT EXISTS idx_payroll_period ON payroll_records(period_year, period_month);
 CREATE INDEX IF NOT EXISTS idx_payroll_status ON payroll_records(status);
+
+-- ============================================
+-- STAFF SERVICES JUNCTION TABLE
+-- Links staff members to services they offer with optional custom pricing
+-- ============================================
+CREATE TABLE IF NOT EXISTS staff_services (
+    id TEXT PRIMARY KEY,
+    staff_id TEXT NOT NULL REFERENCES stylists(id) ON DELETE CASCADE,
+    service_id TEXT NOT NULL REFERENCES services(id) ON DELETE CASCADE,
+    custom_price REAL,           -- Override price for this staff-service combination
+    custom_duration INTEGER,     -- Override duration in minutes
+    active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(staff_id, service_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_staff_services_staff ON staff_services(staff_id);
+CREATE INDEX IF NOT EXISTS idx_staff_services_service ON staff_services(service_id);
