@@ -5023,8 +5023,8 @@ app.get('/api/admin/chat/conversations', authenticateAdmin, async (req, res) => 
             const lastUser = [...msgs].reverse().find(m => m.from_type === 'user');
             summaries.push({
                 id: c.id,
-                userName: payload.customerName,
-                userEmail: payload.customerEmail,
+                customerName: payload.customerName, // Fixed: was 'userName', admin console expects 'customerName'
+                customerEmail: payload.customerEmail,
                 guestId: c.guest_id,
                 source: c.source,
                 lastMessage: lastUser ? lastUser.text.substring(0, 100) : '',

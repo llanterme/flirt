@@ -5958,6 +5958,11 @@
             updateUserUI();
             loadUserData();
             loadUpcomingAppointment();
+
+            // Clear guest chat conversation so user gets a fresh conversation linked to their account
+            localStorage.removeItem('flirt_conversation_id');
+            localStorage.removeItem('flirt_guest_id');
+            currentConversationId = null;
         }
 
         async function checkAuthStatus() {
