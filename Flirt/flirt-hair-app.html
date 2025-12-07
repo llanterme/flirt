@@ -6857,11 +6857,19 @@
             }
         }
 
-        // Dev-only auto-login when running locally without a token
+        // Dev-only auto-login - DISABLED by default for security
+        // Only enable this for local development when needed
         async function devAutoLoginIfNeeded() {
+            // SECURITY: Auto-login is disabled by default
+            // To enable for local dev, set localStorage.setItem('flirt_dev_autologin', 'true')
+            const devAutoLoginEnabled = localStorage.getItem('flirt_dev_autologin') === 'true';
             const hasToken = !!getToken();
             const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            if (hasToken || !isLocalhost) return;
+
+            // Only proceed if ALL conditions are met: localhost, no token, AND explicitly enabled
+            if (hasToken || !isLocalhost || !devAutoLoginEnabled) return;
+
+            console.log('[DEV] Auto-login enabled for development');
             try {
                 const res = await fetch(`${API_BASE}/auth/dev-login`);
                 if (!res.ok) return;
@@ -6984,6 +6992,21 @@
         // When called from onclick, pass the event: switchTab('home', event)
         // When called programmatically, just pass the tab name: switchTab('home')
         function switchTab(tabName, evt) {
+            // Protected tabs that require authentication
+            const protectedTabs = ['profile', 'rewards', 'tracker'];
+
+            // Check if trying to access protected tab without auth
+            if (protectedTabs.includes(tabName) && !currentUser) {
+                // Show auth gate and prompt login
+                showAuthGate();
+                showToast({
+                    type: 'info',
+                    title: 'Sign in required',
+                    message: 'Please sign in to access this feature'
+                });
+                return; // Don't switch to protected tab
+            }
+
             const contentAreas = document.querySelectorAll('.content-area');
             contentAreas.forEach(area => area.classList.remove('active'));
 
@@ -11167,10 +11190,23 @@ async function showNotifications() {
 
         setInterval(updateFlashSaleTimer, 1000);
 
-        // Close modals when clicking outside
+        // Close modals when clicking outside - but protect auth modal
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
-                event.target.classList.remove('show');
+                // Special handling for auth modal - don't allow bypass
+                if (event.target.id === 'authModal') {
+                    // Only close if user is already authenticated
+                    if (currentUser) {
+                        event.target.classList.remove('show');
+                    } else {
+                        // User not logged in - show auth gate instead
+                        event.target.classList.remove('show');
+                        showAuthGate();
+                    }
+                } else {
+                    // Other modals can close normally
+                    event.target.classList.remove('show');
+                }
             }
         }
 
