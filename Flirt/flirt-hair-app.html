@@ -3075,12 +3075,209 @@
         .time-window-chip.selected .label {
             color: var(--primary);
         }
+
+        /* Auth Gate / Welcome Screen */
+        .auth-gate {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #F67599 0%, #e05a7f 50%, #414042 100%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 1;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .auth-gate.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .auth-gate-content {
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .auth-gate-logo {
+            margin-bottom: 20px;
+        }
+
+        .auth-gate-logo img {
+            height: 80px;
+            filter: brightness(0) invert(1);
+        }
+
+        .auth-gate-tagline {
+            color: rgba(255,255,255,0.9);
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 14px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+        }
+
+        .auth-gate-hero {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px 30px;
+            margin-bottom: 30px;
+        }
+
+        .auth-gate-hero h1 {
+            color: white;
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 28px;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            margin-bottom: 15px;
+        }
+
+        .auth-gate-hero p {
+            color: rgba(255,255,255,0.85);
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+
+        .auth-gate-features {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .auth-gate-feature {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .auth-gate-feature-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 24px;
+        }
+
+        .auth-gate-feature-text {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .auth-gate-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .auth-gate-btn {
+            padding: 16px 32px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .auth-gate-btn-primary {
+            background: white;
+            color: var(--brand-pink);
+        }
+
+        .auth-gate-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .auth-gate-btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        .auth-gate-btn-secondary:hover {
+            border-color: white;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .auth-gate-footer {
+            margin-top: 30px;
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+        }
+
+        .auth-gate-footer a {
+            color: white;
+            text-decoration: underline;
+        }
     </style>
 
     <!-- Booking Constants (shared with backend) -->
     <script src="/shared/booking-constants.js"></script>
 </head>
 <body>
+    <!-- Auth Gate / Welcome Screen -->
+    <div class="auth-gate" id="authGate">
+        <div class="auth-gate-content">
+            <div class="auth-gate-logo">
+                <img src="Flirt pink logo 2.jpeg" alt="FL!RT">
+            </div>
+            <div class="auth-gate-tagline">Hair & Beauty Bar</div>
+
+            <div class="auth-gate-hero">
+                <h1>Your Hair Journey Starts Here</h1>
+                <p>Book appointments, earn rewards, and discover premium hair extensions tailored just for you.</p>
+            </div>
+
+            <div class="auth-gate-features">
+                <div class="auth-gate-feature">
+                    <div class="auth-gate-feature-icon">📅</div>
+                    <div class="auth-gate-feature-text">Easy Booking</div>
+                </div>
+                <div class="auth-gate-feature">
+                    <div class="auth-gate-feature-icon">⭐</div>
+                    <div class="auth-gate-feature-text">Earn Rewards</div>
+                </div>
+                <div class="auth-gate-feature">
+                    <div class="auth-gate-feature-icon">💇</div>
+                    <div class="auth-gate-feature-text">Track Progress</div>
+                </div>
+            </div>
+
+            <div class="auth-gate-buttons">
+                <button class="auth-gate-btn auth-gate-btn-primary" onclick="showAuthGateSignup()">
+                    Create Account
+                </button>
+                <button class="auth-gate-btn auth-gate-btn-secondary" onclick="showAuthGateLogin()">
+                    I Already Have an Account
+                </button>
+            </div>
+
+            <div class="auth-gate-footer">
+                <p>By continuing, you agree to our <a href="#">Terms</a> & <a href="#">Privacy Policy</a></p>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification Container -->
     <div class="toast-container" id="toastContainer"></div>
 
@@ -5145,6 +5342,27 @@
         // ============================================
         let currentUser = null;
 
+        // Auth Gate Functions
+        function showAuthGate() {
+            document.getElementById('authGate').classList.remove('hidden');
+        }
+
+        function hideAuthGate() {
+            document.getElementById('authGate').classList.add('hidden');
+        }
+
+        function showAuthGateLogin() {
+            hideAuthGate();
+            showAuthModal();
+            switchAuthTab('login');
+        }
+
+        function showAuthGateSignup() {
+            hideAuthGate();
+            showAuthModal();
+            switchAuthTab('signup');
+        }
+
         function showAuthModal() {
             document.getElementById('authModal').classList.add('show');
         }
@@ -5309,6 +5527,7 @@
 
         function onLoginSuccess() {
             closeModal('authModal');
+            hideAuthGate(); // Hide the auth gate on successful login
             document.body.classList.add('logged-in');
             updateUserUI();
             loadUserData();
@@ -5317,21 +5536,27 @@
 
         async function checkAuthStatus() {
             const token = getToken();
-            if (!token) return;
+            if (!token) {
+                // No token - show auth gate
+                showAuthGate();
+                return;
+            }
 
             try {
                 const data = await apiCall('/auth/me');
                 currentUser = data.user;
                 document.body.classList.add('logged-in');
+                hideAuthGate(); // User is authenticated - hide the gate
                 updateUserUI();
                 await loadUserData();
                 await loadUpcomingAppointment();
             } catch (error) {
-                // Token was present but invalid/expired - clear it and notify user
+                // Token was present but invalid/expired - clear it and show auth gate
                 localStorage.removeItem('flirt_token');
                 currentUser = null;
                 document.body.classList.remove('logged-in');
                 updateUserUI();
+                showAuthGate();
 
                 // Show non-intrusive feedback about session expiry
                 showToast({
@@ -5450,6 +5675,9 @@
 
                 // Update profile UI to show guest state immediately
                 updateUserUI();
+
+                // Show auth gate again
+                showAuthGate();
 
                 // Show confirmation toast
                 showToast({ type: 'info', title: 'Logged Out', message: 'You have been logged out successfully.' });
