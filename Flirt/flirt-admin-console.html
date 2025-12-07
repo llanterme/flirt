@@ -990,14 +990,76 @@
             margin-top: 15px;
         }
 
-        /* Responsive */
+        /* ============================================
+           MOBILE RESPONSIVE STYLES
+           ============================================ */
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            color: var(--brand-charcoal);
+        }
+
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+            opacity: 1;
+        }
+
+        /* Mobile close button in sidebar */
+        .sidebar-close-btn {
+            display: none;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .sidebar-close-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Tablet and below */
         @media (max-width: 1024px) {
             .sidebar {
                 transform: translateX(-100%);
+                z-index: 999;
+                transition: transform 0.3s ease;
             }
 
             .sidebar.open {
                 transform: translateX(0);
+            }
+
+            .sidebar-close-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .main-content {
@@ -1011,19 +1073,168 @@
             .form-row {
                 grid-template-columns: 1fr;
             }
+
+            /* Top bar adjustments */
+            .top-bar {
+                padding: 12px 15px;
+            }
+
+            .page-title {
+                font-size: 18px;
+            }
+
+            .search-box {
+                display: none;
+            }
+
+            /* Stats grid mobile */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            /* Quick actions mobile */
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
-        .mobile-menu-btn {
-            display: none;
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
+        /* Phone specific */
+        @media (max-width: 768px) {
+            /* Table responsiveness */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin: 0 -15px;
+                padding: 0 15px;
+            }
+
+            .data-table {
+                min-width: 600px;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+
+            /* Filter tabs scroll */
+            .status-filter-tabs {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 5px;
+            }
+
+            .status-filter-tab {
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+
+            /* Action buttons stack on mobile */
+            .action-buttons {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .action-buttons .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            /* Card adjustments */
+            .card {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            /* Stats grid single column on small phones */
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            /* Section headers */
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            /* Quick actions single column */
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            /* Calendar mobile */
+            .calendar-grid {
+                grid-template-columns: repeat(7, 1fr);
+            }
+
+            .calendar-day {
+                min-height: 60px;
+                padding: 5px;
+                font-size: 11px;
+            }
+
+            .calendar-day-header {
+                padding: 5px;
+                font-size: 10px;
+            }
+
+            /* Modal mobile fullscreen */
+            .modal-content {
+                width: 100%;
+                max-width: 100%;
+                height: 100%;
+                max-height: 100%;
+                margin: 0;
+                border-radius: 0;
+            }
+
+            /* Filter panel mobile */
+            .filter-panel {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .filter-panel select,
+            .filter-panel input {
+                width: 100%;
+            }
+
+            /* Booking detail row on mobile */
+            .booking-detail-row {
+                flex-direction: column;
+                gap: 5px;
+            }
         }
 
-        @media (max-width: 1024px) {
-            .mobile-menu-btn {
-                display: block;
+        /* Very small phones */
+        @media (max-width: 400px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .top-bar-actions {
+                gap: 5px;
+            }
+
+            .page-title {
+                font-size: 16px;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 8px 10px;
+                font-size: 12px;
             }
         }
 
@@ -1290,9 +1501,13 @@
     <script src="/shared/booking-constants.js"></script>
 </head>
 <body>
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
     <div class="admin-layout">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
+            <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close menu">×</button>
             <div class="sidebar-header">
                 <div class="sidebar-logo"><img src="Flirt pink logo 2.jpeg" alt="FL!RT Hair & Beauty Bar"></div>
                 <div class="sidebar-subtitle">Admin Console</div>
@@ -4528,13 +4743,27 @@
                 case 'settings': loadSettingsPage(); break;
             }
 
+            // Close sidebar on mobile after navigation
             if (window.innerWidth < 1024) {
-                document.getElementById('sidebar').classList.remove('open');
+                closeSidebar();
             }
         }
 
         function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
+            // Prevent body scroll when sidebar is open
+            document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+            document.body.style.overflow = '';
         }
 
         // ============================================
