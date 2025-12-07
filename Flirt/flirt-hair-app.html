@@ -3801,7 +3801,10 @@
         }
 
         .auth-gate-benefit-icon {
-            font-size: 16px;
+            width: 18px;
+            height: 18px;
+            color: #F67599;
+            flex-shrink: 0;
         }
 
         .auth-gate-benefit-title {
@@ -3878,7 +3881,9 @@
         }
 
         .auth-gate-trust-icon {
-            font-size: 12px;
+            width: 14px;
+            height: 14px;
+            flex-shrink: 0;
         }
 
         .auth-gate-footer {
@@ -3932,15 +3937,25 @@
                 <!-- Compact Benefits Pills -->
                 <div class="auth-gate-benefits">
                     <div class="auth-gate-benefit">
-                        <span class="auth-gate-benefit-icon">📅</span>
+                        <svg class="auth-gate-benefit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
                         <span class="auth-gate-benefit-title">Easy Booking</span>
                     </div>
                     <div class="auth-gate-benefit">
-                        <span class="auth-gate-benefit-icon">🎁</span>
+                        <svg class="auth-gate-benefit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
                         <span class="auth-gate-benefit-title">Earn Rewards</span>
                     </div>
                     <div class="auth-gate-benefit">
-                        <span class="auth-gate-benefit-icon">👑</span>
+                        <svg class="auth-gate-benefit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
                         <span class="auth-gate-benefit-title">VIP Access</span>
                     </div>
                 </div>
@@ -3958,15 +3973,26 @@
                 <!-- Minimal Trust -->
                 <div class="auth-gate-trust">
                     <div class="auth-gate-trust-item">
-                        <span class="auth-gate-trust-icon">🔒</span>
+                        <svg class="auth-gate-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
                         <span>Secure</span>
                     </div>
                     <div class="auth-gate-trust-item">
-                        <span class="auth-gate-trust-icon">⚡</span>
+                        <svg class="auth-gate-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
                         <span>30 seconds</span>
                     </div>
                     <div class="auth-gate-trust-item">
-                        <span class="auth-gate-trust-icon">✨</span>
+                        <svg class="auth-gate-trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
                         <span>2,500+ clients</span>
                     </div>
                 </div>
