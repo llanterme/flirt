@@ -3425,65 +3425,62 @@
             background: #fafafa;
         }
 
-        .auth-gate-instagram-container {
+        /* Instant CSS-only pattern - no images, loads immediately */
+        .auth-gate-gallery-pattern {
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            background:
+                /* Animated gradient overlay */
+                linear-gradient(135deg, rgba(246,117,153,0.15) 0%, transparent 50%, rgba(206,147,216,0.15) 100%),
+                /* Grid pattern */
+                repeating-linear-gradient(0deg, transparent, transparent 49.5%, rgba(255,255,255,0.3) 49.5%, rgba(255,255,255,0.3) 50.5%, transparent 50.5%, transparent 100%),
+                repeating-linear-gradient(90deg, transparent, transparent 49.5%, rgba(255,255,255,0.3) 49.5%, rgba(255,255,255,0.3) 50.5%, transparent 50.5%, transparent 100%),
+                /* Base gradient - pink to purple tones */
+                linear-gradient(135deg,
+                    #fce4ec 0%,
+                    #f8bbd9 15%,
+                    #f48fb1 30%,
+                    #f3e5f5 45%,
+                    #e1bee7 60%,
+                    #ce93d8 75%,
+                    #f8bbd9 90%,
+                    #fce4ec 100%
+                );
+            background-size: 100% 100%, 50% 33.33%, 50% 33.33%, 400% 400%;
+            animation: authGalleryShift 15s ease infinite;
         }
 
-        /* Fast static gallery grid instead of slow Instagram embed */
-        .auth-gate-gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 4px;
-            width: 100%;
-            height: 100%;
-            background: #fafafa;
+        @keyframes authGalleryShift {
+            0%, 100% { background-position: 0% 0%, 0% 0%, 0% 0%, 0% 50%; }
+            25% { background-position: 0% 0%, 0% 0%, 0% 0%, 50% 50%; }
+            50% { background-position: 0% 0%, 0% 0%, 0% 0%, 100% 50%; }
+            75% { background-position: 0% 0%, 0% 0%, 0% 0%, 50% 100%; }
         }
 
-        .auth-gate-gallery-item {
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-        }
-
-        .auth-gate-gallery-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            opacity: 0;
-        }
-
-        .auth-gate-gallery-item img.loaded {
-            opacity: 1;
-        }
-
-        .auth-gate-gallery-item:hover img {
-            transform: scale(1.05);
-        }
-
-        .auth-gate-gallery-item::before {
-            content: '';
+        /* Hair silhouette decorations */
+        .auth-gate-gallery-pattern::before {
+            content: '💇‍♀️';
             position: absolute;
-            inset: 0;
-            background: linear-gradient(45deg, transparent 40%, rgba(246,117,153,0.1) 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 1;
+            font-size: 120px;
+            opacity: 0.08;
+            top: 20%;
+            left: 15%;
+            transform: rotate(-15deg);
         }
 
-        .auth-gate-gallery-item:hover::before {
-            opacity: 1;
+        .auth-gate-gallery-pattern::after {
+            content: '✨';
+            position: absolute;
+            font-size: 80px;
+            opacity: 0.1;
+            bottom: 25%;
+            right: 20%;
+            animation: sparkle 2s ease-in-out infinite;
         }
 
-        .auth-gate-instagram-container iframe,
-        .auth-gate-instagram-container .instagram-media {
-            width: 100% !important;
-            height: 100% !important;
-            min-height: 100% !important;
-            max-width: 100% !important;
+        @keyframes sparkle {
+            0%, 100% { opacity: 0.1; transform: scale(1); }
+            50% { opacity: 0.2; transform: scale(1.1); }
         }
 
         .auth-gate-gallery-overlay {
@@ -3938,28 +3935,10 @@
 <body>
     <!-- Auth Gate / Welcome Screen -->
     <div class="auth-gate" id="authGate">
-        <!-- Gallery Side (Desktop Only) - Fast static images instead of slow Instagram embed -->
+        <!-- Gallery Side (Desktop Only) - Instant gradient pattern, no external images -->
         <div class="auth-gate-gallery">
-            <div class="auth-gate-gallery-grid" id="authGateGallery">
-                <!-- Images loaded dynamically from gallery API for fast loading -->
-                <div class="auth-gate-gallery-item">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Hair Extensions" loading="eager" onload="this.classList.add('loaded')">
-                </div>
-                <div class="auth-gate-gallery-item">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg" alt="Hair Styling" loading="eager" onload="this.classList.add('loaded')">
-                </div>
-                <div class="auth-gate-gallery-item">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg" alt="Color Treatment" loading="eager" onload="this.classList.add('loaded')">
-                </div>
-                <div class="auth-gate-gallery-item">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories7.jpg" alt="Hair Care" loading="eager" onload="this.classList.add('loaded')">
-                </div>
-                <div class="auth-gate-gallery-item">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-image-1.jpg" alt="Salon" loading="eager" onload="this.classList.add('loaded')">
-                </div>
-                <div class="auth-gate-gallery-item">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories2.jpg" alt="Extensions" loading="eager" onload="this.classList.add('loaded')">
-                </div>
+            <div class="auth-gate-gallery-pattern" id="authGateGallery">
+                <!-- Pure CSS pattern - loads instantly, no network requests -->
             </div>
             <div class="auth-gate-gallery-overlay">
                 <div class="auth-gate-gallery-text">
