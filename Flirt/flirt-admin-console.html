@@ -643,6 +643,11 @@
             display: flex;
         }
 
+        /* Higher z-index for stacked modals (e.g., customer modal on top of booking modal) */
+        .modal-overlay.stacked {
+            z-index: 1100;
+        }
+
         .modal {
             background: white;
             border-radius: 20px;
@@ -2704,6 +2709,7 @@
                             <h3 class="data-card-title">Gallery Management</h3>
                             <div style="display:flex; gap:10px; align-items:center;">
                                 <button class="btn btn-outline btn-small" onclick="openInstagramModal()">Instagram Feed</button>
+                                <button class="btn btn-outline btn-small" onclick="importFlirthairGallery()">Import from flirthair.co.za</button>
                                 <button class="btn btn-primary btn-small" onclick="showGalleryModal()">+ Add Image</button>
                             </div>
                         </div>
@@ -3894,9 +3900,14 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label">Customer</label>
-                    <select class="form-input" id="adminBookingCustomer">
-                        <option value="">Loading customers...</option>
-                    </select>
+                    <div style="display: flex; gap: 8px;">
+                        <select class="form-input" id="adminBookingCustomer" style="flex: 1;">
+                            <option value="">Loading customers...</option>
+                        </select>
+                        <button type="button" class="btn btn-outline" onclick="openNewCustomerFromBooking()" title="Add new customer" style="padding: 8px 12px; white-space: nowrap;">
+                            + New
+                        </button>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -6815,6 +6826,18 @@
             }
         }
 
+        // Flag to track if we're creating a customer from booking modal
+        let creatingCustomerFromBooking = false;
+
+        // Open new customer modal from booking flow
+        function openNewCustomerFromBooking() {
+            creatingCustomerFromBooking = true;
+            // Don't close booking modal - just open customer modal on top
+            openCustomerModal(null);
+            // Add stacked class so customer modal appears above booking modal
+            document.getElementById('customerModal').classList.add('stacked');
+        }
+
         function openCustomerModal(customer = null) {
             editingCustomerId = customer?.id || null;
             document.getElementById('customerModalTitle').textContent = editingCustomerId ? 'Edit Customer' : 'Add Customer';
@@ -6830,6 +6853,8 @@
 
         function closeCustomerModal() {
             editingCustomerId = null;
+            creatingCustomerFromBooking = false; // Reset flag on close
+            document.getElementById('customerModal').classList.remove('stacked'); // Remove stacked class
             closeModal('customerModal');
         }
 
@@ -6851,7 +6876,12 @@
                 return;
             }
 
+            // Track if we came from booking flow
+            const wasFromBookingFlow = creatingCustomerFromBooking;
+
             try {
+                let newCustomerId = null;
+
                 if (editingCustomerId) {
                     await apiCall(`/admin/customers/${editingCustomerId}`, {
                         method: 'PUT',
@@ -6859,16 +6889,47 @@
                     });
                     alert('Customer updated');
                 } else {
-                    await apiCall('/admin/customers', {
+                    const result = await apiCall('/admin/customers', {
                         method: 'POST',
                         body: JSON.stringify({ name, email, phone, tier, points, password: password || undefined })
                     });
-                    alert('Customer added');
+                    newCustomerId = result.customerId || result.id;
+
+                    if (wasFromBookingFlow) {
+                        // Don't show alert, just close and update dropdown
+                    } else {
+                        alert('Customer added');
+                    }
                 }
+
                 closeCustomerModal();
                 await loadCustomers();
+
+                // If we were creating from booking flow, update the booking customer dropdown and select new customer
+                if (wasFromBookingFlow && newCustomerId) {
+                    await refreshBookingCustomerDropdown(newCustomerId);
+                }
             } catch (error) {
                 alert('Error saving customer: ' + error.message);
+            }
+        }
+
+        // Refresh the booking customer dropdown and optionally select a customer
+        async function refreshBookingCustomerDropdown(selectCustomerId = null) {
+            try {
+                const data = await apiCall('/admin/customers');
+                const customers = data.customers || [];
+                const customerSelect = document.getElementById('adminBookingCustomer');
+
+                customerSelect.innerHTML = '<option value="">Select customer...</option>' +
+                    customers.map(c => `<option value="${c.id}">${c.name} (${c.email})</option>`).join('');
+
+                // If a customer ID was provided, select them
+                if (selectCustomerId) {
+                    customerSelect.value = selectCustomerId;
+                }
+            } catch (error) {
+                console.error('Error refreshing customer dropdown:', error);
             }
         }
 
@@ -9677,6 +9738,29 @@
         // ============================================
         // GALLERY MANAGEMENT
         // ============================================
+
+        let galleryImporting = false;
+
+        async function importFlirthairGallery() {
+            if (galleryImporting) return;
+            const confirmed = confirm('Import the latest images from flirthair.co.za into the gallery? Existing Flirt images will be updated.');
+            if (!confirmed) return;
+
+            galleryImporting = true;
+            showAdminToast('Importing gallery images...', 'info');
+            try {
+                const result = await apiCall('/admin/gallery/import/flirthair', { method: 'POST' });
+                const created = result.created || 0;
+                const updated = result.updated || 0;
+                const skipped = result.skipped || 0;
+                showAdminToast(`Import complete. ${created} added, ${updated} updated, ${skipped} skipped.`, 'success');
+                loadGallery();
+            } catch (error) {
+                showAdminToast('Import failed: ' + error.message, 'error');
+            } finally {
+                galleryImporting = false;
+            }
+        }
 
         async function loadGallery() {
             try {
