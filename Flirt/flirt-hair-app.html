@@ -3612,6 +3612,30 @@
             color: var(--primary);
         }
 
+        /* ============================================
+           AUTH REQUIRED STATE - Defense in Depth
+           Body starts with auth-required class.
+           App content is hidden until user authenticates.
+           ============================================ */
+        body.auth-required .app-container,
+        body.auth-required .header,
+        body.auth-required .bottom-nav,
+        body.auth-required .chat-widget {
+            display: none !important;
+        }
+
+        /* Auth gate is ALWAYS visible when body has auth-required class */
+        body.auth-required .auth-gate {
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* When logged in (auth-required removed), app shows and auth gate hides */
+        body.logged-in .auth-gate {
+            display: none !important;
+        }
+
         /* Auth Gate / Welcome Screen - Redesigned for conversion */
         .auth-gate {
             position: fixed;
@@ -4150,7 +4174,7 @@
     <!-- Booking Constants (shared with backend) -->
     <script src="/shared/booking-constants.js"></script>
 </head>
-<body>
+<body class="auth-required">
     <!-- Auth Gate / Welcome Screen -->
     <div class="auth-gate" id="authGate">
         <!-- Gallery Side (Desktop Only) - Instant gradient pattern, no external images -->
@@ -6788,8 +6812,10 @@
 
         function onLoginSuccess() {
             closeModal('authModal');
-            hideAuthGate(); // Hide the auth gate on successful login
+            // Update body classes for authenticated state
+            document.body.classList.remove('auth-required');
             document.body.classList.add('logged-in');
+            hideAuthGate();
             updateUserUI();
             loadUserData();
             loadUpcomingAppointment();
@@ -6803,7 +6829,9 @@
         async function checkAuthStatus() {
             const token = getToken();
             if (!token) {
-                // No token - show auth gate
+                // No token - ensure auth-required state and show auth gate
+                document.body.classList.add('auth-required');
+                document.body.classList.remove('logged-in');
                 showAuthGate();
                 return;
             }
@@ -6811,8 +6839,10 @@
             try {
                 const data = await apiCall('/auth/me');
                 currentUser = data.user;
+                // User authenticated - remove auth-required and add logged-in
+                document.body.classList.remove('auth-required');
                 document.body.classList.add('logged-in');
-                hideAuthGate(); // User is authenticated - hide the gate
+                hideAuthGate();
                 updateUserUI();
                 await loadUserData();
                 await loadUpcomingAppointment();
@@ -6820,6 +6850,7 @@
                 // Token was present but invalid/expired - clear it and show auth gate
                 localStorage.removeItem('flirt_token');
                 currentUser = null;
+                document.body.classList.add('auth-required');
                 document.body.classList.remove('logged-in');
                 updateUserUI();
                 showAuthGate();
@@ -6853,7 +6884,10 @@
                 if (data.token && data.user) {
                     localStorage.setItem('flirt_token', data.token);
                     currentUser = data.user;
+                    // Update body classes for authenticated state
+                    document.body.classList.remove('auth-required');
                     document.body.classList.add('logged-in');
+                    hideAuthGate();
                     updateUserUI();
                     await loadUserData();
                     await loadUpcomingAppointment();
@@ -6945,6 +6979,9 @@
                 // Clear auth token and user state
                 localStorage.removeItem('flirt_token');
                 currentUser = null;
+
+                // Update body classes for unauthenticated state
+                document.body.classList.add('auth-required');
                 document.body.classList.remove('logged-in');
 
                 // Update profile UI to show guest state immediately
