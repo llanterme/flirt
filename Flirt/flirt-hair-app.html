@@ -3098,31 +3098,27 @@
             pointer-events: none;
         }
 
-        /* Gallery Side - Hidden on mobile */
+        /* Gallery/Instagram Side - Hidden on mobile */
         .auth-gate-gallery {
             display: none;
             width: 50%;
             position: relative;
             overflow: hidden;
+            background: #fafafa;
         }
 
-        .auth-gate-gallery-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
+        .auth-gate-instagram-container {
+            width: 100%;
             height: 100%;
-            gap: 4px;
+            overflow: hidden;
         }
 
-        .auth-gate-gallery-item {
-            background-size: cover;
-            background-position: center;
-            position: relative;
-            transition: transform 0.5s ease;
-        }
-
-        .auth-gate-gallery-item:hover {
-            transform: scale(1.05);
+        .auth-gate-instagram-container iframe,
+        .auth-gate-instagram-container .instagram-media {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 100% !important;
+            max-width: 100% !important;
         }
 
         .auth-gate-gallery-overlay {
@@ -3130,27 +3126,34 @@
             bottom: 0;
             left: 0;
             right: 0;
-            padding: 40px 30px;
-            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+            padding: 30px 25px;
+            background: linear-gradient(to top, rgba(65,64,66,0.95) 0%, rgba(65,64,66,0.7) 50%, transparent 100%);
+            z-index: 10;
         }
 
         .auth-gate-gallery-text {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .auth-gate-gallery-hashtag {
             color: #FFD700;
             font-family: 'Josefin Sans', sans-serif;
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 600;
             letter-spacing: 0.05em;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .auth-gate-gallery-hashtag:hover {
+            color: #FFA500;
         }
 
         .auth-gate-gallery-label {
             color: rgba(255,255,255,0.9);
-            font-size: 14px;
+            font-size: 12px;
             letter-spacing: 0.1em;
             text-transform: uppercase;
         }
@@ -3162,25 +3165,24 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            overflow-y: auto;
+            padding: 15px 20px;
+            overflow: hidden;
         }
 
         .auth-gate-content {
-            max-width: 420px;
+            max-width: 400px;
             width: 100%;
             text-align: center;
-            padding: 20px 0;
         }
 
         .auth-gate-logo {
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         /* Text-based logo */
         .auth-gate-logo-text {
             font-family: 'Josefin Sans', sans-serif;
-            font-size: 56px;
+            font-size: 48px;
             font-weight: 300;
             letter-spacing: 0.15em;
             color: white;
@@ -3203,7 +3205,7 @@
             }
 
             .auth-gate-logo-text {
-                font-size: 64px;
+                font-size: 52px;
             }
         }
 
@@ -3218,21 +3220,21 @@
             }
 
             .auth-gate-logo-text {
-                font-size: 72px;
+                font-size: 60px;
             }
 
             .auth-gate-content {
-                max-width: 480px;
+                max-width: 440px;
             }
         }
 
         .auth-gate-tagline {
             color: rgba(255,255,255,0.85);
             font-family: 'Josefin Sans', sans-serif;
-            font-size: 12px;
+            font-size: 10px;
             letter-spacing: 0.25em;
             text-transform: uppercase;
-            margin-bottom: 25px;
+            margin-bottom: 12px;
         }
 
         /* Social proof banner */
@@ -3240,25 +3242,25 @@
             background: rgba(255,255,255,0.15);
             backdrop-filter: blur(10px);
             border-radius: 50px;
-            padding: 10px 20px;
-            margin-bottom: 25px;
+            padding: 6px 14px;
+            margin-bottom: 12px;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .auth-gate-avatars {
             display: flex;
-            margin-right: 5px;
+            margin-right: 3px;
         }
 
         .auth-gate-avatars span {
-            width: 28px;
-            height: 28px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             border: 2px solid rgba(255,255,255,0.3);
-            margin-right: -10px;
-            font-size: 14px;
+            margin-right: -8px;
+            font-size: 11px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -3266,7 +3268,7 @@
 
         .auth-gate-social-text {
             color: white;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 500;
         }
 
@@ -3276,16 +3278,16 @@
 
         /* Hero section with emotional appeal */
         .auth-gate-hero {
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         .auth-gate-hero h1 {
             color: white;
             font-family: 'Josefin Sans', sans-serif;
-            font-size: 32px;
+            font-size: 26px;
             font-weight: 300;
             letter-spacing: 0.05em;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
             line-height: 1.2;
         }
 
@@ -3296,8 +3298,8 @@
 
         .auth-gate-hero p {
             color: rgba(255,255,255,0.9);
-            font-size: 16px;
-            line-height: 1.6;
+            font-size: 13px;
+            line-height: 1.5;
             margin-bottom: 0;
         }
 
@@ -3305,15 +3307,15 @@
         .auth-gate-benefits {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
         .auth-gate-benefit {
             background: rgba(255,255,255,0.12);
             backdrop-filter: blur(5px);
-            border-radius: 16px;
-            padding: 16px 12px;
+            border-radius: 12px;
+            padding: 10px 10px;
             text-align: left;
             border: 1px solid rgba(255,255,255,0.1);
             transition: transform 0.2s, background 0.2s;
@@ -3325,29 +3327,29 @@
         }
 
         .auth-gate-benefit-icon {
-            font-size: 28px;
-            margin-bottom: 8px;
+            font-size: 20px;
+            margin-bottom: 4px;
         }
 
         .auth-gate-benefit-title {
             color: white;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .auth-gate-benefit-desc {
             color: rgba(255,255,255,0.75);
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 10px;
+            line-height: 1.3;
         }
 
         /* Limited time offer - urgency */
         .auth-gate-offer {
             background: linear-gradient(90deg, #FFD700, #FFA500);
-            border-radius: 12px;
-            padding: 14px 20px;
-            margin-bottom: 20px;
+            border-radius: 10px;
+            padding: 10px 16px;
+            margin-bottom: 12px;
             position: relative;
             overflow: hidden;
         }
@@ -3369,32 +3371,32 @@
 
         .auth-gate-offer-text {
             color: #414042;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
             position: relative;
             z-index: 1;
         }
 
         .auth-gate-offer-text .points {
-            font-size: 18px;
+            font-size: 14px;
             color: #c94b6d;
         }
 
         /* Testimonial */
         .auth-gate-testimonial {
             background: rgba(0,0,0,0.2);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 25px;
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
             position: relative;
         }
 
         .auth-gate-testimonial::before {
             content: '"';
             position: absolute;
-            top: 8px;
-            left: 12px;
-            font-size: 40px;
+            top: 4px;
+            left: 8px;
+            font-size: 28px;
             color: rgba(255,255,255,0.2);
             font-family: Georgia, serif;
             line-height: 1;
@@ -3402,29 +3404,29 @@
 
         .auth-gate-testimonial-text {
             color: rgba(255,255,255,0.95);
-            font-size: 14px;
+            font-size: 11px;
             font-style: italic;
-            line-height: 1.5;
-            margin-bottom: 10px;
-            padding-left: 20px;
+            line-height: 1.4;
+            margin-bottom: 6px;
+            padding-left: 16px;
         }
 
         .auth-gate-testimonial-author {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding-left: 20px;
+            gap: 8px;
+            padding-left: 16px;
         }
 
         .auth-gate-testimonial-avatar {
-            width: 36px;
-            height: 36px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             background: linear-gradient(135deg, #FFD700, #FFA500);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 12px;
         }
 
         .auth-gate-testimonial-info {
@@ -3433,18 +3435,18 @@
 
         .auth-gate-testimonial-name {
             color: white;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
         }
 
         .auth-gate-testimonial-detail {
             color: rgba(255,255,255,0.7);
-            font-size: 11px;
+            font-size: 9px;
         }
 
         .auth-gate-testimonial-stars {
             color: #FFD700;
-            font-size: 12px;
+            font-size: 10px;
             margin-left: auto;
         }
 
@@ -3452,17 +3454,17 @@
         .auth-gate-buttons {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 10px;
         }
 
         .auth-gate-btn {
-            padding: 18px 32px;
-            border-radius: 30px;
-            font-size: 15px;
+            padding: 14px 24px;
+            border-radius: 25px;
+            font-size: 13px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.1em;
             cursor: pointer;
             transition: all 0.3s ease;
             border: none;
@@ -3473,7 +3475,7 @@
         .auth-gate-btn-primary {
             background: white;
             color: #c94b6d;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
         }
 
         .auth-gate-btn-primary::after {
@@ -3500,26 +3502,26 @@
         .auth-gate-trust {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin-bottom: 15px;
+            gap: 12px;
+            margin-bottom: 8px;
             flex-wrap: wrap;
         }
 
         .auth-gate-trust-item {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             color: rgba(255,255,255,0.7);
-            font-size: 11px;
+            font-size: 9px;
         }
 
         .auth-gate-trust-icon {
-            font-size: 14px;
+            font-size: 11px;
         }
 
         .auth-gate-footer {
             color: rgba(255,255,255,0.5);
-            font-size: 11px;
+            font-size: 9px;
         }
 
         .auth-gate-footer a {
@@ -3527,27 +3529,27 @@
             text-decoration: underline;
         }
 
-        /* Floating elements for visual interest */
-        .auth-gate::after {
+        /* Floating elements for visual interest - only on main side */
+        .auth-gate-main::after {
             content: '';
             position: absolute;
             top: 10%;
             right: -5%;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, rgba(255,215,0,0.15) 0%, transparent 70%);
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%);
             border-radius: 50%;
             pointer-events: none;
         }
 
-        .auth-gate::before {
+        .auth-gate-main::before {
             content: '';
             position: absolute;
             bottom: 15%;
             left: -10%;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
             border-radius: 50%;
             pointer-events: none;
         }
@@ -3557,10 +3559,10 @@
                 grid-template-columns: 1fr;
             }
             .auth-gate-hero h1 {
-                font-size: 26px;
+                font-size: 22px;
             }
             .auth-gate-logo-text {
-                font-size: 42px;
+                font-size: 38px;
             }
         }
     </style>
@@ -3571,17 +3573,15 @@
 <body>
     <!-- Auth Gate / Welcome Screen -->
     <div class="auth-gate" id="authGate">
-        <!-- Gallery Side (Desktop Only) -->
+        <!-- Instagram Feed Side (Desktop Only) -->
         <div class="auth-gate-gallery">
-            <div class="auth-gate-gallery-grid">
-                <div class="auth-gate-gallery-item" style="background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg')"></div>
-                <div class="auth-gate-gallery-item" style="background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg')"></div>
-                <div class="auth-gate-gallery-item" style="background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg')"></div>
-                <div class="auth-gate-gallery-item" style="background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg')"></div>
+            <div class="auth-gate-instagram-container">
+                <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/flirthairsa/" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 0; max-width:100%; min-width:100%; padding:0; width:100%; height:100%;">
+                </blockquote>
             </div>
             <div class="auth-gate-gallery-overlay">
                 <div class="auth-gate-gallery-text">
-                    <span class="auth-gate-gallery-hashtag">#FlirtHair</span>
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="auth-gate-gallery-hashtag">@flirthairsa</a>
                     <span class="auth-gate-gallery-label">Real Results from Real Clients</span>
                 </div>
             </div>
@@ -10437,5 +10437,8 @@ async function showNotifications() {
         // Run on page load
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
+
+    <!-- Instagram Embed Script -->
+    <script async src="//www.instagram.com/embed.js"></script>
 </body>
 </html>
