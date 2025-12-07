@@ -5076,11 +5076,11 @@
     </div>
 
     <!-- Auth Modal -->
-    <div id="authModal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
+    <div id="authModal" class="modal" onclick="closeAuthModalAndShowGate(event)">
+        <div class="modal-content" style="max-width: 400px;" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <h3 class="modal-title">Welcome to Flirt</h3>
-                <button class="close-btn" onclick="closeModal('authModal')">&times;</button>
+                <button class="close-btn" onclick="closeAuthModalAndShowGate()">&times;</button>
             </div>
 
             <div class="auth-tabs">
@@ -5779,6 +5779,18 @@
 
         function showAuthModal() {
             document.getElementById('authModal').classList.add('show');
+        }
+
+        function closeAuthModalAndShowGate(event) {
+            // If called from click on modal background (not content), close and show gate
+            // If called from X button (no event), also close and show gate
+            if (!event || event.target === event.currentTarget) {
+                closeModal('authModal');
+                // Only show auth gate if user is not logged in
+                if (!currentUser) {
+                    showAuthGate();
+                }
+            }
         }
 
         function switchAuthTab(tab) {
