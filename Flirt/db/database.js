@@ -206,20 +206,90 @@ const UserRepository = {
     },
 
     async getHairTracker(userId) {
-        return dbGet('SELECT * FROM hair_tracker WHERE user_id = ?', [userId]);
+        const row = await dbGet('SELECT * FROM hair_tracker WHERE user_id = ?', [userId]);
+        if (!row) return null;
+
+        // Convert snake_case DB columns to camelCase and parse JSON fields
+        return {
+            lastInstallDate: row.last_install_date,
+            extensionType: row.extension_type,
+            maintenanceIntervalDays: row.maintenance_interval_days,
+            nextMaintenanceDate: row.next_maintenance_date,
+            lastDeepConditionDate: row.last_deep_condition_date,
+            lastWashDate: row.last_wash_date,
+            hairHealthScore: row.hair_health_score,
+            washHistory: row.wash_history ? JSON.parse(row.wash_history) : [],
+            productsUsed: row.products_used ? JSON.parse(row.products_used) : [],
+            updatedAt: row.updated_at
+        };
     },
 
     async updateHairTracker(userId, data) {
         const existing = await this.getHairTracker(userId);
+
+        // Merge with existing data
+        const merged = {
+            lastInstallDate: data.lastInstallDate !== undefined ? data.lastInstallDate : (existing?.lastInstallDate || null),
+            extensionType: data.extensionType !== undefined ? data.extensionType : (existing?.extensionType || null),
+            maintenanceIntervalDays: data.maintenanceIntervalDays !== undefined ? data.maintenanceIntervalDays : (existing?.maintenanceIntervalDays || 42),
+            nextMaintenanceDate: data.nextMaintenanceDate !== undefined ? data.nextMaintenanceDate : (existing?.nextMaintenanceDate || null),
+            lastDeepConditionDate: data.lastDeepConditionDate !== undefined ? data.lastDeepConditionDate : (existing?.lastDeepConditionDate || null),
+            lastWashDate: data.lastWashDate !== undefined ? data.lastWashDate : (existing?.lastWashDate || null),
+            hairHealthScore: data.hairHealthScore !== undefined ? data.hairHealthScore : (existing?.hairHealthScore || 100),
+            washHistory: data.washHistory !== undefined ? data.washHistory : (existing?.washHistory || []),
+            productsUsed: data.productsUsed !== undefined ? data.productsUsed : (existing?.productsUsed || [])
+        };
+
+        // Serialize JSON fields
+        const washHistoryJson = JSON.stringify(merged.washHistory);
+        const productsUsedJson = JSON.stringify(merged.productsUsed);
+
         if (existing) {
             await dbRun(
-                `UPDATE hair_tracker SET last_install_date = ?, extension_type = ?, updated_at = datetime('now') WHERE user_id = ?`,
-                [data.lastInstallDate || existing.last_install_date, data.extensionType || existing.extension_type, userId]
+                `UPDATE hair_tracker SET
+                    last_install_date = ?,
+                    extension_type = ?,
+                    maintenance_interval_days = ?,
+                    next_maintenance_date = ?,
+                    last_deep_condition_date = ?,
+                    last_wash_date = ?,
+                    hair_health_score = ?,
+                    wash_history = ?,
+                    products_used = ?,
+                    updated_at = datetime('now')
+                WHERE user_id = ?`,
+                [
+                    merged.lastInstallDate,
+                    merged.extensionType,
+                    merged.maintenanceIntervalDays,
+                    merged.nextMaintenanceDate,
+                    merged.lastDeepConditionDate,
+                    merged.lastWashDate,
+                    merged.hairHealthScore,
+                    washHistoryJson,
+                    productsUsedJson,
+                    userId
+                ]
             );
         } else {
             await dbRun(
-                `INSERT INTO hair_tracker (user_id, last_install_date, extension_type) VALUES (?, ?, ?)`,
-                [userId, data.lastInstallDate, data.extensionType]
+                `INSERT INTO hair_tracker (
+                    user_id, last_install_date, extension_type, maintenance_interval_days,
+                    next_maintenance_date, last_deep_condition_date, last_wash_date,
+                    hair_health_score, wash_history, products_used
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    userId,
+                    merged.lastInstallDate,
+                    merged.extensionType,
+                    merged.maintenanceIntervalDays,
+                    merged.nextMaintenanceDate,
+                    merged.lastDeepConditionDate,
+                    merged.lastWashDate,
+                    merged.hairHealthScore,
+                    washHistoryJson,
+                    productsUsedJson
+                ]
             );
         }
         return await this.getHairTracker(userId);

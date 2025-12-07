@@ -34,6 +34,13 @@ CREATE TABLE IF NOT EXISTS hair_tracker (
     user_id TEXT UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     last_install_date TEXT,
     extension_type TEXT,
+    maintenance_interval_days INTEGER DEFAULT 42,
+    next_maintenance_date TEXT,
+    last_deep_condition_date TEXT,
+    last_wash_date TEXT,
+    hair_health_score INTEGER DEFAULT 100,
+    wash_history TEXT, -- JSON array of wash entries
+    products_used TEXT, -- JSON array of products
     updated_at TEXT DEFAULT (datetime('now'))
 );
 

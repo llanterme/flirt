@@ -1893,12 +1893,8 @@ app.get('/api/hair-tracker/config', async (req, res) => {
 // Get user's hair tracker data with computed metrics
 app.get('/api/hair-tracker', authenticateToken, async (req, res) => {
     try {
-        const user = await UserRepository.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        const tracker = user.hairTracker || {};
+        // Get tracker data from the dedicated hair_tracker table
+        const tracker = await UserRepository.getHairTracker(req.user.id) || {};
         // Use the same config as in the config endpoint
         const config = {
             washFrequencyDays: 3,
@@ -2046,28 +2042,11 @@ app.patch('/api/hair-tracker', authenticateToken, async (req, res) => {
             hairHealthScore
         } = req.body;
 
-        const user = await UserRepository.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
+        // Get existing tracker data from database
+        const existingTracker = await UserRepository.getHairTracker(req.user.id) || {};
 
-        const existingTracker = user.hairTracker || {};
-
-        // Merge with existing data
-        const updatedTracker = {
-            ...existingTracker,
-            lastInstallDate: lastInstallDate !== undefined ? lastInstallDate : existingTracker.lastInstallDate,
-            extensionType: extensionType !== undefined ? extensionType : existingTracker.extensionType,
-            maintenanceIntervalDays: maintenanceIntervalDays !== undefined ? maintenanceIntervalDays : existingTracker.maintenanceIntervalDays,
-            nextMaintenanceDate: nextMaintenanceDate !== undefined ? nextMaintenanceDate : existingTracker.nextMaintenanceDate,
-            lastDeepConditionDate: lastDeepConditionDate !== undefined ? lastDeepConditionDate : existingTracker.lastDeepConditionDate,
-            productsUsed: productsUsed !== undefined ? productsUsed : existingTracker.productsUsed,
-            hairHealthScore: hairHealthScore !== undefined ? hairHealthScore : existingTracker.hairHealthScore,
-            washHistory: existingTracker.washHistory || [],
-            lastWashDate: existingTracker.lastWashDate
-        };
-
-        // If lastInstallDate changed, reset nextMaintenanceDate to recalculate
+        // Calculate next maintenance date if lastInstallDate changed
+        let calculatedNextMaintenance = nextMaintenanceDate;
         if (lastInstallDate && lastInstallDate !== existingTracker.lastInstallDate) {
             const config = {
                 extensionTypeIntervals: {
@@ -2088,11 +2067,18 @@ app.patch('/api/hair-tracker', authenticateToken, async (req, res) => {
                 || config.defaultMaintenanceIntervalDays
                 || 42;
             const nm = new Date(new Date(lastInstallDate).getTime() + interval * 86400000);
-            updatedTracker.nextMaintenanceDate = nm.toISOString();
+            calculatedNextMaintenance = nm.toISOString();
         }
 
-        await UserRepository.updateById(req.user.id, {
-            hairTracker: updatedTracker
+        // Update tracker using the dedicated repository method
+        const updatedTracker = await UserRepository.updateHairTracker(req.user.id, {
+            lastInstallDate,
+            extensionType,
+            maintenanceIntervalDays,
+            nextMaintenanceDate: calculatedNextMaintenance,
+            lastDeepConditionDate,
+            productsUsed,
+            hairHealthScore
         });
 
         res.json({
@@ -2109,13 +2095,9 @@ app.patch('/api/hair-tracker', authenticateToken, async (req, res) => {
 app.post('/api/hair-tracker/log-wash', authenticateToken, async (req, res) => {
     try {
         const { date, notes } = req.body;
-        const user = await UserRepository.findById(req.user.id);
 
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        const currentTracker = user.hairTracker || {};
+        // Get existing tracker from database
+        const currentTracker = await UserRepository.getHairTracker(req.user.id) || {};
         const washHistory = currentTracker.washHistory || [];
         const washDate = date ? new Date(date) : new Date();
 
@@ -2127,14 +2109,10 @@ app.post('/api/hair-tracker/log-wash', authenticateToken, async (req, res) => {
 
         washHistory.push(newWashEntry);
 
-        const updatedTracker = {
-            ...currentTracker,
+        // Update tracker using the dedicated repository method
+        const updatedTracker = await UserRepository.updateHairTracker(req.user.id, {
             washHistory: washHistory,
             lastWashDate: washDate.toISOString()
-        };
-
-        await UserRepository.updateById(req.user.id, {
-            hairTracker: updatedTracker
         });
 
         res.json({
@@ -2152,32 +2130,14 @@ app.post('/api/hair-tracker/log-wash', authenticateToken, async (req, res) => {
 app.post('/api/hair-tracker/log-deep-condition', authenticateToken, async (req, res) => {
     try {
         const { date, notes } = req.body;
-        const user = await UserRepository.findById(req.user.id);
 
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        const currentTracker = user.hairTracker || {};
-        const deepConditionHistory = currentTracker.deepConditionHistory || [];
+        // Get existing tracker from database
+        const currentTracker = await UserRepository.getHairTracker(req.user.id) || {};
         const conditionDate = date ? new Date(date) : new Date();
 
-        const newDeepConditionEntry = {
-            id: uuidv4(),
-            date: conditionDate.toISOString(),
-            notes: notes || ''
-        };
-
-        deepConditionHistory.push(newDeepConditionEntry);
-
-        const updatedTracker = {
-            ...currentTracker,
-            deepConditionHistory: deepConditionHistory,
+        // Update tracker using the dedicated repository method
+        const updatedTracker = await UserRepository.updateHairTracker(req.user.id, {
             lastDeepConditionDate: conditionDate.toISOString()
-        };
-
-        await UserRepository.updateById(req.user.id, {
-            hairTracker: updatedTracker
         });
 
         res.json({
@@ -2200,12 +2160,8 @@ app.post('/api/hair-tracker/add-product', authenticateToken, async (req, res) =>
             return res.status(400).json({ success: false, message: 'Product ID or name required' });
         }
 
-        const user = await UserRepository.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        const currentTracker = user.hairTracker || {};
+        // Get existing tracker from database
+        const currentTracker = await UserRepository.getHairTracker(req.user.id) || {};
         const productsUsed = currentTracker.productsUsed || [];
 
         // Check if product already exists
@@ -2221,13 +2177,9 @@ app.post('/api/hair-tracker/add-product', authenticateToken, async (req, res) =>
                 addedAt: new Date().toISOString()
             };
 
-            updatedTracker = {
-                ...currentTracker,
+            // Update tracker using the dedicated repository method
+            updatedTracker = await UserRepository.updateHairTracker(req.user.id, {
                 productsUsed: [...productsUsed, newProduct]
-            };
-
-            await UserRepository.updateById(req.user.id, {
-                hairTracker: updatedTracker
             });
         }
 
@@ -2247,24 +2199,16 @@ app.delete('/api/hair-tracker/remove-product/:productId', authenticateToken, asy
     try {
         const { productId } = req.params;
 
-        const user = await UserRepository.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        const currentTracker = user.hairTracker || {};
+        // Get existing tracker from database
+        const currentTracker = await UserRepository.getHairTracker(req.user.id) || {};
         let updatedTracker = currentTracker;
 
         if (currentTracker.productsUsed) {
             const filteredProducts = currentTracker.productsUsed.filter(p => p.productId !== productId);
 
-            updatedTracker = {
-                ...currentTracker,
+            // Update tracker using the dedicated repository method
+            updatedTracker = await UserRepository.updateHairTracker(req.user.id, {
                 productsUsed: filteredProducts
-            };
-
-            await UserRepository.updateById(req.user.id, {
-                hairTracker: updatedTracker
             });
         }
 
