@@ -148,7 +148,7 @@ async function seedAdminUser() {
             const passwordHash = await bcrypt.hash(ADMIN_SEED_PASSWORD, 10);
             await UserRepository.create({
                 id: 'admin-001',
-                email: 'admin@flirthair.co.za',
+                email: 'admin@flirt.co.za',
                 passwordHash,
                 name: 'Flirt Admin',
                 phone: '+27 11 123 4567',
@@ -159,7 +159,7 @@ async function seedAdminUser() {
                 referralCode: 'FLIRTADMIN',
                 referredBy: null
             });
-            console.log(`✅ Admin user created in SQLite: admin@flirthair.co.za`);
+            console.log(`✅ Admin user created in SQLite: admin@flirt.co.za`);
             console.log('⚠️  Admin must change password on first login');
         }
     } catch (error) {
