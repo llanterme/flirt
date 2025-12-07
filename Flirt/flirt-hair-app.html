@@ -1639,6 +1639,224 @@
             font-weight: 500;
         }
 
+        /* Hair Tracker Setup - Enhanced UX */
+        .tracker-setup-hero {
+            text-align: center;
+            padding: 20px 0 30px;
+        }
+
+        .tracker-setup-visual {
+            margin-bottom: 24px;
+        }
+
+        .tracker-setup-circle {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tracker-setup-icon {
+            font-size: 50px;
+            z-index: 2;
+            animation: trackerBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes trackerBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .tracker-setup-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 3px solid var(--brand-pink);
+            opacity: 0.3;
+            animation: trackerPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes trackerPulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.1); opacity: 0.1; }
+        }
+
+        .tracker-setup-title {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--brand-charcoal);
+            margin-bottom: 12px;
+        }
+
+        .tracker-setup-desc {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.5;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        .tracker-setup-social {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .tracker-setup-avatars {
+            display: flex;
+        }
+
+        .tracker-setup-avatars span {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gray-light);
+            border-radius: 50%;
+            margin-left: -8px;
+            font-size: 16px;
+            border: 2px solid white;
+        }
+
+        .tracker-setup-avatars span:first-child {
+            margin-left: 0;
+        }
+
+        /* Benefits Grid */
+        .tracker-benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .tracker-benefit-card {
+            background: white;
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid var(--border-soft);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .tracker-benefit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .tracker-benefit-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin: 0 auto 10px;
+        }
+
+        .tracker-benefit-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--brand-charcoal);
+            margin-bottom: 4px;
+        }
+
+        .tracker-benefit-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* CTA Section */
+        .tracker-setup-cta {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .tracker-setup-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--brand-pink);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(246, 117, 153, 0.4);
+            width: 100%;
+            justify-content: center;
+        }
+
+        .tracker-setup-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(246, 117, 153, 0.5);
+        }
+
+        .tracker-setup-btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .tracker-setup-btn-primary svg {
+            transition: transform 0.2s ease;
+        }
+
+        .tracker-setup-btn-primary:hover svg {
+            transform: translateX(4px);
+        }
+
+        .tracker-setup-time {
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Info Bar */
+        .tracker-setup-info {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tracker-info-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .tracker-info-icon {
+            font-size: 14px;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 400px) {
+            .tracker-benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tracker-setup-info {
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+        }
+
         /* Hair Tracker */
         .tracker-progress {
             background: white;
@@ -4993,18 +5211,86 @@
 
         <!-- Hair Tracker Content -->
         <div id="tracker" class="content-area">
-            <h2 id="trackerTitle" class="section-title" style="margin-bottom: 20px;">Hair Care Journey</h2>
-            <p id="trackerSubtitle" style="text-align: center; color: var(--gray-medium); margin-bottom: 20px; display: none;"></p>
+            <h2 id="trackerTitle" class="section-title" style="margin-bottom: 8px;">Hair Care Journey</h2>
+            <p id="trackerSubtitle" style="text-align: center; color: var(--gray-medium); margin-bottom: 20px;">Keep your extensions healthy and on track</p>
 
-            <!-- Setup prompt (shown when no tracker data) -->
-            <div id="trackerSetupPrompt" class="card" style="text-align: center; padding: 30px; display: none;">
-                <div style="font-size: 60px; margin-bottom: 15px;">💇</div>
-                <h3 style="margin-bottom: 10px;">Set Up Your Hair Tracker</h3>
-                <p id="trackerNoInstallMessage" style="color: var(--gray-medium); margin-bottom: 20px;">
-                    Set up your hair tracker to get personalized care recommendations!
-                </p>
-                <button id="trackerSetupBtn" class="btn btn-primary" onclick="showTrackerSetupModal()">Set Up Tracker</button>
+            <!-- Enhanced Setup prompt (shown when no tracker data) -->
+            <div id="trackerSetupPrompt" style="display: none;">
+                <!-- Hero Section -->
+                <div class="tracker-setup-hero">
+                    <div class="tracker-setup-visual">
+                        <div class="tracker-setup-circle">
+                            <div class="tracker-setup-icon">💇‍♀️</div>
+                            <div class="tracker-setup-ring"></div>
+                        </div>
+                    </div>
+                    <h3 class="tracker-setup-title">Track Your Hair Health</h3>
+                    <p class="tracker-setup-desc">Get personalized reminders, care tips, and keep your extensions looking gorgeous longer</p>
+
+                    <!-- Social Proof -->
+                    <div class="tracker-setup-social">
+                        <div class="tracker-setup-avatars">
+                            <span>👩🏽</span><span>👩🏻</span><span>👩🏾</span>
+                        </div>
+                        <span>Join <strong>500+</strong> women tracking their hair journey</span>
+                    </div>
+                </div>
+
+                <!-- Benefits Preview -->
+                <div class="tracker-benefits-grid">
+                    <div class="tracker-benefit-card">
+                        <div class="tracker-benefit-icon" style="background: linear-gradient(135deg, #E8F5E9, #C8E6C9);">📅</div>
+                        <div class="tracker-benefit-title">Smart Reminders</div>
+                        <div class="tracker-benefit-desc">Never miss a wash day or maintenance appointment</div>
+                    </div>
+                    <div class="tracker-benefit-card">
+                        <div class="tracker-benefit-icon" style="background: linear-gradient(135deg, #FFF3E0, #FFE0B2);">💡</div>
+                        <div class="tracker-benefit-title">Personalized Tips</div>
+                        <div class="tracker-benefit-desc">Care recommendations based on your extension type</div>
+                    </div>
+                    <div class="tracker-benefit-card">
+                        <div class="tracker-benefit-icon" style="background: linear-gradient(135deg, #FCE4EC, #F8BBD9);">📊</div>
+                        <div class="tracker-benefit-title">Health Score</div>
+                        <div class="tracker-benefit-desc">Track your hair health and see improvements</div>
+                    </div>
+                    <div class="tracker-benefit-card">
+                        <div class="tracker-benefit-icon" style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB);">🏆</div>
+                        <div class="tracker-benefit-title">Earn Points</div>
+                        <div class="tracker-benefit-desc">Get rewarded for maintaining your routine</div>
+                    </div>
+                </div>
+
+                <!-- CTA Section -->
+                <div class="tracker-setup-cta">
+                    <button id="trackerSetupBtn" class="tracker-setup-btn-primary" onclick="showTrackerSetupModal()">
+                        <span>Start Tracking</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                    <p class="tracker-setup-time">⏱️ Takes less than 30 seconds</p>
+                </div>
+
+                <!-- Quick Info -->
+                <div class="tracker-setup-info">
+                    <div class="tracker-info-item">
+                        <span class="tracker-info-icon">🔒</span>
+                        <span>Your data is private</span>
+                    </div>
+                    <div class="tracker-info-item">
+                        <span class="tracker-info-icon">✨</span>
+                        <span>Free forever</span>
+                    </div>
+                    <div class="tracker-info-item">
+                        <span class="tracker-info-icon">📱</span>
+                        <span>Works offline</span>
+                    </div>
+                </div>
             </div>
+
+            <!-- Hidden message for no install (used by JS) -->
+            <p id="trackerNoInstallMessage" style="display: none;"></p>
 
             <!-- Main tracker content (shown when tracker is set up) -->
             <div id="trackerMainContent" style="display: none;">
