@@ -89,6 +89,19 @@ async function initializeDatabase() {
     await ensureColumn('promos', 'title', 'TEXT');
     await ensureColumn('promos', 'subtitle', 'TEXT');
     await ensureColumn('promos', 'priority', 'INTEGER DEFAULT 0');
+
+    // User profile migrations (hair_profile and notification_prefs)
+    await ensureColumn('users', 'hair_profile', 'TEXT');
+    await ensureColumn('users', 'notification_prefs', 'TEXT');
+
+    // Hair tracker extended columns
+    await ensureColumn('hair_tracker', 'maintenance_interval_days', 'INTEGER DEFAULT 42');
+    await ensureColumn('hair_tracker', 'next_maintenance_date', 'TEXT');
+    await ensureColumn('hair_tracker', 'last_deep_condition_date', 'TEXT');
+    await ensureColumn('hair_tracker', 'last_wash_date', 'TEXT');
+    await ensureColumn('hair_tracker', 'hair_health_score', 'INTEGER DEFAULT 100');
+    await ensureColumn('hair_tracker', 'wash_history', 'TEXT');
+    await ensureColumn('hair_tracker', 'products_used', 'TEXT');
 }
 
 // Utilities for lightweight migrations (add missing columns safely)
