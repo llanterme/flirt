@@ -11136,17 +11136,53 @@ async function showNotifications() {
             switchTab('booking');
         }
 
-        function chatWithStylist(stylistId, stylistName) {
-            toggleChat();
-            setTimeout(() => {
-                const messagesContainer = document.getElementById('chatMessages');
-                messagesContainer.innerHTML += `
-                    <div class="chat-message received">
-                        <div class="message-bubble">Hi! You've requested to chat with ${stylistName || 'our team'}. They'll be notified and will respond soon! 💇‍♀️</div>
-                        <div class="message-time">Just now</div>
-                    </div>
-                `;
-            }, 500);
+        async function chatWithStylist(stylistId, stylistName) {
+            // Open the chat window
+            if (!chatOpen) {
+                toggleChat();
+            }
+
+            // Wait for chat to open and load existing conversation
+            await new Promise(resolve => setTimeout(resolve, 600));
+
+            // Send an actual message to the backend about wanting to chat with this stylist
+            const messageText = `Hi! I'd like to chat with ${stylistName || 'a stylist'} about booking an appointment.`;
+
+            try {
+                const body = {
+                    conversationId: currentConversationId,
+                    text: messageText,
+                    source: 'app'
+                };
+
+                if (!currentUser) {
+                    body.guestId = getGuestId();
+                }
+
+                // Add the message to the UI optimistically
+                appendChatMessage('sent', messageText, new Date());
+
+                const data = await apiCall('/chat/message', {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                });
+
+                if (!currentConversationId && data.conversation) {
+                    currentConversationId = data.conversation.id;
+                    localStorage.setItem('flirt_conversation_id', currentConversationId);
+                }
+
+                lastRenderedMessageCount++;
+
+                // Add a system acknowledgment message
+                setTimeout(() => {
+                    appendChatMessage('received', `Great! ${stylistName || 'Our team'} will be notified and respond soon. In the meantime, feel free to share more details about what you're looking for! 💇‍♀️`, new Date());
+                }, 800);
+
+            } catch (error) {
+                console.error('Error sending stylist chat request:', error);
+                appendChatMessage('received', 'Sorry, there was an error starting the chat. Please try again.', new Date());
+            }
         }
 
         // ========== FLASH SALE TIMER ==========
