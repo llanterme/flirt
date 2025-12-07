@@ -298,7 +298,264 @@
             }
         }
 
-        /* Home Dashboard */
+        /* Home Dashboard - Redesigned */
+        .home-hero {
+            background: linear-gradient(135deg, var(--brand-charcoal) 0%, #2d2d2e 50%, var(--brand-pink) 150%);
+            color: white;
+            padding: 28px 24px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .home-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(246, 117, 153, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .home-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .home-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .home-hero-greeting {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .home-hero-headline {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .home-hero-headline .highlight {
+            color: var(--brand-pink);
+            font-weight: 600;
+        }
+
+        .home-hero-subtitle {
+            font-size: 14px;
+            opacity: 0.85;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            max-width: 320px;
+        }
+
+        .home-hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--brand-pink);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(246, 117, 153, 0.4);
+        }
+
+        .home-hero-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(246, 117, 153, 0.5);
+        }
+
+        .home-hero-stats {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            z-index: 1;
+        }
+
+        .home-hero-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .home-hero-stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--brand-pink);
+        }
+
+        .home-hero-stat-label {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .home-hero-stat-divider {
+            width: 1px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Three Action Cards Row */
+        .home-actions-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .home-action-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-soft);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .home-action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .home-action-icon-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tracker-icon {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            color: #2E7D32;
+        }
+
+        .share-icon {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            color: #E65100;
+        }
+
+        .shop-icon {
+            background: linear-gradient(135deg, #FCE4EC 0%, #F8BBD9 100%);
+            color: var(--brand-pink);
+        }
+
+        .home-action-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--brand-charcoal);
+        }
+
+        .home-action-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .home-action-link {
+            font-size: 12px;
+            color: var(--brand-pink);
+            font-weight: 600;
+        }
+
+        /* Quick Book Services Chips */
+        .home-quick-book {
+            margin-bottom: 24px;
+        }
+
+        .home-services-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 4px 0;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .home-services-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .home-service-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            border: 2px solid var(--border-soft);
+            border-radius: 30px;
+            padding: 10px 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .home-service-chip:hover {
+            border-color: var(--brand-pink);
+            background: rgba(246, 117, 153, 0.05);
+        }
+
+        .home-service-emoji {
+            font-size: 18px;
+        }
+
+        .home-service-chip span:last-child {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--brand-charcoal);
+        }
+
+        /* Responsive for mobile */
+        @media (max-width: 600px) {
+            .home-actions-row {
+                grid-template-columns: 1fr;
+            }
+
+            .home-action-card {
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .home-action-content {
+                flex: 1;
+            }
+
+            .home-hero-headline {
+                font-size: 22px;
+            }
+        }
+
+        /* Legacy welcome-banner support */
         .welcome-banner {
             background: linear-gradient(135deg, var(--primary-black) 0%, var(--gray-dark) 100%);
             color: white;
@@ -3786,59 +4043,112 @@
 
         <!-- Home Content -->
         <div id="home" class="content-area active">
-            <div class="welcome-banner" id="welcomeBanner">
-                <div class="welcome-title" id="welcomeTitle">Welcome to FL!RT 👋</div>
-                <p id="welcomeSubtitle">Discover premium hair extensions and book your transformation!</p>
-                <div class="points-display" id="pointsDisplay" style="display: none;">
-                    <span class="points-icon">✨</span>
-                    <div>
-                        <strong id="bannerPoints">0 Points</strong>
-                        <div style="font-size: 12px; opacity: 0.8;" id="bannerTier">Bronze Member</div>
+            <!-- Hero Welcome Banner with CTA -->
+            <div class="home-hero" id="welcomeBanner">
+                <div class="home-hero-content">
+                    <div class="home-hero-greeting" id="welcomeTitle">Welcome back! 👋</div>
+                    <h1 class="home-hero-headline">Ready for Your <span class="highlight">Hair Transformation</span>?</h1>
+                    <p class="home-hero-subtitle" id="welcomeSubtitle">Book your next appointment and let our expert stylists work their magic</p>
+                    <button class="home-hero-cta" onclick="navigateToSection('book')">
+                        <span>Book Your Appointment</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                <div class="home-hero-stats" id="pointsDisplay" style="display: none;">
+                    <div class="home-hero-stat">
+                        <span class="home-hero-stat-value" id="bannerPoints">0</span>
+                        <span class="home-hero-stat-label">Points</span>
+                    </div>
+                    <div class="home-hero-stat-divider"></div>
+                    <div class="home-hero-stat">
+                        <span class="home-hero-stat-value" id="bannerTier">Bronze</span>
+                        <span class="home-hero-stat-label">Member</span>
                     </div>
                 </div>
             </div>
 
-            <div class="quick-actions">
-                <div class="action-card" onclick="navigateToSection('book')">
-                    <div class="action-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="color: var(--brand-pink);">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
+            <!-- Three Key Actions Row -->
+            <div class="home-actions-row">
+                <!-- Hair Tracker Card -->
+                <div class="home-action-card home-action-tracker" onclick="switchTab('tracker')">
+                    <div class="home-action-icon-wrap tracker-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
                     </div>
-                    <div class="action-title">Book Now</div>
+                    <div class="home-action-content">
+                        <div class="home-action-title">Track Your Hair</div>
+                        <div class="home-action-desc">Monitor your extension health & maintenance schedule</div>
+                        <div class="home-action-link">View Tracker →</div>
+                    </div>
                 </div>
-                <div class="action-card" onclick="switchTab('shop')">
-                    <div class="action-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="color: var(--brand-pink);">
-                            <circle cx="9" cy="21" r="1"></circle>
-                            <circle cx="20" cy="21" r="1"></circle>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+
+                <!-- Share & Earn Card -->
+                <div class="home-action-card home-action-share" onclick="switchTab('rewards')">
+                    <div class="home-action-icon-wrap share-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+                            <circle cx="18" cy="5" r="3"></circle>
+                            <circle cx="6" cy="12" r="3"></circle>
+                            <circle cx="18" cy="19" r="3"></circle>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
                         </svg>
                     </div>
-                    <div class="action-title">Shop Products</div>
+                    <div class="home-action-content">
+                        <div class="home-action-title">Share & Earn R100</div>
+                        <div class="home-action-desc">Invite friends and both get rewarded!</div>
+                        <div class="home-action-link">Get Your Code →</div>
+                    </div>
                 </div>
-                <div class="action-card" onclick="switchTab('rewards')">
-                    <div class="action-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="color: var(--brand-pink);">
-                            <circle cx="12" cy="8" r="7"></circle>
-                            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+
+                <!-- Shop Card -->
+                <div class="home-action-card home-action-shop" onclick="switchTab('shop')">
+                    <div class="home-action-icon-wrap shop-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
                         </svg>
                     </div>
-                    <div class="action-title">Refer & Earn</div>
+                    <div class="home-action-content">
+                        <div class="home-action-title">Shop Products</div>
+                        <div class="home-action-desc">Premium hair care & extension products</div>
+                        <div class="home-action-link">Browse Shop →</div>
+                    </div>
                 </div>
-                <div class="action-card" onclick="switchTab('team')">
-                    <div class="action-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="color: var(--brand-pink);">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
+            </div>
+
+            <!-- Quick Book Services -->
+            <div class="home-quick-book">
+                <div class="section-header">
+                    <h2 class="section-title">Quick Book</h2>
+                    <a href="#" class="view-all-btn" onclick="navigateToSection('book'); return false;">View All Services</a>
+                </div>
+                <div class="home-services-scroll">
+                    <div class="home-service-chip" onclick="quickBookService('hair')">
+                        <span class="home-service-emoji">💇‍♀️</span>
+                        <span>Hair Extensions</span>
                     </div>
-                    <div class="action-title">Meet Our Team</div>
+                    <div class="home-service-chip" onclick="quickBookService('nails')">
+                        <span class="home-service-emoji">💅</span>
+                        <span>Nails</span>
+                    </div>
+                    <div class="home-service-chip" onclick="quickBookService('lashes')">
+                        <span class="home-service-emoji">👁️</span>
+                        <span>Lashes</span>
+                    </div>
+                    <div class="home-service-chip" onclick="quickBookService('makeup')">
+                        <span class="home-service-emoji">💄</span>
+                        <span>Makeup</span>
+                    </div>
+                    <div class="home-service-chip" onclick="quickBookService('facial')">
+                        <span class="home-service-emoji">✨</span>
+                        <span>Facials</span>
+                    </div>
                 </div>
             </div>
 
@@ -6041,7 +6351,7 @@
 
                 // Welcome banner for guests
                 if (welcomeTitle) welcomeTitle.textContent = 'Welcome to FL!RT 👋';
-                if (welcomeSubtitle) welcomeSubtitle.textContent = 'Discover premium hair extensions and book your transformation!';
+                if (welcomeSubtitle) welcomeSubtitle.textContent = 'Book your next appointment and let our expert stylists work their magic';
                 if (pointsDisplayBanner) pointsDisplayBanner.style.display = 'none';
                 return;
             }
@@ -6058,15 +6368,15 @@
             // Welcome banner for logged-in users
             const firstName = currentUser.name?.split(' ')[0] || 'there';
             if (welcomeTitle) welcomeTitle.textContent = `Welcome back, ${firstName}! 👋`;
-            if (welcomeSubtitle) welcomeSubtitle.textContent = 'Your beauty journey continues...';
+            if (welcomeSubtitle) welcomeSubtitle.textContent = 'Book your next appointment and let our expert stylists work their magic';
 
             // Show points display
             if (pointsDisplayBanner) pointsDisplayBanner.style.display = 'flex';
-            if (bannerPoints) bannerPoints.textContent = `${(currentUser.points ?? 0).toLocaleString()} Points`;
+            if (bannerPoints) bannerPoints.textContent = (currentUser.points ?? 0).toLocaleString();
             if (bannerTier) {
                 const tier = currentUser.tier || 'bronze';
                 const niceTier = tier.charAt(0).toUpperCase() + tier.slice(1);
-                bannerTier.textContent = `${niceTier} Tier Member`;
+                bannerTier.textContent = niceTier;
             }
 
             // Update rewards section - use #userPoints which has class .stat-number
@@ -6173,6 +6483,20 @@
             } else if (section === 'my-bookings') {
                 switchTab('booking');
                 document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Quick book a specific service type from home page
+        function quickBookService(serviceType) {
+            switchTab('booking');
+            // Pre-select booking type based on service
+            if (serviceType === 'hair' || serviceType === 'extensions') {
+                selectBookingType('hair');
+            } else if (serviceType === 'nails' || serviceType === 'beauty' || serviceType === 'facial' || serviceType === 'lashes') {
+                selectBookingType('beauty');
+            } else {
+                // Default to hair for unknown types
+                selectBookingType('hair');
             }
         }
 
