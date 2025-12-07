@@ -157,13 +157,24 @@ const UserRepository = {
             name: 'name', phone: 'phone', points: 'points', tier: 'tier',
             referredBy: 'referred_by', referralCode: 'referral_code',
             mustChangePassword: 'must_change_password',
-            passwordHash: 'password_hash'
+            passwordHash: 'password_hash',
+            hairProfile: 'hair_profile',
+            notificationPrefs: 'notification_prefs'
         };
+
+        // Fields that need JSON serialization
+        const jsonFields = ['hairProfile', 'notificationPrefs'];
 
         for (const [key, dbField] of Object.entries(fieldMap)) {
             if (updates[key] !== undefined) {
                 fields.push(`${dbField} = ?`);
-                values.push(key === 'mustChangePassword' ? (updates[key] ? 1 : 0) : updates[key]);
+                let value = updates[key];
+                if (key === 'mustChangePassword') {
+                    value = updates[key] ? 1 : 0;
+                } else if (jsonFields.includes(key) && typeof value === 'object') {
+                    value = JSON.stringify(value);
+                }
+                values.push(value);
             }
         }
 
@@ -174,6 +185,36 @@ const UserRepository = {
 
         await dbRun(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, values);
         return this.findById(id);
+    },
+
+    // Get hair profile for a user (parses JSON)
+    async getHairProfile(userId) {
+        const user = await this.findById(userId);
+        if (!user) return null;
+        return user.hair_profile ? JSON.parse(user.hair_profile) : null;
+    },
+
+    // Update hair profile for a user
+    async updateHairProfile(userId, profileData) {
+        const existing = await this.getHairProfile(userId) || {};
+        const merged = { ...existing, ...profileData };
+        await this.update(userId, { hairProfile: merged });
+        return merged;
+    },
+
+    // Get notification preferences for a user (parses JSON)
+    async getNotificationPrefs(userId) {
+        const user = await this.findById(userId);
+        if (!user) return null;
+        return user.notification_prefs ? JSON.parse(user.notification_prefs) : null;
+    },
+
+    // Update notification preferences for a user
+    async updateNotificationPrefs(userId, prefs) {
+        const existing = await this.getNotificationPrefs(userId) || {};
+        const merged = { ...existing, ...prefs };
+        await this.update(userId, { notificationPrefs: merged });
+        return merged;
     },
 
     // Alias for update() to match server.js usage

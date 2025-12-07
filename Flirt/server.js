@@ -554,14 +554,8 @@ app.patch('/api/auth/me', authenticateToken, async (req, res) => {
 // Get hair profile for authenticated user
 app.get('/api/hair-profile', authenticateToken, async (req, res) => {
     try {
-        const user = await UserRepository.findById(req.user.id);
-
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        // Return hair profile or defaults
-        const hairProfile = user.hairProfile || {
+        // Get hair profile from the dedicated repository method
+        const hairProfile = await UserRepository.getHairProfile(req.user.id) || {
             hairType: null,
             extensionType: null,
             preferredStylist: null,
@@ -579,28 +573,18 @@ app.get('/api/hair-profile', authenticateToken, async (req, res) => {
 app.patch('/api/hair-profile', authenticateToken, async (req, res) => {
     try {
         const { hairType, extensionType, preferredStylist, notes } = req.body;
-        const user = await UserRepository.findById(req.user.id);
 
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
+        // Build update object with only provided fields
+        const updates = {};
+        if (hairType !== undefined) updates.hairType = hairType;
+        if (extensionType !== undefined) updates.extensionType = extensionType;
+        if (preferredStylist !== undefined) updates.preferredStylist = preferredStylist;
+        if (notes !== undefined) updates.notes = notes;
 
-        // Initialize hairProfile if it doesn't exist
-        let profile = user.hairProfile || {};
+        // Update hair profile using the dedicated repository method
+        const hairProfile = await UserRepository.updateHairProfile(req.user.id, updates);
 
-        // Merge updates
-        if (hairType !== undefined) profile.hairType = hairType;
-        if (extensionType !== undefined) profile.extensionType = extensionType;
-        if (preferredStylist !== undefined) profile.preferredStylist = preferredStylist;
-        if (notes !== undefined) profile.notes = notes;
-
-        const updateData = {
-            hairProfile: profile,
-            updatedAt: new Date().toISOString()
-        };
-        await UserRepository.updateById(req.user.id, updateData);
-
-        res.json({ success: true, hairProfile: profile });
+        res.json({ success: true, hairProfile });
     } catch (error) {
         console.error('Error updating hair profile:', error);
         res.status(500).json({ success: false, message: 'Internal server error' });
@@ -614,14 +598,8 @@ app.patch('/api/hair-profile', authenticateToken, async (req, res) => {
 // Get notification preferences for authenticated user
 app.get('/api/notification-prefs', authenticateToken, async (req, res) => {
     try {
-        const user = await UserRepository.findById(req.user.id);
-
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        // Return notification prefs or defaults
-        const notificationPrefs = user.notificationPrefs || {
+        // Get notification prefs from the dedicated repository method
+        const notificationPrefs = await UserRepository.getNotificationPrefs(req.user.id) || {
             promotions: true,
             appointmentReminders: true,
             loyaltyUpdates: true
@@ -638,31 +616,17 @@ app.get('/api/notification-prefs', authenticateToken, async (req, res) => {
 app.patch('/api/notification-prefs', authenticateToken, async (req, res) => {
     try {
         const { promotions, appointmentReminders, loyaltyUpdates } = req.body;
-        const user = await UserRepository.findById(req.user.id);
 
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
+        // Build update object with only provided fields
+        const updates = {};
+        if (promotions !== undefined) updates.promotions = promotions;
+        if (appointmentReminders !== undefined) updates.appointmentReminders = appointmentReminders;
+        if (loyaltyUpdates !== undefined) updates.loyaltyUpdates = loyaltyUpdates;
 
-        // Initialize notificationPrefs if it doesn't exist
-        const currentPrefs = user.notificationPrefs || {
-            promotions: true,
-            appointmentReminders: true,
-            loyaltyUpdates: true
-        };
+        // Update notification prefs using the dedicated repository method
+        const notificationPrefs = await UserRepository.updateNotificationPrefs(req.user.id, updates);
 
-        // Merge updates
-        const updatedPrefs = { ...currentPrefs };
-        if (promotions !== undefined) updatedPrefs.promotions = promotions;
-        if (appointmentReminders !== undefined) updatedPrefs.appointmentReminders = appointmentReminders;
-        if (loyaltyUpdates !== undefined) updatedPrefs.loyaltyUpdates = loyaltyUpdates;
-
-        await UserRepository.updateById(req.user.id, {
-            notificationPrefs: updatedPrefs,
-            updatedAt: new Date().toISOString()
-        });
-
-        res.json({ success: true, notificationPrefs: updatedPrefs });
+        res.json({ success: true, notificationPrefs });
     } catch (error) {
         console.error('Database error updating notification preferences:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });

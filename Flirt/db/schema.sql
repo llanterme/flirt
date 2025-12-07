@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
     referral_code TEXT UNIQUE,
     referred_by TEXT REFERENCES users(id),
     must_change_password INTEGER DEFAULT 0,
+    hair_profile TEXT, -- JSON object for hair profile data
+    notification_prefs TEXT, -- JSON object for notification preferences
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT
 );
