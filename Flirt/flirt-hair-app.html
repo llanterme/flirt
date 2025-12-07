@@ -1221,19 +1221,75 @@
             white-space: nowrap;
         }
 
-        /* Category group styling */
+        /* Category group styling - Collapsible */
         .service-category-group {
-            margin-bottom: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .service-category-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            cursor: pointer;
+            background: white;
+            transition: background 0.2s ease;
+            user-select: none;
+        }
+
+        .service-category-header:hover {
+            background: rgba(246, 117, 153, 0.03);
+        }
+
+        .service-category-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .service-category-title {
-            font-size: 13px;
+            font-size: 15px;
             font-weight: 600;
+            color: var(--brand-charcoal);
+            margin: 0;
+        }
+
+        .service-category-count {
+            font-size: 12px;
             color: var(--gray-medium);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 8px;
-            padding-left: 4px;
+            background: var(--gray-light);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .service-category-chevron {
+            width: 20px;
+            height: 20px;
+            color: var(--gray-medium);
+            transition: transform 0.3s ease;
+        }
+
+        .service-category-group.expanded .service-category-chevron {
+            transform: rotate(180deg);
+        }
+
+        .service-category-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .service-category-group.expanded .service-category-content {
+            max-height: 2000px; /* Large enough for any content */
+        }
+
+        .service-category-content .service-grid {
+            padding: 0 12px 12px 12px;
+            margin-bottom: 0;
         }
 
         /* Calendar */
@@ -8005,39 +8061,58 @@
                 grouped[cat].push(service);
             });
 
-            // Render grouped services
+            // Render grouped services with collapsible categories
             let html = '';
+            const categoryId = (cat) => 'cat-' + cat.toLowerCase().replace(/[^a-z0-9]/g, '-');
+
             Object.keys(grouped).sort().forEach(category => {
                 const services = grouped[category];
+                const catId = categoryId(category);
 
                 html += `
-                    <div style="margin-bottom: 30px;">
-                        <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 15px; color: var(--text-dark); border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">
-                            ${category}
-                        </h4>
-                        <div class="service-grid">
-                            ${services.map(service => {
-                                const imageUrl = service.image_url || categoryImages[category] || 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=400&h=300&fit=crop';
-                                return `
-                                    <div class="service-card" onclick="selectBeautyService('${service.id}', this)">
-                                        <img src="${imageUrl}" alt="${service.name}" class="service-image"
-                                             onerror="this.src='https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=400&h=300&fit=crop'">
-                                        <div class="service-content">
-                                            <div class="service-info">
-                                                <div class="service-name">${service.name}</div>
-                                                <div class="service-duration">${service.duration || 0} min</div>
+                    <div class="service-category-group" id="${catId}">
+                        <div class="service-category-header" onclick="toggleServiceCategory('${catId}')">
+                            <div class="service-category-header-left">
+                                <span class="service-category-title">${category}</span>
+                                <span class="service-category-count">${services.length}</span>
+                            </div>
+                            <svg class="service-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                        </div>
+                        <div class="service-category-content">
+                            <div class="service-grid">
+                                ${services.map(service => {
+                                    const imageUrl = service.image_url || categoryImages[category] || 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=400&h=300&fit=crop';
+                                    return `
+                                        <div class="service-card" onclick="selectBeautyService('${service.id}', this)">
+                                            <img src="${imageUrl}" alt="${service.name}" class="service-image"
+                                                 onerror="this.src='https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=400&h=300&fit=crop'">
+                                            <div class="service-content">
+                                                <div class="service-info">
+                                                    <div class="service-name">${service.name}</div>
+                                                    <div class="service-duration">${service.duration || 0} min</div>
+                                                </div>
+                                                <div class="service-price">R${service.price.toLocaleString()}</div>
                                             </div>
-                                            <div class="service-price">R${service.price.toLocaleString()}</div>
                                         </div>
-                                    </div>
-                                `;
-                            }).join('')}
+                                    `;
+                                }).join('')}
+                            </div>
                         </div>
                     </div>
                 `;
             });
 
             container.innerHTML = html;
+        }
+
+        // Toggle service category expand/collapse
+        function toggleServiceCategory(catId) {
+            const group = document.getElementById(catId);
+            if (group) {
+                group.classList.toggle('expanded');
+            }
         }
 
         // ========== CALENDAR STATE ==========
