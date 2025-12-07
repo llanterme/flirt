@@ -3431,6 +3431,53 @@
             overflow: hidden;
         }
 
+        /* Fast static gallery grid instead of slow Instagram embed */
+        .auth-gate-gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 4px;
+            width: 100%;
+            height: 100%;
+            background: #fafafa;
+        }
+
+        .auth-gate-gallery-item {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+        }
+
+        .auth-gate-gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .auth-gate-gallery-item img.loaded {
+            opacity: 1;
+        }
+
+        .auth-gate-gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .auth-gate-gallery-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, transparent 40%, rgba(246,117,153,0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+
+        .auth-gate-gallery-item:hover::before {
+            opacity: 1;
+        }
+
         .auth-gate-instagram-container iframe,
         .auth-gate-instagram-container .instagram-media {
             width: 100% !important;
@@ -3891,11 +3938,28 @@
 <body>
     <!-- Auth Gate / Welcome Screen -->
     <div class="auth-gate" id="authGate">
-        <!-- Instagram Feed Side (Desktop Only) -->
+        <!-- Gallery Side (Desktop Only) - Fast static images instead of slow Instagram embed -->
         <div class="auth-gate-gallery">
-            <div class="auth-gate-instagram-container">
-                <blockquote class="instagram-media" data-instgrm-permalink="https://www.instagram.com/flirthairsa/" data-instgrm-version="14" style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 0; max-width:100%; min-width:100%; padding:0; width:100%; height:100%;">
-                </blockquote>
+            <div class="auth-gate-gallery-grid" id="authGateGallery">
+                <!-- Images loaded dynamically from gallery API for fast loading -->
+                <div class="auth-gate-gallery-item">
+                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Hair Extensions" loading="eager" onload="this.classList.add('loaded')">
+                </div>
+                <div class="auth-gate-gallery-item">
+                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg" alt="Hair Styling" loading="eager" onload="this.classList.add('loaded')">
+                </div>
+                <div class="auth-gate-gallery-item">
+                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg" alt="Color Treatment" loading="eager" onload="this.classList.add('loaded')">
+                </div>
+                <div class="auth-gate-gallery-item">
+                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories7.jpg" alt="Hair Care" loading="eager" onload="this.classList.add('loaded')">
+                </div>
+                <div class="auth-gate-gallery-item">
+                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-image-1.jpg" alt="Salon" loading="eager" onload="this.classList.add('loaded')">
+                </div>
+                <div class="auth-gate-gallery-item">
+                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories2.jpg" alt="Extensions" loading="eager" onload="this.classList.add('loaded')">
+                </div>
             </div>
             <div class="auth-gate-gallery-overlay">
                 <div class="auth-gate-gallery-text">
@@ -4259,16 +4323,70 @@
                 </div>
             </div>
 
+            <!-- Instagram CTA Banner (fast, no embed) -->
             <div id="instagramFeedContainer" style="margin-top: 20px; display: none;">
-                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 10px;">
-                    <h3 style="font-size: 18px; margin: 0; color: var(--brand-charcoal);">Instagram Highlights</h3>
-                    <a id="instagramCTA" href="#" target="_blank" style="display:none; font-size: 14px; color: var(--brand-pink); text-decoration: none;">Follow us</a>
-                </div>
-                <div id="instagramEmbed" style="width: 100%; min-height: 860px; background: var(--gray-light); border-radius: 12px; overflow: hidden;">
-                    <iframe id="instagramEmbedFrame" src="" style="width:100%; height:860px; border:0; overflow:hidden;" allowtransparency="true" allow="encrypted-media" scrolling="no"></iframe>
-                </div>
-                <div id="instagramFallback" style="display:none; color: var(--gray-medium); margin-top: 10px;"></div>
+                <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-cta-banner" id="instagramBanner">
+                    <div class="instagram-cta-icon">
+                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                        </svg>
+                    </div>
+                    <div class="instagram-cta-content">
+                        <span class="instagram-cta-handle" id="instagramHandle">@flirthairsa</span>
+                        <span class="instagram-cta-text">Follow us for daily hair inspiration</span>
+                    </div>
+                    <div class="instagram-cta-arrow">→</div>
+                </a>
             </div>
+            <style>
+                .instagram-cta-banner {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 16px 20px;
+                    background: linear-gradient(135deg, #833AB4 0%, #FD1D1D 50%, #FCAF45 100%);
+                    border-radius: 16px;
+                    text-decoration: none;
+                    color: white;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                }
+                .instagram-cta-banner:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(131, 58, 180, 0.3);
+                }
+                .instagram-cta-banner:active {
+                    transform: scale(0.98);
+                }
+                .instagram-cta-icon {
+                    flex-shrink: 0;
+                    opacity: 0.9;
+                }
+                .instagram-cta-content {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                .instagram-cta-handle {
+                    font-weight: 700;
+                    font-size: 16px;
+                }
+                .instagram-cta-text {
+                    font-size: 13px;
+                    opacity: 0.9;
+                }
+                .instagram-cta-arrow {
+                    font-size: 20px;
+                    font-weight: 300;
+                    opacity: 0.8;
+                    transition: transform 0.2s ease;
+                }
+                .instagram-cta-banner:hover .instagram-cta-arrow {
+                    transform: translateX(4px);
+                }
+            </style>
 
             <div class="section-header">
                 <h2 class="section-title">Hair Care Tips</h2>
@@ -9136,29 +9254,19 @@ async function showNotifications() {
                 // Store items for lightbox
                 window.galleryItems = items;
 
+                // Show Instagram CTA banner (fast, no embed)
                 const instagram = data.instagram;
                 const instaContainer = document.getElementById('instagramFeedContainer');
-                const instaFallback = document.getElementById('instagramFallback');
-                const instaCTA = document.getElementById('instagramCTA');
-                const instaFrame = document.getElementById('instagramEmbedFrame');
-                if (instaContainer && instaFallback && instaCTA && instaFrame) {
-                    if (instagram && instagram.embedUrl) {
-                        instaContainer.style.display = 'block';
-                        instaFallback.style.display = 'none';
-                        instaCTA.style.display = 'inline';
-                        if (instagram.username) {
-                            instaCTA.href = `https://www.instagram.com/${instagram.username}/`;
-                            instaCTA.textContent = `@${instagram.username}`;
-                        }
-                        instaFrame.src = instagram.embedUrl;
-                    } else {
-                        instaContainer.style.display = 'block';
-                        instaFrame.src = '';
-                        instaCTA.style.display = instagram?.username ? 'inline' : 'none';
-                        instaFallback.style.display = 'block';
-                        instaFallback.innerHTML = instagram?.username
-                            ? `Follow us on Instagram: <a href="https://www.instagram.com/${instagram.username}/" target="_blank">@${instagram.username}</a>`
-                            : 'Follow us on Instagram for the latest looks.';
+                const instaBanner = document.getElementById('instagramBanner');
+                const instaHandle = document.getElementById('instagramHandle');
+
+                if (instaContainer && instagram?.username) {
+                    instaContainer.style.display = 'block';
+                    if (instaBanner) {
+                        instaBanner.href = `https://www.instagram.com/${instagram.username}/`;
+                    }
+                    if (instaHandle) {
+                        instaHandle.textContent = `@${instagram.username}`;
                     }
                 }
 
@@ -10844,7 +10952,5 @@ async function showNotifications() {
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
 
-    <!-- Instagram Embed Script -->
-    <script async src="//www.instagram.com/embed.js"></script>
 </body>
 </html>
