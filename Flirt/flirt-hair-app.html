@@ -4509,45 +4509,33 @@
                 }
             </style>
 
-            <!-- Instagram Feed Section -->
+            <!-- Instagram Feed Section - Single unified gallery -->
             <div class="section-header">
-                <h2 class="section-title">Follow Us</h2>
+                <h2 class="section-title">Instagram</h2>
                 <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="view-all-btn">@flirthairsa</a>
             </div>
 
-            <!-- Instagram Feed Grid - Always visible -->
+            <!-- Instagram Feed Grid - Loads gallery images from API -->
             <div class="instagram-feed-section">
                 <div class="instagram-feed-grid" id="instagramFeedGrid">
-                    <!-- Static Instagram-style grid that loads instantly -->
+                    <!-- Placeholder tiles shown while loading -->
                     <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
-                        <div class="instagram-feed-placeholder">
-                            <span>💇‍♀️</span>
-                        </div>
+                        <div class="instagram-feed-placeholder"><span>💇‍♀️</span></div>
                     </a>
                     <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
-                        <div class="instagram-feed-placeholder">
-                            <span>✨</span>
-                        </div>
+                        <div class="instagram-feed-placeholder"><span>✨</span></div>
                     </a>
                     <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
-                        <div class="instagram-feed-placeholder">
-                            <span>💕</span>
-                        </div>
+                        <div class="instagram-feed-placeholder"><span>💕</span></div>
                     </a>
                     <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
-                        <div class="instagram-feed-placeholder">
-                            <span>💅</span>
-                        </div>
+                        <div class="instagram-feed-placeholder"><span>💅</span></div>
                     </a>
                     <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
-                        <div class="instagram-feed-placeholder">
-                            <span>👑</span>
-                        </div>
+                        <div class="instagram-feed-placeholder"><span>👑</span></div>
                     </a>
                     <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
-                        <div class="instagram-feed-placeholder">
-                            <span>🌟</span>
-                        </div>
+                        <div class="instagram-feed-placeholder"><span>🌟</span></div>
                     </a>
                 </div>
 
@@ -4675,18 +4663,6 @@
                     transform: translateX(4px);
                 }
             </style>
-
-            <!-- Gallery Section (loads from API) -->
-            <div class="section-header">
-                <h2 class="section-title">Gallery</h2>
-            </div>
-
-            <div class="gallery-grid" id="galleryGrid">
-                <!-- Gallery items loaded dynamically from API -->
-            </div>
-
-            <!-- Hidden container for API-driven Instagram (legacy support) -->
-            <div id="instagramFeedContainer" style="display: none;"></div>
 
             <div class="section-header">
                 <h2 class="section-title">Hair Care Tips</h2>
@@ -9607,10 +9583,10 @@ async function showNotifications() {
         function showRedeemOptions() { alert('Redeem points options'); }
         function addProgressPhoto() { openPhotoUpload(); }
 
-        // ========== GALLERY FUNCTIONALITY ==========
+        // ========== INSTAGRAM FEED FUNCTIONALITY ==========
         async function loadGallery() {
-            const container = document.getElementById('galleryGrid');
-            if (!container) return;
+            const instagramGrid = document.getElementById('instagramFeedGrid');
+            if (!instagramGrid) return;
 
             try {
                 const response = await fetch(`${API_BASE}/gallery`);
@@ -9619,57 +9595,23 @@ async function showNotifications() {
                 const data = await response.json();
                 const items = data.items || [];
 
-                if (!items.length) {
-                    container.innerHTML = `
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #fef5f8 0%, #fff 100%); border-radius: 15px; border: 2px dashed var(--brand-pink);">
-                            <div style="font-size: 60px; margin-bottom: 15px;">💇‍♀️</div>
-                            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 10px; color: var(--brand-charcoal);">Our Gallery is Coming Soon!</h3>
-                            <p style="color: var(--gray-medium); margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
-                                We're building an amazing collection of transformation photos. In the meantime, check out our services!
-                            </p>
-                            <button class="btn btn-primary" onclick="navigateToSection('book')" style="background: var(--brand-pink); border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: 600;">
-                                Explore Our Services
-                            </button>
-                        </div>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = items.map(item => `
-                    <div class="gallery-item" onclick="openGalleryLightbox('${item.id}')">
-                        <img src="${item.imageUrl}" alt="${item.altText || 'Gallery Image'}" onerror="this.src='https://via.placeholder.com/300x300?text=Image'">
-                        ${item.label ? `<div class="gallery-label">${item.label}</div>` : ''}
-                    </div>
-                `).join('');
+                // Keep placeholder tiles if no images available
+                if (!items.length) return;
 
                 // Store items for lightbox
                 window.galleryItems = items;
 
-                // Also populate Instagram feed grid with first 6 gallery images
-                const instagramGrid = document.getElementById('instagramFeedGrid');
-                if (instagramGrid && items.length > 0) {
-                    const feedItems = items.slice(0, 6);
-                    instagramGrid.innerHTML = feedItems.map(item => `
-                        <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
-                            <img src="${item.imageUrl}" alt="${item.altText || 'Hair Inspiration'}" onerror="this.parentElement.innerHTML='<div class=\\'instagram-feed-placeholder\\'><span>💇‍♀️</span></div>'">
-                        </a>
-                    `).join('');
-                }
+                // Populate Instagram feed grid with first 6 gallery images
+                const feedItems = items.slice(0, 6);
+                instagramGrid.innerHTML = feedItems.map(item => `
+                    <a href="javascript:void(0)" class="instagram-feed-item" onclick="openGalleryLightbox('${item.id}')">
+                        <img src="${item.imageUrl}" alt="${item.altText || 'Hair Inspiration'}" onerror="this.parentElement.innerHTML='<div class=\\'instagram-feed-placeholder\\'><span>💇‍♀️</span></div>'">
+                    </a>
+                `).join('');
 
             } catch (error) {
                 console.error('Failed to load gallery:', error);
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #fef5f8 0%, #fff 100%); border-radius: 15px; border: 2px dashed var(--brand-pink);">
-                        <div style="font-size: 60px; margin-bottom: 15px;">💇‍♀️</div>
-                        <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 10px; color: var(--brand-charcoal);">Our Gallery is Coming Soon!</h3>
-                        <p style="color: var(--gray-medium); margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
-                            We're building an amazing collection of transformation photos. In the meantime, check out our services!
-                        </p>
-                        <button class="btn btn-primary" onclick="navigateToSection('book')" style="background: var(--brand-pink); border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: 600;">
-                            Explore Our Services
-                        </button>
-                    </div>
-                `;
+                // Keep placeholder tiles on error - no need to show error state
             }
         }
 
