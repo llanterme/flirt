@@ -385,6 +385,19 @@
             box-shadow: 0 6px 20px rgba(246, 117, 153, 0.5);
         }
 
+        .home-hero-cta:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 10px rgba(246, 117, 153, 0.4);
+        }
+
+        .home-hero-cta svg {
+            transition: transform 0.2s ease;
+        }
+
+        .home-hero-cta:hover svg {
+            transform: translateX(4px);
+        }
+
         .home-hero-stats {
             display: flex;
             align-items: center;
@@ -443,6 +456,11 @@
         .home-action-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .home-action-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
         }
 
         .home-action-icon-wrap {
@@ -525,6 +543,12 @@
             background: rgba(246, 117, 153, 0.05);
         }
 
+        .home-service-chip:active {
+            transform: scale(0.95);
+            background: rgba(246, 117, 153, 0.15);
+            border-color: var(--brand-pink);
+        }
+
         .home-service-emoji {
             font-size: 18px;
         }
@@ -539,19 +563,56 @@
         @media (max-width: 600px) {
             .home-actions-row {
                 grid-template-columns: 1fr;
+                gap: 10px;
             }
 
             .home-action-card {
                 flex-direction: row;
                 align-items: center;
+                padding: 14px;
+            }
+
+            .home-action-icon-wrap {
+                width: 44px;
+                height: 44px;
+                flex-shrink: 0;
             }
 
             .home-action-content {
                 flex: 1;
+                min-width: 0;
+            }
+
+            .home-action-desc {
+                display: none;
+            }
+
+            .home-action-title {
+                font-size: 15px;
             }
 
             .home-hero-headline {
                 font-size: 22px;
+            }
+
+            .home-hero {
+                padding: 22px 18px;
+            }
+
+            .home-hero-cta {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+
+        /* Tablet/medium screens - 2 column layout */
+        @media (min-width: 601px) and (max-width: 900px) {
+            .home-actions-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .home-action-card:last-child {
+                grid-column: span 2;
             }
         }
 
@@ -4109,9 +4170,9 @@
                 <div class="home-action-card home-action-shop" onclick="switchTab('shop')">
                     <div class="home-action-icon-wrap shop-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
-                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                            <line x1="3" y1="6" x2="21" y2="6"></line>
-                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                         </svg>
                     </div>
                     <div class="home-action-content">
@@ -4160,10 +4221,10 @@
                 </div>
                 <div class="offers-list" id="specialOffersList">
                     <!-- Dynamic content injected by loadSpecialOffers() -->
-                    <div class="offer-card" style="opacity: 0.5;">
-                        <span class="offer-badge">LOADING</span>
-                        <div class="offer-title">Loading offers...</div>
-                        <div class="offer-description">Please wait</div>
+                    <div class="offer-card" style="background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite;">
+                        <div style="height: 14px; width: 60px; background: #ddd; border-radius: 4px; margin-bottom: 10px;"></div>
+                        <div style="height: 18px; width: 120px; background: #ddd; border-radius: 4px; margin-bottom: 8px;"></div>
+                        <div style="height: 12px; width: 100px; background: #ddd; border-radius: 4px;"></div>
                     </div>
                 </div>
             </section>
@@ -4174,16 +4235,18 @@
 
             <!-- Dynamic Upcoming Appointments Container -->
             <div id="upcomingAppointmentsContainer">
-                <!-- Loading state -->
-                <div class="appointment-card" style="opacity: 0.6;">
-                    <div class="appointment-date">Loading...</div>
-                    <div class="appointment-details">
-                        <div class="appointment-info">
-                            <div class="appointment-service">Checking your appointments</div>
-                        </div>
-                    </div>
+                <!-- Loading state with skeleton animation -->
+                <div class="appointment-card" style="background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite;">
+                    <div style="height: 16px; width: 100px; background: #ddd; border-radius: 4px; margin-bottom: 8px;"></div>
+                    <div style="height: 14px; width: 150px; background: #ddd; border-radius: 4px;"></div>
                 </div>
             </div>
+            <style>
+                @keyframes shimmer {
+                    0% { background-position: -200% 0; }
+                    100% { background-position: 200% 0; }
+                }
+            </style>
 
             <div class="section-header">
                 <h2 class="section-title">Gallery</h2>
@@ -6492,7 +6555,7 @@
             // Pre-select booking type based on service
             if (serviceType === 'hair' || serviceType === 'extensions') {
                 selectBookingType('hair');
-            } else if (serviceType === 'nails' || serviceType === 'beauty' || serviceType === 'facial' || serviceType === 'lashes') {
+            } else if (serviceType === 'nails' || serviceType === 'beauty' || serviceType === 'facial' || serviceType === 'lashes' || serviceType === 'makeup') {
                 selectBookingType('beauty');
             } else {
                 // Default to hair for unknown types
@@ -8857,7 +8920,9 @@ async function showNotifications() {
 
             } catch (error) {
                 console.error('Failed to load special offers:', error);
-                container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Unable to load special offers. Please try again later.</p>';
+                // Hide section on error instead of showing error message
+                const section = document.getElementById('specialOffersSection');
+                if (section) section.style.display = 'none';
             }
         }
 
