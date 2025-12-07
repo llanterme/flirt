@@ -643,6 +643,11 @@
             display: flex;
         }
 
+        /* Higher z-index for stacked modals (e.g., customer modal on top of booking modal) */
+        .modal-overlay.stacked {
+            z-index: 1100;
+        }
+
         .modal {
             background: white;
             border-radius: 20px;
@@ -2704,6 +2709,7 @@
                             <h3 class="data-card-title">Gallery Management</h3>
                             <div style="display:flex; gap:10px; align-items:center;">
                                 <button class="btn btn-outline btn-small" onclick="openInstagramModal()">Instagram Feed</button>
+                                <button class="btn btn-outline btn-small" onclick="importFlirthairGallery()">Import from flirthair.co.za</button>
                                 <button class="btn btn-primary btn-small" onclick="showGalleryModal()">+ Add Image</button>
                             </div>
                         </div>
@@ -2861,113 +2867,44 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Business Name</label>
-                                    <input type="text" class="form-input" value="Flirt Hair Extensions">
+                                    <input type="text" class="form-input" id="settingsBusinessName" placeholder="Enter business name">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Email</label>
-                                    <input type="email" class="form-input" value="hello@flirthair.co.za">
+                                    <input type="email" class="form-input" id="settingsEmail" placeholder="Enter email address">
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Phone</label>
-                                    <input type="tel" class="form-input" value="+27 21 123 4567">
+                                    <input type="tel" class="form-input" id="settingsPhone" placeholder="Enter phone number">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Address</label>
-                                    <input type="text" class="form-input" value="123 Main Street, Cape Town">
+                                    <input type="text" class="form-input" id="settingsAddress" placeholder="Enter full address">
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Business Hours</label>
-                                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
-                                    <div style="text-align: center; padding: 10px; background: var(--gray-light); border-radius: 8px;">
-                                        <div style="font-weight: 600; font-size: 12px;">MON</div>
-                                        <div style="font-size: 11px; color: var(--gray-medium);">8am-6pm</div>
-                                    </div>
-                                    <div style="text-align: center; padding: 10px; background: var(--gray-light); border-radius: 8px;">
-                                        <div style="font-weight: 600; font-size: 12px;">TUE</div>
-                                        <div style="font-size: 11px; color: var(--gray-medium);">8am-6pm</div>
-                                    </div>
-                                    <div style="text-align: center; padding: 10px; background: var(--gray-light); border-radius: 8px;">
-                                        <div style="font-weight: 600; font-size: 12px;">WED</div>
-                                        <div style="font-size: 11px; color: var(--gray-medium);">8am-6pm</div>
-                                    </div>
-                                    <div style="text-align: center; padding: 10px; background: var(--gray-light); border-radius: 8px;">
-                                        <div style="font-weight: 600; font-size: 12px;">THU</div>
-                                        <div style="font-size: 11px; color: var(--gray-medium);">8am-6pm</div>
-                                    </div>
-                                    <div style="text-align: center; padding: 10px; background: var(--gray-light); border-radius: 8px;">
-                                        <div style="font-weight: 600; font-size: 12px;">FRI</div>
-                                        <div style="font-size: 11px; color: var(--gray-medium);">8am-6pm</div>
-                                    </div>
-                                    <div style="text-align: center; padding: 10px; background: var(--gray-light); border-radius: 8px;">
-                                        <div style="font-weight: 600; font-size: 12px;">SAT</div>
-                                        <div style="font-size: 11px; color: var(--gray-medium);">9am-4pm</div>
-                                    </div>
-                                    <div style="text-align: center; padding: 10px; background: var(--gray-light); border-radius: 8px; opacity: 0.5;">
-                                        <div style="font-weight: 600; font-size: 12px;">SUN</div>
-                                        <div style="font-size: 11px; color: var(--gray-medium);">Closed</div>
-                                    </div>
+                                <label class="form-label">Business Hours <span style="font-weight: normal; color: var(--gray-medium);">(click to edit)</span></label>
+                                <div id="businessHoursGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
+                                    <!-- Hours will be populated by JavaScript -->
                                 </div>
                             </div>
-                            <button class="btn btn-primary">Save Settings</button>
+                            <button class="btn btn-primary" onclick="saveBusinessSettings()">Save Settings</button>
                         </div>
                     </div>
 
                     <div class="data-card">
                         <div class="data-card-header">
                             <h3 class="data-card-title">Service Pricing</h3>
-                            <button class="btn btn-outline btn-sm">+ Add Service</button>
+                            <a href="#" onclick="navigateToSection('services'); return false;" class="btn btn-outline btn-sm">Manage Services</a>
                         </div>
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Service</th>
-                                    <th>Duration</th>
-                                    <th>Price</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Tape Extensions</td>
-                                    <td>2-3 hours</td>
-                                    <td><input type="text" class="form-input" value="R2,500" style="width: 100px;"></td>
-                                    <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️</button>
-                                        <button class="btn btn-icon btn-outline">🗑️</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Weft Installation</td>
-                                    <td>3-4 hours</td>
-                                    <td><input type="text" class="form-input" value="R3,200" style="width: 100px;"></td>
-                                    <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️</button>
-                                        <button class="btn btn-icon btn-outline">🗑️</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Maintenance</td>
-                                    <td>1-2 hours</td>
-                                    <td><input type="text" class="form-input" value="R800" style="width: 100px;"></td>
-                                    <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️</button>
-                                        <button class="btn btn-icon btn-outline">🗑️</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Color Matching</td>
-                                    <td>30 min</td>
-                                    <td><input type="text" class="form-input" value="Free" style="width: 100px;"></td>
-                                    <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️</button>
-                                        <button class="btn btn-icon btn-outline">🗑️</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div style="padding: 20px; background: var(--gray-light); border-radius: 8px; margin: 15px;">
+                            <p style="margin: 0; color: var(--gray-medium); font-size: 14px;">
+                                Service pricing is managed in the <strong>Services</strong> section.
+                                <a href="#" onclick="navigateToSection('services'); return false;" style="color: var(--primary);">Go to Services</a>
+                            </p>
+                        </div>
                     </div>
 
                     <div class="data-card">
@@ -2978,19 +2915,28 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Standard Courier Fee</label>
-                                    <input type="text" class="form-input" value="R65">
+                                    <div style="position: relative;">
+                                        <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-medium);">R</span>
+                                        <input type="number" class="form-input" id="deliveryStandardFee" placeholder="65" style="padding-left: 30px;" min="0" step="0.01">
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Express Courier Fee</label>
-                                    <input type="text" class="form-input" value="R120">
+                                    <div style="position: relative;">
+                                        <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-medium);">R</span>
+                                        <input type="number" class="form-input" id="deliveryExpressFee" placeholder="120" style="padding-left: 30px;" min="0" step="0.01">
+                                    </div>
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Free Delivery Threshold</label>
-                                <input type="text" class="form-input" value="R500" style="max-width: 200px;">
+                                <div style="position: relative; max-width: 200px;">
+                                    <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-medium);">R</span>
+                                    <input type="number" class="form-input" id="deliveryFreeThreshold" placeholder="500" style="padding-left: 30px;" min="0" step="0.01">
+                                </div>
                                 <p style="font-size: 13px; color: var(--gray-medium); margin-top: 5px;">Orders above this amount get free standard delivery</p>
                             </div>
-                            <button class="btn btn-primary">Save Delivery Settings</button>
+                            <button class="btn btn-primary" onclick="saveDeliverySettings()">Save Delivery Settings</button>
                         </div>
                     </div>
                 </section>
@@ -3954,9 +3900,14 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label">Customer</label>
-                    <select class="form-input" id="adminBookingCustomer">
-                        <option value="">Loading customers...</option>
-                    </select>
+                    <div style="display: flex; gap: 8px;">
+                        <select class="form-input" id="adminBookingCustomer" style="flex: 1;">
+                            <option value="">Loading customers...</option>
+                        </select>
+                        <button type="button" class="btn btn-outline" onclick="openNewCustomerFromBooking()" title="Add new customer" style="padding: 8px 12px; white-space: nowrap;">
+                            + New
+                        </button>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -4560,6 +4511,7 @@
                 case 'payment-settings': loadPaymentSettings(); break;
                 case 'chat': loadAdminConversations(); break;
                 case 'hair-tips': loadHairTips(); break;
+                case 'settings': loadSettingsPage(); break;
             }
 
             if (window.innerWidth < 1024) {
@@ -4825,10 +4777,10 @@
                             <td>${displayTime}</td>
                             <td><span class="status-badge status-${b.status}">${b.status}</span></td>
                             <td class="action-btns">
-                                ${b.status === 'pending' ? `
+                                ${b.status === 'REQUESTED' ? `
                                     <button class="btn btn-icon btn-outline booking-confirm-btn" data-booking-id="${b.id}" title="Confirm">✅</button>
                                 ` : ''}
-                                ${b.status === 'confirmed' ? `
+                                ${b.status === 'CONFIRMED' ? `
                                     <button class="btn btn-icon btn-outline booking-complete-btn" data-booking-id="${b.id}" title="Complete">✔️</button>
                                 ` : ''}
                                 <button class="btn btn-icon btn-outline" title="View" onclick="showSection('bookings')">👁️</button>
@@ -5693,9 +5645,9 @@
 
                 // Format time display based on booking status
                 let timeStr = 'TBC';
-                if (b.status === 'CONFIRMED' || b.status === 'confirmed') {
+                if (b.status === 'CONFIRMED') {
                     timeStr = b.assignedStartTime || b.confirmedTime || b.time || 'TBC';
-                } else if (b.status === 'REQUESTED' || b.status === 'pending') {
+                } else if (b.status === 'REQUESTED') {
                     // Show time window for requested bookings
                     const timeWindow = window.BookingConstants?.getTimeWindow(b.requestedTimeWindow || b.preferredTimeOfDay);
                     timeStr = timeWindow ? `${timeWindow.icon} ${timeWindow.label}` : (b.preferredTimeOfDay || 'TBC');
@@ -5728,15 +5680,15 @@
                         <td>${timeStr}</td>
                         <td><span class="status-badge status-${b.status}">${b.status}</span></td>
                         <td class="action-btns">
-                            ${(b.status === 'REQUESTED' || b.status === 'pending') && !b.assignedStartTime ? `
+                            ${b.status === 'REQUESTED' && !b.assignedStartTime ? `
                                 <button class="btn btn-sm btn-primary booking-assign-btn" data-booking-id="${b.id}" title="Assign Time">⏰ Assign</button>
                             ` : `
                                 <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}" title="Edit booking">✏️</button>
                             `}
-                            ${b.status === 'CONFIRMED' || b.status === 'confirmed' ? `
+                            ${b.status === 'CONFIRMED' ? `
                                 <button class="btn btn-sm booking-complete-btn" data-booking-id="${b.id}" title="Complete">✓</button>
                             ` : ''}
-                            ${(b.status === 'REQUESTED' || b.status === 'CONFIRMED' || b.status === 'pending' || b.status === 'confirmed') ? `
+                            ${(b.status === 'REQUESTED' || b.status === 'CONFIRMED') ? `
                                 <button class="btn btn-sm btn-outline booking-cancel-btn" data-booking-id="${b.id}" title="Cancel">✗</button>
                             ` : ''}
                         </td>
@@ -5939,13 +5891,13 @@
                             ${b.notes ? `<div style="font-size: 12px; color: var(--gray-medium); margin-top: 8px; padding: 8px; background: var(--gray-light); border-radius: 4px;"><strong>Notes:</strong> ${b.notes}</div>` : ''}
                             <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
                                 <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}">✏️ Edit</button>
-                                ${b.status === 'pending' ? `
+                                ${b.status === 'REQUESTED' ? `
                                     <button class="btn btn-sm btn-primary booking-confirm-close-btn" data-booking-id="${b.id}">✓ Confirm</button>
                                 ` : ''}
-                                ${b.status === 'confirmed' ? `
+                                ${b.status === 'CONFIRMED' ? `
                                     <button class="btn btn-sm btn-primary booking-complete-close-btn" data-booking-id="${b.id}">✓ Complete</button>
                                 ` : ''}
-                                ${(b.status === 'pending' || b.status === 'confirmed') ? `
+                                ${(b.status === 'REQUESTED' || b.status === 'CONFIRMED') ? `
                                     <button class="btn btn-sm btn-outline booking-cancel-close-btn" data-booking-id="${b.id}">✗ Cancel</button>
                                 ` : ''}
                                 <button class="btn btn-sm booking-delete-btn" data-booking-id="${b.id}" style="background: var(--danger); color: white; margin-left: auto;">🗑️ Delete</button>
@@ -6637,7 +6589,7 @@
                 .filter(b =>
                     b.stylistId === stylistId &&
                     (b.requestedDate || b.date) === date &&
-                    (b.status === 'CONFIRMED' || b.status === 'confirmed') &&
+                    b.status === 'CONFIRMED' &&
                     b.assignedStartTime
                 )
                 .map(b => b.assignedStartTime);
@@ -6874,6 +6826,18 @@
             }
         }
 
+        // Flag to track if we're creating a customer from booking modal
+        let creatingCustomerFromBooking = false;
+
+        // Open new customer modal from booking flow
+        function openNewCustomerFromBooking() {
+            creatingCustomerFromBooking = true;
+            // Don't close booking modal - just open customer modal on top
+            openCustomerModal(null);
+            // Add stacked class so customer modal appears above booking modal
+            document.getElementById('customerModal').classList.add('stacked');
+        }
+
         function openCustomerModal(customer = null) {
             editingCustomerId = customer?.id || null;
             document.getElementById('customerModalTitle').textContent = editingCustomerId ? 'Edit Customer' : 'Add Customer';
@@ -6889,6 +6853,8 @@
 
         function closeCustomerModal() {
             editingCustomerId = null;
+            creatingCustomerFromBooking = false; // Reset flag on close
+            document.getElementById('customerModal').classList.remove('stacked'); // Remove stacked class
             closeModal('customerModal');
         }
 
@@ -6910,7 +6876,12 @@
                 return;
             }
 
+            // Track if we came from booking flow
+            const wasFromBookingFlow = creatingCustomerFromBooking;
+
             try {
+                let newCustomerId = null;
+
                 if (editingCustomerId) {
                     await apiCall(`/admin/customers/${editingCustomerId}`, {
                         method: 'PUT',
@@ -6918,16 +6889,47 @@
                     });
                     alert('Customer updated');
                 } else {
-                    await apiCall('/admin/customers', {
+                    const result = await apiCall('/admin/customers', {
                         method: 'POST',
                         body: JSON.stringify({ name, email, phone, tier, points, password: password || undefined })
                     });
-                    alert('Customer added');
+                    newCustomerId = result.customerId || result.id;
+
+                    if (wasFromBookingFlow) {
+                        // Don't show alert, just close and update dropdown
+                    } else {
+                        alert('Customer added');
+                    }
                 }
+
                 closeCustomerModal();
                 await loadCustomers();
+
+                // If we were creating from booking flow, update the booking customer dropdown and select new customer
+                if (wasFromBookingFlow && newCustomerId) {
+                    await refreshBookingCustomerDropdown(newCustomerId);
+                }
             } catch (error) {
                 alert('Error saving customer: ' + error.message);
+            }
+        }
+
+        // Refresh the booking customer dropdown and optionally select a customer
+        async function refreshBookingCustomerDropdown(selectCustomerId = null) {
+            try {
+                const data = await apiCall('/admin/customers');
+                const customers = data.customers || [];
+                const customerSelect = document.getElementById('adminBookingCustomer');
+
+                customerSelect.innerHTML = '<option value="">Select customer...</option>' +
+                    customers.map(c => `<option value="${c.id}">${c.name} (${c.email})</option>`).join('');
+
+                // If a customer ID was provided, select them
+                if (selectCustomerId) {
+                    customerSelect.value = selectCustomerId;
+                }
+            } catch (error) {
+                console.error('Error refreshing customer dropdown:', error);
             }
         }
 
@@ -9737,6 +9739,29 @@
         // GALLERY MANAGEMENT
         // ============================================
 
+        let galleryImporting = false;
+
+        async function importFlirthairGallery() {
+            if (galleryImporting) return;
+            const confirmed = confirm('Import the latest images from flirthair.co.za into the gallery? Existing Flirt images will be updated.');
+            if (!confirmed) return;
+
+            galleryImporting = true;
+            showAdminToast('Importing gallery images...', 'info');
+            try {
+                const result = await apiCall('/admin/gallery/import/flirthair', { method: 'POST' });
+                const created = result.created || 0;
+                const updated = result.updated || 0;
+                const skipped = result.skipped || 0;
+                showAdminToast(`Import complete. ${created} added, ${updated} updated, ${skipped} skipped.`, 'success');
+                loadGallery();
+            } catch (error) {
+                showAdminToast('Import failed: ' + error.message, 'error');
+            } finally {
+                galleryImporting = false;
+            }
+        }
+
         async function loadGallery() {
             try {
                 const data = await apiCall('/admin/gallery');
@@ -10109,6 +10134,212 @@
             } else {
                 missingVarsDiv.style.display = 'none';
             }
+        }
+
+        // ============================================
+        // BUSINESS & DELIVERY SETTINGS
+        // ============================================
+
+        let businessHours = {};
+
+        async function loadSettingsPage() {
+            await Promise.all([
+                loadBusinessSettings(),
+                loadDeliverySettings()
+            ]);
+        }
+
+        async function loadBusinessSettings() {
+            try {
+                const data = await apiCall('/admin/business-settings');
+                const settings = data.settings;
+
+                document.getElementById('settingsBusinessName').value = settings.businessName || '';
+                document.getElementById('settingsEmail').value = settings.email || '';
+                document.getElementById('settingsPhone').value = settings.phone || '';
+                document.getElementById('settingsAddress').value = settings.address || '';
+
+                businessHours = settings.hours || {};
+                renderBusinessHours();
+            } catch (error) {
+                console.error('Error loading business settings:', error);
+                // If endpoint doesn't exist yet (table not created), show defaults
+                renderBusinessHours();
+            }
+        }
+
+        function renderBusinessHours() {
+            const days = [
+                { key: 'mon', label: 'MON' },
+                { key: 'tue', label: 'TUE' },
+                { key: 'wed', label: 'WED' },
+                { key: 'thu', label: 'THU' },
+                { key: 'fri', label: 'FRI' },
+                { key: 'sat', label: 'SAT' },
+                { key: 'sun', label: 'SUN' }
+            ];
+
+            const grid = document.getElementById('businessHoursGrid');
+            grid.innerHTML = days.map(day => {
+                const hours = businessHours[day.key];
+                const isClosed = !hours;
+                const displayText = isClosed ? 'Closed' : formatHoursDisplay(hours.open, hours.close);
+                const opacity = isClosed ? 'opacity: 0.5;' : '';
+
+                return `
+                    <div style="text-align: center; padding: 10px; background: var(--gray-light); border-radius: 8px; cursor: pointer; ${opacity}"
+                         onclick="editDayHours('${day.key}', '${day.label}')"
+                         title="Click to edit">
+                        <div style="font-weight: 600; font-size: 12px;">${day.label}</div>
+                        <div style="font-size: 11px; color: var(--gray-medium);">${displayText}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatHoursDisplay(open, close) {
+            const formatTime = (time) => {
+                if (!time) return '';
+                const [h, m] = time.split(':');
+                const hour = parseInt(h);
+                const ampm = hour >= 12 ? 'pm' : 'am';
+                const hour12 = hour % 12 || 12;
+                return `${hour12}${ampm}`;
+            };
+            return `${formatTime(open)}-${formatTime(close)}`;
+        }
+
+        function editDayHours(dayKey, dayLabel) {
+            const hours = businessHours[dayKey];
+            const isClosed = !hours;
+
+            const html = `
+                <div style="padding: 20px;">
+                    <h3 style="margin-bottom: 20px;">Edit ${dayLabel} Hours</h3>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="dayClosedCheckbox" ${isClosed ? 'checked' : ''} onchange="toggleDayClosed()">
+                            <span>Closed</span>
+                        </label>
+                    </div>
+                    <div id="hoursInputs" style="${isClosed ? 'display: none;' : ''}">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Open</label>
+                                <input type="time" class="form-input" id="dayOpenTime" value="${hours?.open || '08:00'}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Close</label>
+                                <input type="time" class="form-input" id="dayCloseTime" value="${hours?.close || '18:00'}">
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="saveDayHours('${dayKey}')">Save</button>
+                        <button class="btn btn-outline" onclick="closeModal('editHoursModal')">Cancel</button>
+                    </div>
+                </div>
+            `;
+
+            // Create modal if not exists
+            let modal = document.getElementById('editHoursModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'editHoursModal';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = '<div class="modal" style="max-width: 400px;"></div>';
+                document.body.appendChild(modal);
+            }
+
+            modal.querySelector('.modal').innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function toggleDayClosed() {
+            const isClosed = document.getElementById('dayClosedCheckbox').checked;
+            document.getElementById('hoursInputs').style.display = isClosed ? 'none' : '';
+        }
+
+        function saveDayHours(dayKey) {
+            const isClosed = document.getElementById('dayClosedCheckbox').checked;
+
+            if (isClosed) {
+                businessHours[dayKey] = null;
+            } else {
+                businessHours[dayKey] = {
+                    open: document.getElementById('dayOpenTime').value,
+                    close: document.getElementById('dayCloseTime').value
+                };
+            }
+
+            renderBusinessHours();
+            closeModal('editHoursModal');
+        }
+
+        async function saveBusinessSettings() {
+            const payload = {
+                businessName: document.getElementById('settingsBusinessName').value.trim(),
+                email: document.getElementById('settingsEmail').value.trim(),
+                phone: document.getElementById('settingsPhone').value.trim(),
+                address: document.getElementById('settingsAddress').value.trim(),
+                hours: businessHours
+            };
+
+            // Validate email
+            if (payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            try {
+                await apiCall('/admin/business-settings', {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+                alert('Business settings saved successfully!');
+            } catch (error) {
+                console.error('Error saving business settings:', error);
+                alert('Failed to save business settings: ' + error.message);
+            }
+        }
+
+        async function loadDeliverySettings() {
+            try {
+                const data = await apiCall('/admin/delivery-config');
+                const config = data.config;
+
+                document.getElementById('deliveryStandardFee').value = config.standardFee || '';
+                document.getElementById('deliveryExpressFee').value = config.expressFee || '';
+                document.getElementById('deliveryFreeThreshold').value = config.freeThreshold || '';
+            } catch (error) {
+                console.error('Error loading delivery settings:', error);
+            }
+        }
+
+        async function saveDeliverySettings() {
+            const standardFee = parseFloat(document.getElementById('deliveryStandardFee').value) || 0;
+            const expressFee = parseFloat(document.getElementById('deliveryExpressFee').value) || 0;
+            const freeThreshold = parseFloat(document.getElementById('deliveryFreeThreshold').value) || 0;
+
+            if (standardFee < 0 || expressFee < 0 || freeThreshold < 0) {
+                alert('Fee values cannot be negative');
+                return;
+            }
+
+            try {
+                await apiCall('/admin/delivery-config', {
+                    method: 'PUT',
+                    body: JSON.stringify({ standardFee, expressFee, freeThreshold })
+                });
+                alert('Delivery settings saved successfully!');
+            } catch (error) {
+                console.error('Error saving delivery settings:', error);
+                alert('Failed to save delivery settings: ' + error.message);
+            }
+        }
+
+        function navigateToSection(sectionId) {
+            showSection(sectionId);
         }
 
         document.addEventListener('DOMContentLoaded', async function() {

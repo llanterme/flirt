@@ -298,7 +298,325 @@
             }
         }
 
-        /* Home Dashboard */
+        /* Home Dashboard - Redesigned */
+        .home-hero {
+            background: linear-gradient(135deg, var(--brand-charcoal) 0%, #2d2d2e 50%, var(--brand-pink) 150%);
+            color: white;
+            padding: 28px 24px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .home-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(246, 117, 153, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .home-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .home-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .home-hero-greeting {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .home-hero-headline {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .home-hero-headline .highlight {
+            color: var(--brand-pink);
+            font-weight: 600;
+        }
+
+        .home-hero-subtitle {
+            font-size: 14px;
+            opacity: 0.85;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            max-width: 320px;
+        }
+
+        .home-hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--brand-pink);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(246, 117, 153, 0.4);
+        }
+
+        .home-hero-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(246, 117, 153, 0.5);
+        }
+
+        .home-hero-cta:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 2px 10px rgba(246, 117, 153, 0.4);
+        }
+
+        .home-hero-cta svg {
+            transition: transform 0.2s ease;
+        }
+
+        .home-hero-cta:hover svg {
+            transform: translateX(4px);
+        }
+
+        .home-hero-stats {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            z-index: 1;
+        }
+
+        .home-hero-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .home-hero-stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--brand-pink);
+        }
+
+        .home-hero-stat-label {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .home-hero-stat-divider {
+            width: 1px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Three Action Cards Row */
+        .home-actions-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .home-action-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-soft);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .home-action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .home-action-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .home-action-icon-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tracker-icon {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            color: #2E7D32;
+        }
+
+        .share-icon {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            color: #E65100;
+        }
+
+        .shop-icon {
+            background: linear-gradient(135deg, #FCE4EC 0%, #F8BBD9 100%);
+            color: var(--brand-pink);
+        }
+
+        .home-action-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--brand-charcoal);
+        }
+
+        .home-action-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .home-action-link {
+            font-size: 12px;
+            color: var(--brand-pink);
+            font-weight: 600;
+        }
+
+        /* Quick Book Services Chips */
+        .home-quick-book {
+            margin-bottom: 24px;
+        }
+
+        .home-services-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 4px 0;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .home-services-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .home-service-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            border: 2px solid var(--border-soft);
+            border-radius: 30px;
+            padding: 10px 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .home-service-chip:hover {
+            border-color: var(--brand-pink);
+            background: rgba(246, 117, 153, 0.05);
+        }
+
+        .home-service-chip:active {
+            transform: scale(0.95);
+            background: rgba(246, 117, 153, 0.15);
+            border-color: var(--brand-pink);
+        }
+
+        .home-service-emoji {
+            font-size: 18px;
+        }
+
+        .home-service-chip span:last-child {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--brand-charcoal);
+        }
+
+        /* Responsive for mobile */
+        @media (max-width: 600px) {
+            .home-actions-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .home-action-card {
+                flex-direction: row;
+                align-items: center;
+                padding: 14px;
+            }
+
+            .home-action-icon-wrap {
+                width: 44px;
+                height: 44px;
+                flex-shrink: 0;
+            }
+
+            .home-action-content {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .home-action-desc {
+                display: none;
+            }
+
+            .home-action-title {
+                font-size: 15px;
+            }
+
+            .home-hero-headline {
+                font-size: 22px;
+            }
+
+            .home-hero {
+                padding: 22px 18px;
+            }
+
+            .home-hero-cta {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+
+        /* Tablet/medium screens - 2 column layout */
+        @media (min-width: 601px) and (max-width: 900px) {
+            .home-actions-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .home-action-card:last-child {
+                grid-column: span 2;
+            }
+        }
+
+        /* Legacy welcome-banner support */
         .welcome-banner {
             background: linear-gradient(135deg, var(--primary-black) 0%, var(--gray-dark) 100%);
             color: white;
@@ -1321,6 +1639,224 @@
             font-weight: 500;
         }
 
+        /* Hair Tracker Setup - Enhanced UX */
+        .tracker-setup-hero {
+            text-align: center;
+            padding: 20px 0 30px;
+        }
+
+        .tracker-setup-visual {
+            margin-bottom: 24px;
+        }
+
+        .tracker-setup-circle {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tracker-setup-icon {
+            font-size: 50px;
+            z-index: 2;
+            animation: trackerBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes trackerBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .tracker-setup-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 3px solid var(--brand-pink);
+            opacity: 0.3;
+            animation: trackerPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes trackerPulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.1); opacity: 0.1; }
+        }
+
+        .tracker-setup-title {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--brand-charcoal);
+            margin-bottom: 12px;
+        }
+
+        .tracker-setup-desc {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.5;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
+        .tracker-setup-social {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .tracker-setup-avatars {
+            display: flex;
+        }
+
+        .tracker-setup-avatars span {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gray-light);
+            border-radius: 50%;
+            margin-left: -8px;
+            font-size: 16px;
+            border: 2px solid white;
+        }
+
+        .tracker-setup-avatars span:first-child {
+            margin-left: 0;
+        }
+
+        /* Benefits Grid */
+        .tracker-benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .tracker-benefit-card {
+            background: white;
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid var(--border-soft);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .tracker-benefit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .tracker-benefit-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin: 0 auto 10px;
+        }
+
+        .tracker-benefit-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--brand-charcoal);
+            margin-bottom: 4px;
+        }
+
+        .tracker-benefit-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* CTA Section */
+        .tracker-setup-cta {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .tracker-setup-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--brand-pink);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(246, 117, 153, 0.4);
+            width: 100%;
+            justify-content: center;
+        }
+
+        .tracker-setup-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(246, 117, 153, 0.5);
+        }
+
+        .tracker-setup-btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .tracker-setup-btn-primary svg {
+            transition: transform 0.2s ease;
+        }
+
+        .tracker-setup-btn-primary:hover svg {
+            transform: translateX(4px);
+        }
+
+        .tracker-setup-time {
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Info Bar */
+        .tracker-setup-info {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tracker-info-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .tracker-info-icon {
+            font-size: 14px;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 400px) {
+            .tracker-benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tracker-setup-info {
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+        }
+
         /* Hair Tracker */
         .tracker-progress {
             background: white;
@@ -1645,7 +2181,7 @@
             width: 100%;
             height: 100%;
             background: rgba(65, 64, 66, 0.85);
-            z-index: 1000;
+            z-index: 10001; /* Higher than auth-gate (10000) so modals appear on top */
             align-items: center;
             justify-content: center;
             padding: 20px;
@@ -2980,83 +3516,6 @@
             display: block;
         }
 
-        /* Social Login Styles */
-        .social-auth {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding: 0 20px;
-            margin-bottom: 15px;
-        }
-
-        .social-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 10px;
-            border: 1px solid var(--border-soft);
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: white;
-        }
-
-        .social-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .social-google {
-            color: var(--brand-charcoal);
-        }
-
-        .social-google:hover {
-            background: var(--surface-muted);
-        }
-
-        .social-facebook {
-            background: #1877F2;
-            color: white;
-            border-color: #1877F2;
-        }
-
-        .social-facebook:hover {
-            background: #166fe5;
-        }
-
-        .social-facebook .social-icon {
-            fill: white;
-        }
-
-        .social-icon {
-            flex-shrink: 0;
-        }
-
-        .social-divider {
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            margin-bottom: 15px;
-        }
-
-        .social-divider::before,
-        .social-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--surface-muted);
-        }
-
-        .social-divider span {
-            padding: 0 15px;
-            color: var(--text-subtle);
-            font-size: 13px;
-        }
-
         .guest-link {
             text-align: center;
             margin-top: 15px;
@@ -3152,12 +3611,690 @@
         .time-window-chip.selected .label {
             color: var(--primary);
         }
+
+        /* ============================================
+           AUTH REQUIRED STATE - Defense in Depth
+           Body starts with auth-required class.
+           App content is hidden until user authenticates.
+           ============================================ */
+        body.auth-required .app-container,
+        body.auth-required .header,
+        body.auth-required .bottom-nav,
+        body.auth-required .chat-widget {
+            display: none !important;
+        }
+
+        /* Auth gate is ALWAYS visible when body has auth-required class */
+        body.auth-required .auth-gate {
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* When logged in (auth-required removed), app shows and auth gate hides */
+        body.logged-in .auth-gate {
+            display: none !important;
+        }
+
+        /* Auth Gate / Welcome Screen - Redesigned for conversion */
+        .auth-gate {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(160deg, #F67599 0%, #e05a7f 40%, #c94b6d 70%, #414042 100%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: row;
+            opacity: 1;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            overflow: hidden;
+        }
+
+        .auth-gate.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Gallery/Instagram Side - Hidden on mobile */
+        .auth-gate-gallery {
+            display: none;
+            width: 50%;
+            position: relative;
+            overflow: hidden;
+            background: #fafafa;
+        }
+
+        /* Instant CSS-only pattern - no images, loads immediately */
+        .auth-gate-gallery-pattern {
+            width: 100%;
+            height: 100%;
+            background:
+                /* Animated gradient overlay */
+                linear-gradient(135deg, rgba(246,117,153,0.15) 0%, transparent 50%, rgba(206,147,216,0.15) 100%),
+                /* Grid pattern */
+                repeating-linear-gradient(0deg, transparent, transparent 49.5%, rgba(255,255,255,0.3) 49.5%, rgba(255,255,255,0.3) 50.5%, transparent 50.5%, transparent 100%),
+                repeating-linear-gradient(90deg, transparent, transparent 49.5%, rgba(255,255,255,0.3) 49.5%, rgba(255,255,255,0.3) 50.5%, transparent 50.5%, transparent 100%),
+                /* Base gradient - pink to purple tones */
+                linear-gradient(135deg,
+                    #fce4ec 0%,
+                    #f8bbd9 15%,
+                    #f48fb1 30%,
+                    #f3e5f5 45%,
+                    #e1bee7 60%,
+                    #ce93d8 75%,
+                    #f8bbd9 90%,
+                    #fce4ec 100%
+                );
+            background-size: 100% 100%, 50% 33.33%, 50% 33.33%, 400% 400%;
+            animation: authGalleryShift 15s ease infinite;
+        }
+
+        @keyframes authGalleryShift {
+            0%, 100% { background-position: 0% 0%, 0% 0%, 0% 0%, 0% 50%; }
+            25% { background-position: 0% 0%, 0% 0%, 0% 0%, 50% 50%; }
+            50% { background-position: 0% 0%, 0% 0%, 0% 0%, 100% 50%; }
+            75% { background-position: 0% 0%, 0% 0%, 0% 0%, 50% 100%; }
+        }
+
+        /* Hair silhouette decorations */
+        .auth-gate-gallery-pattern::before {
+            content: '💇‍♀️';
+            position: absolute;
+            font-size: 120px;
+            opacity: 0.08;
+            top: 20%;
+            left: 15%;
+            transform: rotate(-15deg);
+        }
+
+        .auth-gate-gallery-pattern::after {
+            content: '✨';
+            position: absolute;
+            font-size: 80px;
+            opacity: 0.1;
+            bottom: 25%;
+            right: 20%;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0.1; transform: scale(1); }
+            50% { opacity: 0.2; transform: scale(1.1); }
+        }
+
+        .auth-gate-gallery-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 30px 25px;
+            background: linear-gradient(to top, rgba(65,64,66,0.95) 0%, rgba(65,64,66,0.7) 50%, transparent 100%);
+            z-index: 10;
+        }
+
+        .auth-gate-gallery-text {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .auth-gate-gallery-hashtag {
+            color: #FFD700;
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .auth-gate-gallery-hashtag:hover {
+            color: #FFA500;
+        }
+
+        .auth-gate-gallery-label {
+            color: rgba(255,255,255,0.9);
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Main Content Side */
+        .auth-gate-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 20px;
+            overflow: hidden;
+        }
+
+        .auth-gate-content {
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .auth-gate-logo {
+            margin-bottom: 4px;
+        }
+
+        /* Text-based logo */
+        .auth-gate-logo-text {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 48px;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            color: white;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .auth-gate-logo-dot {
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        /* Desktop: Show gallery and adjust layout */
+        @media (min-width: 900px) {
+            .auth-gate-gallery {
+                display: block;
+            }
+
+            .auth-gate-main {
+                width: 50%;
+            }
+
+            .auth-gate-logo-text {
+                font-size: 52px;
+            }
+        }
+
+        /* Large desktop */
+        @media (min-width: 1200px) {
+            .auth-gate-gallery {
+                width: 55%;
+            }
+
+            .auth-gate-main {
+                width: 45%;
+            }
+
+            .auth-gate-logo-text {
+                font-size: 60px;
+            }
+
+            .auth-gate-content {
+                max-width: 440px;
+            }
+        }
+
+        .auth-gate-tagline {
+            color: rgba(255,255,255,0.85);
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        /* Social proof banner */
+        .auth-gate-social-proof {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            padding: 6px 14px;
+            margin-bottom: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .auth-gate-avatars {
+            display: flex;
+            margin-right: 3px;
+        }
+
+        .auth-gate-avatars span {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+            margin-right: -8px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-gate-social-text {
+            color: white;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .auth-gate-social-text strong {
+            color: #FFD700;
+        }
+
+        /* Hero section with emotional appeal */
+        .auth-gate-hero {
+            margin-bottom: 12px;
+        }
+
+        .auth-gate-hero h1 {
+            color: white;
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 26px;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+
+        .auth-gate-hero h1 .highlight {
+            color: #FFD700;
+            font-weight: 400;
+        }
+
+        .auth-gate-hero p {
+            color: rgba(255,255,255,0.9);
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 0;
+        }
+
+        /* Benefits cards with specific value props */
+        .auth-gate-benefits {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .auth-gate-benefit {
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(5px);
+            border-radius: 12px;
+            padding: 10px 10px;
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .auth-gate-benefit:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.18);
+        }
+
+        .auth-gate-benefit-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .auth-gate-benefit-title {
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .auth-gate-benefit-desc {
+            color: rgba(255,255,255,0.75);
+            font-size: 10px;
+            line-height: 1.3;
+        }
+
+        /* Limited time offer - urgency */
+        .auth-gate-offer {
+            background: linear-gradient(90deg, #FFD700, #FFA500);
+            border-radius: 10px;
+            padding: 10px 16px;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-gate-offer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            100% { left: 100%; }
+        }
+
+        .auth-gate-offer-text {
+            color: #414042;
+            font-size: 12px;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-gate-offer-text .points {
+            font-size: 14px;
+            color: #c94b6d;
+        }
+
+        /* Testimonial */
+        .auth-gate-testimonial {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .auth-gate-testimonial::before {
+            content: '"';
+            position: absolute;
+            top: 4px;
+            left: 8px;
+            font-size: 28px;
+            color: rgba(255,255,255,0.2);
+            font-family: Georgia, serif;
+            line-height: 1;
+        }
+
+        .auth-gate-testimonial-text {
+            color: rgba(255,255,255,0.95);
+            font-size: 11px;
+            font-style: italic;
+            line-height: 1.4;
+            margin-bottom: 6px;
+            padding-left: 16px;
+        }
+
+        .auth-gate-testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-left: 16px;
+        }
+
+        .auth-gate-testimonial-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .auth-gate-testimonial-info {
+            text-align: left;
+        }
+
+        .auth-gate-testimonial-name {
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .auth-gate-testimonial-detail {
+            color: rgba(255,255,255,0.7);
+            font-size: 9px;
+        }
+
+        .auth-gate-testimonial-stars {
+            color: #FFD700;
+            font-size: 10px;
+            margin-left: auto;
+        }
+
+        /* CTA Buttons */
+        .auth-gate-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .auth-gate-btn {
+            padding: 14px 24px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-gate-btn-primary {
+            background: white;
+            color: #c94b6d;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .auth-gate-btn-primary::after {
+            content: ' ✨';
+        }
+
+        .auth-gate-btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+        }
+
+        .auth-gate-btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.4);
+        }
+
+        .auth-gate-btn-secondary:hover {
+            border-color: white;
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Trust badges */
+        .auth-gate-trust {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .auth-gate-trust-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: rgba(255,255,255,0.7);
+            font-size: 9px;
+        }
+
+        .auth-gate-trust-icon {
+            font-size: 11px;
+        }
+
+        .auth-gate-footer {
+            color: rgba(255,255,255,0.5);
+            font-size: 9px;
+        }
+
+        .auth-gate-footer a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: underline;
+        }
+
+        /* Floating elements for visual interest - only on main side */
+        .auth-gate-main::after {
+            content: '';
+            position: absolute;
+            top: 10%;
+            right: -5%;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .auth-gate-main::before {
+            content: '';
+            position: absolute;
+            bottom: 15%;
+            left: -10%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        @media (max-width: 400px) {
+            .auth-gate-benefits {
+                grid-template-columns: 1fr;
+            }
+            .auth-gate-hero h1 {
+                font-size: 22px;
+            }
+            .auth-gate-logo-text {
+                font-size: 38px;
+            }
+        }
     </style>
 
     <!-- Booking Constants (shared with backend) -->
     <script src="/shared/booking-constants.js"></script>
 </head>
-<body>
+<body class="auth-required">
+    <!-- Auth Gate / Welcome Screen -->
+    <div class="auth-gate" id="authGate">
+        <!-- Gallery Side (Desktop Only) - Instant gradient pattern, no external images -->
+        <div class="auth-gate-gallery">
+            <div class="auth-gate-gallery-pattern" id="authGateGallery">
+                <!-- Pure CSS pattern - loads instantly, no network requests -->
+            </div>
+            <div class="auth-gate-gallery-overlay">
+                <div class="auth-gate-gallery-text">
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="auth-gate-gallery-hashtag">@flirthairsa</a>
+                    <span class="auth-gate-gallery-label">Real Results from Real Clients</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Side -->
+        <div class="auth-gate-main">
+        <div class="auth-gate-content">
+            <div class="auth-gate-logo">
+                <span class="auth-gate-logo-text">FL<span class="auth-gate-logo-dot">!</span>RT</span>
+            </div>
+            <div class="auth-gate-tagline">Premium Hair Extensions</div>
+
+            <!-- Social Proof Banner -->
+            <div class="auth-gate-social-proof">
+                <div class="auth-gate-avatars">
+                    <span>👩🏽</span>
+                    <span>👩🏻</span>
+                    <span>👩🏾</span>
+                </div>
+                <div class="auth-gate-social-text">
+                    <strong>2,500+</strong> happy clients this year
+                </div>
+            </div>
+
+            <!-- Emotional Hero -->
+            <div class="auth-gate-hero">
+                <h1>Feel <span class="highlight">Confident</span> in Your Hair</h1>
+                <p>Join thousands of women who've transformed their look with premium extensions & expert styling</p>
+            </div>
+
+            <!-- Value Proposition Benefits -->
+            <div class="auth-gate-benefits">
+                <div class="auth-gate-benefit">
+                    <div class="auth-gate-benefit-icon">📱</div>
+                    <div class="auth-gate-benefit-title">Book in 30 Seconds</div>
+                    <div class="auth-gate-benefit-desc">Skip the phone calls. Book your perfect slot instantly</div>
+                </div>
+                <div class="auth-gate-benefit">
+                    <div class="auth-gate-benefit-icon">🎁</div>
+                    <div class="auth-gate-benefit-title">Earn Free Services</div>
+                    <div class="auth-gate-benefit-desc">Collect points with every visit & unlock rewards</div>
+                </div>
+                <div class="auth-gate-benefit">
+                    <div class="auth-gate-benefit-icon">💫</div>
+                    <div class="auth-gate-benefit-title">VIP Treatment</div>
+                    <div class="auth-gate-benefit-desc">Members get priority booking & exclusive offers</div>
+                </div>
+                <div class="auth-gate-benefit">
+                    <div class="auth-gate-benefit-icon">📸</div>
+                    <div class="auth-gate-benefit-title">Track Your Journey</div>
+                    <div class="auth-gate-benefit-desc">See your hair transformation over time</div>
+                </div>
+            </div>
+
+            <!-- Urgency/FOMO Offer -->
+            <div class="auth-gate-offer">
+                <div class="auth-gate-offer-text">
+                    🎉 Sign up today & get <span class="points">50 FREE points</span> towards your first reward!
+                </div>
+            </div>
+
+            <!-- Social Proof Testimonial -->
+            <div class="auth-gate-testimonial">
+                <div class="auth-gate-testimonial-text">
+                    Best decision ever! The app makes booking so easy, and I've already earned a free maintenance session from my points.
+                </div>
+                <div class="auth-gate-testimonial-author">
+                    <div class="auth-gate-testimonial-avatar">👩🏽</div>
+                    <div class="auth-gate-testimonial-info">
+                        <div class="auth-gate-testimonial-name">Thandi M.</div>
+                        <div class="auth-gate-testimonial-detail">Gold Member • Pretoria</div>
+                    </div>
+                    <div class="auth-gate-testimonial-stars">⭐⭐⭐⭐⭐</div>
+                </div>
+            </div>
+
+            <!-- CTA Buttons -->
+            <div class="auth-gate-buttons">
+                <button class="auth-gate-btn auth-gate-btn-primary" onclick="showAuthGateSignup()">
+                    Get Started Free
+                </button>
+                <button class="auth-gate-btn auth-gate-btn-secondary" onclick="showAuthGateLogin()">
+                    I Have an Account
+                </button>
+            </div>
+
+            <!-- Trust Signals -->
+            <div class="auth-gate-trust">
+                <div class="auth-gate-trust-item">
+                    <span class="auth-gate-trust-icon">🔒</span>
+                    <span>Secure & Private</span>
+                </div>
+                <div class="auth-gate-trust-item">
+                    <span class="auth-gate-trust-icon">⚡</span>
+                    <span>Takes 30 seconds</span>
+                </div>
+                <div class="auth-gate-trust-item">
+                    <span class="auth-gate-trust-icon">💳</span>
+                    <span>No card required</span>
+                </div>
+            </div>
+
+            <div class="auth-gate-footer">
+                <p>By continuing, you agree to our <a href="#">Terms</a> & <a href="#">Privacy Policy</a></p>
+            </div>
+        </div>
+        </div>
+    </div>
+
     <!-- Toast Notification Container -->
     <div class="toast-container" id="toastContainer"></div>
 
@@ -3252,59 +4389,112 @@
 
         <!-- Home Content -->
         <div id="home" class="content-area active">
-            <div class="welcome-banner" id="welcomeBanner">
-                <div class="welcome-title" id="welcomeTitle">Welcome to FL!RT 👋</div>
-                <p id="welcomeSubtitle">Discover premium hair extensions and book your transformation!</p>
-                <div class="points-display" id="pointsDisplay" style="display: none;">
-                    <span class="points-icon">✨</span>
-                    <div>
-                        <strong id="bannerPoints">0 Points</strong>
-                        <div style="font-size: 12px; opacity: 0.8;" id="bannerTier">Bronze Member</div>
+            <!-- Hero Welcome Banner with CTA -->
+            <div class="home-hero" id="welcomeBanner">
+                <div class="home-hero-content">
+                    <div class="home-hero-greeting" id="welcomeTitle">Welcome back! 👋</div>
+                    <h1 class="home-hero-headline">Ready for Your <span class="highlight">Hair Transformation</span>?</h1>
+                    <p class="home-hero-subtitle" id="welcomeSubtitle">Book your next appointment and let our expert stylists work their magic</p>
+                    <button class="home-hero-cta" onclick="navigateToSection('book')">
+                        <span>Book Your Appointment</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                </div>
+                <div class="home-hero-stats" id="pointsDisplay" style="display: none;">
+                    <div class="home-hero-stat">
+                        <span class="home-hero-stat-value" id="bannerPoints">0</span>
+                        <span class="home-hero-stat-label">Points</span>
+                    </div>
+                    <div class="home-hero-stat-divider"></div>
+                    <div class="home-hero-stat">
+                        <span class="home-hero-stat-value" id="bannerTier">Bronze</span>
+                        <span class="home-hero-stat-label">Member</span>
                     </div>
                 </div>
             </div>
 
-            <div class="quick-actions">
-                <div class="action-card" onclick="navigateToSection('book')">
-                    <div class="action-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="color: var(--brand-pink);">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
+            <!-- Three Key Actions Row -->
+            <div class="home-actions-row">
+                <!-- Hair Tracker Card -->
+                <div class="home-action-card home-action-tracker" onclick="switchTab('tracker')">
+                    <div class="home-action-icon-wrap tracker-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
                     </div>
-                    <div class="action-title">Book Now</div>
+                    <div class="home-action-content">
+                        <div class="home-action-title">Track Your Hair</div>
+                        <div class="home-action-desc">Monitor your extension health & maintenance schedule</div>
+                        <div class="home-action-link">View Tracker →</div>
+                    </div>
                 </div>
-                <div class="action-card" onclick="switchTab('shop')">
-                    <div class="action-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="color: var(--brand-pink);">
+
+                <!-- Share & Earn Card -->
+                <div class="home-action-card home-action-share" onclick="switchTab('rewards')">
+                    <div class="home-action-icon-wrap share-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
+                            <circle cx="18" cy="5" r="3"></circle>
+                            <circle cx="6" cy="12" r="3"></circle>
+                            <circle cx="18" cy="19" r="3"></circle>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                        </svg>
+                    </div>
+                    <div class="home-action-content">
+                        <div class="home-action-title">Share & Earn R100</div>
+                        <div class="home-action-desc">Invite friends and both get rewarded!</div>
+                        <div class="home-action-link">Get Your Code →</div>
+                    </div>
+                </div>
+
+                <!-- Shop Card -->
+                <div class="home-action-card home-action-shop" onclick="switchTab('shop')">
+                    <div class="home-action-icon-wrap shop-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
                             <circle cx="9" cy="21" r="1"></circle>
                             <circle cx="20" cy="21" r="1"></circle>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                         </svg>
                     </div>
-                    <div class="action-title">Shop Products</div>
-                </div>
-                <div class="action-card" onclick="switchTab('rewards')">
-                    <div class="action-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="color: var(--brand-pink);">
-                            <circle cx="12" cy="8" r="7"></circle>
-                            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
-                        </svg>
+                    <div class="home-action-content">
+                        <div class="home-action-title">Shop Products</div>
+                        <div class="home-action-desc">Premium hair care & extension products</div>
+                        <div class="home-action-link">Browse Shop →</div>
                     </div>
-                    <div class="action-title">Refer & Earn</div>
                 </div>
-                <div class="action-card" onclick="switchTab('team')">
-                    <div class="action-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="40" height="40" style="color: var(--brand-pink);">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
+            </div>
+
+            <!-- Quick Book Services -->
+            <div class="home-quick-book">
+                <div class="section-header">
+                    <h2 class="section-title">Quick Book</h2>
+                    <a href="#" class="view-all-btn" onclick="navigateToSection('book'); return false;">View All Services</a>
+                </div>
+                <div class="home-services-scroll">
+                    <div class="home-service-chip" onclick="quickBookService('hair')">
+                        <span class="home-service-emoji">💇‍♀️</span>
+                        <span>Hair Extensions</span>
                     </div>
-                    <div class="action-title">Meet Our Team</div>
+                    <div class="home-service-chip" onclick="quickBookService('nails')">
+                        <span class="home-service-emoji">💅</span>
+                        <span>Nails</span>
+                    </div>
+                    <div class="home-service-chip" onclick="quickBookService('lashes')">
+                        <span class="home-service-emoji">👁️</span>
+                        <span>Lashes</span>
+                    </div>
+                    <div class="home-service-chip" onclick="quickBookService('makeup')">
+                        <span class="home-service-emoji">💄</span>
+                        <span>Makeup</span>
+                    </div>
+                    <div class="home-service-chip" onclick="quickBookService('facial')">
+                        <span class="home-service-emoji">✨</span>
+                        <span>Facials</span>
+                    </div>
                 </div>
             </div>
 
@@ -3316,10 +4506,10 @@
                 </div>
                 <div class="offers-list" id="specialOffersList">
                     <!-- Dynamic content injected by loadSpecialOffers() -->
-                    <div class="offer-card" style="opacity: 0.5;">
-                        <span class="offer-badge">LOADING</span>
-                        <div class="offer-title">Loading offers...</div>
-                        <div class="offer-description">Please wait</div>
+                    <div class="offer-card" style="background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite;">
+                        <div style="height: 14px; width: 60px; background: #ddd; border-radius: 4px; margin-bottom: 10px;"></div>
+                        <div style="height: 18px; width: 120px; background: #ddd; border-radius: 4px; margin-bottom: 8px;"></div>
+                        <div style="height: 12px; width: 100px; background: #ddd; border-radius: 4px;"></div>
                     </div>
                 </div>
             </section>
@@ -3330,38 +4520,173 @@
 
             <!-- Dynamic Upcoming Appointments Container -->
             <div id="upcomingAppointmentsContainer">
-                <!-- Loading state -->
-                <div class="appointment-card" style="opacity: 0.6;">
-                    <div class="appointment-date">Loading...</div>
-                    <div class="appointment-details">
-                        <div class="appointment-info">
-                            <div class="appointment-service">Checking your appointments</div>
-                        </div>
-                    </div>
+                <!-- Loading state with skeleton animation -->
+                <div class="appointment-card" style="background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite;">
+                    <div style="height: 16px; width: 100px; background: #ddd; border-radius: 4px; margin-bottom: 8px;"></div>
+                    <div style="height: 14px; width: 150px; background: #ddd; border-radius: 4px;"></div>
                 </div>
             </div>
+            <style>
+                @keyframes shimmer {
+                    0% { background-position: -200% 0; }
+                    100% { background-position: 200% 0; }
+                }
+            </style>
 
+            <!-- Instagram Feed Section - Single unified gallery -->
             <div class="section-header">
-                <h2 class="section-title">Gallery</h2>
+                <h2 class="section-title">Instagram</h2>
+                <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="view-all-btn">@flirthairsa</a>
             </div>
 
-            <div class="gallery-grid" id="galleryGrid">
-                <!-- Gallery items loaded dynamically -->
-                <div class="gallery-item" style="display: flex; align-items: center; justify-content: center; background: var(--gray-light);">
-                    <span style="color: var(--gray-medium);">Loading...</span>
+            <!-- Instagram Feed Grid - Loads gallery images from API -->
+            <div class="instagram-feed-section">
+                <div class="instagram-feed-grid" id="instagramFeedGrid">
+                    <!-- Placeholder tiles shown while loading -->
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
+                        <div class="instagram-feed-placeholder"><span>💇‍♀️</span></div>
+                    </a>
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
+                        <div class="instagram-feed-placeholder"><span>✨</span></div>
+                    </a>
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
+                        <div class="instagram-feed-placeholder"><span>💕</span></div>
+                    </a>
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
+                        <div class="instagram-feed-placeholder"><span>💅</span></div>
+                    </a>
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
+                        <div class="instagram-feed-placeholder"><span>👑</span></div>
+                    </a>
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-feed-item">
+                        <div class="instagram-feed-placeholder"><span>🌟</span></div>
+                    </a>
                 </div>
+
+                <!-- Instagram CTA Banner -->
+                <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-cta-banner">
+                    <div class="instagram-cta-icon">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                        </svg>
+                    </div>
+                    <div class="instagram-cta-content">
+                        <span class="instagram-cta-handle">@flirthairsa</span>
+                        <span class="instagram-cta-text">Follow us for daily hair inspiration</span>
+                    </div>
+                    <div class="instagram-cta-arrow">→</div>
+                </a>
             </div>
 
-            <div id="instagramFeedContainer" style="margin-top: 20px; display: none;">
-                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 10px;">
-                    <h3 style="font-size: 18px; margin: 0; color: var(--brand-charcoal);">Instagram Highlights</h3>
-                    <a id="instagramCTA" href="#" target="_blank" style="display:none; font-size: 14px; color: var(--brand-pink); text-decoration: none;">Follow us</a>
-                </div>
-                <div id="instagramEmbed" style="width: 100%; min-height: 860px; background: var(--gray-light); border-radius: 12px; overflow: hidden;">
-                    <iframe id="instagramEmbedFrame" src="" style="width:100%; height:860px; border:0; overflow:hidden;" allowtransparency="true" allow="encrypted-media" scrolling="no"></iframe>
-                </div>
-                <div id="instagramFallback" style="display:none; color: var(--gray-medium); margin-top: 10px;"></div>
-            </div>
+            <style>
+                .instagram-feed-section {
+                    margin-bottom: 24px;
+                }
+
+                .instagram-feed-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 4px;
+                    margin-bottom: 12px;
+                    border-radius: 12px;
+                    overflow: hidden;
+                }
+
+                .instagram-feed-item {
+                    aspect-ratio: 1;
+                    position: relative;
+                    overflow: hidden;
+                    text-decoration: none;
+                }
+
+                .instagram-feed-placeholder {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 32px;
+                    transition: transform 0.3s ease;
+                }
+
+                .instagram-feed-item:nth-child(1) .instagram-feed-placeholder { background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%); }
+                .instagram-feed-item:nth-child(2) .instagram-feed-placeholder { background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); }
+                .instagram-feed-item:nth-child(3) .instagram-feed-placeholder { background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%); }
+                .instagram-feed-item:nth-child(4) .instagram-feed-placeholder { background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%); }
+                .instagram-feed-item:nth-child(5) .instagram-feed-placeholder { background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); }
+                .instagram-feed-item:nth-child(6) .instagram-feed-placeholder { background: linear-gradient(135deg, #fce4ec 0%, #f48fb1 100%); }
+
+                .instagram-feed-item:hover .instagram-feed-placeholder {
+                    transform: scale(1.1);
+                }
+
+                .instagram-feed-item img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    transition: transform 0.3s ease;
+                }
+
+                .instagram-feed-item:hover img {
+                    transform: scale(1.1);
+                }
+
+                .instagram-cta-banner {
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+                    padding: 14px 18px;
+                    background: linear-gradient(135deg, #833AB4 0%, #FD1D1D 50%, #FCAF45 100%);
+                    border-radius: 12px;
+                    text-decoration: none;
+                    color: white;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                }
+
+                .instagram-cta-banner:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(131, 58, 180, 0.3);
+                }
+
+                .instagram-cta-banner:active {
+                    transform: scale(0.98);
+                }
+
+                .instagram-cta-icon {
+                    flex-shrink: 0;
+                    opacity: 0.95;
+                }
+
+                .instagram-cta-content {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+
+                .instagram-cta-handle {
+                    font-weight: 700;
+                    font-size: 15px;
+                }
+
+                .instagram-cta-text {
+                    font-size: 12px;
+                    opacity: 0.9;
+                }
+
+                .instagram-cta-arrow {
+                    font-size: 18px;
+                    font-weight: 300;
+                    opacity: 0.8;
+                    transition: transform 0.2s ease;
+                }
+
+                .instagram-cta-banner:hover .instagram-cta-arrow {
+                    transform: translateX(4px);
+                }
+            </style>
 
             <div class="section-header">
                 <h2 class="section-title">Hair Care Tips</h2>
@@ -3989,18 +5314,86 @@
 
         <!-- Hair Tracker Content -->
         <div id="tracker" class="content-area">
-            <h2 id="trackerTitle" class="section-title" style="margin-bottom: 20px;">Hair Care Journey</h2>
-            <p id="trackerSubtitle" style="text-align: center; color: var(--gray-medium); margin-bottom: 20px; display: none;"></p>
+            <h2 id="trackerTitle" class="section-title" style="margin-bottom: 8px;">Hair Care Journey</h2>
+            <p id="trackerSubtitle" style="text-align: center; color: var(--gray-medium); margin-bottom: 20px;">Keep your extensions healthy and on track</p>
 
-            <!-- Setup prompt (shown when no tracker data) -->
-            <div id="trackerSetupPrompt" class="card" style="text-align: center; padding: 30px; display: none;">
-                <div style="font-size: 60px; margin-bottom: 15px;">💇</div>
-                <h3 style="margin-bottom: 10px;">Set Up Your Hair Tracker</h3>
-                <p id="trackerNoInstallMessage" style="color: var(--gray-medium); margin-bottom: 20px;">
-                    Set up your hair tracker to get personalized care recommendations!
-                </p>
-                <button id="trackerSetupBtn" class="btn btn-primary" onclick="showTrackerSetupModal()">Set Up Tracker</button>
+            <!-- Enhanced Setup prompt (shown when no tracker data) -->
+            <div id="trackerSetupPrompt" style="display: none;">
+                <!-- Hero Section -->
+                <div class="tracker-setup-hero">
+                    <div class="tracker-setup-visual">
+                        <div class="tracker-setup-circle">
+                            <div class="tracker-setup-icon">💇‍♀️</div>
+                            <div class="tracker-setup-ring"></div>
+                        </div>
+                    </div>
+                    <h3 class="tracker-setup-title">Track Your Hair Health</h3>
+                    <p class="tracker-setup-desc">Get personalized reminders, care tips, and keep your extensions looking gorgeous longer</p>
+
+                    <!-- Social Proof -->
+                    <div class="tracker-setup-social">
+                        <div class="tracker-setup-avatars">
+                            <span>👩🏽</span><span>👩🏻</span><span>👩🏾</span>
+                        </div>
+                        <span>Join <strong>500+</strong> women tracking their hair journey</span>
+                    </div>
+                </div>
+
+                <!-- Benefits Preview -->
+                <div class="tracker-benefits-grid">
+                    <div class="tracker-benefit-card">
+                        <div class="tracker-benefit-icon" style="background: linear-gradient(135deg, #E8F5E9, #C8E6C9);">📅</div>
+                        <div class="tracker-benefit-title">Smart Reminders</div>
+                        <div class="tracker-benefit-desc">Never miss a wash day or maintenance appointment</div>
+                    </div>
+                    <div class="tracker-benefit-card">
+                        <div class="tracker-benefit-icon" style="background: linear-gradient(135deg, #FFF3E0, #FFE0B2);">💡</div>
+                        <div class="tracker-benefit-title">Personalized Tips</div>
+                        <div class="tracker-benefit-desc">Care recommendations based on your extension type</div>
+                    </div>
+                    <div class="tracker-benefit-card">
+                        <div class="tracker-benefit-icon" style="background: linear-gradient(135deg, #FCE4EC, #F8BBD9);">📊</div>
+                        <div class="tracker-benefit-title">Health Score</div>
+                        <div class="tracker-benefit-desc">Track your hair health and see improvements</div>
+                    </div>
+                    <div class="tracker-benefit-card">
+                        <div class="tracker-benefit-icon" style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB);">🏆</div>
+                        <div class="tracker-benefit-title">Earn Points</div>
+                        <div class="tracker-benefit-desc">Get rewarded for maintaining your routine</div>
+                    </div>
+                </div>
+
+                <!-- CTA Section -->
+                <div class="tracker-setup-cta">
+                    <button id="trackerSetupBtn" class="tracker-setup-btn-primary" onclick="showTrackerSetupModal()">
+                        <span>Start Tracking</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                    <p class="tracker-setup-time">⏱️ Takes less than 30 seconds</p>
+                </div>
+
+                <!-- Quick Info -->
+                <div class="tracker-setup-info">
+                    <div class="tracker-info-item">
+                        <span class="tracker-info-icon">🔒</span>
+                        <span>Your data is private</span>
+                    </div>
+                    <div class="tracker-info-item">
+                        <span class="tracker-info-icon">✨</span>
+                        <span>Free forever</span>
+                    </div>
+                    <div class="tracker-info-item">
+                        <span class="tracker-info-icon">📱</span>
+                        <span>Works offline</span>
+                    </div>
+                </div>
             </div>
+
+            <!-- Hidden message for no install (used by JS) -->
+            <p id="trackerNoInstallMessage" style="display: none;"></p>
 
             <!-- Main tracker content (shown when tracker is set up) -->
             <div id="trackerMainContent" style="display: none;">
@@ -4542,39 +5935,16 @@
     </div>
 
     <!-- Auth Modal -->
-    <div id="authModal" class="modal">
-        <div class="modal-content" style="max-width: 400px;">
+    <div id="authModal" class="modal" onclick="closeAuthModalAndShowGate(event)">
+        <div class="modal-content" style="max-width: 400px;" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <h3 class="modal-title">Welcome to Flirt</h3>
-                <button class="close-btn" onclick="closeModal('authModal')">&times;</button>
+                <button class="close-btn" onclick="closeAuthModalAndShowGate()">&times;</button>
             </div>
 
             <div class="auth-tabs">
                 <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
                 <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
-            </div>
-
-            <!-- Social Login Buttons -->
-            <div class="social-auth">
-                <button class="social-btn social-google" onclick="startGoogleLogin()">
-                    <svg class="social-icon" viewBox="0 0 24 24" width="20" height="20">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    Continue with Google
-                </button>
-                <button class="social-btn social-facebook" onclick="startFacebookLogin()">
-                    <svg class="social-icon" viewBox="0 0 24 24" width="20" height="20" fill="#1877F2">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                    </svg>
-                    Continue with Facebook
-                </button>
-            </div>
-
-            <div class="social-divider">
-                <span>or</span>
             </div>
 
             <div id="authError" class="auth-error"></div>
@@ -5245,8 +6615,41 @@
         // ============================================
         let currentUser = null;
 
+        // Auth Gate Functions
+        function showAuthGate() {
+            document.getElementById('authGate').classList.remove('hidden');
+        }
+
+        function hideAuthGate() {
+            document.getElementById('authGate').classList.add('hidden');
+        }
+
+        function showAuthGateLogin() {
+            hideAuthGate();
+            showAuthModal();
+            switchAuthTab('login');
+        }
+
+        function showAuthGateSignup() {
+            hideAuthGate();
+            showAuthModal();
+            switchAuthTab('signup');
+        }
+
         function showAuthModal() {
             document.getElementById('authModal').classList.add('show');
+        }
+
+        function closeAuthModalAndShowGate(event) {
+            // If called from click on modal background (not content), close and show gate
+            // If called from X button (no event), also close and show gate
+            if (!event || event.target === event.currentTarget) {
+                closeModal('authModal');
+                // Only show auth gate if user is not logged in
+                if (!currentUser) {
+                    showAuthGate();
+                }
+            }
         }
 
         function switchAuthTab(tab) {
@@ -5391,49 +6794,6 @@
             }
         }
 
-        // ============================================
-        // SOCIAL LOGIN (GOOGLE & FACEBOOK)
-        // ============================================
-
-        function startGoogleLogin() {
-            openSocialPopup('/api/auth/google/start');
-        }
-
-        function startFacebookLogin() {
-            openSocialPopup('/api/auth/facebook/start');
-        }
-
-        function openSocialPopup(path) {
-            const width = 500;
-            const height = 600;
-            const left = (window.screen.width - width) / 2;
-            const top = (window.screen.height - height) / 2;
-
-            // Build URL - remove /api from API_BASE if present
-            const baseUrl = API_BASE.replace('/api', '');
-            window.open(
-                baseUrl + path,
-                'flirt_social_login',
-                `width=${width},height=${height},top=${top},left=${left}`
-            );
-        }
-
-        // Listen for OAuth popup messages
-        window.addEventListener('message', (event) => {
-            const data = event.data || {};
-
-            if (data.type === 'flirt_social_login' && data.token && data.user) {
-                localStorage.setItem('flirt_token', data.token);
-                currentUser = data.user;
-                document.body.classList.add('logged-in');
-                updateUserUI();
-                loadUserData();
-                closeModal('authModal');
-            } else if (data.type === 'flirt_social_error' && data.message) {
-                showAuthError(data.message);
-            }
-        });
-
         // Clear errors when user starts typing
         function setupAuthInputListeners() {
             const authInputs = [
@@ -5452,29 +6812,48 @@
 
         function onLoginSuccess() {
             closeModal('authModal');
+            // Update body classes for authenticated state
+            document.body.classList.remove('auth-required');
             document.body.classList.add('logged-in');
+            hideAuthGate();
             updateUserUI();
             loadUserData();
             loadUpcomingAppointment();
+
+            // Clear guest chat conversation so user gets a fresh conversation linked to their account
+            localStorage.removeItem('flirt_conversation_id');
+            localStorage.removeItem('flirt_guest_id');
+            currentConversationId = null;
         }
 
         async function checkAuthStatus() {
             const token = getToken();
-            if (!token) return;
+            if (!token) {
+                // No token - ensure auth-required state and show auth gate
+                document.body.classList.add('auth-required');
+                document.body.classList.remove('logged-in');
+                showAuthGate();
+                return;
+            }
 
             try {
                 const data = await apiCall('/auth/me');
                 currentUser = data.user;
+                // User authenticated - remove auth-required and add logged-in
+                document.body.classList.remove('auth-required');
                 document.body.classList.add('logged-in');
+                hideAuthGate();
                 updateUserUI();
                 await loadUserData();
                 await loadUpcomingAppointment();
             } catch (error) {
-                // Token was present but invalid/expired - clear it and notify user
+                // Token was present but invalid/expired - clear it and show auth gate
                 localStorage.removeItem('flirt_token');
                 currentUser = null;
+                document.body.classList.add('auth-required');
                 document.body.classList.remove('logged-in');
                 updateUserUI();
+                showAuthGate();
 
                 // Show non-intrusive feedback about session expiry
                 showToast({
@@ -5485,11 +6864,19 @@
             }
         }
 
-        // Dev-only auto-login when running locally without a token
+        // Dev-only auto-login - DISABLED by default for security
+        // Only enable this for local development when needed
         async function devAutoLoginIfNeeded() {
+            // SECURITY: Auto-login is disabled by default
+            // To enable for local dev, set localStorage.setItem('flirt_dev_autologin', 'true')
+            const devAutoLoginEnabled = localStorage.getItem('flirt_dev_autologin') === 'true';
             const hasToken = !!getToken();
             const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            if (hasToken || !isLocalhost) return;
+
+            // Only proceed if ALL conditions are met: localhost, no token, AND explicitly enabled
+            if (hasToken || !isLocalhost || !devAutoLoginEnabled) return;
+
+            console.log('[DEV] Auto-login enabled for development');
             try {
                 const res = await fetch(`${API_BASE}/auth/dev-login`);
                 if (!res.ok) return;
@@ -5497,7 +6884,10 @@
                 if (data.token && data.user) {
                     localStorage.setItem('flirt_token', data.token);
                     currentUser = data.user;
+                    // Update body classes for authenticated state
+                    document.body.classList.remove('auth-required');
                     document.body.classList.add('logged-in');
+                    hideAuthGate();
                     updateUserUI();
                     await loadUserData();
                     await loadUpcomingAppointment();
@@ -5528,7 +6918,7 @@
 
                 // Welcome banner for guests
                 if (welcomeTitle) welcomeTitle.textContent = 'Welcome to FL!RT 👋';
-                if (welcomeSubtitle) welcomeSubtitle.textContent = 'Discover premium hair extensions and book your transformation!';
+                if (welcomeSubtitle) welcomeSubtitle.textContent = 'Book your next appointment and let our expert stylists work their magic';
                 if (pointsDisplayBanner) pointsDisplayBanner.style.display = 'none';
                 return;
             }
@@ -5545,15 +6935,15 @@
             // Welcome banner for logged-in users
             const firstName = currentUser.name?.split(' ')[0] || 'there';
             if (welcomeTitle) welcomeTitle.textContent = `Welcome back, ${firstName}! 👋`;
-            if (welcomeSubtitle) welcomeSubtitle.textContent = 'Your beauty journey continues...';
+            if (welcomeSubtitle) welcomeSubtitle.textContent = 'Book your next appointment and let our expert stylists work their magic';
 
             // Show points display
             if (pointsDisplayBanner) pointsDisplayBanner.style.display = 'flex';
-            if (bannerPoints) bannerPoints.textContent = `${(currentUser.points ?? 0).toLocaleString()} Points`;
+            if (bannerPoints) bannerPoints.textContent = (currentUser.points ?? 0).toLocaleString();
             if (bannerTier) {
                 const tier = currentUser.tier || 'bronze';
                 const niceTier = tier.charAt(0).toUpperCase() + tier.slice(1);
-                bannerTier.textContent = `${niceTier} Tier Member`;
+                bannerTier.textContent = niceTier;
             }
 
             // Update rewards section - use #userPoints which has class .stat-number
@@ -5589,10 +6979,16 @@
                 // Clear auth token and user state
                 localStorage.removeItem('flirt_token');
                 currentUser = null;
+
+                // Update body classes for unauthenticated state
+                document.body.classList.add('auth-required');
                 document.body.classList.remove('logged-in');
 
                 // Update profile UI to show guest state immediately
                 updateUserUI();
+
+                // Show auth gate again
+                showAuthGate();
 
                 // Show confirmation toast
                 showToast({ type: 'info', title: 'Logged Out', message: 'You have been logged out successfully.' });
@@ -5609,6 +7005,21 @@
         // When called from onclick, pass the event: switchTab('home', event)
         // When called programmatically, just pass the tab name: switchTab('home')
         function switchTab(tabName, evt) {
+            // Protected tabs that require authentication
+            const protectedTabs = ['profile', 'rewards', 'tracker'];
+
+            // Check if trying to access protected tab without auth
+            if (protectedTabs.includes(tabName) && !currentUser) {
+                // Show auth gate and prompt login
+                showAuthGate();
+                showToast({
+                    type: 'info',
+                    title: 'Sign in required',
+                    message: 'Please sign in to access this feature'
+                });
+                return; // Don't switch to protected tab
+            }
+
             const contentAreas = document.querySelectorAll('.content-area');
             contentAreas.forEach(area => area.classList.remove('active'));
 
@@ -5657,6 +7068,20 @@
             } else if (section === 'my-bookings') {
                 switchTab('booking');
                 document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Quick book a specific service type from home page
+        function quickBookService(serviceType) {
+            switchTab('booking');
+            // Pre-select booking type based on service
+            if (serviceType === 'hair' || serviceType === 'extensions') {
+                selectBookingType('hair');
+            } else if (serviceType === 'nails' || serviceType === 'beauty' || serviceType === 'facial' || serviceType === 'lashes' || serviceType === 'makeup') {
+                selectBookingType('beauty');
+            } else {
+                // Default to hair for unknown types
+                selectBookingType('hair');
             }
         }
 
@@ -7769,10 +9194,11 @@ async function showNotifications() {
 
                     // Format time display with new two-step booking logic
                     let timeDisplay = 'TBC';
-                    if (booking.status === 'CONFIRMED' || booking.status === 'confirmed') {
+                    const statusUpper = (booking.status || '').toUpperCase();
+                    if (statusUpper === 'CONFIRMED') {
                         // Confirmed bookings have exact time
                         timeDisplay = booking.assignedStartTime || booking.confirmedTime || booking.time || 'TBC';
-                    } else if (booking.status === 'REQUESTED' || booking.status === 'pending') {
+                    } else if (statusUpper === 'REQUESTED') {
                         // Requested bookings show time window
                         const timeWindow = window.BookingConstants?.getTimeWindow(booking.requestedTimeWindow || booking.preferredTimeOfDay);
                         if (timeWindow) {
@@ -7790,10 +9216,9 @@ async function showNotifications() {
 
                     // Status badge with new statuses
                     let statusBadge = '';
-                    const statusUpper = (booking.status || '').toUpperCase();
-                    if (statusUpper === 'CONFIRMED' || booking.status === 'confirmed') {
+                    if (statusUpper === 'CONFIRMED') {
                         statusBadge = '<span style="background: var(--success); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">✓ Confirmed</span>';
-                    } else if (statusUpper === 'REQUESTED' || booking.status === 'pending') {
+                    } else if (statusUpper === 'REQUESTED') {
                         statusBadge = '<span style="background: #FFC107; color: var(--brand-charcoal); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">⏳ Pending Time</span>';
                     } else {
                         statusBadge = '<span style="background: var(--warning); color: var(--brand-charcoal); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">Pending</span>';
@@ -8017,7 +9442,9 @@ async function showNotifications() {
 
             } catch (error) {
                 console.error('Failed to load special offers:', error);
-                container.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Unable to load special offers. Please try again later.</p>';
+                // Hide section on error instead of showing error message
+                const section = document.getElementById('specialOffersSection');
+                if (section) section.style.display = 'none';
             }
         }
 
@@ -8193,10 +9620,10 @@ async function showNotifications() {
         function showRedeemOptions() { alert('Redeem points options'); }
         function addProgressPhoto() { openPhotoUpload(); }
 
-        // ========== GALLERY FUNCTIONALITY ==========
+        // ========== INSTAGRAM FEED FUNCTIONALITY ==========
         async function loadGallery() {
-            const container = document.getElementById('galleryGrid');
-            if (!container) return;
+            const instagramGrid = document.getElementById('instagramFeedGrid');
+            if (!instagramGrid) return;
 
             try {
                 const response = await fetch(`${API_BASE}/gallery`);
@@ -8205,72 +9632,23 @@ async function showNotifications() {
                 const data = await response.json();
                 const items = data.items || [];
 
-                if (!items.length) {
-                    container.innerHTML = `
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #fef5f8 0%, #fff 100%); border-radius: 15px; border: 2px dashed var(--brand-pink);">
-                            <div style="font-size: 60px; margin-bottom: 15px;">💇‍♀️</div>
-                            <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 10px; color: var(--brand-charcoal);">Our Gallery is Coming Soon!</h3>
-                            <p style="color: var(--gray-medium); margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
-                                We're building an amazing collection of transformation photos. In the meantime, check out our services!
-                            </p>
-                            <button class="btn btn-primary" onclick="navigateToSection('book')" style="background: var(--brand-pink); border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: 600;">
-                                Explore Our Services
-                            </button>
-                        </div>
-                    `;
-                    return;
-                }
-
-                container.innerHTML = items.map(item => `
-                    <div class="gallery-item" onclick="openGalleryLightbox('${item.id}')">
-                        <img src="${item.imageUrl}" alt="${item.altText || 'Gallery Image'}" onerror="this.src='https://via.placeholder.com/300x300?text=Image'">
-                        ${item.label ? `<div class="gallery-label">${item.label}</div>` : ''}
-                    </div>
-                `).join('');
+                // Keep placeholder tiles if no images available
+                if (!items.length) return;
 
                 // Store items for lightbox
                 window.galleryItems = items;
 
-                const instagram = data.instagram;
-                const instaContainer = document.getElementById('instagramFeedContainer');
-                const instaFallback = document.getElementById('instagramFallback');
-                const instaCTA = document.getElementById('instagramCTA');
-                const instaFrame = document.getElementById('instagramEmbedFrame');
-                if (instaContainer && instaFallback && instaCTA && instaFrame) {
-                    if (instagram && instagram.embedUrl) {
-                        instaContainer.style.display = 'block';
-                        instaFallback.style.display = 'none';
-                        instaCTA.style.display = 'inline';
-                        if (instagram.username) {
-                            instaCTA.href = `https://www.instagram.com/${instagram.username}/`;
-                            instaCTA.textContent = `@${instagram.username}`;
-                        }
-                        instaFrame.src = instagram.embedUrl;
-                    } else {
-                        instaContainer.style.display = 'block';
-                        instaFrame.src = '';
-                        instaCTA.style.display = instagram?.username ? 'inline' : 'none';
-                        instaFallback.style.display = 'block';
-                        instaFallback.innerHTML = instagram?.username
-                            ? `Follow us on Instagram: <a href="https://www.instagram.com/${instagram.username}/" target="_blank">@${instagram.username}</a>`
-                            : 'Follow us on Instagram for the latest looks.';
-                    }
-                }
+                // Populate Instagram feed grid with first 6 gallery images
+                const feedItems = items.slice(0, 6);
+                instagramGrid.innerHTML = feedItems.map(item => `
+                    <a href="javascript:void(0)" class="instagram-feed-item" onclick="openGalleryLightbox('${item.id}')">
+                        <img src="${item.imageUrl}" alt="${item.altText || 'Hair Inspiration'}" onerror="this.parentElement.innerHTML='<div class=\\'instagram-feed-placeholder\\'><span>💇‍♀️</span></div>'">
+                    </a>
+                `).join('');
 
             } catch (error) {
                 console.error('Failed to load gallery:', error);
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #fef5f8 0%, #fff 100%); border-radius: 15px; border: 2px dashed var(--brand-pink);">
-                        <div style="font-size: 60px; margin-bottom: 15px;">💇‍♀️</div>
-                        <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 10px; color: var(--brand-charcoal);">Our Gallery is Coming Soon!</h3>
-                        <p style="color: var(--gray-medium); margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
-                            We're building an amazing collection of transformation photos. In the meantime, check out our services!
-                        </p>
-                        <button class="btn btn-primary" onclick="navigateToSection('book')" style="background: var(--brand-pink); border: none; padding: 12px 30px; border-radius: 25px; cursor: pointer; font-weight: 600;">
-                            Explore Our Services
-                        </button>
-                    </div>
-                `;
+                // Keep placeholder tiles on error - no need to show error state
             }
         }
 
@@ -9791,10 +11169,23 @@ async function showNotifications() {
 
         setInterval(updateFlashSaleTimer, 1000);
 
-        // Close modals when clicking outside
+        // Close modals when clicking outside - but protect auth modal
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
-                event.target.classList.remove('show');
+                // Special handling for auth modal - don't allow bypass
+                if (event.target.id === 'authModal') {
+                    // Only close if user is already authenticated
+                    if (currentUser) {
+                        event.target.classList.remove('show');
+                    } else {
+                        // User not logged in - show auth gate instead
+                        event.target.classList.remove('show');
+                        showAuthGate();
+                    }
+                } else {
+                    // Other modals can close normally
+                    event.target.classList.remove('show');
+                }
             }
         }
 
@@ -9938,5 +11329,6 @@ async function showNotifications() {
         // Run on page load
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
+
 </body>
 </html>

@@ -7,16 +7,6 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const querystring = require('querystring');
 
-// Optional: axios for OAuth - using native https if not available
-let axios;
-try {
-    axios = require('axios');
-} catch (e) {
-    // Will use native https module as fallback
-    axios = null;
-}
-const https = require('https');
-
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
@@ -84,15 +74,6 @@ const JWT_SECRET = process.env.JWT_SECRET || (() => {
 const ADMIN_SEED_PASSWORD = process.env.ADMIN_SEED_PASSWORD || 'admin123';
 
 const IS_DEV = process.env.NODE_ENV !== 'production';
-
-// OAuth configuration (set these in environment for production)
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || 'GOOGLE_CLIENT_ID_HERE';
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || 'GOOGLE_CLIENT_SECRET_HERE';
-const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/google/callback';
-
-const FACEBOOK_CLIENT_ID = process.env.FACEBOOK_CLIENT_ID || 'FACEBOOK_APP_ID_HERE';
-const FACEBOOK_CLIENT_SECRET = process.env.FACEBOOK_CLIENT_SECRET || 'FACEBOOK_APP_SECRET_HERE';
-const FACEBOOK_REDIRECT_URI = process.env.FACEBOOK_REDIRECT_URI || 'http://localhost:3001/api/auth/facebook/callback';
 
 // Rate limiting tracking (simple in-memory)
 const loginAttempts = new Map();
@@ -401,291 +382,6 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Database error fetching user:', error.message);
         res.status(500).json({ success: false, message: 'Database error' });
-    }
-});
-
-// ============================================
-// OAUTH HELPER FUNCTIONS
-// ============================================
-
-function renderSocialSuccess(res, token, user) {
-    const html = `
-<!DOCTYPE html>
-<html>
-<head><title>Flirt Login</title></head>
-<body>
-<script>
-  (function() {
-    if (window.opener && window.opener.postMessage) {
-      window.opener.postMessage({ type: 'flirt_social_login', token: ${JSON.stringify(token)}, user: ${JSON.stringify(user)} }, '*');
-    }
-    window.close();
-  })();
-</script>
-</body>
-</html>`;
-    res.send(html);
-}
-
-function renderSocialError(res, message) {
-    const html = `
-<!DOCTYPE html>
-<html>
-<head><title>Flirt Login</title></head>
-<body>
-<script>
-  (function() {
-    if (window.opener && window.opener.postMessage) {
-      window.opener.postMessage({ type: 'flirt_social_error', message: ${JSON.stringify(message)} }, '*');
-    }
-    window.close();
-  })();
-</script>
-</body>
-</html>`;
-    res.send(html);
-}
-
-// Helper to make HTTPS requests (fallback if axios not available)
-function httpsRequest(options, postData = null) {
-    return new Promise((resolve, reject) => {
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                try {
-                    resolve(JSON.parse(data));
-                } catch (e) {
-                    resolve(data);
-                }
-            });
-        });
-        req.on('error', reject);
-        if (postData) {
-            req.write(postData);
-        }
-        req.end();
-    });
-}
-
-// ============================================
-// GOOGLE OAUTH ROUTES
-// ============================================
-
-// Start Google OAuth
-app.get('/api/auth/google/start', (req, res) => {
-    const params = {
-        client_id: GOOGLE_CLIENT_ID,
-        redirect_uri: GOOGLE_REDIRECT_URI,
-        response_type: 'code',
-        scope: 'openid email profile',
-        prompt: 'select_account',
-        access_type: 'online'
-    };
-    const url = 'https://accounts.google.com/o/oauth2/v2/auth?' + querystring.stringify(params);
-    res.redirect(url);
-});
-
-// Google callback
-app.get('/api/auth/google/callback', async (req, res) => {
-    const { code, error } = req.query;
-    if (error) {
-        return renderSocialError(res, 'Google sign-in was cancelled or failed.');
-    }
-
-    try {
-        let tokenData, profileData;
-
-        if (axios) {
-            // Use axios if available
-            const tokenRes = await axios.post('https://oauth2.googleapis.com/token', {
-                code,
-                client_id: GOOGLE_CLIENT_ID,
-                client_secret: GOOGLE_CLIENT_SECRET,
-                redirect_uri: GOOGLE_REDIRECT_URI,
-                grant_type: 'authorization_code'
-            });
-            tokenData = tokenRes.data;
-
-            const profileRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: { Authorization: `Bearer ${tokenData.access_token}` }
-            });
-            profileData = profileRes.data;
-        } else {
-            // Fallback to native https
-            const tokenBody = JSON.stringify({
-                code,
-                client_id: GOOGLE_CLIENT_ID,
-                client_secret: GOOGLE_CLIENT_SECRET,
-                redirect_uri: GOOGLE_REDIRECT_URI,
-                grant_type: 'authorization_code'
-            });
-
-            tokenData = await httpsRequest({
-                hostname: 'oauth2.googleapis.com',
-                path: '/token',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Content-Length': Buffer.byteLength(tokenBody)
-                }
-            }, tokenBody);
-
-            profileData = await httpsRequest({
-                hostname: 'www.googleapis.com',
-                path: '/oauth2/v3/userinfo',
-                method: 'GET',
-                headers: { Authorization: `Bearer ${tokenData.access_token}` }
-            });
-        }
-
-        const email = (profileData.email || '').toLowerCase();
-        const name = profileData.name || profileData.given_name || 'Flirt User';
-
-        if (!email) {
-            return renderSocialError(res, 'No email address returned from Google.');
-        }
-
-        // Find or create local user
-        let user = await UserRepository.findByEmail(email);
-
-        if (!user) {
-            const userId = uuidv4();
-            user = {
-                id: userId,
-                email,
-                name,
-                phone: '',
-                password_hash: null, // OAuth users don't have passwords
-                role: 'customer',
-                points: 0,
-                tier: 'bronze',
-                referralCode: generateReferralCode(name),
-                referredBy: null,
-                hairTracker: { lastInstallDate: null, extensionType: null },
-                createdAt: new Date().toISOString(),
-                authProvider: 'google'
-            };
-            await UserRepository.create(user);
-            console.log(`New user created via Google OAuth: ${email}`);
-        }
-
-        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-        const { passwordHash, ...userResponse } = user;
-
-        return renderSocialSuccess(res, token, userResponse);
-    } catch (err) {
-        console.error('Google OAuth error:', err.response?.data || err.message || err);
-        return renderSocialError(res, 'Google sign-in failed. Please try again.');
-    }
-});
-
-// ============================================
-// FACEBOOK OAUTH ROUTES
-// ============================================
-
-// Start Facebook OAuth
-app.get('/api/auth/facebook/start', (req, res) => {
-    const params = {
-        client_id: FACEBOOK_CLIENT_ID,
-        redirect_uri: FACEBOOK_REDIRECT_URI,
-        response_type: 'code',
-        scope: 'email,public_profile'
-    };
-    const url = 'https://www.facebook.com/v18.0/dialog/oauth?' + querystring.stringify(params);
-    res.redirect(url);
-});
-
-// Facebook callback
-app.get('/api/auth/facebook/callback', async (req, res) => {
-    const { code, error } = req.query;
-    if (error) {
-        return renderSocialError(res, 'Facebook sign-in was cancelled or failed.');
-    }
-
-    try {
-        let tokenData, profileData;
-
-        if (axios) {
-            // Use axios if available
-            const tokenRes = await axios.get('https://graph.facebook.com/v18.0/oauth/access_token', {
-                params: {
-                    client_id: FACEBOOK_CLIENT_ID,
-                    client_secret: FACEBOOK_CLIENT_SECRET,
-                    redirect_uri: FACEBOOK_REDIRECT_URI,
-                    code
-                }
-            });
-            tokenData = tokenRes.data;
-
-            const profileRes = await axios.get('https://graph.facebook.com/me', {
-                params: { fields: 'id,name,email', access_token: tokenData.access_token }
-            });
-            profileData = profileRes.data;
-        } else {
-            // Fallback to native https
-            const tokenParams = querystring.stringify({
-                client_id: FACEBOOK_CLIENT_ID,
-                client_secret: FACEBOOK_CLIENT_SECRET,
-                redirect_uri: FACEBOOK_REDIRECT_URI,
-                code
-            });
-
-            tokenData = await httpsRequest({
-                hostname: 'graph.facebook.com',
-                path: `/v18.0/oauth/access_token?${tokenParams}`,
-                method: 'GET'
-            });
-
-            const profileParams = querystring.stringify({
-                fields: 'id,name,email',
-                access_token: tokenData.access_token
-            });
-
-            profileData = await httpsRequest({
-                hostname: 'graph.facebook.com',
-                path: `/me?${profileParams}`,
-                method: 'GET'
-            });
-        }
-
-        const email = (profileData.email || '').toLowerCase();
-        const name = profileData.name || 'Flirt User';
-
-        if (!email) {
-            return renderSocialError(res, 'No email address returned from Facebook. Please ensure your Facebook account has a verified email.');
-        }
-
-        let user = await UserRepository.findByEmail(email);
-
-        if (!user) {
-            const userId = uuidv4();
-            user = {
-                id: userId,
-                email,
-                name,
-                phone: '',
-                password_hash: null, // OAuth users don't have passwords
-                role: 'customer',
-                points: 0,
-                tier: 'bronze',
-                referralCode: generateReferralCode(name),
-                referredBy: null,
-                hairTracker: { lastInstallDate: null, extensionType: null },
-                createdAt: new Date().toISOString(),
-                authProvider: 'facebook'
-            };
-            await UserRepository.create(user);
-            console.log(`New user created via Facebook OAuth: ${email}`);
-        }
-
-        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
-        const { passwordHash, ...userResponse } = user;
-
-        return renderSocialSuccess(res, token, userResponse);
-    } catch (err) {
-        console.error('Facebook OAuth error:', err.response?.data || err.message || err);
-        return renderSocialError(res, 'Facebook sign-in failed. Please try again.');
     }
 });
 
@@ -2850,8 +2546,8 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
             const bookingDate = b.requestedDate || b.date;
             return bookingDate === today;
         }).length;
-        const pendingBookings = allBookings.filter(b => b.status === 'pending').length;
-        const pendingOrders = allOrders.filter(o => o.status === 'pending').length;
+        const pendingBookings = allBookings.filter(b => b.status === 'REQUESTED').length;
+        const pendingOrders = allOrders.filter(o => o.status === 'pending').length; // Orders use lowercase status
 
         res.json({
             success: true,
@@ -3010,6 +2706,162 @@ app.put('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
             success: false,
             message: 'Failed to update payment configuration'
         });
+    }
+});
+
+// ============================================
+// BUSINESS SETTINGS API
+// ============================================
+
+// Get business settings
+app.get('/api/admin/business-settings', authenticateAdmin, async (req, res) => {
+    try {
+        const row = db.prepare('SELECT * FROM business_settings WHERE id = 1').get();
+        if (!row) {
+            // Create default if not exists
+            db.prepare('INSERT OR IGNORE INTO business_settings (id) VALUES (1)').run();
+            const newRow = db.prepare('SELECT * FROM business_settings WHERE id = 1').get();
+            return res.json({
+                success: true,
+                settings: {
+                    businessName: newRow.business_name,
+                    email: newRow.email,
+                    phone: newRow.phone,
+                    address: newRow.address,
+                    hours: JSON.parse(newRow.hours_json || '{}')
+                }
+            });
+        }
+        res.json({
+            success: true,
+            settings: {
+                businessName: row.business_name,
+                email: row.email,
+                phone: row.phone,
+                address: row.address,
+                hours: JSON.parse(row.hours_json || '{}')
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching business settings:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch business settings' });
+    }
+});
+
+// Update business settings
+app.put('/api/admin/business-settings', authenticateAdmin, async (req, res) => {
+    try {
+        const { businessName, email, phone, address, hours } = req.body;
+
+        // Validate email format
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ success: false, message: 'Invalid email format' });
+        }
+
+        const hoursJson = hours ? JSON.stringify(hours) : null;
+
+        db.prepare(`
+            UPDATE business_settings
+            SET business_name = COALESCE(?, business_name),
+                email = COALESCE(?, email),
+                phone = COALESCE(?, phone),
+                address = COALESCE(?, address),
+                hours_json = COALESCE(?, hours_json),
+                updated_at = datetime('now')
+            WHERE id = 1
+        `).run(businessName, email, phone, address, hoursJson);
+
+        const updated = db.prepare('SELECT * FROM business_settings WHERE id = 1').get();
+        res.json({
+            success: true,
+            message: 'Business settings updated successfully',
+            settings: {
+                businessName: updated.business_name,
+                email: updated.email,
+                phone: updated.phone,
+                address: updated.address,
+                hours: JSON.parse(updated.hours_json || '{}')
+            }
+        });
+    } catch (error) {
+        console.error('Error updating business settings:', error);
+        res.status(500).json({ success: false, message: 'Failed to update business settings' });
+    }
+});
+
+// ============================================
+// DELIVERY CONFIG API
+// ============================================
+
+// Get delivery config
+app.get('/api/admin/delivery-config', authenticateAdmin, async (req, res) => {
+    try {
+        const row = db.prepare('SELECT * FROM delivery_config WHERE id = 1').get();
+        if (!row) {
+            // Create default if not exists
+            db.prepare('INSERT OR IGNORE INTO delivery_config (id) VALUES (1)').run();
+            const newRow = db.prepare('SELECT * FROM delivery_config WHERE id = 1').get();
+            return res.json({
+                success: true,
+                config: {
+                    standardFee: newRow.standard_fee,
+                    expressFee: newRow.express_fee,
+                    freeThreshold: newRow.free_threshold
+                }
+            });
+        }
+        res.json({
+            success: true,
+            config: {
+                standardFee: row.standard_fee,
+                expressFee: row.express_fee,
+                freeThreshold: row.free_threshold
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching delivery config:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch delivery config' });
+    }
+});
+
+// Update delivery config
+app.put('/api/admin/delivery-config', authenticateAdmin, async (req, res) => {
+    try {
+        const { standardFee, expressFee, freeThreshold } = req.body;
+
+        // Validate numeric values
+        if (standardFee !== undefined && (isNaN(standardFee) || standardFee < 0)) {
+            return res.status(400).json({ success: false, message: 'Invalid standard fee' });
+        }
+        if (expressFee !== undefined && (isNaN(expressFee) || expressFee < 0)) {
+            return res.status(400).json({ success: false, message: 'Invalid express fee' });
+        }
+        if (freeThreshold !== undefined && (isNaN(freeThreshold) || freeThreshold < 0)) {
+            return res.status(400).json({ success: false, message: 'Invalid free threshold' });
+        }
+
+        db.prepare(`
+            UPDATE delivery_config
+            SET standard_fee = COALESCE(?, standard_fee),
+                express_fee = COALESCE(?, express_fee),
+                free_threshold = COALESCE(?, free_threshold),
+                updated_at = datetime('now')
+            WHERE id = 1
+        `).run(standardFee, expressFee, freeThreshold);
+
+        const updated = db.prepare('SELECT * FROM delivery_config WHERE id = 1').get();
+        res.json({
+            success: true,
+            message: 'Delivery settings updated successfully',
+            config: {
+                standardFee: updated.standard_fee,
+                expressFee: updated.express_fee,
+                freeThreshold: updated.free_threshold
+            }
+        });
+    } catch (error) {
+        console.error('Error updating delivery config:', error);
+        res.status(500).json({ success: false, message: 'Failed to update delivery config' });
     }
 });
 
@@ -4544,7 +4396,7 @@ app.post('/api/notifications', authenticateAdmin, async (req, res) => {
             active: true,
             startsAt: startsAt || new Date().toISOString(),
             expiresAt: expiresAt || null,
-            createdBy: req.user.userId
+            createdBy: req.user.id
         };
 
         const created = await NotificationRepository.create(notification);
@@ -5171,8 +5023,8 @@ app.get('/api/admin/chat/conversations', authenticateAdmin, async (req, res) => 
             const lastUser = [...msgs].reverse().find(m => m.from_type === 'user');
             summaries.push({
                 id: c.id,
-                userName: payload.customerName,
-                userEmail: payload.customerEmail,
+                customerName: payload.customerName, // Fixed: was 'userName', admin console expects 'customerName'
+                customerEmail: payload.customerEmail,
                 guestId: c.guest_id,
                 source: c.source,
                 lastMessage: lastUser ? lastUser.text.substring(0, 100) : '',
