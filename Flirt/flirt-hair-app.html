@@ -3917,6 +3917,18 @@
             display: none !important;
         }
 
+        /* Checking auth state - token exists, validating with server */
+        /* Hide auth gate, show app with loading indicator */
+        body.checking-auth .auth-gate {
+            display: none !important;
+        }
+
+        body.checking-auth .app-container,
+        body.checking-auth .header,
+        body.checking-auth .bottom-nav {
+            display: flex !important;
+        }
+
         /* ============================================
            AUTH GATE - Modern Redesign
            Clean, conversion-focused welcome screen
@@ -4198,6 +4210,20 @@
     <script src="/shared/booking-constants.js"></script>
 </head>
 <body class="auth-required">
+    <!-- Immediate token check - prevents auth gate flash for returning users -->
+    <script>
+        (function() {
+            var token = localStorage.getItem('flirt_token');
+            if (token) {
+                // User has a token - hide auth gate immediately, show loading state
+                // The async checkAuthStatus() will validate the token and either:
+                // - Keep user logged in if valid
+                // - Show auth gate if token is expired/invalid
+                document.body.classList.remove('auth-required');
+                document.body.classList.add('checking-auth');
+            }
+        })();
+    </script>
     <!-- Auth Gate / Welcome Screen -->
     <div class="auth-gate" id="authGate">
         <!-- Clean Modern Design - Full Screen with Bottom Content -->
@@ -6845,8 +6871,8 @@
             const token = getToken();
             if (!token) {
                 // No token - ensure auth-required state and show auth gate
+                document.body.classList.remove('checking-auth', 'logged-in');
                 document.body.classList.add('auth-required');
-                document.body.classList.remove('logged-in');
                 showAuthGate();
                 return;
             }
@@ -6854,8 +6880,8 @@
             try {
                 const data = await apiCall('/auth/me');
                 currentUser = data.user;
-                // User authenticated - remove auth-required and add logged-in
-                document.body.classList.remove('auth-required');
+                // User authenticated - remove all other states, add logged-in
+                document.body.classList.remove('auth-required', 'checking-auth');
                 document.body.classList.add('logged-in');
                 hideAuthGate();
                 updateUserUI();
@@ -6865,8 +6891,8 @@
                 // Token was present but invalid/expired - clear it and show auth gate
                 localStorage.removeItem('flirt_token');
                 currentUser = null;
+                document.body.classList.remove('checking-auth', 'logged-in');
                 document.body.classList.add('auth-required');
-                document.body.classList.remove('logged-in');
                 updateUserUI();
                 showAuthGate();
 
