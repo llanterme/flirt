@@ -3086,18 +3086,84 @@
             background: linear-gradient(160deg, #F67599 0%, #e05a7f 40%, #c94b6d 70%, #414042 100%);
             z-index: 10000;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+            flex-direction: row;
             opacity: 1;
             transition: opacity 0.5s ease, visibility 0.5s ease;
-            overflow-y: auto;
+            overflow: hidden;
         }
 
         .auth-gate.hidden {
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
+        }
+
+        /* Gallery Side - Hidden on mobile */
+        .auth-gate-gallery {
+            display: none;
+            width: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-gate-gallery-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            height: 100%;
+            gap: 4px;
+        }
+
+        .auth-gate-gallery-item {
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            transition: transform 0.5s ease;
+        }
+
+        .auth-gate-gallery-item:hover {
+            transform: scale(1.05);
+        }
+
+        .auth-gate-gallery-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 40px 30px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+        }
+
+        .auth-gate-gallery-text {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .auth-gate-gallery-hashtag {
+            color: #FFD700;
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .auth-gate-gallery-label {
+            color: rgba(255,255,255,0.9);
+            font-size: 14px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Main Content Side */
+        .auth-gate-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
         }
 
         .auth-gate-content {
@@ -3111,9 +3177,53 @@
             margin-bottom: 8px;
         }
 
-        .auth-gate-logo img {
-            height: 70px;
-            filter: brightness(0) invert(1);
+        /* Text-based logo */
+        .auth-gate-logo-text {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 56px;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            color: white;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .auth-gate-logo-dot {
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        /* Desktop: Show gallery and adjust layout */
+        @media (min-width: 900px) {
+            .auth-gate-gallery {
+                display: block;
+            }
+
+            .auth-gate-main {
+                width: 50%;
+            }
+
+            .auth-gate-logo-text {
+                font-size: 64px;
+            }
+        }
+
+        /* Large desktop */
+        @media (min-width: 1200px) {
+            .auth-gate-gallery {
+                width: 55%;
+            }
+
+            .auth-gate-main {
+                width: 45%;
+            }
+
+            .auth-gate-logo-text {
+                font-size: 72px;
+            }
+
+            .auth-gate-content {
+                max-width: 480px;
+            }
         }
 
         .auth-gate-tagline {
@@ -3449,6 +3559,9 @@
             .auth-gate-hero h1 {
                 font-size: 26px;
             }
+            .auth-gate-logo-text {
+                font-size: 42px;
+            }
         }
     </style>
 
@@ -3458,9 +3571,27 @@
 <body>
     <!-- Auth Gate / Welcome Screen -->
     <div class="auth-gate" id="authGate">
+        <!-- Gallery Side (Desktop Only) -->
+        <div class="auth-gate-gallery">
+            <div class="auth-gate-gallery-grid">
+                <div class="auth-gate-gallery-item" style="background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg')"></div>
+                <div class="auth-gate-gallery-item" style="background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg')"></div>
+                <div class="auth-gate-gallery-item" style="background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg')"></div>
+                <div class="auth-gate-gallery-item" style="background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg')"></div>
+            </div>
+            <div class="auth-gate-gallery-overlay">
+                <div class="auth-gate-gallery-text">
+                    <span class="auth-gate-gallery-hashtag">#FlirtHair</span>
+                    <span class="auth-gate-gallery-label">Real Results from Real Clients</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Side -->
+        <div class="auth-gate-main">
         <div class="auth-gate-content">
             <div class="auth-gate-logo">
-                <img src="Flirt pink logo 2.jpeg" alt="FL!RT">
+                <span class="auth-gate-logo-text">FL<span class="auth-gate-logo-dot">!</span>RT</span>
             </div>
             <div class="auth-gate-tagline">Premium Hair Extensions</div>
 
@@ -3557,6 +3688,7 @@
             <div class="auth-gate-footer">
                 <p>By continuing, you agree to our <a href="#">Terms</a> & <a href="#">Privacy Policy</a></p>
             </div>
+        </div>
         </div>
     </div>
 
