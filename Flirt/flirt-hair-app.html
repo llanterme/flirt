@@ -566,8 +566,11 @@
             border-color: var(--brand-pink);
         }
 
-        .home-service-emoji {
-            font-size: 18px;
+        .home-service-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--brand-pink);
+            flex-shrink: 0;
         }
 
         .home-service-chip span:last-child {
@@ -4463,23 +4466,48 @@
                 </div>
                 <div class="home-services-scroll">
                     <div class="home-service-chip" onclick="quickBookService('hair')">
-                        <span class="home-service-emoji">💇‍♀️</span>
+                        <svg class="home-service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.8-.1 2.6-.3"></path>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <path d="M9 9h.01M15 9h.01"></path>
+                            <path d="M17 2c0 4 4 6 4 10 0 2.5-2 4-4 4s-4-1.5-4-4c0-4 4-6 4-10"></path>
+                        </svg>
                         <span>Hair Extensions</span>
                     </div>
                     <div class="home-service-chip" onclick="quickBookService('nails')">
-                        <span class="home-service-emoji">💅</span>
+                        <svg class="home-service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22c5.5 0 10-4.5 10-10S17.5 2 12 2 2 6.5 2 12s4.5 10 10 10z"></path>
+                            <path d="M12 18a6 6 0 0 0 6-6H6a6 6 0 0 0 6 6z"></path>
+                            <path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path>
+                        </svg>
                         <span>Nails</span>
                     </div>
                     <div class="home-service-chip" onclick="quickBookService('lashes')">
-                        <span class="home-service-emoji">👁️</span>
+                        <svg class="home-service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 5V2M7 6L5 3M17 6l2-3"></path>
+                        </svg>
                         <span>Lashes</span>
                     </div>
                     <div class="home-service-chip" onclick="quickBookService('makeup')">
-                        <span class="home-service-emoji">💄</span>
+                        <svg class="home-service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 2h6l1 7H8l1-7z"></path>
+                            <path d="M8 9h8v2a4 4 0 0 1-4 4 4 4 0 0 1-4-4V9z"></path>
+                            <path d="M12 15v7"></path>
+                            <path d="M8 22h8"></path>
+                        </svg>
                         <span>Makeup</span>
                     </div>
                     <div class="home-service-chip" onclick="quickBookService('facial')">
-                        <span class="home-service-emoji">✨</span>
+                        <svg class="home-service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                            <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                            <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                            <path d="M12 2a4 4 0 0 0-1 7.9"></path>
+                            <path d="M12 2a4 4 0 0 1 1 7.9"></path>
+                        </svg>
                         <span>Facials</span>
                     </div>
                 </div>
