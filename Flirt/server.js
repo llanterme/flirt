@@ -2709,6 +2709,162 @@ app.put('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
     }
 });
 
+// ============================================
+// BUSINESS SETTINGS API
+// ============================================
+
+// Get business settings
+app.get('/api/admin/business-settings', authenticateAdmin, async (req, res) => {
+    try {
+        const row = db.prepare('SELECT * FROM business_settings WHERE id = 1').get();
+        if (!row) {
+            // Create default if not exists
+            db.prepare('INSERT OR IGNORE INTO business_settings (id) VALUES (1)').run();
+            const newRow = db.prepare('SELECT * FROM business_settings WHERE id = 1').get();
+            return res.json({
+                success: true,
+                settings: {
+                    businessName: newRow.business_name,
+                    email: newRow.email,
+                    phone: newRow.phone,
+                    address: newRow.address,
+                    hours: JSON.parse(newRow.hours_json || '{}')
+                }
+            });
+        }
+        res.json({
+            success: true,
+            settings: {
+                businessName: row.business_name,
+                email: row.email,
+                phone: row.phone,
+                address: row.address,
+                hours: JSON.parse(row.hours_json || '{}')
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching business settings:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch business settings' });
+    }
+});
+
+// Update business settings
+app.put('/api/admin/business-settings', authenticateAdmin, async (req, res) => {
+    try {
+        const { businessName, email, phone, address, hours } = req.body;
+
+        // Validate email format
+        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ success: false, message: 'Invalid email format' });
+        }
+
+        const hoursJson = hours ? JSON.stringify(hours) : null;
+
+        db.prepare(`
+            UPDATE business_settings
+            SET business_name = COALESCE(?, business_name),
+                email = COALESCE(?, email),
+                phone = COALESCE(?, phone),
+                address = COALESCE(?, address),
+                hours_json = COALESCE(?, hours_json),
+                updated_at = datetime('now')
+            WHERE id = 1
+        `).run(businessName, email, phone, address, hoursJson);
+
+        const updated = db.prepare('SELECT * FROM business_settings WHERE id = 1').get();
+        res.json({
+            success: true,
+            message: 'Business settings updated successfully',
+            settings: {
+                businessName: updated.business_name,
+                email: updated.email,
+                phone: updated.phone,
+                address: updated.address,
+                hours: JSON.parse(updated.hours_json || '{}')
+            }
+        });
+    } catch (error) {
+        console.error('Error updating business settings:', error);
+        res.status(500).json({ success: false, message: 'Failed to update business settings' });
+    }
+});
+
+// ============================================
+// DELIVERY CONFIG API
+// ============================================
+
+// Get delivery config
+app.get('/api/admin/delivery-config', authenticateAdmin, async (req, res) => {
+    try {
+        const row = db.prepare('SELECT * FROM delivery_config WHERE id = 1').get();
+        if (!row) {
+            // Create default if not exists
+            db.prepare('INSERT OR IGNORE INTO delivery_config (id) VALUES (1)').run();
+            const newRow = db.prepare('SELECT * FROM delivery_config WHERE id = 1').get();
+            return res.json({
+                success: true,
+                config: {
+                    standardFee: newRow.standard_fee,
+                    expressFee: newRow.express_fee,
+                    freeThreshold: newRow.free_threshold
+                }
+            });
+        }
+        res.json({
+            success: true,
+            config: {
+                standardFee: row.standard_fee,
+                expressFee: row.express_fee,
+                freeThreshold: row.free_threshold
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching delivery config:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch delivery config' });
+    }
+});
+
+// Update delivery config
+app.put('/api/admin/delivery-config', authenticateAdmin, async (req, res) => {
+    try {
+        const { standardFee, expressFee, freeThreshold } = req.body;
+
+        // Validate numeric values
+        if (standardFee !== undefined && (isNaN(standardFee) || standardFee < 0)) {
+            return res.status(400).json({ success: false, message: 'Invalid standard fee' });
+        }
+        if (expressFee !== undefined && (isNaN(expressFee) || expressFee < 0)) {
+            return res.status(400).json({ success: false, message: 'Invalid express fee' });
+        }
+        if (freeThreshold !== undefined && (isNaN(freeThreshold) || freeThreshold < 0)) {
+            return res.status(400).json({ success: false, message: 'Invalid free threshold' });
+        }
+
+        db.prepare(`
+            UPDATE delivery_config
+            SET standard_fee = COALESCE(?, standard_fee),
+                express_fee = COALESCE(?, express_fee),
+                free_threshold = COALESCE(?, free_threshold),
+                updated_at = datetime('now')
+            WHERE id = 1
+        `).run(standardFee, expressFee, freeThreshold);
+
+        const updated = db.prepare('SELECT * FROM delivery_config WHERE id = 1').get();
+        res.json({
+            success: true,
+            message: 'Delivery settings updated successfully',
+            config: {
+                standardFee: updated.standard_fee,
+                expressFee: updated.express_fee,
+                freeThreshold: updated.free_threshold
+            }
+        });
+    } catch (error) {
+        console.error('Error updating delivery config:', error);
+        res.status(500).json({ success: false, message: 'Failed to update delivery config' });
+    }
+});
+
 // Create booking (admin on behalf of customer)
 app.post('/api/admin/bookings', authenticateAdmin, async (req, res) => {
     const { userId, type, stylistId, serviceId, date, time, duration, notes } = req.body;
