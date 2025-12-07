@@ -444,3 +444,18 @@ CREATE TABLE IF NOT EXISTS staff_services (
 
 CREATE INDEX IF NOT EXISTS idx_staff_services_staff ON staff_services(staff_id);
 CREATE INDEX IF NOT EXISTS idx_staff_services_service ON staff_services(service_id);
+
+-- ============================================
+-- USER INSPO PHOTOS TABLE
+-- Stores user-uploaded hair inspiration photos
+-- ============================================
+CREATE TABLE IF NOT EXISTS user_inspo_photos (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    image_data TEXT NOT NULL, -- Base64 encoded image
+    label TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_inspo_photos_user ON user_inspo_photos(user_id);

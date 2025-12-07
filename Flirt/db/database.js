@@ -102,6 +102,19 @@ async function initializeDatabase() {
     await ensureColumn('hair_tracker', 'hair_health_score', 'INTEGER DEFAULT 100');
     await ensureColumn('hair_tracker', 'wash_history', 'TEXT');
     await ensureColumn('hair_tracker', 'products_used', 'TEXT');
+
+    // Ensure user_inspo_photos table exists (for hair inspiration photos)
+    await ensureTable('user_inspo_photos', `
+        CREATE TABLE IF NOT EXISTS user_inspo_photos (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            image_data TEXT NOT NULL,
+            label TEXT,
+            notes TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    `);
+    await ensureIndex('idx_inspo_photos_user', 'user_inspo_photos', 'user_id');
 }
 
 // Utilities for lightweight migrations (add missing columns safely)
@@ -111,6 +124,30 @@ async function ensureColumn(table, column, definition) {
     if (!hasColumn) {
         await dbRun(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
         console.log(`Added missing column ${column} to ${table}`);
+    }
+}
+
+// Ensure a table exists (for migrations)
+async function ensureTable(tableName, createStatement) {
+    const result = await dbGet(
+        `SELECT name FROM sqlite_master WHERE type='table' AND name=?`,
+        [tableName]
+    );
+    if (!result) {
+        await dbRun(createStatement);
+        console.log(`Created missing table: ${tableName}`);
+    }
+}
+
+// Ensure an index exists (for migrations)
+async function ensureIndex(indexName, tableName, column) {
+    const result = await dbGet(
+        `SELECT name FROM sqlite_master WHERE type='index' AND name=?`,
+        [indexName]
+    );
+    if (!result) {
+        await dbRun(`CREATE INDEX IF NOT EXISTS ${indexName} ON ${tableName}(${column})`);
+        console.log(`Created missing index: ${indexName}`);
     }
 }
 

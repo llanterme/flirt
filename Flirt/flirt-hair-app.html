@@ -5773,6 +5773,19 @@
                     </div>
                     <span>›</span>
                 </li>
+                <li class="menu-item" onclick="openMyHairPhotos()">
+                    <div class="menu-item-content">
+                        <span class="menu-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                        </span>
+                        <span class="menu-text">My Hair Photos</span>
+                    </div>
+                    <span>›</span>
+                </li>
                 <li class="menu-item" onclick="viewPayments()">
                     <div class="menu-item-content">
                         <span class="menu-icon">
@@ -6072,6 +6085,32 @@
             </div>
 
             <button class="btn btn-primary" onclick="saveInspoPhotos()">Save Photos</button>
+        </div>
+    </div>
+
+    <!-- My Hair Photos Modal -->
+    <div id="myHairPhotosModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">My Hair Photos</h3>
+                <button class="close-btn" onclick="closeModal('myHairPhotosModal')">&times;</button>
+            </div>
+
+            <p style="color: var(--gray-medium); font-size: 14px; margin-bottom: 20px;">
+                Your uploaded hair inspiration photos. Share these with your stylist during consultations.
+            </p>
+
+            <!-- Upload new photo button -->
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="closeModal('myHairPhotosModal'); openPhotoUpload();">
+                    <span style="margin-right: 8px;">+</span> Upload New Photo
+                </button>
+            </div>
+
+            <!-- Photos gallery -->
+            <div id="myHairPhotosGallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
+                <div style="text-align: center; padding: 40px; color: var(--gray-medium);">Loading...</div>
+            </div>
         </div>
     </div>
 
@@ -11312,7 +11351,8 @@ async function showNotifications() {
 
                 alert('📸 Photos saved to your Inspo Board!\n\nYour stylist will be able to see these during your next consultation.');
                 closeModal('photoUploadModal');
-                loadInspoGallery(); // Reload gallery
+                loadInspoGallery(); // Reload home page gallery
+                loadMyHairPhotosGallery(); // Reload profile gallery if open
             } catch (error) {
                 console.error('Error saving photos:', error);
                 alert('Failed to save photos. Please try again.');
@@ -11410,9 +11450,96 @@ async function showNotifications() {
                 }
 
                 loadInspoGallery(); // Reload gallery
+                loadMyHairPhotosGallery(); // Also reload profile gallery if open
             } catch (error) {
                 console.error('Error deleting photo:', error);
                 alert('Failed to delete photo. Please try again.');
+            }
+        }
+
+        // ========== MY HAIR PHOTOS (Profile) ==========
+        async function openMyHairPhotos() {
+            if (!getToken()) {
+                alert('Please sign in to view your hair photos');
+                showAuthModal('login');
+                return;
+            }
+            document.getElementById('myHairPhotosModal').classList.add('show');
+            loadMyHairPhotosGallery();
+        }
+
+        async function loadMyHairPhotosGallery() {
+            const gallery = document.getElementById('myHairPhotosGallery');
+            if (!gallery) return;
+
+            gallery.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--gray-medium);">Loading...</div>';
+
+            try {
+                const token = getToken();
+                if (!token) {
+                    gallery.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--gray-medium);">Please sign in to view your photos</div>';
+                    return;
+                }
+
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                };
+
+                const response = await fetch(`${API_BASE}/inspo-photos`, { headers });
+                if (!response.ok) {
+                    throw new Error('Failed to load photos');
+                }
+
+                const photos = await response.json();
+
+                if (!photos || photos.length === 0) {
+                    gallery.innerHTML = `
+                        <div style="text-align: center; padding: 40px; grid-column: 1 / -1;">
+                            <div style="font-size: 48px; margin-bottom: 15px;">📷</div>
+                            <h3 style="margin-bottom: 10px; color: var(--gray-dark);">No Photos Yet</h3>
+                            <p style="color: var(--gray-medium); margin-bottom: 15px;">
+                                Upload photos of your hair to share with your stylist.
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Load full image data for each photo
+                let galleryHtml = '';
+                for (const photo of photos) {
+                    const fullPhotoResponse = await fetch(`${API_BASE}/inspo-photos/${photo.id}`, { headers });
+                    if (fullPhotoResponse.ok) {
+                        const fullPhoto = await fullPhotoResponse.json();
+                        galleryHtml += `
+                            <div style="position: relative; border-radius: 12px; overflow: hidden; background: var(--gray-light);">
+                                <img src="${fullPhoto.imageData}" alt="${fullPhoto.label || 'Hair photo'}"
+                                     style="width: 100%; height: 150px; object-fit: cover; display: block;">
+                                ${fullPhoto.label ? `<div style="padding: 8px; font-size: 12px; color: var(--gray-dark);">${fullPhoto.label}</div>` : ''}
+                                <button onclick="deleteInspoPhoto('${photo.id}')"
+                                        style="position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.6); color: white; border: none; cursor: pointer; font-size: 14px;">
+                                    &times;
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+
+                gallery.innerHTML = galleryHtml || '<div style="text-align: center; padding: 40px; grid-column: 1 / -1; color: var(--gray-medium);">No photos found</div>';
+
+            } catch (error) {
+                console.error('Error loading hair photos:', error);
+                gallery.innerHTML = `
+                    <div style="text-align: center; padding: 40px; grid-column: 1 / -1;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
+                        <h3 style="margin-bottom: 10px; color: var(--gray-dark);">Couldn't Load Photos</h3>
+                        <p style="color: var(--gray-medium); margin-bottom: 15px;">
+                            There was an error loading your photos.
+                        </p>
+                        <button class="btn btn-secondary btn-small" onclick="loadMyHairPhotosGallery()">Try Again</button>
+                    </div>
+                `;
             }
         }
 
