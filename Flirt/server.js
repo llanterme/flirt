@@ -10,7 +10,7 @@ const querystring = require('querystring');
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
-let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository, PayrollRepository;
+let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository, PayrollRepository, PasswordResetRepository;
 
 try {
     const dbModule = require('./db/database');
@@ -32,6 +32,7 @@ try {
     ChatRepository = dbModule.ChatRepository;
     HairTipRepository = dbModule.HairTipRepository;
     PayrollRepository = dbModule.PayrollRepository;
+    PasswordResetRepository = dbModule.PasswordResetRepository;
 
     // Ensure database directory exists
     const dbDir = path.dirname(DATABASE_PATH);
@@ -366,6 +367,140 @@ app.post('/api/auth/login', async (req, res) => {
         user: userResponse,
         mustChangePassword: user.must_change_password || user.mustChangePassword || false
     });
+});
+
+// Forgot password - request reset link
+app.post('/api/auth/forgot-password', async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    try {
+        const user = await UserRepository.findByEmail(email);
+
+        // Always return success to prevent email enumeration
+        if (!user) {
+            console.log(`Password reset requested for non-existent email: ${email}`);
+            return res.json({
+                success: true,
+                message: 'If an account with that email exists, a password reset link has been sent.'
+            });
+        }
+
+        // Generate a secure random token
+        const crypto = require('crypto');
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+
+        // Ensure the table exists (run migration if needed)
+        try {
+            await db.dbRun(`
+                CREATE TABLE IF NOT EXISTS password_reset_tokens (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    token TEXT UNIQUE NOT NULL,
+                    expires_at TEXT NOT NULL,
+                    used INTEGER DEFAULT 0,
+                    created_at TEXT DEFAULT (datetime('now'))
+                )
+            `);
+        } catch (e) {
+            // Table might already exist, that's fine
+        }
+
+        await PasswordResetRepository.createToken(user.id, resetToken, expiresAt);
+
+        // Build reset URL
+        const baseUrl = process.env.APP_URL || `http://localhost:${PORT}`;
+        const resetUrl = `${baseUrl}/?reset_token=${resetToken}`;
+
+        // Send email
+        try {
+            await emailService.sendEmail({
+                to: user.email,
+                subject: 'Reset Your Flirt Hair Password',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <div style="background: linear-gradient(135deg, #414042 0%, #2d2d2e 100%); padding: 30px; text-align: center;">
+                            <h1 style="color: #F67599; margin: 0; font-size: 28px;">FL!RT</h1>
+                            <p style="color: #fff; margin: 5px 0 0;">Hair & Beauty Bar</p>
+                        </div>
+                        <div style="padding: 30px; background: #f8f8f8;">
+                            <h2 style="color: #414042; margin-bottom: 20px;">Reset Your Password</h2>
+                            <p style="color: #666; line-height: 1.6;">Hi ${user.name},</p>
+                            <p style="color: #666; line-height: 1.6;">You requested to reset your password. Click the button below to set a new password:</p>
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="${resetUrl}" style="background: #F67599; color: white; padding: 15px 30px; text-decoration: none; border-radius: 30px; font-weight: bold; display: inline-block;">Reset Password</a>
+                            </div>
+                            <p style="color: #666; line-height: 1.6; font-size: 14px;">This link will expire in 1 hour.</p>
+                            <p style="color: #666; line-height: 1.6; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
+                            <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+                            <p style="color: #999; font-size: 12px; text-align: center;">Flirt Hair & Beauty Bar</p>
+                        </div>
+                    </div>
+                `
+            });
+            console.log(`Password reset email sent to: ${user.email}`);
+        } catch (emailError) {
+            console.error('Failed to send password reset email:', emailError.message);
+            // Still return success to prevent enumeration, but log the error
+        }
+
+        res.json({
+            success: true,
+            message: 'If an account with that email exists, a password reset link has been sent.'
+        });
+
+    } catch (error) {
+        console.error('Error in forgot password:', error.message);
+        res.status(500).json({ success: false, message: 'An error occurred. Please try again later.' });
+    }
+});
+
+// Reset password with token
+app.post('/api/auth/reset-password', async (req, res) => {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+        return res.status(400).json({ success: false, message: 'Token and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
+    try {
+        const resetToken = await PasswordResetRepository.findByToken(token);
+
+        if (!resetToken) {
+            return res.status(400).json({ success: false, message: 'Invalid or expired reset link. Please request a new one.' });
+        }
+
+        // Hash the new password
+        const passwordHash = await bcrypt.hash(newPassword, 10);
+
+        // Update user's password
+        await UserRepository.update(resetToken.user_id, {
+            passwordHash,
+            mustChangePassword: false
+        });
+
+        // Mark token as used
+        await PasswordResetRepository.markUsed(token);
+
+        console.log(`Password reset successful for user: ${resetToken.user_id}`);
+
+        res.json({
+            success: true,
+            message: 'Password has been reset successfully. You can now log in with your new password.'
+        });
+
+    } catch (error) {
+        console.error('Error in reset password:', error.message);
+        res.status(500).json({ success: false, message: 'An error occurred. Please try again later.' });
+    }
 });
 
 // Get current user
@@ -3857,6 +3992,71 @@ app.put('/api/admin/customers/:id', authenticateAdmin, async (req, res) => {
         res.json({ success: true, customer: updated });
     } catch (error) {
         console.error('Error updating customer:', error.message);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// Reset customer password (admin) - generates a new password and optionally sends email
+app.post('/api/admin/customers/:id/reset-password', authenticateAdmin, async (req, res) => {
+    try {
+        const { sendEmail: shouldSendEmail = true, newPassword } = req.body;
+
+        const user = await UserRepository.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+
+        // Generate or use provided password
+        const password = newPassword || Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 4).toUpperCase();
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        await UserRepository.update(user.id, {
+            passwordHash,
+            mustChangePassword: true
+        });
+
+        // Optionally send email with new password
+        if (shouldSendEmail && user.email) {
+            try {
+                await emailService.sendEmail({
+                    to: user.email,
+                    subject: 'Your Flirt Hair Password Has Been Reset',
+                    html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                            <div style="background: linear-gradient(135deg, #414042 0%, #2d2d2e 100%); padding: 30px; text-align: center;">
+                                <h1 style="color: #F67599; margin: 0; font-size: 28px;">FL!RT</h1>
+                                <p style="color: #fff; margin: 5px 0 0;">Hair & Beauty Bar</p>
+                            </div>
+                            <div style="padding: 30px; background: #f8f8f8;">
+                                <h2 style="color: #414042; margin-bottom: 20px;">Password Reset</h2>
+                                <p style="color: #666; line-height: 1.6;">Hi ${user.name},</p>
+                                <p style="color: #666; line-height: 1.6;">Your password has been reset by our team. Here are your new login credentials:</p>
+                                <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #F67599;">
+                                    <p style="margin: 5px 0;"><strong>Email:</strong> ${user.email}</p>
+                                    <p style="margin: 5px 0;"><strong>Temporary Password:</strong> ${password}</p>
+                                </div>
+                                <p style="color: #666; line-height: 1.6;">Please log in and change your password immediately.</p>
+                                <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+                                <p style="color: #999; font-size: 12px; text-align: center;">Flirt Hair & Beauty Bar</p>
+                            </div>
+                        </div>
+                    `
+                });
+                console.log(`Password reset email sent to: ${user.email}`);
+            } catch (emailError) {
+                console.error('Failed to send password reset email:', emailError.message);
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Password has been reset',
+            temporaryPassword: password,
+            emailSent: shouldSendEmail
+        });
+
+    } catch (error) {
+        console.error('Error resetting customer password:', error.message);
         res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });

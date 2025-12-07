@@ -2488,8 +2488,22 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Password (optional)</label>
+                                <label class="form-label">Password (optional for new customers)</label>
                                 <input type="text" class="form-input" id="customerPassword" placeholder="Leave blank to auto-generate">
+                            </div>
+                            <!-- Reset Password Section (only shown when editing) -->
+                            <div id="resetPasswordSection" class="form-group" style="display: none; border-top: 1px solid var(--gray-light); padding-top: 15px; margin-top: 15px;">
+                                <label class="form-label">Password Reset</label>
+                                <p style="font-size: 12px; color: var(--gray-dark); margin-bottom: 10px;">Generate a new temporary password and optionally send it to the customer via email.</p>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <button type="button" class="btn btn-outline" onclick="resetCustomerPassword()" style="flex-shrink: 0;">
+                                        🔑 Reset Password
+                                    </button>
+                                    <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--gray-dark);">
+                                        <input type="checkbox" id="sendResetEmail" checked> Send email to customer
+                                    </label>
+                                </div>
+                                <div id="resetPasswordResult" style="margin-top: 10px; padding: 10px; border-radius: 8px; display: none;"></div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -6848,6 +6862,17 @@
             document.getElementById('customerTier').value = customer?.tier || 'bronze';
             document.getElementById('customerPoints').value = customer?.points ?? 0;
             document.getElementById('customerPassword').value = '';
+
+            // Show/hide reset password section based on whether we're editing
+            const resetSection = document.getElementById('resetPasswordSection');
+            const resetResult = document.getElementById('resetPasswordResult');
+            if (editingCustomerId) {
+                resetSection.style.display = 'block';
+                resetResult.style.display = 'none';
+            } else {
+                resetSection.style.display = 'none';
+            }
+
             openModal('customerModal');
         }
 
@@ -6935,6 +6960,53 @@
 
         function openChatForCustomer(id, name, email) {
             alert(`Chat for ${name || email || id} coming soon`);
+        }
+
+        async function resetCustomerPassword() {
+            if (!editingCustomerId) {
+                alert('No customer selected');
+                return;
+            }
+
+            const sendEmail = document.getElementById('sendResetEmail').checked;
+            const resultEl = document.getElementById('resetPasswordResult');
+
+            if (!confirm('Are you sure you want to reset this customer\'s password?')) {
+                return;
+            }
+
+            try {
+                resultEl.style.display = 'block';
+                resultEl.style.background = '#fff3cd';
+                resultEl.style.color = '#856404';
+                resultEl.innerHTML = 'Resetting password...';
+
+                const data = await apiCall(`/admin/customers/${editingCustomerId}/reset-password`, {
+                    method: 'POST',
+                    body: JSON.stringify({ sendEmail })
+                });
+
+                resultEl.style.background = '#d4edda';
+                resultEl.style.color = '#155724';
+
+                if (sendEmail) {
+                    resultEl.innerHTML = `
+                        <strong>Password reset successfully!</strong><br>
+                        <span style="font-size: 12px;">Temporary password: <code style="background: #f8f9fa; padding: 2px 6px; border-radius: 4px;">${data.temporaryPassword}</code></span><br>
+                        <span style="font-size: 12px;">Email sent to customer.</span>
+                    `;
+                } else {
+                    resultEl.innerHTML = `
+                        <strong>Password reset successfully!</strong><br>
+                        <span style="font-size: 12px;">Temporary password: <code style="background: #f8f9fa; padding: 2px 6px; border-radius: 4px;">${data.temporaryPassword}</code></span><br>
+                        <span style="font-size: 12px; color: #856404;">Please share this password with the customer manually.</span>
+                    `;
+                }
+            } catch (error) {
+                resultEl.style.background = '#f8d7da';
+                resultEl.style.color = '#721c24';
+                resultEl.innerHTML = `<strong>Error:</strong> ${error.message || 'Failed to reset password'}`;
+            }
         }
 
         function getInitials(text) {

@@ -1880,6 +1880,38 @@ const PayrollRepository = {
     }
 };
 
+// ============================================
+// PASSWORD RESET REPOSITORY
+// ============================================
+const PasswordResetRepository = {
+    async createToken(userId, token, expiresAt) {
+        // Invalidate any existing tokens for this user
+        await dbRun('UPDATE password_reset_tokens SET used = 1 WHERE user_id = ? AND used = 0', [userId]);
+
+        const sql = `
+            INSERT INTO password_reset_tokens (user_id, token, expires_at)
+            VALUES (?, ?, ?)
+        `;
+        await dbRun(sql, [userId, token, expiresAt]);
+        return { userId, token, expiresAt };
+    },
+
+    async findByToken(token) {
+        return dbGet(`
+            SELECT * FROM password_reset_tokens
+            WHERE token = ? AND used = 0 AND datetime(expires_at) > datetime('now')
+        `, [token]);
+    },
+
+    async markUsed(token) {
+        await dbRun('UPDATE password_reset_tokens SET used = 1 WHERE token = ?', [token]);
+    },
+
+    async deleteExpired() {
+        await dbRun("DELETE FROM password_reset_tokens WHERE datetime(expires_at) < datetime('now') OR used = 1");
+    }
+};
+
 module.exports = {
     getDb,
     dbRun,
@@ -1902,5 +1934,6 @@ module.exports = {
     PaymentRepository,
     PaymentSettingsRepository,
     ChatRepository,
-    PayrollRepository
+    PayrollRepository,
+    PasswordResetRepository
 };
