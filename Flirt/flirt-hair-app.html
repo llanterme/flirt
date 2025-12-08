@@ -11872,6 +11872,18 @@ async function showNotifications() {
             setTimeout(() => {
                 modal.style.display = 'none';
             }, 300);
+
+            // Refresh appointments list and switch to home tab
+            loadUpcomingAppointment();
+            switchTab('home');
+
+            // Scroll to upcoming appointments section
+            setTimeout(() => {
+                const appointmentsSection = document.getElementById('upcomingAppointmentsContainer');
+                if (appointmentsSection) {
+                    appointmentsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 400);
         }
 
         function showRedeemOptions() { alert('Redeem points options'); }
