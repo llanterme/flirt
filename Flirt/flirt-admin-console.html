@@ -10725,6 +10725,7 @@
             }
 
             modal.querySelector('.modal').innerHTML = html;
+            modal.style.display = '';  // Clear inline style so CSS class can work
             modal.classList.add('show');
         }
 
