@@ -7845,8 +7845,8 @@
         async function selectHairService(serviceType, el) {
             await ensureBookingData();
 
-            // Construct the full service ID (e.g., 'tape' -> 'service_tape')
-            const serviceId = `service_${serviceType}`;
+            // Use the service ID as-is if it already has prefix, otherwise add it
+            const serviceId = serviceType.startsWith('service_') ? serviceType : `service_${serviceType}`;
 
             // Find service from cache or build from card DOM
             let service = services[serviceId] || services[serviceType];
