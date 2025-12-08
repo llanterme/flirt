@@ -8526,10 +8526,18 @@
 
                 showToast({ type: 'success', title: 'Request Submitted!', message: 'We will assign an exact time within 24 hours!' });
 
-                // Show success modal
-                setTimeout(() => {
-                    alert(`✅ Booking Request Submitted!\n\nStylist: ${stylist.name}\nService: ${service.name}\nPrice: ${service.price}\nPreferred Date: ${formatDateDisplay(bookingDate)}\nTime Window: ${timeWindowDisplay}\n\nOur salon team will assign an exact appointment time within 24 hours and notify you. You will also receive a confirmation email.\n\n+50 loyalty points earned! 🎉`);
-                }, 100);
+                // Show styled booking confirmation modal
+                showBookingConfirmation({
+                    type: 'Hair Extensions',
+                    service: service.name,
+                    duration: service.duration || '2-3 hours',
+                    price: service.price,
+                    date: formatDateDisplay(bookingDate),
+                    time: 'To be assigned',
+                    therapist: `Stylist: ${stylist.name}`,
+                    timeWindow: timeWindowDisplay,
+                    points: 0 // Hidden - rewards system disabled
+                });
 
                 // Reset booking state
                 selectedStylist = null;
@@ -8541,9 +8549,12 @@
                 hairCalendarMonthOffset = 0;
 
                 // Reset UI
-                document.getElementById('stylistSelection').style.display = 'block';
-                document.getElementById('serviceSelection').style.display = 'none';
-                document.getElementById('bookingForm').style.display = 'none';
+                const stylistSelectionEl = document.getElementById('stylistSelection');
+                const hairServiceSelectionEl = document.getElementById('hairServiceSelection');
+                const bookingFormEl = document.getElementById('bookingForm');
+                if (stylistSelectionEl) stylistSelectionEl.style.display = 'none';
+                if (hairServiceSelectionEl) hairServiceSelectionEl.style.display = 'block';
+                if (bookingFormEl) bookingFormEl.style.display = 'none';
 
                 // Reload user data to update points
                 loadUserData();
@@ -10226,6 +10237,7 @@ async function showNotifications() {
             const modal = document.getElementById('bookingConfirmationModal');
             const content = document.getElementById('bookingConfirmationContent');
             const pointsEl = document.getElementById('confirmationPoints');
+            const loyaltySection = document.getElementById('loyaltyPointsSection');
 
             let html = `
                 <div style="margin-bottom: 25px;">
@@ -10252,7 +10264,15 @@ async function showNotifications() {
                         </tr>
             `;
 
-            if (booking.time && booking.time !== 'To be assigned') {
+            // Show time window for hair bookings (time to be assigned)
+            if (booking.timeWindow) {
+                html += `
+                        <tr style="border-bottom: 1px solid var(--gray-light);">
+                            <td style="padding: 12px 0; font-weight: 600; color: var(--gray-dark);">Time Window:</td>
+                            <td style="padding: 12px 0; text-align: right; color: var(--text-dark);">${booking.timeWindow}</td>
+                        </tr>
+                `;
+            } else if (booking.time && booking.time !== 'To be assigned') {
                 html += `
                         <tr style="border-bottom: 1px solid var(--gray-light);">
                             <td style="padding: 12px 0; font-weight: 600; color: var(--gray-dark);">Time:</td>
@@ -10276,8 +10296,29 @@ async function showNotifications() {
                 </div>
             `;
 
+            // Add info about time assignment for hair bookings
+            if (booking.timeWindow) {
+                html += `
+                    <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: flex-start; gap: 12px;">
+                        <span style="font-size: 20px;">ℹ️</span>
+                        <div style="font-size: 13px; color: #1565c0;">
+                            <strong>Time Confirmation</strong><br>
+                            Our salon team will assign an exact appointment time within 24 hours based on availability and your preferences. You will receive a confirmation email.
+                        </div>
+                    </div>
+                `
+            }
+
             content.innerHTML = html;
-            pointsEl.textContent = `+${booking.points}`;
+
+            // Hide loyalty points section if points is 0 (rewards system disabled)
+            if (loyaltySection) {
+                loyaltySection.style.display = booking.points > 0 ? 'block' : 'none';
+            }
+            if (pointsEl && booking.points > 0) {
+                pointsEl.textContent = `+${booking.points}`;
+            }
+
             modal.style.display = 'flex';
 
             // Add fade-in animation
