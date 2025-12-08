@@ -9975,7 +9975,19 @@
         function toggleServiceCategory(catId) {
             const group = document.getElementById(catId);
             if (group) {
-                group.classList.toggle('expanded');
+                const isExpanded = group.classList.contains('expanded');
+                const content = group.querySelector('.service-category-content');
+                const header = group.querySelector('.service-category-header');
+
+                if (isExpanded) {
+                    group.classList.remove('expanded');
+                    if (content) content.classList.remove('expanded');
+                    if (header) header.classList.remove('expanded');
+                } else {
+                    group.classList.add('expanded');
+                    if (content) content.classList.add('expanded');
+                    if (header) header.classList.add('expanded');
+                }
             }
         }
 
