@@ -1303,11 +1303,12 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
             promoCode: appliedPromo,
             discount,
             total,
-            status: 'pending'
+            status: 'pending',
+            items: orderItems
         };
 
         // Create order with items
-        const newOrder = await OrderRepository.create(orderData, orderItems);
+        const newOrder = await OrderRepository.create(orderData);
 
         // Update product stock
         for (const item of items) {
