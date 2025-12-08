@@ -4917,65 +4917,14 @@
 
                 <div class="section-header">
                     <h3 style="font-size: 18px;">Choose Your Stylist</h3>
-                    <div style="font-size: 13px; color: var(--gray-medium); margin-top: 5px;">Select the stylist you prefer to work with</div>
+                    <div style="font-size: 13px; color: var(--gray-medium); margin-top: 5px;">Select from stylists who offer this service</div>
                 </div>
 
-                <div class="stylist-grid">
-                    <div class="stylist-card" onclick="selectStylist('lisa')">
-                        <div class="stylist-avatar" style="background: linear-gradient(135deg, #F67599 0%, #e05a7f 100%);">L</div>
-                        <div class="stylist-info">
-                            <div class="stylist-name">Lisa Thompson</div>
-                            <div class="stylist-specialty">Senior Stylist • 8 years exp</div>
-                            <div class="stylist-badges">
-                                <span class="badge-specialty">Tape Extensions</span>
-                                <span class="badge-specialty">Weft</span>
-                            </div>
-                            <div class="stylist-rating"><svg viewBox="0 0 24 24" fill="#F67599" width="14" height="14"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 4.9 (127 reviews)</div>
-                            <div class="stylist-availability">✓ Available this week</div>
-                        </div>
-                    </div>
-
-                    <div class="stylist-card" onclick="selectStylist('emma')">
-                        <div class="stylist-avatar" style="background: linear-gradient(135deg, var(--brand-pink) 0%, var(--brand-pink-dark) 100%);">E</div>
-                        <div class="stylist-info">
-                            <div class="stylist-name">Emma Williams</div>
-                            <div class="stylist-specialty">Extension Specialist • 6 years exp</div>
-                            <div class="stylist-badges">
-                                <span class="badge-specialty">Keratin Bonds</span>
-                                <span class="badge-specialty">Volume</span>
-                            </div>
-                            <div class="stylist-rating"><svg viewBox="0 0 24 24" fill="#F67599" width="14" height="14"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 4.8 (94 reviews)</div>
-                            <div class="stylist-availability">✓ Available this week</div>
-                        </div>
-                    </div>
-
-                    <div class="stylist-card favorite" onclick="selectStylist('sarah')">
-                        <div class="favorite-badge"><svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12" style="margin-right: 4px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Your Favorite</div>
-                        <div class="stylist-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">S</div>
-                        <div class="stylist-info">
-                            <div class="stylist-name">Sarah Martinez</div>
-                            <div class="stylist-specialty">Color Expert • 10 years exp</div>
-                            <div class="stylist-badges">
-                                <span class="badge-specialty">Color Match</span>
-                                <span class="badge-specialty">Balayage</span>
-                            </div>
-                            <div class="stylist-rating"><svg viewBox="0 0 24 24" fill="#F67599" width="14" height="14"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 5.0 (203 reviews)</div>
-                            <div class="stylist-availability">✓ Available this week</div>
-                        </div>
-                    </div>
-
-                    <div class="stylist-card" onclick="selectStylist('maya')">
-                        <div class="stylist-avatar" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">M</div>
-                        <div class="stylist-info">
-                            <div class="stylist-name">Maya Johnson</div>
-                            <div class="stylist-specialty">Maintenance Expert • 5 years exp</div>
-                            <div class="stylist-badges">
-                                <span class="badge-specialty">Maintenance</span>
-                                <span class="badge-specialty">Repair</span>
-                            </div>
-                            <div class="stylist-rating"><svg viewBox="0 0 24 24" fill="#F67599" width="14" height="14"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 4.9 (156 reviews)</div>
-                            <div class="stylist-availability">✓ Available this week</div>
-                        </div>
+                <div id="stylistGridContainer" class="stylist-grid">
+                    <!-- Stylists will be loaded dynamically based on selected service -->
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--gray-medium);">
+                        <div class="loading-spinner" style="margin: 0 auto 15px;"></div>
+                        Loading available stylists...
                     </div>
                 </div>
             </div>
@@ -7736,6 +7685,107 @@
             }
         }
 
+        // Load stylists who offer a specific service
+        async function loadStylistsForService(serviceId) {
+            const container = document.getElementById('stylistGridContainer');
+
+            // Show loading state
+            container.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--gray-medium);">
+                    <div class="loading-spinner" style="margin: 0 auto 15px;"></div>
+                    Loading available stylists...
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`${API_BASE}/services/${serviceId}/stylists`);
+                const data = await response.json();
+
+                if (!data.success || !data.stylists || data.stylists.length === 0) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                            <div style="font-size: 48px; margin-bottom: 15px;">😔</div>
+                            <div style="font-weight: 600; color: var(--brand-charcoal); margin-bottom: 10px;">No Stylists Available</div>
+                            <div style="color: var(--gray-medium); margin-bottom: 20px;">
+                                No stylists are currently assigned to this service.<br>
+                                Please contact us or try a different service.
+                            </div>
+                            <button class="btn btn-outline" onclick="goBackToHairService()">← Choose Different Service</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Default colors for stylists
+                const defaultColors = [
+                    'linear-gradient(135deg, #F67599 0%, #e05a7f 100%)',
+                    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+                ];
+
+                // Cache stylists for later use
+                data.stylists.forEach(s => {
+                    stylists[s.id] = {
+                        id: s.id,
+                        name: s.name,
+                        specialty: s.specialty,
+                        tagline: s.tagline,
+                        rating: s.rating,
+                        reviewCount: s.review_count,
+                        color: s.color || defaultColors[0],
+                        avatar: s.name.charAt(0).toUpperCase(),
+                        imageUrl: s.image_url,
+                        servicePrice: s.service_price,
+                        serviceDuration: s.service_duration
+                    };
+                });
+
+                container.innerHTML = data.stylists.map((stylist, index) => {
+                    const color = stylist.color || defaultColors[index % defaultColors.length];
+                    const avatar = stylist.name.charAt(0).toUpperCase();
+                    const yearsExp = stylist.years_experience ? `${stylist.years_experience} years exp` : '';
+                    const specialty = stylist.specialty || 'Stylist';
+                    const rating = stylist.rating || 5.0;
+                    const reviewCount = stylist.review_count || 0;
+
+                    return `
+                        <div class="stylist-card" onclick="selectStylist('${stylist.id}')">
+                            ${stylist.image_url ?
+                                `<img src="${stylist.image_url}" class="stylist-avatar" style="object-fit: cover;" onerror="this.outerHTML='<div class=\\'stylist-avatar\\' style=\\'background: ${color};\\'>${avatar}</div>'">` :
+                                `<div class="stylist-avatar" style="background: ${color};">${avatar}</div>`
+                            }
+                            <div class="stylist-info">
+                                <div class="stylist-name">${stylist.name}</div>
+                                <div class="stylist-specialty">${specialty}${yearsExp ? ' • ' + yearsExp : ''}</div>
+                                <div class="stylist-rating">
+                                    <svg viewBox="0 0 24 24" fill="#F67599" width="14" height="14">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                    </svg>
+                                    ${rating.toFixed(1)} (${reviewCount} reviews)
+                                </div>
+                                <div class="stylist-availability">✓ Available for this service</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error loading stylists for service:', error);
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
+                        <div style="font-weight: 600; color: var(--brand-charcoal); margin-bottom: 10px;">Error Loading Stylists</div>
+                        <div style="color: var(--gray-medium); margin-bottom: 20px;">
+                            Unable to load available stylists. Please try again.
+                        </div>
+                        <button class="btn btn-primary" onclick="loadStylistsForService('${serviceId}')">Try Again</button>
+                    </div>
+                `;
+            }
+        }
+
         // Load Dynamic Booking Type Cards
         async function loadBookingTypes() {
             try {
@@ -7877,6 +7927,9 @@
             // Update banner in stylist selection section
             document.getElementById('selectedHairServiceNameBanner').textContent = service.name;
             document.getElementById('selectedHairServiceDetailsBanner').textContent = `${service.duration} - ${service.price}`;
+
+            // Load stylists who offer this service
+            loadStylistsForService(serviceId);
 
             // Show stylist selection, hide hair service selection
             setTimeout(() => {

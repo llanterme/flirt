@@ -922,6 +922,22 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
             return res.status(404).json({ success: false, message: 'Service not found' });
         }
 
+        // Validate that stylist offers this service (if stylist is specified)
+        if (stylistId) {
+            const staffServiceRow = await db.dbGet(
+                'SELECT id FROM staff_services WHERE staff_id = ? AND service_id = ? AND active = 1',
+                [stylistId, serviceId]
+            );
+
+            if (!staffServiceRow) {
+                const stylist = await StylistRepository.findById(stylistId);
+                return res.status(400).json({
+                    success: false,
+                    message: `${stylist?.name || 'This stylist'} does not offer ${service.name}. Please select a different stylist or service.`
+                });
+            }
+        }
+
         const newBooking = {
             id: uuidv4(),
             userId: req.user.id,
@@ -2686,6 +2702,44 @@ app.get('/api/stylists/:stylistId/services', async (req, res) => {
     } catch (error) {
         console.error('Error fetching stylist services:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch services' });
+    }
+});
+
+// Get stylists who offer a specific service (client-facing)
+app.get('/api/services/:serviceId/stylists', async (req, res) => {
+    try {
+        const { serviceId } = req.params;
+
+        const query = `
+            SELECT
+                st.id,
+                st.name,
+                st.specialty,
+                st.tagline,
+                st.rating,
+                st.review_count,
+                st.clients_count,
+                st.years_experience,
+                st.instagram,
+                st.color,
+                st.image_url,
+                COALESCE(ss.custom_price, s.price) as service_price,
+                COALESCE(ss.custom_duration, s.duration) as service_duration
+            FROM staff_services ss
+            JOIN stylists st ON ss.staff_id = st.id
+            JOIN services s ON ss.service_id = s.id
+            WHERE ss.service_id = ?
+              AND ss.active = 1
+              AND st.available = 1
+            ORDER BY st.name
+        `;
+
+        const stylists = await db.dbAll(query, [serviceId]);
+
+        res.json({ success: true, stylists });
+    } catch (error) {
+        console.error('Error fetching stylists for service:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch stylists' });
     }
 });
 
