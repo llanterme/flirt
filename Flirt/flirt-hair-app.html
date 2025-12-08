@@ -1441,6 +1441,489 @@
             box-shadow: none;
         }
 
+        /* ============================================
+           MODERN BOOKING FLOW - Show Salon Inspired
+           ============================================ */
+
+        /* Booking Container */
+        .booking-flow-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        /* Modern Step Indicator */
+        .booking-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 0 10px;
+            position: relative;
+        }
+
+        .booking-steps::before {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: #E5E7EB;
+            z-index: 0;
+        }
+
+        .booking-steps::after {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: 40px;
+            height: 2px;
+            background: var(--brand-pink);
+            z-index: 1;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .booking-steps[data-step="1"]::after { width: 0%; }
+        .booking-steps[data-step="2"]::after { width: 33%; }
+        .booking-steps[data-step="3"]::after { width: 66%; }
+        .booking-steps[data-step="4"]::after { width: 100%; }
+
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #E5E7EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #9CA3AF;
+            transition: all 0.3s ease;
+        }
+
+        .step-item.active .step-circle {
+            background: var(--brand-pink);
+            border-color: var(--brand-pink);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(246, 117, 153, 0.2);
+        }
+
+        .step-item.completed .step-circle {
+            background: var(--brand-pink);
+            border-color: var(--brand-pink);
+            color: white;
+        }
+
+        .step-item.completed .step-circle::after {
+            content: '✓';
+        }
+
+        .step-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .step-item.active .step-label,
+        .step-item.completed .step-label {
+            color: var(--brand-charcoal);
+        }
+
+        /* Service Selection - Modern Cards */
+        .service-list-modern {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .service-item-modern {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .service-item-modern:hover {
+            border-color: var(--brand-pink);
+            background: #FFF5F8;
+        }
+
+        .service-item-modern.selected {
+            border-color: var(--brand-pink);
+            background: #FFF5F8;
+            box-shadow: 0 0 0 3px rgba(246, 117, 153, 0.15);
+        }
+
+        .service-item-modern .service-details {
+            flex: 1;
+        }
+
+        .service-item-modern .service-name {
+            font-weight: 600;
+            color: var(--brand-charcoal);
+            margin-bottom: 4px;
+        }
+
+        .service-item-modern .service-meta {
+            font-size: 13px;
+            color: #6B7280;
+        }
+
+        .service-item-modern .service-price {
+            font-weight: 700;
+            color: var(--brand-pink);
+            font-size: 16px;
+        }
+
+        .service-item-modern .select-indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #D1D5DB;
+            border-radius: 50%;
+            margin-left: 12px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .service-item-modern.selected .select-indicator {
+            background: var(--brand-pink);
+            border-color: var(--brand-pink);
+        }
+
+        .service-item-modern.selected .select-indicator::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Stylist Selection - Horizontal Cards */
+        .stylist-list-modern {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stylist-item-modern {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stylist-item-modern:hover {
+            border-color: var(--brand-pink);
+            background: #FFF5F8;
+        }
+
+        .stylist-item-modern.selected {
+            border-color: var(--brand-pink);
+            background: #FFF5F8;
+            box-shadow: 0 0 0 3px rgba(246, 117, 153, 0.15);
+        }
+
+        .stylist-item-modern .stylist-photo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: var(--brand-pink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .stylist-item-modern .stylist-info {
+            flex: 1;
+        }
+
+        .stylist-item-modern .stylist-name {
+            font-weight: 600;
+            color: var(--brand-charcoal);
+            margin-bottom: 2px;
+        }
+
+        .stylist-item-modern .stylist-role {
+            font-size: 13px;
+            color: #6B7280;
+        }
+
+        .stylist-item-modern .select-btn {
+            background: transparent;
+            border: 2px solid var(--brand-pink);
+            color: var(--brand-pink);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .stylist-item-modern:hover .select-btn,
+        .stylist-item-modern.selected .select-btn {
+            background: var(--brand-pink);
+            color: white;
+        }
+
+        /* Date & Time Selection */
+        .datetime-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .datetime-section h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--brand-charcoal);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .time-slots-modern {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .time-slot-modern {
+            padding: 10px 8px;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--brand-charcoal);
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .time-slot-modern:hover:not(.unavailable) {
+            border-color: var(--brand-pink);
+            background: #FFF5F8;
+        }
+
+        .time-slot-modern.selected {
+            background: var(--brand-pink);
+            border-color: var(--brand-pink);
+            color: white;
+        }
+
+        .time-slot-modern.unavailable {
+            background: #F3F4F6;
+            color: #9CA3AF;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+
+        /* Booking Summary */
+        .booking-summary {
+            background: #F9FAFB;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .booking-summary h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--brand-charcoal);
+            margin-bottom: 16px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .summary-row .label {
+            color: #6B7280;
+            font-size: 14px;
+        }
+
+        .summary-row .value {
+            font-weight: 600;
+            color: var(--brand-charcoal);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .summary-row .edit-btn {
+            font-size: 12px;
+            color: var(--brand-pink);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .summary-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            margin-top: 8px;
+            border-top: 2px solid var(--brand-pink);
+        }
+
+        .summary-total .label {
+            font-weight: 600;
+            color: var(--brand-charcoal);
+        }
+
+        .summary-total .price {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--brand-pink);
+        }
+
+        /* Back Button */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #6B7280;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--brand-pink);
+        }
+
+        /* Section Title */
+        .section-title-modern {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--brand-charcoal);
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle-modern {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 20px;
+        }
+
+        /* Continue Button */
+        .btn-continue {
+            width: 100%;
+            padding: 16px 24px;
+            background: var(--brand-pink);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 24px;
+        }
+
+        .btn-continue:hover {
+            background: #E5607F;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(246, 117, 153, 0.3);
+        }
+
+        .btn-continue:disabled {
+            background: #D1D5DB;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Step Transition Animation */
+        .booking-step {
+            animation: fadeInUp 0.3s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 480px) {
+            .booking-steps {
+                padding: 0 5px;
+            }
+
+            .booking-steps::before {
+                left: 30px;
+                right: 30px;
+            }
+
+            .step-label {
+                font-size: 10px;
+            }
+
+            .time-slots-modern {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .stylist-item-modern {
+                flex-wrap: wrap;
+            }
+
+            .stylist-item-modern .select-btn {
+                width: 100%;
+                margin-top: 12px;
+            }
+        }
+
         /* Products */
         .product-grid {
             display: grid;
@@ -4832,10 +5315,189 @@
 
         <!-- Booking Content -->
         <div id="booking" class="content-area">
-            <h2 class="section-title" style="margin-bottom: 20px;">Book Your Appointment</h2>
+            <!-- Modern Booking Flow Container -->
+            <div class="booking-flow-container" id="modernBookingFlow">
+                <!-- Step Indicator -->
+                <div class="booking-steps" data-step="1" id="bookingStepsIndicator">
+                    <div class="step-item active" data-step="1">
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Service</div>
+                    </div>
+                    <div class="step-item" data-step="2">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Stylist</div>
+                    </div>
+                    <div class="step-item" data-step="3">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Date & Time</div>
+                    </div>
+                    <div class="step-item" data-step="4">
+                        <div class="step-circle">4</div>
+                        <div class="step-label">Confirm</div>
+                    </div>
+                </div>
 
-            <!-- Booking Type Selection -->
-            <div id="bookingTypeSelection">
+                <!-- Step 1: Service Selection -->
+                <div class="booking-step" id="bookingStep1">
+                    <h2 class="section-title-modern">Select Your Service</h2>
+                    <p class="section-subtitle-modern">Choose the service you'd like to book</p>
+
+                    <div class="service-list-modern" id="modernServicesList">
+                        <div style="text-align: center; padding: 40px; color: #6B7280;">
+                            <div class="loading-spinner" style="margin: 0 auto 15px;"></div>
+                            Loading services...
+                        </div>
+                    </div>
+
+                    <button class="btn-continue" id="step1ContinueBtn" onclick="goToBookingStep(2)" disabled>
+                        Continue to Stylist Selection
+                    </button>
+                </div>
+
+                <!-- Step 2: Stylist Selection -->
+                <div class="booking-step" id="bookingStep2" style="display: none;">
+                    <div class="back-link" onclick="goToBookingStep(1)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Services
+                    </div>
+
+                    <h2 class="section-title-modern">Choose Your Stylist</h2>
+                    <p class="section-subtitle-modern" id="step2ServiceInfo">For Tape Extensions - R2,500</p>
+
+                    <div class="stylist-list-modern" id="modernStylistsList">
+                        <div style="text-align: center; padding: 40px; color: #6B7280;">
+                            <div class="loading-spinner" style="margin: 0 auto 15px;"></div>
+                            Loading stylists...
+                        </div>
+                    </div>
+
+                    <button class="btn-continue" id="step2ContinueBtn" onclick="goToBookingStep(3)" disabled>
+                        Continue to Date & Time
+                    </button>
+                </div>
+
+                <!-- Step 3: Date & Time Selection -->
+                <div class="booking-step" id="bookingStep3" style="display: none;">
+                    <div class="back-link" onclick="goToBookingStep(2)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Stylist
+                    </div>
+
+                    <h2 class="section-title-modern">Select Date & Time</h2>
+                    <p class="section-subtitle-modern" id="step3StylistInfo">With Emma - Stylist & Extension Specialist</p>
+
+                    <div class="datetime-section">
+                        <h4>📅 Select Date</h4>
+                        <div class="calendar-container" style="max-width: 100%;">
+                            <div class="calendar-header">
+                                <button class="calendar-nav" onclick="changeModernCalendarMonth(-1)">◀</button>
+                                <div class="calendar-month" id="modernCalendarMonth">December 2024</div>
+                                <button class="calendar-nav" onclick="changeModernCalendarMonth(1)">▶</button>
+                            </div>
+                            <div class="calendar-grid" id="modernCalendarGrid">
+                                <!-- Calendar days generated by JS -->
+                            </div>
+                        </div>
+
+                        <h4 style="margin-top: 24px;">🕐 Select Time</h4>
+                        <div class="time-slots-modern" id="modernTimeSlots">
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '09:00')">09:00</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '09:30')">09:30</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '10:00')">10:00</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '10:30')">10:30</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '11:00')">11:00</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '11:30')">11:30</div>
+                            <div class="time-slot-modern unavailable">12:00</div>
+                            <div class="time-slot-modern unavailable">12:30</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '13:00')">13:00</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '13:30')">13:30</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '14:00')">14:00</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '14:30')">14:30</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '15:00')">15:00</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '15:30')">15:30</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '16:00')">16:00</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '16:30')">16:30</div>
+                        </div>
+                    </div>
+
+                    <button class="btn-continue" id="step3ContinueBtn" onclick="goToBookingStep(4)" disabled>
+                        Review Booking
+                    </button>
+                </div>
+
+                <!-- Step 4: Review & Confirm -->
+                <div class="booking-step" id="bookingStep4" style="display: none;">
+                    <div class="back-link" onclick="goToBookingStep(3)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Date & Time
+                    </div>
+
+                    <h2 class="section-title-modern">Review Your Booking</h2>
+                    <p class="section-subtitle-modern">Please confirm the details below</p>
+
+                    <div class="booking-summary">
+                        <h4>Booking Details</h4>
+                        <div class="summary-row">
+                            <span class="label">Service</span>
+                            <span class="value">
+                                <span id="summaryService">Tape Extensions</span>
+                                <span class="edit-btn" onclick="goToBookingStep(1)">Edit</span>
+                            </span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="label">Stylist</span>
+                            <span class="value">
+                                <span id="summaryStylist">Emma Williams</span>
+                                <span class="edit-btn" onclick="goToBookingStep(2)">Edit</span>
+                            </span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="label">Date</span>
+                            <span class="value">
+                                <span id="summaryDate">Monday, Dec 16, 2024</span>
+                                <span class="edit-btn" onclick="goToBookingStep(3)">Edit</span>
+                            </span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="label">Time</span>
+                            <span class="value">
+                                <span id="summaryTime">10:00 AM</span>
+                                <span class="edit-btn" onclick="goToBookingStep(3)">Edit</span>
+                            </span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="label">Duration</span>
+                            <span class="value" id="summaryDuration">2-3 hours</span>
+                        </div>
+                        <div class="summary-total">
+                            <span class="label">Total</span>
+                            <span class="price" id="summaryTotal">R2,500</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label class="form-label">Special Requests or Notes (Optional)</label>
+                        <textarea class="form-input" id="modernBookingNotes" rows="3" placeholder="Any specific requirements, preferences, or questions for your stylist..."></textarea>
+                    </div>
+
+                    <button class="btn-continue" onclick="submitModernBooking()">
+                        Confirm Booking
+                    </button>
+
+                    <p style="text-align: center; font-size: 12px; color: #6B7280; margin-top: 16px;">
+                        By confirming, you agree to our cancellation policy. Appointments cancelled less than 24 hours in advance may be subject to a fee.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Legacy Booking Type Selection (hidden by default) -->
+            <div id="bookingTypeSelection" style="display: none;">
                 <div class="booking-type-cards" id="bookingTypeCardsContainer">
                     <!-- Booking type cards will be dynamically loaded here -->
                     <div style="text-align: center; padding: 40px; color: var(--text-muted);">
@@ -4844,7 +5506,7 @@
                 </div>
             </div>
 
-            <!-- Step 1: Select Hair Service -->
+            <!-- Legacy Step 1: Select Hair Service -->
             <div id="hairServiceSelection" style="display: none;">
                 <div class="booking-progress step-1">
                     <div class="progress-step active">
@@ -5288,9 +5950,76 @@
             </div>
         </div>
 
-        <!-- Rewards Content - Hidden for now, to be implemented later -->
-        <div id="rewards" class="content-area" style="display: none !important;">
+        <!-- Rewards Content -->
+        <div id="rewards" class="content-area">
             <h2 id="rewardsTitle" class="section-title" style="margin-bottom: 20px;">Rewards & Referrals</h2>
+
+            <!-- Active Rewards Banner -->
+            <div id="activeRewardsBanner" style="display: none; background: linear-gradient(135deg, #fff5f8 0%, #ffe8ee 100%); padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid var(--brand-pink);">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span style="font-size: 24px;">🎁</span>
+                    <strong style="color: var(--brand-pink);">You have rewards to use!</strong>
+                </div>
+                <div id="activeRewardsList" style="font-size: 14px;"></div>
+            </div>
+
+            <!-- My Progress Section -->
+            <div class="section-header">
+                <h3 class="section-title">My Rewards Progress</h3>
+            </div>
+
+            <div id="rewardsProgressContainer" style="margin-bottom: 25px;">
+                <!-- Nails Track -->
+                <div class="card reward-track-card" id="nailsTrackCard" style="display: none; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 24px;">💅</span>
+                            <strong>Nails Rewards</strong>
+                        </div>
+                        <span id="nailsTrackCount" style="font-size: 14px; color: var(--gray-medium);">0 visits</span>
+                    </div>
+                    <div style="background: var(--gray-light); height: 8px; border-radius: 8px; overflow: hidden;">
+                        <div id="nailsProgressBar" style="background: linear-gradient(90deg, var(--brand-pink-dark), var(--brand-pink)); height: 100%; width: 0%; transition: width 0.5s;"></div>
+                    </div>
+                    <div id="nailsTrackInfo" style="font-size: 13px; color: var(--gray-medium); margin-top: 8px;"></div>
+                </div>
+
+                <!-- Maintenance Track -->
+                <div class="card reward-track-card" id="maintenanceTrackCard" style="display: none; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 24px;">✨</span>
+                            <strong>Extensions Maintenance</strong>
+                        </div>
+                        <span id="maintenanceTrackCount" style="font-size: 14px; color: var(--gray-medium);">0 visits</span>
+                    </div>
+                    <div style="background: var(--gray-light); height: 8px; border-radius: 8px; overflow: hidden;">
+                        <div id="maintenanceProgressBar" style="background: linear-gradient(90deg, #9c27b0, #e040fb); height: 100%; width: 0%; transition: width 0.5s;"></div>
+                    </div>
+                    <div id="maintenanceTrackInfo" style="font-size: 13px; color: var(--gray-medium); margin-top: 8px;"></div>
+                </div>
+
+                <!-- Spend Track -->
+                <div class="card reward-track-card" id="spendTrackCard" style="display: none; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 24px;">💰</span>
+                            <strong>Spend & Save</strong>
+                        </div>
+                        <span id="spendTrackAmount" style="font-size: 14px; color: var(--gray-medium);">R0</span>
+                    </div>
+                    <div style="background: var(--gray-light); height: 8px; border-radius: 8px; overflow: hidden;">
+                        <div id="spendProgressBar" style="background: linear-gradient(90deg, #ff9800, #ffc107); height: 100%; width: 0%; transition: width 0.5s;"></div>
+                    </div>
+                    <div id="spendTrackInfo" style="font-size: 13px; color: var(--gray-medium); margin-top: 8px;"></div>
+                </div>
+
+                <!-- No Progress Message -->
+                <div id="noRewardsProgress" class="card" style="text-align: center; padding: 30px; color: var(--gray-medium);">
+                    <span style="font-size: 48px; display: block; margin-bottom: 15px;">🎁</span>
+                    <p>Book your first appointment to start earning rewards!</p>
+                </div>
+            </div>
 
             <div class="referral-code-box">
                 <div style="font-size: 13px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;">Your Referral Code</div>
@@ -7396,6 +8125,7 @@
             if (tabName === 'rewards') {
                 loadUserData();
                 loadLoyaltyConfig();
+                loadRewardsProgress();
             } else if (tabName === 'tracker') {
                 loadHairTracker();
             } else if (tabName === 'team') {
@@ -7450,6 +8180,456 @@
         let beautyServices = {};
         let hairServicesRaw = []; // Raw service data from API
         let bookingDataLoaded = false;
+
+        // ============================================
+        // MODERN BOOKING FLOW STATE
+        // ============================================
+        let modernBookingState = {
+            currentStep: 1,
+            service: null,
+            serviceId: null,
+            stylist: null,
+            stylistId: null,
+            date: null,
+            dateStr: null,
+            time: null,
+            calendarMonthOffset: 0
+        };
+
+        // Initialize modern booking on page load
+        function initModernBooking() {
+            loadModernServices();
+            renderModernCalendar();
+        }
+
+        // Load services for modern booking flow
+        async function loadModernServices() {
+            const container = document.getElementById('modernServicesList');
+            if (!container) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/services/hair`);
+                const data = await response.json();
+
+                if (!data.success || !data.services || data.services.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #6B7280;">
+                            No services available at the moment.
+                        </div>
+                    `;
+                    return;
+                }
+
+                hairServicesRaw = data.services;
+
+                container.innerHTML = data.services
+                    .filter(s => s.active !== 0)
+                    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                    .map(service => {
+                        const duration = formatDuration(service.duration);
+                        const price = formatServicePrice(service.price);
+
+                        return `
+                            <div class="service-item-modern" onclick="selectModernService('${service.id}', this)" data-service-id="${service.id}">
+                                <div class="service-details">
+                                    <div class="service-name">${service.name}</div>
+                                    <div class="service-meta">${duration}${duration && price ? ' • ' : ''}${price}</div>
+                                </div>
+                                <div class="service-price">${price}</div>
+                                <div class="select-indicator"></div>
+                            </div>
+                        `;
+                    }).join('');
+
+            } catch (error) {
+                console.error('Error loading services:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #6B7280;">
+                        Error loading services. Please try again.
+                    </div>
+                `;
+            }
+        }
+
+        // Select a service in modern booking flow
+        function selectModernService(serviceId, element) {
+            // Remove selection from all services
+            document.querySelectorAll('.service-item-modern').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Add selection to clicked service
+            element.classList.add('selected');
+
+            // Find service details
+            const service = hairServicesRaw.find(s => s.id === serviceId);
+            if (service) {
+                modernBookingState.service = service;
+                modernBookingState.serviceId = serviceId;
+
+                // Enable continue button
+                document.getElementById('step1ContinueBtn').disabled = false;
+            }
+        }
+
+        // Load stylists for selected service
+        async function loadModernStylists() {
+            const container = document.getElementById('modernStylistsList');
+            if (!container || !modernBookingState.serviceId) return;
+
+            // Update service info display
+            const service = modernBookingState.service;
+            if (service) {
+                const price = formatServicePrice(service.price);
+                document.getElementById('step2ServiceInfo').textContent = `For ${service.name} - ${price}`;
+            }
+
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #6B7280;">
+                    <div class="loading-spinner" style="margin: 0 auto 15px;"></div>
+                    Loading stylists...
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`${API_BASE}/services/${modernBookingState.serviceId}/stylists`);
+                const data = await response.json();
+
+                if (!data.success || !data.stylists || data.stylists.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #6B7280;">
+                            <div style="font-size: 48px; margin-bottom: 15px;">😔</div>
+                            <div style="font-weight: 600; margin-bottom: 10px;">No Stylists Available</div>
+                            <div style="margin-bottom: 20px;">No stylists are currently assigned to this service.</div>
+                            <button class="btn btn-outline" onclick="goToBookingStep(1)">← Choose Different Service</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.stylists.map(stylist => {
+                    const initial = stylist.name.charAt(0).toUpperCase();
+                    const role = stylist.specialty || 'Stylist';
+                    const experience = stylist.years_experience ? `${stylist.years_experience} years experience` : '';
+
+                    return `
+                        <div class="stylist-item-modern" onclick="selectModernStylist('${stylist.id}', this)" data-stylist-id="${stylist.id}">
+                            ${stylist.image_url
+                                ? `<img src="${stylist.image_url}" class="stylist-photo" alt="${stylist.name}" onerror="this.outerHTML='<div class=\\'stylist-photo\\'>${initial}</div>'">`
+                                : `<div class="stylist-photo" style="background: ${stylist.color || '#F67599'};">${initial}</div>`
+                            }
+                            <div class="stylist-info">
+                                <div class="stylist-name">${stylist.name}</div>
+                                <div class="stylist-role">${role}${experience ? ' • ' + experience : ''}</div>
+                            </div>
+                            <button class="select-btn">Select</button>
+                        </div>
+                    `;
+                }).join('');
+
+                // Cache stylists for later use
+                data.stylists.forEach(s => {
+                    stylists[s.id] = s;
+                });
+
+            } catch (error) {
+                console.error('Error loading stylists:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #6B7280;">
+                        Error loading stylists. Please try again.
+                    </div>
+                `;
+            }
+        }
+
+        // Select a stylist in modern booking flow
+        function selectModernStylist(stylistId, element) {
+            // Remove selection from all stylists
+            document.querySelectorAll('.stylist-item-modern').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Add selection to clicked stylist
+            element.classList.add('selected');
+
+            // Store stylist details
+            const stylist = stylists[stylistId];
+            if (stylist) {
+                modernBookingState.stylist = stylist;
+                modernBookingState.stylistId = stylistId;
+
+                // Enable continue button
+                document.getElementById('step2ContinueBtn').disabled = false;
+            }
+        }
+
+        // Navigate between booking steps
+        function goToBookingStep(step) {
+            // Hide all steps
+            for (let i = 1; i <= 4; i++) {
+                const stepEl = document.getElementById(`bookingStep${i}`);
+                if (stepEl) stepEl.style.display = 'none';
+            }
+
+            // Show target step
+            const targetStep = document.getElementById(`bookingStep${step}`);
+            if (targetStep) {
+                targetStep.style.display = 'block';
+                // Re-trigger animation
+                targetStep.classList.remove('booking-step');
+                void targetStep.offsetWidth; // Force reflow
+                targetStep.classList.add('booking-step');
+            }
+
+            // Update step indicator
+            updateStepIndicator(step);
+            modernBookingState.currentStep = step;
+
+            // Load step-specific data
+            if (step === 2) {
+                loadModernStylists();
+            } else if (step === 3) {
+                // Update stylist info display
+                if (modernBookingState.stylist) {
+                    const role = modernBookingState.stylist.specialty || 'Stylist';
+                    document.getElementById('step3StylistInfo').textContent =
+                        `With ${modernBookingState.stylist.name} - ${role}`;
+                }
+                renderModernCalendar();
+            } else if (step === 4) {
+                updateBookingSummary();
+            }
+        }
+
+        // Update step indicator UI
+        function updateStepIndicator(currentStep) {
+            const indicator = document.getElementById('bookingStepsIndicator');
+            if (!indicator) return;
+
+            indicator.setAttribute('data-step', currentStep);
+
+            indicator.querySelectorAll('.step-item').forEach((item, index) => {
+                const stepNum = index + 1;
+                item.classList.remove('active', 'completed');
+
+                if (stepNum < currentStep) {
+                    item.classList.add('completed');
+                } else if (stepNum === currentStep) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Calendar for modern booking
+        let modernCalendarMonthOffset = 0;
+
+        function changeModernCalendarMonth(delta) {
+            modernCalendarMonthOffset += delta;
+            renderModernCalendar();
+        }
+
+        function renderModernCalendar() {
+            const grid = document.getElementById('modernCalendarGrid');
+            const monthLabel = document.getElementById('modernCalendarMonth');
+            if (!grid || !monthLabel) return;
+
+            const today = new Date();
+            const targetMonth = new Date(today.getFullYear(), today.getMonth() + modernCalendarMonthOffset, 1);
+            const year = targetMonth.getFullYear();
+            const month = targetMonth.getMonth();
+
+            monthLabel.textContent = targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDay = new Date(year, month, 1).getDay();
+
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            let html = dayNames.map(d => `<div class="calendar-day-name">${d}</div>`).join('');
+
+            // Empty cells before first day
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div class="calendar-day disabled"></div>';
+            }
+
+            // Days of month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const isSunday = date.getDay() === 0;
+                const isSelected = dateStr === modernBookingState.dateStr;
+
+                let classes = 'calendar-day';
+                if (isPast || isSunday) classes += ' disabled';
+                if (isSelected) classes += ' selected';
+
+                if (isPast || isSunday) {
+                    html += `<div class="${classes}">${day}</div>`;
+                } else {
+                    html += `<div class="${classes}" onclick="selectModernDate('${dateStr}', this)">${day}</div>`;
+                }
+            }
+
+            grid.innerHTML = html;
+        }
+
+        // Select a date in modern booking
+        function selectModernDate(dateStr, element) {
+            // Remove selection from all dates
+            document.querySelectorAll('#modernCalendarGrid .calendar-day').forEach(day => {
+                day.classList.remove('selected');
+            });
+
+            // Add selection to clicked date
+            element.classList.add('selected');
+
+            modernBookingState.dateStr = dateStr;
+            modernBookingState.date = new Date(dateStr + 'T00:00:00');
+
+            // Check if time is also selected to enable continue
+            checkStep3Complete();
+        }
+
+        // Select time slot in modern booking
+        function selectModernTimeSlot(element, time) {
+            if (element.classList.contains('unavailable')) return;
+
+            // Remove selection from all time slots
+            document.querySelectorAll('.time-slot-modern').forEach(slot => {
+                slot.classList.remove('selected');
+            });
+
+            // Add selection to clicked slot
+            element.classList.add('selected');
+
+            modernBookingState.time = time;
+
+            // Check if date is also selected to enable continue
+            checkStep3Complete();
+        }
+
+        // Check if step 3 is complete
+        function checkStep3Complete() {
+            const btn = document.getElementById('step3ContinueBtn');
+            if (btn) {
+                btn.disabled = !(modernBookingState.dateStr && modernBookingState.time);
+            }
+        }
+
+        // Update booking summary
+        function updateBookingSummary() {
+            const service = modernBookingState.service;
+            const stylist = modernBookingState.stylist;
+            const date = modernBookingState.date;
+            const time = modernBookingState.time;
+
+            if (service) {
+                document.getElementById('summaryService').textContent = service.name;
+                document.getElementById('summaryDuration').textContent = formatDuration(service.duration);
+                document.getElementById('summaryTotal').textContent = formatServicePrice(service.price);
+            }
+
+            if (stylist) {
+                document.getElementById('summaryStylist').textContent = stylist.name;
+            }
+
+            if (date) {
+                document.getElementById('summaryDate').textContent = date.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            }
+
+            if (time) {
+                // Convert 24h to 12h format
+                const [hours, mins] = time.split(':');
+                const hour = parseInt(hours);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const hour12 = hour % 12 || 12;
+                document.getElementById('summaryTime').textContent = `${hour12}:${mins} ${ampm}`;
+            }
+        }
+
+        // Submit booking from modern flow
+        async function submitModernBooking() {
+            if (!currentUser) {
+                showAuthModal();
+                return;
+            }
+
+            const { service, serviceId, stylist, stylistId, dateStr, time } = modernBookingState;
+
+            if (!serviceId || !stylistId || !dateStr || !time) {
+                showToast({ type: 'error', title: 'Incomplete Booking', message: 'Please complete all booking details' });
+                return;
+            }
+
+            const notes = document.getElementById('modernBookingNotes')?.value || '';
+
+            try {
+                // Construct full stylist ID if needed
+                const fullStylistId = stylistId.startsWith('stylist_') ? stylistId : `stylist_${stylistId}`;
+
+                await apiCall('/bookings', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        type: 'hair',
+                        stylistId: fullStylistId,
+                        serviceId: serviceId,
+                        date: dateStr,
+                        time: time,
+                        notes: notes
+                    })
+                });
+
+                showToast({ type: 'success', title: 'Booking Confirmed!', message: 'Your appointment has been booked successfully!' });
+
+                // Show confirmation modal
+                showBookingConfirmation({
+                    type: 'Hair Appointment',
+                    service: service.name,
+                    duration: formatDuration(service.duration),
+                    price: formatServicePrice(service.price),
+                    date: modernBookingState.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
+                    time: time,
+                    stylist: stylist.name,
+                    points: 0
+                });
+
+                // Reset modern booking state
+                modernBookingState = {
+                    currentStep: 1,
+                    service: null,
+                    serviceId: null,
+                    stylist: null,
+                    stylistId: null,
+                    date: null,
+                    dateStr: null,
+                    time: null,
+                    calendarMonthOffset: 0
+                };
+
+                // Reset UI
+                goToBookingStep(1);
+                document.querySelectorAll('.service-item-modern').forEach(item => item.classList.remove('selected'));
+                document.getElementById('step1ContinueBtn').disabled = true;
+
+                // Reload user data and go to home
+                loadUserData();
+                switchTab('home');
+
+            } catch (error) {
+                showToast({ type: 'error', title: 'Booking Failed', message: error.message || 'Error creating booking' });
+            }
+        }
+
+        // Initialize modern booking when booking tab is shown
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load modern booking services
+            setTimeout(initModernBooking, 500);
+        });
 
         // Default images for services (fallback when no image_url)
         const defaultServiceImages = {
@@ -8861,6 +10041,116 @@ async function showNotifications() {
                 document.body.removeChild(textArea);
                 showToast({ type: 'success', title: 'Copied!', message: 'Referral code copied to clipboard' });
             });
+        }
+
+        // ========== REWARDS PROGRAMME ==========
+        let rewardsProgress = null;
+
+        // Load user's rewards programme progress
+        async function loadRewardsProgress() {
+            if (!currentUser) {
+                document.getElementById('noRewardsProgress').style.display = 'block';
+                return;
+            }
+
+            try {
+                const result = await apiCall('/rewards/my-progress');
+                if (result.success && result.enabled) {
+                    rewardsProgress = result;
+                    renderRewardsProgress(result);
+                } else {
+                    // Rewards programme disabled
+                    document.getElementById('noRewardsProgress').style.display = 'block';
+                    document.getElementById('noRewardsProgress').innerHTML = `
+                        <span style="font-size: 48px; display: block; margin-bottom: 15px;">🎁</span>
+                        <p>Rewards programme coming soon!</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading rewards progress:', error);
+            }
+        }
+
+        function renderRewardsProgress(data) {
+            const { tracks, activeRewards } = data;
+            let hasAnyProgress = false;
+
+            // Render Nails Track
+            if (tracks?.nails?.enabled) {
+                const nailsCard = document.getElementById('nailsTrackCard');
+                nailsCard.style.display = 'block';
+                hasAnyProgress = true;
+
+                const count = tracks.nails.currentCount || 0;
+                document.getElementById('nailsTrackCount').textContent = `${count} visit${count !== 1 ? 's' : ''}`;
+
+                // Calculate progress - towards milestone 1 first, then milestone 2
+                const m1 = tracks.nails.milestone1;
+                const m2 = tracks.nails.milestone2;
+                let progressPercent = 0;
+                let infoText = '';
+
+                if (count >= m2.target) {
+                    progressPercent = 100;
+                    infoText = 'All milestones reached!';
+                } else if (count >= m1.target) {
+                    progressPercent = 50 + ((count - m1.target) / (m2.target - m1.target)) * 50;
+                    infoText = `${m2.target - count} more visits for ${m2.discount}% off`;
+                } else {
+                    progressPercent = (count / m1.target) * 50;
+                    infoText = `${m1.target - count} more visits for ${m1.discount}% off`;
+                }
+
+                document.getElementById('nailsProgressBar').style.width = `${progressPercent}%`;
+                document.getElementById('nailsTrackInfo').textContent = infoText;
+            }
+
+            // Render Maintenance Track
+            if (tracks?.maintenance?.enabled) {
+                const maintCard = document.getElementById('maintenanceTrackCard');
+                maintCard.style.display = 'block';
+                hasAnyProgress = true;
+
+                const m = tracks.maintenance.milestone;
+                const progress = m.progress || 0;
+                const target = m.target;
+
+                document.getElementById('maintenanceTrackCount').textContent = `${progress} of ${target}`;
+                document.getElementById('maintenanceProgressBar').style.width = `${(progress / target) * 100}%`;
+                document.getElementById('maintenanceTrackInfo').textContent = `${m.nextRewardAt} more visit${m.nextRewardAt !== 1 ? 's' : ''} for ${m.discount}% off`;
+            }
+
+            // Render Spend Track
+            if (tracks?.spend?.enabled) {
+                const spendCard = document.getElementById('spendTrackCard');
+                spendCard.style.display = 'block';
+                hasAnyProgress = true;
+
+                document.getElementById('spendTrackAmount').textContent = `R${(tracks.spend.currentAmount || 0).toLocaleString()}`;
+                document.getElementById('spendProgressBar').style.width = `${tracks.spend.progressPercent || 0}%`;
+                document.getElementById('spendTrackInfo').textContent = `R${tracks.spend.amountToNextReward?.toLocaleString() || 0} more to earn ${tracks.spend.discount}% off`;
+            }
+
+            // Show/hide no progress message
+            document.getElementById('noRewardsProgress').style.display = hasAnyProgress ? 'none' : 'block';
+
+            // Render active rewards banner
+            if (activeRewards && activeRewards.length > 0) {
+                const banner = document.getElementById('activeRewardsBanner');
+                banner.style.display = 'block';
+
+                const listHtml = activeRewards.map(r => {
+                    const expiryDate = r.expires_at ? new Date(r.expires_at).toLocaleDateString() : 'No expiry';
+                    return `<div style="margin-bottom: 8px; padding: 8px; background: white; border-radius: 8px;">
+                        <strong>${r.description}</strong>
+                        <div style="font-size: 12px; color: var(--gray-medium);">Expires: ${expiryDate}</div>
+                    </div>`;
+                }).join('');
+
+                document.getElementById('activeRewardsList').innerHTML = listHtml;
+            } else {
+                document.getElementById('activeRewardsBanner').style.display = 'none';
+            }
         }
 
         // ========== HAIR TRACKER ==========
