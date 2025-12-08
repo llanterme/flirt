@@ -88,6 +88,37 @@ CREATE TABLE IF NOT EXISTS services (
 CREATE INDEX IF NOT EXISTS idx_services_type ON services(service_type);
 
 -- ============================================
+-- SERVICE TYPES (Admin-configurable service types)
+-- ============================================
+CREATE TABLE IF NOT EXISTS service_types (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    display_order INTEGER DEFAULT 0,
+    active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_service_types_active ON service_types(active);
+
+-- ============================================
+-- SERVICE CATEGORIES (Admin-configurable categories per type)
+-- ============================================
+CREATE TABLE IF NOT EXISTS service_categories (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    service_type_id TEXT NOT NULL REFERENCES service_types(id) ON DELETE CASCADE,
+    description TEXT,
+    display_order INTEGER DEFAULT 0,
+    active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(name, service_type_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_service_categories_type ON service_categories(service_type_id);
+CREATE INDEX IF NOT EXISTS idx_service_categories_active ON service_categories(active);
+
+-- ============================================
 -- BOOKINGS TABLE (Redesigned for two-step booking flow)
 -- ============================================
 CREATE TABLE IF NOT EXISTS bookings (

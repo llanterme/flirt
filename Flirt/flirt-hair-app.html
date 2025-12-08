@@ -1706,6 +1706,138 @@
             font-weight: bold;
         }
 
+        /* Service Category Groups - Collapsible Accordion */
+        .service-category-group {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .service-category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            cursor: pointer;
+            background: #FAFAFA;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .service-category-header:hover {
+            background: #FFF5F8;
+        }
+
+        .service-category-header.expanded {
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .service-category-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .service-category-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--brand-pink) 0%, var(--brand-pink-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+        }
+
+        .service-category-name {
+            font-weight: 600;
+            color: var(--brand-charcoal);
+            font-size: 14px;
+        }
+
+        .service-category-count {
+            font-size: 12px;
+            color: #6B7280;
+            margin-top: 2px;
+        }
+
+        .service-category-toggle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #F3F4F6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .service-category-header.expanded .service-category-toggle {
+            transform: rotate(180deg);
+            background: var(--brand-pink);
+            color: white;
+        }
+
+        .service-category-toggle svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .service-category-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .service-category-content.expanded {
+            max-height: 2000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .service-category-items {
+            padding: 8px;
+        }
+
+        /* Compact service items inside categories */
+        .service-category-items .service-item-modern {
+            border: none;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 2px;
+            background: white;
+        }
+
+        .service-category-items .service-item-modern:hover {
+            background: #FFF5F8;
+        }
+
+        .service-category-items .service-item-modern.selected {
+            background: #FFF0F4;
+            box-shadow: none;
+            border-left: 3px solid var(--brand-pink);
+        }
+
+        .service-category-items .service-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .service-category-items .service-meta {
+            font-size: 12px;
+        }
+
+        .service-category-items .service-price {
+            font-size: 14px;
+        }
+
+        .service-category-items .select-indicator {
+            width: 18px;
+            height: 18px;
+        }
+
         /* Stylist Selection - Horizontal Cards */
         .stylist-list-modern {
             display: flex;
@@ -8364,6 +8496,143 @@
             document.getElementById('step1ContinueBtn').disabled = false;
         }
 
+        // Category icons for beauty services
+        const categoryIcons = {
+            'nails': '💅',
+            'Nails': '💅',
+            'Nails - Acrylic': '💅',
+            'Nails - Polygel': '💅',
+            'Nail Add-Ons': '✨',
+            'Pedicure': '🦶',
+            'Brows & Lashes': '👁️',
+            'Lash Extensions': '✨',
+            'Waxing': '🌸',
+            'Dermaplaning': '🌿',
+            'Facial Add-Ons': '🧴',
+            'Male Grooming': '🧔',
+            'Micro-Needling': '💎',
+            'default': '💫'
+        };
+
+        // Get category order for sorting
+        const categoryOrder = [
+            'Nails',
+            'Nails - Acrylic',
+            'Nails - Polygel',
+            'Nail Add-Ons',
+            'Pedicure',
+            'Brows & Lashes',
+            'Lash Extensions',
+            'Waxing',
+            'Dermaplaning',
+            'Facial Add-Ons',
+            'Micro-Needling',
+            'Male Grooming',
+            'nails'
+        ];
+
+        // Render beauty services grouped by category
+        function renderCategorizedServices(services) {
+            // Group services by category
+            const grouped = {};
+            services.forEach(service => {
+                const cat = service.category || 'Other';
+                if (!grouped[cat]) {
+                    grouped[cat] = [];
+                }
+                grouped[cat].push(service);
+            });
+
+            // Sort categories by predefined order
+            const sortedCategories = Object.keys(grouped).sort((a, b) => {
+                const orderA = categoryOrder.indexOf(a);
+                const orderB = categoryOrder.indexOf(b);
+                if (orderA === -1 && orderB === -1) return a.localeCompare(b);
+                if (orderA === -1) return 1;
+                if (orderB === -1) return -1;
+                return orderA - orderB;
+            });
+
+            // Build HTML for all categories
+            return sortedCategories.map((category, index) => {
+                const catServices = grouped[category].sort((a, b) =>
+                    (a.display_order || 0) - (b.display_order || 0) || a.name.localeCompare(b.name)
+                );
+                const icon = categoryIcons[category] || categoryIcons['default'];
+                const priceRange = getPriceRange(catServices);
+
+                return `
+                    <div class="service-category-group" data-category="${category}">
+                        <div class="service-category-header" onclick="toggleServiceCategory(this)">
+                            <div class="service-category-info">
+                                <div class="service-category-icon">${icon}</div>
+                                <div>
+                                    <div class="service-category-name">${category}</div>
+                                    <div class="service-category-count">${catServices.length} service${catServices.length > 1 ? 's' : ''} • ${priceRange}</div>
+                                </div>
+                            </div>
+                            <div class="service-category-toggle">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="service-category-content">
+                            <div class="service-category-items">
+                                ${catServices.map(service => {
+                                    const duration = formatDuration(service.duration);
+                                    const price = formatServicePrice(service.price);
+                                    return `
+                                        <div class="service-item-modern" onclick="selectModernService('${service.id}', this)" data-service-id="${service.id}">
+                                            <div class="service-details">
+                                                <div class="service-name">${service.name}</div>
+                                                <div class="service-meta">${duration}${duration && price ? ' • ' : ''}${price}</div>
+                                            </div>
+                                            <div class="service-price">${price}</div>
+                                            <div class="select-indicator"></div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Get price range text for category
+        function getPriceRange(services) {
+            const prices = services.map(s => s.price).filter(p => p > 0);
+            if (prices.length === 0) return '';
+            const min = Math.min(...prices);
+            const max = Math.max(...prices);
+            if (min === max) return `R${min}`;
+            return `R${min} - R${max}`;
+        }
+
+        // Toggle service category accordion
+        function toggleServiceCategory(header) {
+            const content = header.nextElementSibling;
+            const isExpanded = header.classList.contains('expanded');
+
+            // Close all other categories
+            document.querySelectorAll('.service-category-header.expanded').forEach(h => {
+                if (h !== header) {
+                    h.classList.remove('expanded');
+                    h.nextElementSibling.classList.remove('expanded');
+                }
+            });
+
+            // Toggle current category
+            if (isExpanded) {
+                header.classList.remove('expanded');
+                content.classList.remove('expanded');
+            } else {
+                header.classList.add('expanded');
+                content.classList.add('expanded');
+            }
+        }
+
         // Load services based on type
         async function loadModernServices() {
             const container = document.getElementById('modernServicesList');
@@ -8415,25 +8684,31 @@
                 }
 
                 const servicesArray = isHair ? hairServicesRaw : beautyServicesRaw;
+                const activeServices = servicesArray.filter(s => s.active !== 0);
 
-                container.innerHTML = servicesArray
-                    .filter(s => s.active !== 0)
-                    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
-                    .map(service => {
-                        const duration = formatDuration(service.duration);
-                        const price = formatServicePrice(service.price);
+                // For beauty services, group by category
+                if (!isHair && activeServices.length > 0) {
+                    container.innerHTML = renderCategorizedServices(activeServices);
+                } else {
+                    // Hair services - simple list
+                    container.innerHTML = activeServices
+                        .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                        .map(service => {
+                            const duration = formatDuration(service.duration);
+                            const price = formatServicePrice(service.price);
 
-                        return `
-                            <div class="service-item-modern" onclick="selectModernService('${service.id}', this)" data-service-id="${service.id}">
-                                <div class="service-details">
-                                    <div class="service-name">${service.name}</div>
-                                    <div class="service-meta">${duration}${duration && price ? ' • ' : ''}${price}</div>
+                            return `
+                                <div class="service-item-modern" onclick="selectModernService('${service.id}', this)" data-service-id="${service.id}">
+                                    <div class="service-details">
+                                        <div class="service-name">${service.name}</div>
+                                        <div class="service-meta">${duration}${duration && price ? ' • ' : ''}${price}</div>
+                                    </div>
+                                    <div class="service-price">${price}</div>
+                                    <div class="select-indicator"></div>
                                 </div>
-                                <div class="service-price">${price}</div>
-                                <div class="select-indicator"></div>
-                            </div>
-                        `;
-                    }).join('');
+                            `;
+                        }).join('');
+                }
 
             } catch (error) {
                 console.error('Error loading services:', error);
