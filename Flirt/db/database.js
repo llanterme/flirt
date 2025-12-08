@@ -800,7 +800,10 @@ const BookingRepository = {
 
         if (fields.length === 0) return this.findById(id);
 
-        fields.push("updated_at = datetime('now')");
+        // Only add auto-update for updated_at if not explicitly provided
+        if (updates.updatedAt === undefined) {
+            fields.push("updated_at = datetime('now')");
+        }
         values.push(id);
 
         await dbRun(`UPDATE bookings SET ${fields.join(', ')} WHERE id = ?`, values);
