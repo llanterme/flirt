@@ -134,7 +134,7 @@ CREATE INDEX IF NOT EXISTS idx_bookings_requested_time_window ON bookings(reques
 CREATE INDEX IF NOT EXISTS idx_bookings_assigned_start_time ON bookings(assigned_start_time);
 CREATE INDEX IF NOT EXISTS idx_bookings_stylist ON bookings(stylist_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
-CREATE INDEX IF NOT EXISTS idx_bookings_payment_status ON bookings(payment_status);
+-- NOTE: idx_bookings_payment_status is created via ensureIndex in database.js after migration
 
 -- Legacy indexes (can be removed after migration)
 CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(date);

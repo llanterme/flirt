@@ -1515,6 +1515,151 @@ app.post('/api/payments/webhook/yoco', async (req, res) => {
 });
 
 // ============================================
+// PAYMENT LANDING PAGE & RESULT ROUTES
+// ============================================
+
+// Payment landing page - serves auto-submitting form for PayFast
+// This is the URL sent in emails since PayFast requires form POST
+app.get('/pay/:paymentId', async (req, res) => {
+    try {
+        const payment = await PaymentRepository.findById(req.params.paymentId);
+
+        if (!payment) {
+            return res.status(404).send(generatePaymentErrorPage('Payment Not Found', 'The payment link you clicked is invalid or has expired.'));
+        }
+
+        if (payment.status === 'completed' || payment.status === 'paid') {
+            return res.redirect('/payment/success?ref=' + req.params.paymentId);
+        }
+
+        if (payment.status !== 'pending') {
+            return res.status(400).send(generatePaymentErrorPage('Payment Unavailable', 'This payment is no longer available. Please contact us for assistance.'));
+        }
+
+        // Check if payment metadata has the form data
+        const metadata = typeof payment.metadata === 'string' ? JSON.parse(payment.metadata) : payment.metadata;
+        const providerResponse = metadata?.providerResponse;
+
+        if (!providerResponse || !providerResponse.formData) {
+            return res.status(400).send(generatePaymentErrorPage('Payment Error', 'Payment data is missing. Please request a new payment link.'));
+        }
+
+        // Serve auto-submitting PayFast form
+        const html = PaymentService.generatePayFastRedirectHtml({
+            formAction: providerResponse.formAction,
+            formData: providerResponse.formData
+        });
+
+        res.send(html);
+    } catch (error) {
+        console.error('Payment landing page error:', error);
+        res.status(500).send(generatePaymentErrorPage('Error', 'An unexpected error occurred. Please try again or contact support.'));
+    }
+});
+
+// Payment success page
+app.get('/payment/success', async (req, res) => {
+    const ref = req.query.ref;
+    res.send(generatePaymentResultPage('success', 'Payment Successful!', 'Thank you for your payment. Your booking has been confirmed.', ref));
+});
+
+// Payment cancelled page
+app.get('/payment/cancel', async (req, res) => {
+    const ref = req.query.ref;
+    res.send(generatePaymentResultPage('cancel', 'Payment Cancelled', 'Your payment was cancelled. You can try again from your appointments page.', ref));
+});
+
+// Payment failed page
+app.get('/payment/failed', async (req, res) => {
+    const ref = req.query.ref;
+    res.send(generatePaymentResultPage('failed', 'Payment Failed', 'Your payment could not be processed. Please try again or contact us for assistance.', ref));
+});
+
+// Helper function to generate payment result pages
+function generatePaymentResultPage(type, title, message, ref) {
+    const colors = {
+        success: { bg: '#d4edda', border: '#c3e6cb', text: '#155724', icon: '✓' },
+        cancel: { bg: '#fff3cd', border: '#ffeeba', text: '#856404', icon: '⚠' },
+        failed: { bg: '#f8d7da', border: '#f5c6cb', text: '#721c24', icon: '✗' }
+    };
+    const c = colors[type] || colors.failed;
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title} - Flirt Hair & Beauty</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fff5f7 0%, #ffe4e9 100%);
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(246,117,153,0.2);
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        .icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: ${c.bg};
+            border: 3px solid ${c.border};
+            color: ${c.text};
+            font-size: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        h1 { color: #414042; font-size: 24px; margin-bottom: 10px; }
+        p { color: #6d6e70; line-height: 1.6; margin-bottom: 20px; }
+        .ref { font-size: 12px; color: #999; margin-top: 15px; }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #F67599 0%, #e05a7f 100%);
+            color: white;
+            padding: 14px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(246,117,153,0.4); }
+        .logo { margin-bottom: 20px; }
+        .logo span { color: #F67599; font-size: 28px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo"><span>Flirt</span></div>
+        <div class="icon">${c.icon}</div>
+        <h1>${title}</h1>
+        <p>${message}</p>
+        <a href="/" class="btn">Go to App</a>
+        ${ref ? `<p class="ref">Reference: ${ref}</p>` : ''}
+    </div>
+</body>
+</html>`;
+}
+
+// Helper function to generate error pages
+function generatePaymentErrorPage(title, message) {
+    return generatePaymentResultPage('failed', title, message, null);
+}
+
+// ============================================
 // PROMO ROUTES
 // ============================================
 
@@ -3463,16 +3608,21 @@ app.post('/api/bookings/:id/payment/initiate', authenticateToken, async (req, re
             return res.status(400).json({ success: false, message: 'PayFast is not configured' });
         }
 
-        // Create payment for booking
+        // Create payment for booking with proper item name
         const paymentAmount = booking.service_price;
+        const serviceName = booking.service_name || 'Hair Service';
         const paymentInit = await PaymentService.initializePayment(
             'payfast',
             {
                 id: `booking_${booking.id}`,
                 total: paymentAmount,
-                items: [{ name: booking.service_name, quantity: 1, price: paymentAmount }]
+                items: [{ name: serviceName, quantity: 1, price: paymentAmount }]
             },
-            { id: customer.id, name: customer.name || customer.email, email: customer.email }
+            { id: customer.id, name: customer.name || customer.email, email: customer.email },
+            {
+                itemName: `${serviceName} - Flirt Hair & Beauty`,
+                itemDescription: `Booking at Flirt Hair & Beauty`
+            }
         );
 
         // Create payment transaction record
@@ -3493,11 +3643,15 @@ app.post('/api/bookings/:id/payment/initiate', authenticateToken, async (req, re
             paymentAmount: paymentAmount
         });
 
+        // Generate the payUrl (landing page that auto-submits the form)
+        const config = PaymentService.getEffectiveConfig();
+        const payUrl = `${config.apiBaseUrl}/pay/${paymentInit.paymentId}`;
+
         console.log(`💳 Payment initiated for booking ${booking.id}: R${paymentAmount}`);
 
         res.json({
             success: true,
-            payment: paymentInit,
+            payment: { ...paymentInit, payUrl },
             message: 'Payment link generated'
         });
     } catch (error) {
@@ -3611,16 +3765,21 @@ app.post('/api/admin/bookings/:id/payment/send-link', authenticateAdmin, async (
             return res.status(400).json({ success: false, message: 'PayFast is not configured' });
         }
 
-        // Generate payment link
+        // Generate payment link with proper item name
         const paymentAmount = booking.service_price;
+        const serviceName = booking.service_name || 'Hair Service';
         const paymentInit = await PaymentService.initializePayment(
             'payfast',
             {
                 id: `booking_${booking.id}`,
                 total: paymentAmount,
-                items: [{ name: booking.service_name, quantity: 1, price: paymentAmount }]
+                items: [{ name: serviceName, quantity: 1, price: paymentAmount }]
             },
-            { id: customer.id, name: customer.name || customer.email, email: customer.email }
+            { id: customer.id, name: customer.name || customer.email, email: customer.email },
+            {
+                itemName: `${serviceName} - Flirt Hair & Beauty`,
+                itemDescription: `Booking at Flirt Hair & Beauty`
+            }
         );
 
         // Create payment transaction record
@@ -3641,11 +3800,15 @@ app.post('/api/admin/bookings/:id/payment/send-link', authenticateAdmin, async (
             paymentAmount: paymentAmount
         });
 
-        // Send payment link via email
+        // Generate the payUrl (landing page that auto-submits the form)
+        const config = PaymentService.getEffectiveConfig();
+        const payUrl = `${config.apiBaseUrl}/pay/${paymentInit.paymentId}`;
+
+        // Send payment link via email using the payUrl
         if (sendMethod === 'email' || sendMethod === 'both') {
             if (customer.email) {
                 try {
-                    await emailService.sendPaymentLink(booking, customer, paymentInit.redirectUrl || paymentInit.formAction);
+                    await emailService.sendPaymentLink(booking, customer, payUrl);
                     console.log(`📧 Payment link sent to ${customer.email}`);
                 } catch (emailError) {
                     console.error('Failed to send payment email:', emailError.message);
@@ -3657,7 +3820,7 @@ app.post('/api/admin/bookings/:id/payment/send-link', authenticateAdmin, async (
 
         res.json({
             success: true,
-            payment: paymentInit,
+            payment: { ...paymentInit, payUrl },
             customer: { name: customer.name, email: customer.email, phone: customer.phone },
             message: `Payment link ${sendMethod === 'email' ? 'sent' : 'generated'} successfully`
         });

@@ -73,11 +73,16 @@ function setRuntimeConfig(config) {
  * Generate PayFast payment form data
  * @param {Object} order - Order details
  * @param {Object} customer - Customer details
+ * @param {Object} options - Optional settings (itemName, itemDescription)
  * @returns {Object} Form data for PayFast redirect
  */
-function generatePayFastPayment(order, customer) {
+function generatePayFastPayment(order, customer, options = {}) {
     const config = getEffectiveConfig();
     const paymentId = `FLT-${uuidv4().substring(0, 8).toUpperCase()}`;
+
+    // Determine item name and description
+    const itemName = options.itemName || `Flirt Order #${order.id.substring(0, 8)}`;
+    const itemDescription = options.itemDescription || `${order.items.length} item(s) from Flirt Hair & Beauty`;
 
     const data = {
         // Merchant details
@@ -95,8 +100,8 @@ function generatePayFastPayment(order, customer) {
         // Transaction details
         m_payment_id: paymentId,
         amount: order.total.toFixed(2),
-        item_name: `Flirt Order #${order.id.substring(0, 8)}`,
-        item_description: `${order.items.length} item(s) from Flirt Hair & Beauty`,
+        item_name: itemName,
+        item_description: itemDescription,
 
         // Custom fields
         custom_str1: order.id,
@@ -324,14 +329,15 @@ function processYocoWebhook(event) {
  * @param {string} provider - 'payfast' or 'yoco'
  * @param {Object} order - Order details
  * @param {Object} customer - Customer details
+ * @param {Object} options - Optional settings (itemName, itemDescription)
  */
-async function initializePayment(provider, order, customer) {
+async function initializePayment(provider, order, customer, options = {}) {
     switch (provider) {
         case 'payfast':
             return {
                 provider: 'payfast',
                 type: 'redirect',
-                ...generatePayFastPayment(order, customer)
+                ...generatePayFastPayment(order, customer, options)
             };
 
         case 'yoco':

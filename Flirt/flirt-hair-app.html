@@ -9869,28 +9869,11 @@ async function showNotifications() {
                 });
 
                 if (result.success && result.payment) {
-                    // Redirect to PayFast payment page
-                    if (result.payment.redirectUrl) {
+                    // Redirect to payment landing page (which auto-submits to PayFast)
+                    if (result.payment.payUrl) {
+                        window.location.href = result.payment.payUrl;
+                    } else if (result.payment.redirectUrl) {
                         window.location.href = result.payment.redirectUrl;
-                    } else if (result.payment.formAction) {
-                        // Create and submit form
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = result.payment.formAction;
-
-                        // Add form fields
-                        if (result.payment.fields) {
-                            for (const [key, value] of Object.entries(result.payment.fields)) {
-                                const input = document.createElement('input');
-                                input.type = 'hidden';
-                                input.name = key;
-                                input.value = value;
-                                form.appendChild(input);
-                            }
-                        }
-
-                        document.body.appendChild(form);
-                        form.submit();
                     } else {
                         showToast({ type: 'error', title: 'Payment Error', message: 'Unable to initiate payment. Please contact the salon.' });
                     }
