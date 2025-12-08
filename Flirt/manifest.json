@@ -1,7 +1,7 @@
 {
   "name": "Flirt Hair & Beauty",
   "short_name": "Flirt",
-  "description": "Book appointments, shop products, and earn rewards at Flirt Hair & Beauty Bar",
+  "description": "Book appointments and shop premium hair extensions at Flirt Hair & Beauty Bar",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
