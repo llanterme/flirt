@@ -1635,14 +1635,13 @@
                 <div class="nav-section" style="margin-top: 20px;">
                     <div class="nav-section-title">Settings</div>
                 </div>
-                <!-- Loyalty Settings hidden - to be implemented later
-                <a class="nav-item" onclick="showSection('loyalty-settings', event)">
+                <a class="nav-item" onclick="showSection('rewards-settings', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        <circle cx="12" cy="8" r="7"></circle>
+                        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
                     </svg>
-                    Loyalty Settings
+                    Rewards Programme
                 </a>
-                -->
                 <a class="nav-item" onclick="showSection('hair-tracker-settings', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
@@ -2342,24 +2341,6 @@
                                 <div class="stat-icon pink">👩‍🎨</div>
                             </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <div>
-                                    <div class="stat-value">4.9</div>
-                                    <div class="stat-label">Average Rating</div>
-                                </div>
-                                <div class="stat-icon gold">⭐</div>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-card-header">
-                                <div>
-                                    <div class="stat-value">580</div>
-                                    <div class="stat-label">Total Reviews</div>
-                                </div>
-                                <div class="stat-icon green">💬</div>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="data-card">
@@ -2368,8 +2349,6 @@
                                 <tr>
                                     <th>Staff Member</th>
                                     <th>Role</th>
-                                    <th>Specialties</th>
-                                    <th>Rating</th>
                                     <th>Bookings</th>
                                     <th>Status</th>
                                     <th>Actions</th>
@@ -3431,6 +3410,226 @@
 
                     <!-- Success Message -->
                     <div id="loyaltySuccess" style="margin-top: 15px; padding: 15px; background: rgba(76,175,80,0.1); border-radius: 8px; border-left: 4px solid var(--success); display: none;">
+                        <strong style="color: var(--success);">Settings saved successfully!</strong>
+                    </div>
+                </section>
+
+                <!-- Rewards Programme Settings Section -->
+                <section id="rewards-settings" class="page-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Rewards Programme Settings</h2>
+                        <p style="color: var(--gray-medium); margin-top: 5px;">Configure the salon rewards programme - milestones, discounts, and packages</p>
+                    </div>
+
+                    <!-- Programme Status -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Programme Status</h3>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Programme Enabled</label>
+                                    <label class="switch" style="margin-top: 10px;">
+                                        <input type="checkbox" id="rewardsProgrammeEnabled" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                    <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Enable or disable the entire rewards programme</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Programme Name</label>
+                                    <input type="text" id="rewardsProgrammeName" class="form-input" placeholder="Salon Rewards">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nails Rewards -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Nails Rewards Track</h3>
+                            <label class="switch">
+                                <input type="checkbox" id="rewardsNailsEnabled" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">1st Milestone - Visit Count</label>
+                                    <input type="number" id="rewardsNailsMilestone1Count" class="form-input" min="1" value="6">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">1st Milestone - Discount %</label>
+                                    <input type="number" id="rewardsNailsMilestone1Discount" class="form-input" min="1" max="100" value="10">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">2nd Milestone - Visit Count</label>
+                                    <input type="number" id="rewardsNailsMilestone2Count" class="form-input" min="1" value="12">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">2nd Milestone - Discount %</label>
+                                    <input type="number" id="rewardsNailsMilestone2Discount" class="form-input" min="1" max="100" value="50">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Reward Expiry (days)</label>
+                                    <input type="number" id="rewardsNailsExpiryDays" class="form-input" min="1" value="90">
+                                    <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Days until reward expires after being issued</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Maintenance Rewards -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Hair Extensions Maintenance Track</h3>
+                            <label class="switch">
+                                <input type="checkbox" id="rewardsMaintenanceEnabled" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Milestone - Every X Visits</label>
+                                    <input type="number" id="rewardsMaintenanceMilestoneCount" class="form-input" min="1" value="6">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Discount % at Milestone</label>
+                                    <input type="number" id="rewardsMaintenanceDiscount" class="form-input" min="1" max="100" value="10">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Reward Expiry (days)</label>
+                                    <input type="number" id="rewardsMaintenanceExpiryDays" class="form-input" min="1" value="90">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spend & Save -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Spend & Save Track</h3>
+                            <label class="switch">
+                                <input type="checkbox" id="rewardsSpendEnabled" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Spend Threshold (R)</label>
+                                    <input type="number" id="rewardsSpendThreshold" class="form-input" min="100" value="10000">
+                                    <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Cumulative spend amount to earn reward</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Discount % at Threshold</label>
+                                    <input type="number" id="rewardsSpendDiscount" class="form-input" min="1" max="100" value="20">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Reward Expiry (days)</label>
+                                    <input type="number" id="rewardsSpendExpiryDays" class="form-input" min="1" value="90">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Referral Rewards -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Referral Rewards</h3>
+                            <label class="switch">
+                                <input type="checkbox" id="rewardsReferralEnabled" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Minimum Booking Value (R)</label>
+                                    <input type="number" id="rewardsReferralMinValue" class="form-input" min="0" value="1000">
+                                    <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Referee's first booking must be at least this amount</p>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Reward Description</label>
+                                    <input type="text" id="rewardsReferralDescription" class="form-input" value="Complimentary wash & blow-dry">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Service Packages -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Service Packages</h3>
+                            <label class="switch">
+                                <input type="checkbox" id="rewardsPackagesEnabled" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div style="padding: 25px;">
+                            <p style="color: var(--gray-medium); margin-bottom: 15px;">Configure pre-paid session packages (e.g., 4 wash & blow-dry sessions at 20% off)</p>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Default Package Sessions</label>
+                                    <input type="number" id="rewardsPackageSessions" class="form-input" min="1" value="4">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Default Package Discount %</label>
+                                    <input type="number" id="rewardsPackageDiscount" class="form-input" min="1" max="100" value="20">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Summary -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Rewards Analytics</h3>
+                            <button class="btn btn-outline" onclick="loadRewardsAnalytics()">Refresh</button>
+                        </div>
+                        <div id="rewardsAnalyticsContent" style="padding: 25px;">
+                            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px;">
+                                <div class="stat-card">
+                                    <div class="stat-value" id="rewardsStatTotal">-</div>
+                                    <div class="stat-label">Total Rewards Issued</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="rewardsStatActive">-</div>
+                                    <div class="stat-label">Active Rewards</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="rewardsStatRedeemed">-</div>
+                                    <div class="stat-label">Redeemed</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-value" id="rewardsStatUsers">-</div>
+                                    <div class="stat-label">Users with Rewards</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save Button -->
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="saveRewardsSettings()">Save Rewards Settings</button>
+                    </div>
+
+                    <!-- Messages -->
+                    <div id="rewardsErrors" style="margin-top: 15px; padding: 15px; background: rgba(244,67,54,0.1); border-radius: 8px; border-left: 4px solid var(--danger); display: none;">
+                        <strong style="color: var(--danger);">Error:</strong>
+                        <span id="rewardsErrorMessage"></span>
+                    </div>
+                    <div id="rewardsSuccess" style="margin-top: 15px; padding: 15px; background: rgba(76,175,80,0.1); border-radius: 8px; border-left: 4px solid var(--success); display: none;">
                         <strong style="color: var(--success);">Settings saved successfully!</strong>
                     </div>
                 </section>
@@ -4802,6 +5001,7 @@
                 case 'notifications': loadNotifications(); break;
                 case 'gallery': loadGallery(); break;
                 case 'loyalty-settings': loadLoyaltySettings(); break;
+                case 'rewards-settings': loadRewardsSettings(); break;
                 case 'hair-tracker-settings': loadHairTrackerSettings(); break;
                 case 'payment-settings': loadPaymentSettings(); break;
                 case 'chat': loadAdminConversations(); break;
@@ -7099,8 +7299,7 @@
                                 <div><strong>${s.name}</strong><br><small>${s.specialty}</small></div>
                             </div></td>
                             <td>${s.specialty}</td>
-                            <td>⭐ ${s.rating}</td>
-                            <td>${s.clientsCount} clients</td>
+                            <td>${s.clientsCount || 'undefined'} clients</td>
                             <td><span class="status-badge status-${s.available ? 'confirmed' : 'cancelled'}">${s.available ? 'Active' : 'Inactive'}</span></td>
                             <td>
                                 <button class="btn btn-sm" onclick="editStaff('${s.id}')">Edit</button>
@@ -7110,7 +7309,7 @@
                         </tr>
                     `).join('');
                 } else if (container) {
-                    container.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color: var(--text-subtle);">No staff members yet</td></tr>';
+                    container.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color: var(--text-subtle);">No staff members yet</td></tr>';
                 }
             } catch (error) {
                 console.log('Staff load error:', error);
@@ -8538,6 +8737,145 @@
             } catch (error) {
                 showAdminToast('Failed to reset settings: ' + (error.message || ''), 'error');
             }
+        }
+
+        // ============================================
+        // REWARDS PROGRAMME SETTINGS
+        // ============================================
+        let rewardsConfig = null;
+
+        async function loadRewardsSettings() {
+            try {
+                const result = await apiCall('/admin/rewards/config');
+                if (result.success && result.config) {
+                    rewardsConfig = result.config;
+                    populateRewardsForm(result.config);
+                }
+                // Also load analytics
+                loadRewardsAnalytics();
+            } catch (error) {
+                console.error('Error loading rewards settings:', error);
+                showRewardsError('Failed to load rewards settings: ' + error.message);
+            }
+        }
+
+        function populateRewardsForm(config) {
+            // Programme status
+            document.getElementById('rewardsProgrammeEnabled').checked = config.programme_enabled == 1;
+            document.getElementById('rewardsProgrammeName').value = config.programme_name || 'Salon Rewards';
+
+            // Nails track
+            document.getElementById('rewardsNailsEnabled').checked = config.nails_enabled == 1;
+            document.getElementById('rewardsNailsMilestone1Count').value = config.nails_milestone_1_count || 6;
+            document.getElementById('rewardsNailsMilestone1Discount').value = config.nails_milestone_1_discount || 10;
+            document.getElementById('rewardsNailsMilestone2Count').value = config.nails_milestone_2_count || 12;
+            document.getElementById('rewardsNailsMilestone2Discount').value = config.nails_milestone_2_discount || 50;
+            document.getElementById('rewardsNailsExpiryDays').value = config.nails_reward_expiry_days || 90;
+
+            // Maintenance track
+            document.getElementById('rewardsMaintenanceEnabled').checked = config.maintenance_enabled == 1;
+            document.getElementById('rewardsMaintenanceMilestoneCount').value = config.maintenance_milestone_count || 6;
+            document.getElementById('rewardsMaintenanceDiscount').value = config.maintenance_discount || 10;
+            document.getElementById('rewardsMaintenanceExpiryDays').value = config.maintenance_reward_expiry_days || 90;
+
+            // Spend track
+            document.getElementById('rewardsSpendEnabled').checked = config.spend_enabled == 1;
+            document.getElementById('rewardsSpendThreshold').value = config.spend_threshold || 10000;
+            document.getElementById('rewardsSpendDiscount').value = config.spend_discount || 20;
+            document.getElementById('rewardsSpendExpiryDays').value = config.spend_reward_expiry_days || 90;
+
+            // Referral
+            document.getElementById('rewardsReferralEnabled').checked = config.referral_enabled == 1;
+            document.getElementById('rewardsReferralMinValue').value = config.referral_min_booking_value || 1000;
+            document.getElementById('rewardsReferralDescription').value = config.referral_reward_description || 'Complimentary wash & blow-dry';
+
+            // Packages
+            document.getElementById('rewardsPackagesEnabled').checked = config.packages_enabled == 1;
+            document.getElementById('rewardsPackageSessions').value = config.wash_blowdry_package_sessions || 4;
+            document.getElementById('rewardsPackageDiscount').value = config.wash_blowdry_package_discount || 20;
+
+            // Hide messages
+            document.getElementById('rewardsErrors').style.display = 'none';
+            document.getElementById('rewardsSuccess').style.display = 'none';
+        }
+
+        async function saveRewardsSettings() {
+            try {
+                const config = {
+                    programme_enabled: document.getElementById('rewardsProgrammeEnabled').checked ? 1 : 0,
+                    programme_name: document.getElementById('rewardsProgrammeName').value,
+
+                    nails_enabled: document.getElementById('rewardsNailsEnabled').checked ? 1 : 0,
+                    nails_milestone_1_count: parseInt(document.getElementById('rewardsNailsMilestone1Count').value) || 6,
+                    nails_milestone_1_discount: parseFloat(document.getElementById('rewardsNailsMilestone1Discount').value) || 10,
+                    nails_milestone_2_count: parseInt(document.getElementById('rewardsNailsMilestone2Count').value) || 12,
+                    nails_milestone_2_discount: parseFloat(document.getElementById('rewardsNailsMilestone2Discount').value) || 50,
+                    nails_reward_expiry_days: parseInt(document.getElementById('rewardsNailsExpiryDays').value) || 90,
+
+                    maintenance_enabled: document.getElementById('rewardsMaintenanceEnabled').checked ? 1 : 0,
+                    maintenance_milestone_count: parseInt(document.getElementById('rewardsMaintenanceMilestoneCount').value) || 6,
+                    maintenance_discount: parseFloat(document.getElementById('rewardsMaintenanceDiscount').value) || 10,
+                    maintenance_reward_expiry_days: parseInt(document.getElementById('rewardsMaintenanceExpiryDays').value) || 90,
+
+                    spend_enabled: document.getElementById('rewardsSpendEnabled').checked ? 1 : 0,
+                    spend_threshold: parseFloat(document.getElementById('rewardsSpendThreshold').value) || 10000,
+                    spend_discount: parseFloat(document.getElementById('rewardsSpendDiscount').value) || 20,
+                    spend_reward_expiry_days: parseInt(document.getElementById('rewardsSpendExpiryDays').value) || 90,
+
+                    referral_enabled: document.getElementById('rewardsReferralEnabled').checked ? 1 : 0,
+                    referral_min_booking_value: parseFloat(document.getElementById('rewardsReferralMinValue').value) || 1000,
+                    referral_reward_description: document.getElementById('rewardsReferralDescription').value,
+
+                    packages_enabled: document.getElementById('rewardsPackagesEnabled').checked ? 1 : 0,
+                    wash_blowdry_package_sessions: parseInt(document.getElementById('rewardsPackageSessions').value) || 4,
+                    wash_blowdry_package_discount: parseFloat(document.getElementById('rewardsPackageDiscount').value) || 20
+                };
+
+                const result = await apiCall('/admin/rewards/config', {
+                    method: 'PUT',
+                    body: JSON.stringify(config)
+                });
+
+                if (result.success) {
+                    rewardsConfig = result.config;
+                    showRewardsSuccess();
+                    showAdminToast('Rewards settings saved successfully', 'success');
+                } else {
+                    showRewardsError(result.message || 'Failed to save settings');
+                }
+            } catch (error) {
+                console.error('Error saving rewards settings:', error);
+                showRewardsError('Failed to save settings: ' + error.message);
+            }
+        }
+
+        async function loadRewardsAnalytics() {
+            try {
+                const result = await apiCall('/admin/rewards/analytics');
+                if (result.success) {
+                    document.getElementById('rewardsStatTotal').textContent = result.stats?.total_rewards || 0;
+                    document.getElementById('rewardsStatActive').textContent = result.stats?.active_rewards || 0;
+                    document.getElementById('rewardsStatRedeemed').textContent = result.stats?.redeemed_rewards || 0;
+                    document.getElementById('rewardsStatUsers').textContent = result.stats?.users_with_rewards || 0;
+                }
+            } catch (error) {
+                console.error('Error loading rewards analytics:', error);
+            }
+        }
+
+        function showRewardsError(message) {
+            const errorDiv = document.getElementById('rewardsErrors');
+            document.getElementById('rewardsErrorMessage').textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('rewardsSuccess').style.display = 'none';
+        }
+
+        function showRewardsSuccess() {
+            document.getElementById('rewardsSuccess').style.display = 'block';
+            document.getElementById('rewardsErrors').style.display = 'none';
+            setTimeout(() => {
+                document.getElementById('rewardsSuccess').style.display = 'none';
+            }, 3000);
         }
 
         // ============================================

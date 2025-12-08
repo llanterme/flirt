@@ -992,12 +992,6 @@
             font-weight: 600;
         }
 
-        .stylist-rating {
-            font-size: 14px;
-            color: var(--gray-dark);
-            margin: 8px 0;
-        }
-
         .stylist-availability {
             font-size: 13px;
             color: var(--success);
@@ -7747,8 +7741,6 @@
                     const avatar = stylist.name.charAt(0).toUpperCase();
                     const yearsExp = stylist.years_experience ? `${stylist.years_experience} years exp` : '';
                     const specialty = stylist.specialty || 'Stylist';
-                    const rating = stylist.rating || 5.0;
-                    const reviewCount = stylist.review_count || 0;
 
                     return `
                         <div class="stylist-card" onclick="selectStylist('${stylist.id}')">
@@ -7759,12 +7751,6 @@
                             <div class="stylist-info">
                                 <div class="stylist-name">${stylist.name}</div>
                                 <div class="stylist-specialty">${specialty}${yearsExp ? ' • ' + yearsExp : ''}</div>
-                                <div class="stylist-rating">
-                                    <svg viewBox="0 0 24 24" fill="#F67599" width="14" height="14">
-                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                                    </svg>
-                                    ${rating.toFixed(1)} (${reviewCount} reviews)
-                                </div>
                                 <div class="stylist-availability">✓ Available for this service</div>
                             </div>
                         </div>
@@ -11854,17 +11840,9 @@ async function showNotifications() {
                     const specialty = stylist.specialty || 'Hair Stylist';
                     const tagline = stylist.tagline || 'Passionate about creating beautiful hair!';
                     const yearsExp = stylist.yearsExperience || stylist.years_experience || 0;
-                    const rating = stylist.rating || 0;
-                    const reviewCount = stylist.reviewCount || stylist.review_count || 0;
                     const instagram = stylist.instagram || '';
                     const color = stylist.color || '#F67599';
                     const initial = stylist.name.charAt(0).toUpperCase();
-
-                    // Parse specialty tags
-                    const specialtyTags = specialty.split(',').map(s => s.trim()).filter(s => s);
-                    const specialtyTagsHtml = specialtyTags.map(tag =>
-                        `<span class="team-specialty-tag">${tag}</span>`
-                    ).join('');
 
                     return `
                         <div class="team-card">
@@ -11877,23 +11855,14 @@ async function showNotifications() {
                                 <div class="team-name">${stylist.name}</div>
                                 <div class="team-role">${specialty}</div>
                                 <div class="team-tagline">${tagline}</div>
-                                <div class="team-specialties">
-                                    ${specialtyTagsHtml || '<span class="team-specialty-tag">Hair Extensions</span>'}
-                                </div>
+                                ${yearsExp > 0 ? `
                                 <div class="team-stats">
                                     <div class="team-stat">
                                         <div class="team-stat-value">${yearsExp}</div>
                                         <div class="team-stat-label">Years Exp</div>
                                     </div>
-                                    <div class="team-stat">
-                                        <div class="team-stat-value">${rating.toFixed(1)}</div>
-                                        <div class="team-stat-label">Rating</div>
-                                    </div>
-                                    <div class="team-stat">
-                                        <div class="team-stat-value">${reviewCount}</div>
-                                        <div class="team-stat-label">Reviews</div>
-                                    </div>
                                 </div>
+                                ` : ''}
                                 <div class="team-socials">
                                     ${instagram ? `<button class="team-social-btn" onclick="window.open('https://instagram.com/${instagram.replace('@', '')}', '_blank')">📷</button>` : ''}
                                     <button class="team-social-btn" onclick="bookWithStylist('${stylist.id}')">📅</button>

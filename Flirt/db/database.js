@@ -127,6 +127,15 @@ async function initializeDatabase() {
     // Booking completion tracking
     await ensureColumn('bookings', 'completed_at', 'TEXT');
 
+    // Rewards programme columns for bookings
+    await ensureColumn('bookings', 'reward_id', 'TEXT');
+    await ensureColumn('bookings', 'discount_amount', 'REAL DEFAULT 0');
+    await ensureColumn('bookings', 'package_session_id', 'TEXT');
+
+    // Referral rewards tracking
+    await ensureColumn('referrals', 'referee_first_booking_value', 'REAL');
+    await ensureColumn('referrals', 'reward_issued', 'INTEGER DEFAULT 0');
+
     // Migration: Recreate payment_transactions table to add 'eft' to payment_provider CHECK constraint
     await migratePaymentTransactionsTable();
 }
@@ -510,13 +519,13 @@ const StylistRepository = {
 
     async create(stylist) {
         const sql = `
-            INSERT INTO stylists (id, name, specialty, tagline, rating, review_count, clients_count, years_experience, instagram, color, available, image_url)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO stylists (id, name, specialty, tagline, clients_count, years_experience, instagram, color, available, image_url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         await dbRun(sql, [
             stylist.id, stylist.name, stylist.specialty, stylist.tagline || '',
-            stylist.rating || 5.0, stylist.reviewCount || 0, stylist.clientsCount || 0,
-            stylist.yearsExperience || 0, stylist.instagram || '', stylist.color || '#FF6B9D',
+            stylist.clientsCount || 0, stylist.yearsExperience || 0,
+            stylist.instagram || '', stylist.color || '#FF6B9D',
             stylist.available !== false ? 1 : 0, stylist.imageUrl || ''
         ]);
         return this.findById(stylist.id);
@@ -528,10 +537,10 @@ const StylistRepository = {
 
         const fieldMap = {
             name: 'name', specialty: 'specialty', tagline: 'tagline',
-            rating: 'rating', reviewCount: 'review_count', clientsCount: 'clients_count',
-            yearsExperience: 'years_experience', instagram: 'instagram',
-            color: 'color', available: 'available', imageUrl: 'image_url',
-            basicMonthlyPay: 'basic_monthly_pay', commissionRate: 'commission_rate'
+            clientsCount: 'clients_count', yearsExperience: 'years_experience',
+            instagram: 'instagram', color: 'color', available: 'available',
+            imageUrl: 'image_url', basicMonthlyPay: 'basic_monthly_pay',
+            commissionRate: 'commission_rate'
         };
 
         for (const [key, dbField] of Object.entries(fieldMap)) {
@@ -2262,6 +2271,423 @@ const PasswordResetRepository = {
     }
 };
 
+// ============================================
+// REWARDS PROGRAMME REPOSITORIES
+// ============================================
+
+const RewardsConfigRepository = {
+    async get() {
+        let config = await dbGet('SELECT * FROM rewards_config WHERE id = 1');
+        if (!config) {
+            await dbRun('INSERT OR IGNORE INTO rewards_config (id) VALUES (1)');
+            config = await dbGet('SELECT * FROM rewards_config WHERE id = 1');
+        }
+        return config;
+    },
+
+    async update(updates) {
+        const fields = [];
+        const values = [];
+        const allowedFields = [
+            'programme_enabled', 'programme_name', 'terms_conditions', 'terms_version',
+            'nails_enabled', 'nails_milestone_1_count', 'nails_milestone_1_discount',
+            'nails_milestone_2_count', 'nails_milestone_2_discount', 'nails_reward_expiry_days',
+            'maintenance_enabled', 'maintenance_milestone_count', 'maintenance_discount',
+            'maintenance_reward_expiry_days', 'spend_enabled', 'spend_threshold',
+            'spend_discount', 'spend_reward_expiry_days', 'referral_enabled',
+            'referral_min_booking_value', 'referral_reward_service_id',
+            'referral_reward_description', 'packages_enabled',
+            'wash_blowdry_package_sessions', 'wash_blowdry_package_discount', 'wash_blowdry_service_id'
+        ];
+
+        // Convert camelCase to snake_case and build update query
+        for (const [key, value] of Object.entries(updates)) {
+            const snakeKey = key.replace(/[A-Z]/g, m => '_' + m.toLowerCase());
+            if (allowedFields.includes(snakeKey)) {
+                fields.push(`${snakeKey} = ?`);
+                values.push(value);
+            }
+        }
+
+        if (fields.length === 0) return this.get();
+
+        fields.push("updated_at = datetime('now')");
+        values.push(1);
+
+        await dbRun(`UPDATE rewards_config SET ${fields.join(', ')} WHERE id = ?`, values);
+        return this.get();
+    }
+};
+
+const RewardTrackRepository = {
+    async getOrCreate(userId, trackType) {
+        let track = await dbGet(
+            'SELECT * FROM reward_tracks WHERE user_id = ? AND track_type = ?',
+            [userId, trackType]
+        );
+
+        if (!track) {
+            const id = require('uuid').v4();
+            await dbRun(
+                `INSERT INTO reward_tracks (id, user_id, track_type) VALUES (?, ?, ?)`,
+                [id, userId, trackType]
+            );
+            track = await dbGet('SELECT * FROM reward_tracks WHERE id = ?', [id]);
+        }
+
+        return track;
+    },
+
+    async increment(userId, trackType, countIncrement = 1, amountIncrement = 0) {
+        const track = await this.getOrCreate(userId, trackType);
+
+        await dbRun(`
+            UPDATE reward_tracks
+            SET current_count = current_count + ?,
+                current_amount = current_amount + ?,
+                lifetime_count = lifetime_count + ?,
+                lifetime_amount = lifetime_amount + ?,
+                updated_at = datetime('now')
+            WHERE id = ?
+        `, [countIncrement, amountIncrement, countIncrement, amountIncrement, track.id]);
+
+        return this.getOrCreate(userId, trackType);
+    },
+
+    async updateMilestone(userId, trackType, milestoneCount) {
+        await dbRun(`
+            UPDATE reward_tracks
+            SET last_milestone_count = ?,
+                updated_at = datetime('now')
+            WHERE user_id = ? AND track_type = ?
+        `, [milestoneCount, userId, trackType]);
+    },
+
+    async getAllForUser(userId) {
+        return dbAll('SELECT * FROM reward_tracks WHERE user_id = ?', [userId]);
+    },
+
+    async resetCycleCount(userId, trackType) {
+        await dbRun(`
+            UPDATE reward_tracks
+            SET current_count = 0,
+                last_milestone_count = 0,
+                updated_at = datetime('now')
+            WHERE user_id = ? AND track_type = ?
+        `, [userId, trackType]);
+    }
+};
+
+const UserRewardRepository = {
+    async create(reward) {
+        const id = reward.id || require('uuid').v4();
+        await dbRun(`
+            INSERT INTO user_rewards
+            (id, user_id, reward_type, reward_value, applicable_to, description,
+             source_track, source_milestone, status, expires_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)
+        `, [
+            id, reward.userId, reward.rewardType, reward.rewardValue,
+            reward.applicableTo || null, reward.description,
+            reward.sourceTrack, reward.sourceMilestone || null,
+            reward.expiresAt || null
+        ]);
+        return this.findById(id);
+    },
+
+    async findById(id) {
+        return dbGet('SELECT * FROM user_rewards WHERE id = ?', [id]);
+    },
+
+    async findActiveForUser(userId) {
+        return dbAll(`
+            SELECT * FROM user_rewards
+            WHERE user_id = ?
+              AND status = 'active'
+              AND (expires_at IS NULL OR datetime(expires_at) > datetime('now'))
+            ORDER BY created_at DESC
+        `, [userId]);
+    },
+
+    async findApplicableForBooking(userId, serviceCategory, serviceId) {
+        return dbAll(`
+            SELECT * FROM user_rewards
+            WHERE user_id = ?
+              AND status = 'active'
+              AND (expires_at IS NULL OR datetime(expires_at) > datetime('now'))
+              AND (applicable_to IS NULL
+                   OR applicable_to = ?
+                   OR applicable_to = ?)
+            ORDER BY reward_value DESC
+        `, [userId, serviceCategory || '', serviceId || '']);
+    },
+
+    async redeem(rewardId, bookingId) {
+        await dbRun(`
+            UPDATE user_rewards
+            SET status = 'redeemed',
+                redeemed_at = datetime('now'),
+                redeemed_booking_id = ?
+            WHERE id = ?
+        `, [bookingId, rewardId]);
+        return this.findById(rewardId);
+    },
+
+    async void(rewardId, voidedBy, reason) {
+        await dbRun(`
+            UPDATE user_rewards
+            SET status = 'voided',
+                voided_by = ?,
+                voided_reason = ?
+            WHERE id = ?
+        `, [voidedBy, reason, rewardId]);
+    },
+
+    async updateStatus(rewardId, status) {
+        await dbRun(`
+            UPDATE user_rewards
+            SET status = ?
+            WHERE id = ?
+        `, [status, rewardId]);
+        return this.findById(rewardId);
+    },
+
+    async expireOld() {
+        return dbRun(`
+            UPDATE user_rewards
+            SET status = 'expired'
+            WHERE status = 'active'
+              AND expires_at IS NOT NULL
+              AND datetime(expires_at) < datetime('now')
+        `);
+    },
+
+    async getHistory(userId, limit = 50) {
+        return dbAll(`
+            SELECT ur.*, b.service_name as redeemed_service
+            FROM user_rewards ur
+            LEFT JOIN bookings b ON ur.redeemed_booking_id = b.id
+            WHERE ur.user_id = ?
+            ORDER BY ur.created_at DESC
+            LIMIT ?
+        `, [userId, limit]);
+    },
+
+    async getAllAdmin(filters = {}) {
+        let query = `
+            SELECT ur.*, u.name as user_name, u.email as user_email
+            FROM user_rewards ur
+            JOIN users u ON ur.user_id = u.id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (filters.status) {
+            query += ' AND ur.status = ?';
+            params.push(filters.status);
+        }
+        if (filters.sourceTrack) {
+            query += ' AND ur.source_track = ?';
+            params.push(filters.sourceTrack);
+        }
+        if (filters.userId) {
+            query += ' AND ur.user_id = ?';
+            params.push(filters.userId);
+        }
+
+        query += ' ORDER BY ur.created_at DESC LIMIT 500';
+
+        return dbAll(query, params);
+    },
+
+    async getStats() {
+        const stats = await dbGet(`
+            SELECT
+                COUNT(*) as total_issued,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_count,
+                SUM(CASE WHEN status = 'redeemed' THEN 1 ELSE 0 END) as redeemed_count,
+                SUM(CASE WHEN status = 'expired' THEN 1 ELSE 0 END) as expired_count,
+                SUM(CASE WHEN status = 'voided' THEN 1 ELSE 0 END) as voided_count
+            FROM user_rewards
+        `);
+        return stats;
+    }
+};
+
+const ServicePackageRepository = {
+    async create(pkg) {
+        const id = pkg.id || require('uuid').v4();
+        await dbRun(`
+            INSERT INTO service_packages
+            (id, name, description, service_type, applicable_service_id, total_sessions,
+             base_price, discount_percent, final_price, validity_type, validity_days, active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            id, pkg.name, pkg.description || null, pkg.serviceType,
+            pkg.applicableServiceId || null, pkg.totalSessions,
+            pkg.basePrice, pkg.discountPercent, pkg.finalPrice,
+            pkg.validityType || 'calendar_month', pkg.validityDays || null,
+            pkg.active !== false ? 1 : 0
+        ]);
+        return this.findById(id);
+    },
+
+    async findById(id) {
+        return dbGet('SELECT * FROM service_packages WHERE id = ?', [id]);
+    },
+
+    async findAll() {
+        return dbAll('SELECT * FROM service_packages ORDER BY name');
+    },
+
+    async findActive() {
+        return dbAll('SELECT * FROM service_packages WHERE active = 1 ORDER BY name');
+    },
+
+    async update(id, updates) {
+        const fields = [];
+        const values = [];
+        const fieldMap = {
+            name: 'name',
+            description: 'description',
+            serviceType: 'service_type',
+            applicableServiceId: 'applicable_service_id',
+            totalSessions: 'total_sessions',
+            basePrice: 'base_price',
+            discountPercent: 'discount_percent',
+            finalPrice: 'final_price',
+            validityType: 'validity_type',
+            validityDays: 'validity_days',
+            active: 'active'
+        };
+
+        for (const [key, dbField] of Object.entries(fieldMap)) {
+            if (updates[key] !== undefined) {
+                fields.push(`${dbField} = ?`);
+                values.push(updates[key]);
+            }
+        }
+
+        if (fields.length === 0) return this.findById(id);
+
+        values.push(id);
+        await dbRun(`UPDATE service_packages SET ${fields.join(', ')} WHERE id = ?`, values);
+        return this.findById(id);
+    },
+
+    async delete(id) {
+        await dbRun('DELETE FROM service_packages WHERE id = ?', [id]);
+    }
+};
+
+const UserPackageRepository = {
+    async create(pkg) {
+        const id = require('uuid').v4();
+        await dbRun(`
+            INSERT INTO user_packages
+            (id, user_id, package_id, package_name, total_sessions,
+             purchase_price, valid_from, valid_until)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            id, pkg.userId, pkg.packageId, pkg.packageName,
+            pkg.totalSessions, pkg.purchasePrice, pkg.validFrom, pkg.validUntil
+        ]);
+        return this.findById(id);
+    },
+
+    async findById(id) {
+        const pkg = await dbGet('SELECT * FROM user_packages WHERE id = ?', [id]);
+        if (pkg) {
+            pkg.sessions_remaining = pkg.total_sessions - pkg.sessions_used;
+        }
+        return pkg;
+    },
+
+    async findActiveForUser(userId) {
+        const packages = await dbAll(`
+            SELECT *,
+                   (total_sessions - sessions_used) as sessions_remaining
+            FROM user_packages
+            WHERE user_id = ?
+              AND status = 'active'
+              AND date(valid_until) >= date('now')
+            ORDER BY valid_until ASC
+        `, [userId]);
+        return packages;
+    },
+
+    async findAllForUser(userId) {
+        return dbAll(`
+            SELECT *,
+                   (total_sessions - sessions_used) as sessions_remaining
+            FROM user_packages
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+        `, [userId]);
+    },
+
+    async useSession(packageId, bookingId) {
+        const pkg = await this.findById(packageId);
+        if (!pkg || pkg.status !== 'active') {
+            throw new Error('Package not found or inactive');
+        }
+        if (pkg.sessions_used >= pkg.total_sessions) {
+            throw new Error('No sessions remaining');
+        }
+        if (new Date(pkg.valid_until) < new Date()) {
+            throw new Error('Package has expired');
+        }
+
+        // Record session use
+        const sessionId = require('uuid').v4();
+        await dbRun(`
+            INSERT INTO package_sessions (id, user_package_id, booking_id)
+            VALUES (?, ?, ?)
+        `, [sessionId, packageId, bookingId]);
+
+        // Update package
+        const newUsed = pkg.sessions_used + 1;
+        const newStatus = newUsed >= pkg.total_sessions ? 'fully_used' : 'active';
+
+        await dbRun(`
+            UPDATE user_packages
+            SET sessions_used = ?,
+                status = ?
+            WHERE id = ?
+        `, [newUsed, newStatus, packageId]);
+
+        return this.findById(packageId);
+    },
+
+    async expireOld() {
+        return dbRun(`
+            UPDATE user_packages
+            SET status = 'expired'
+            WHERE status = 'active'
+              AND date(valid_until) < date('now')
+        `);
+    },
+
+    async updateStatus(packageId, status) {
+        await dbRun(`
+            UPDATE user_packages
+            SET status = ?
+            WHERE id = ?
+        `, [status, packageId]);
+        return this.findById(packageId);
+    },
+
+    async getSessionHistory(packageId) {
+        return dbAll(`
+            SELECT ps.*, b.service_name, b.requested_date
+            FROM package_sessions ps
+            LEFT JOIN bookings b ON ps.booking_id = b.id
+            WHERE ps.user_package_id = ?
+            ORDER BY ps.used_at DESC
+        `, [packageId]);
+    }
+};
+
 module.exports = {
     getDb,
     dbRun,
@@ -2285,5 +2711,11 @@ module.exports = {
     PaymentSettingsRepository,
     ChatRepository,
     PayrollRepository,
-    PasswordResetRepository
+    PasswordResetRepository,
+    // Rewards Programme
+    RewardsConfigRepository,
+    RewardTrackRepository,
+    UserRewardRepository,
+    ServicePackageRepository,
+    UserPackageRepository
 };

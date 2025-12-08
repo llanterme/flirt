@@ -10,7 +10,7 @@ const querystring = require('querystring');
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
-let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository, PayrollRepository, PasswordResetRepository;
+let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository, PayrollRepository, PasswordResetRepository, RewardsConfigRepository, RewardTrackRepository, UserRewardRepository, ServicePackageRepository, UserPackageRepository;
 
 try {
     const dbModule = require('./db/database');
@@ -33,6 +33,12 @@ try {
     HairTipRepository = dbModule.HairTipRepository;
     PayrollRepository = dbModule.PayrollRepository;
     PasswordResetRepository = dbModule.PasswordResetRepository;
+    // Rewards Programme
+    RewardsConfigRepository = dbModule.RewardsConfigRepository;
+    RewardTrackRepository = dbModule.RewardTrackRepository;
+    UserRewardRepository = dbModule.UserRewardRepository;
+    ServicePackageRepository = dbModule.ServicePackageRepository;
+    UserPackageRepository = dbModule.UserPackageRepository;
 
     // Ensure database directory exists
     const dbDir = path.dirname(DATABASE_PATH);
@@ -238,6 +244,405 @@ function authenticateAdmin(req, res, next) {
         next();
     });
 }
+
+// ============================================
+// REWARDS PROCESSING SERVICE
+// ============================================
+
+const RewardsService = {
+    // Main entry point - called when booking is completed
+    async processCompletedBooking(booking, user) {
+        try {
+            const config = await RewardsConfigRepository.get();
+            if (!config || !config.programme_enabled) {
+                console.log('Rewards programme is disabled');
+                return { processed: false, reason: 'programme_disabled' };
+            }
+
+            const results = {
+                processed: true,
+                rewards: [],
+                tracks: []
+            };
+
+            // Get service details
+            const service = await ServiceRepository.findById(booking.service_id || booking.serviceId);
+            if (!service) {
+                console.log('Service not found for booking:', booking.id);
+                return results;
+            }
+
+            const serviceCategory = service.category || service.type || '';
+            const bookingAmount = booking.final_amount || booking.finalAmount || booking.total_amount || booking.amount || 0;
+
+            // Process tracks based on service category
+            if (config.nails_enabled && this.isNailsService(serviceCategory)) {
+                const nailsResult = await this.processNailsTrack(user.id, config, booking);
+                if (nailsResult) results.tracks.push(nailsResult);
+            }
+
+            if (config.maintenance_enabled && this.isMaintenanceService(serviceCategory)) {
+                const maintenanceResult = await this.processMaintenanceTrack(user.id, config, booking);
+                if (maintenanceResult) results.tracks.push(maintenanceResult);
+            }
+
+            // Process spend track (applies to all services)
+            if (config.spend_enabled && bookingAmount > 0) {
+                const spendResult = await this.processSpendTrack(user.id, config, bookingAmount, booking);
+                if (spendResult) results.tracks.push(spendResult);
+            }
+
+            // Check referral rewards (for referrer when referee completes qualifying booking)
+            if (config.referral_enabled) {
+                const referralResult = await this.checkReferralReward(user, config, bookingAmount, booking);
+                if (referralResult) results.rewards.push(referralResult);
+            }
+
+            return results;
+        } catch (error) {
+            console.error('Error processing rewards for booking:', error);
+            return { processed: false, error: error.message };
+        }
+    },
+
+    // Check if service is a nails service
+    isNailsService(category) {
+        const nailsKeywords = ['nail', 'nails', 'manicure', 'pedicure', 'gel', 'acrylic'];
+        return nailsKeywords.some(kw => category.toLowerCase().includes(kw));
+    },
+
+    // Check if service is a maintenance service
+    isMaintenanceService(category) {
+        const maintenanceKeywords = ['maintenance', 'extension', 'weave', 'tape', 'keratin', 'weft'];
+        return maintenanceKeywords.some(kw => category.toLowerCase().includes(kw));
+    },
+
+    // Process nails reward track
+    async processNailsTrack(userId, config, booking) {
+        try {
+            // Get or create track
+            const track = await RewardTrackRepository.getOrCreate(userId, 'nails');
+
+            // Increment visit count (countIncrement=1, amountIncrement=0)
+            const newCount = (track.current_count || 0) + 1;
+            await RewardTrackRepository.increment(userId, 'nails', 1, 0);
+
+            let rewardIssued = null;
+
+            // Check milestones
+            if (newCount === config.nails_milestone_2_count) {
+                // 12th visit - 50% off
+                rewardIssued = await this.issueReward(userId, 'nails', 'discount_percent', config.nails_milestone_2_discount, config.nails_reward_expiry_days, 'Nails reward - ' + config.nails_milestone_2_discount + '% off');
+                await RewardTrackRepository.updateMilestone(userId, 'nails', newCount);
+            } else if (newCount === config.nails_milestone_1_count) {
+                // 6th visit - 10% off
+                rewardIssued = await this.issueReward(userId, 'nails', 'discount_percent', config.nails_milestone_1_discount, config.nails_reward_expiry_days, 'Nails reward - ' + config.nails_milestone_1_discount + '% off');
+                await RewardTrackRepository.updateMilestone(userId, 'nails', newCount);
+            }
+
+            return {
+                track: 'nails',
+                newCount,
+                milestone1Target: config.nails_milestone_1_count,
+                milestone2Target: config.nails_milestone_2_count,
+                rewardIssued
+            };
+        } catch (error) {
+            console.error('Error processing nails track:', error);
+            return null;
+        }
+    },
+
+    // Process maintenance reward track
+    async processMaintenanceTrack(userId, config, booking) {
+        try {
+            const track = await RewardTrackRepository.getOrCreate(userId, 'maintenance');
+
+            const newCount = (track.current_count || 0) + 1;
+            await RewardTrackRepository.increment(userId, 'maintenance', 1, 0);
+
+            let rewardIssued = null;
+
+            // Check milestone (every 6th visit)
+            if (newCount % config.maintenance_milestone_count === 0) {
+                rewardIssued = await this.issueReward(userId, 'maintenance', 'discount_percent', config.maintenance_discount, config.maintenance_reward_expiry_days, 'Maintenance reward - ' + config.maintenance_discount + '% off');
+                await RewardTrackRepository.updateMilestone(userId, 'maintenance', newCount);
+            }
+
+            return {
+                track: 'maintenance',
+                newCount,
+                milestoneTarget: config.maintenance_milestone_count,
+                rewardIssued
+            };
+        } catch (error) {
+            console.error('Error processing maintenance track:', error);
+            return null;
+        }
+    },
+
+    // Process spend track
+    async processSpendTrack(userId, config, amount, booking) {
+        try {
+            const track = await RewardTrackRepository.getOrCreate(userId, 'spend');
+
+            const currentAmount = track.current_amount || 0;
+            const newAmount = currentAmount + amount;
+
+            // Update track with amount (countIncrement=0, amountIncrement=amount)
+            await RewardTrackRepository.increment(userId, 'spend', 0, amount);
+
+            let rewardIssued = null;
+
+            // Check if threshold crossed
+            const previousMilestones = Math.floor(currentAmount / config.spend_threshold);
+            const newMilestones = Math.floor(newAmount / config.spend_threshold);
+
+            if (newMilestones > previousMilestones) {
+                // User has crossed a spend threshold
+                rewardIssued = await this.issueReward(userId, 'spend', 'discount_percent', config.spend_discount, config.spend_reward_expiry_days, 'Spend & Save reward - ' + config.spend_discount + '% off next service');
+                await RewardTrackRepository.updateMilestone(userId, 'spend', newMilestones);
+            }
+
+            return {
+                track: 'spend',
+                currentAmount: newAmount,
+                threshold: config.spend_threshold,
+                progressPercent: Math.round((newAmount % config.spend_threshold) / config.spend_threshold * 100),
+                rewardIssued
+            };
+        } catch (error) {
+            console.error('Error processing spend track:', error);
+            return null;
+        }
+    },
+
+    // Check and issue referral reward
+    async checkReferralReward(user, config, bookingAmount, booking) {
+        try {
+            // This user was referred by someone - check if this is their first qualifying booking
+            if (!user.referred_by && !user.referredBy) return null;
+
+            const referrerId = user.referred_by || user.referredBy;
+
+            // Check if referral reward was already issued for this referee
+            const existingReferral = await this.getReferralRecord(user.id);
+            if (existingReferral && existingReferral.reward_issued) return null;
+
+            // Check if booking meets minimum value
+            if (bookingAmount < config.referral_min_booking_value) return null;
+
+            // Issue reward to referrer
+            const rewardDescription = config.referral_reward_description || 'Complimentary wash & blow-dry';
+            const reward = await this.issueReward(
+                referrerId,
+                'referral',
+                'free_service',
+                config.referral_reward_service_id,
+                90, // 90 day expiry for referral rewards
+                rewardDescription
+            );
+
+            // Mark referral as rewarded
+            await this.markReferralRewarded(user.id, bookingAmount);
+
+            return {
+                type: 'referral',
+                referrerId,
+                reward
+            };
+        } catch (error) {
+            console.error('Error checking referral reward:', error);
+            return null;
+        }
+    },
+
+    // Issue a reward to user
+    async issueReward(userId, trackType, rewardType, value, expiryDays, description) {
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + expiryDays);
+
+        const reward = await UserRewardRepository.create({
+            id: uuidv4(),
+            userId,
+            rewardType,       // 'discount_percent', 'discount_fixed', 'free_service'
+            rewardValue: value,
+            sourceTrack: trackType,  // 'nails', 'maintenance', 'spend', 'referral'
+            description,
+            expiresAt: expiryDate.toISOString()
+        });
+
+        console.log(`Issued reward to user ${userId}: ${description}`);
+        return reward;
+    },
+
+    // Get referral record for a user (as referee)
+    async getReferralRecord(refereeId) {
+        try {
+            const result = await db.get('SELECT * FROM referrals WHERE referee_id = ?', [refereeId]);
+            return result;
+        } catch (error) {
+            return null;
+        }
+    },
+
+    // Mark referral as having issued reward
+    async markReferralRewarded(refereeId, bookingValue) {
+        try {
+            await db.run(`
+                UPDATE referrals
+                SET referee_first_booking_value = ?, reward_issued = 1
+                WHERE referee_id = ?
+            `, [bookingValue, refereeId]);
+        } catch (error) {
+            console.error('Error marking referral rewarded:', error);
+        }
+    },
+
+    // Apply reward to a booking
+    async applyRewardToBooking(bookingId, rewardId) {
+        try {
+            const reward = await UserRewardRepository.findById(rewardId);
+            if (!reward || reward.status !== 'active') {
+                return { success: false, message: 'Reward not found or already used' };
+            }
+
+            // Check expiry
+            if (new Date(reward.expires_at) < new Date()) {
+                await UserRewardRepository.updateStatus(rewardId, 'expired');
+                return { success: false, message: 'Reward has expired' };
+            }
+
+            // Calculate discount
+            let discountAmount = 0;
+            const booking = await BookingRepository.findById(bookingId);
+            const rewardValue = reward.reward_value || 0;
+
+            if (reward.reward_type === 'discount_percent') {
+                const baseAmount = booking.total_amount || booking.amount || booking.service_price || 0;
+                discountAmount = baseAmount * (rewardValue / 100);
+            } else if (reward.reward_type === 'discount_fixed') {
+                discountAmount = rewardValue;
+            } else if (reward.reward_type === 'free_service') {
+                // Full discount for free service rewards
+                discountAmount = booking.total_amount || booking.amount || booking.service_price || 0;
+            }
+
+            // Update booking with reward
+            await BookingRepository.updateById(bookingId, {
+                rewardId: rewardId,
+                discountAmount: discountAmount
+            });
+
+            // Mark reward as redeemed
+            await UserRewardRepository.redeem(rewardId, bookingId);
+
+            return {
+                success: true,
+                discountAmount,
+                reward
+            };
+        } catch (error) {
+            console.error('Error applying reward to booking:', error);
+            return { success: false, message: error.message };
+        }
+    },
+
+    // Get user's reward progress summary
+    async getUserProgress(userId) {
+        try {
+            const config = await RewardsConfigRepository.get();
+            if (!config || !config.programme_enabled) {
+                return { enabled: false };
+            }
+
+            const tracks = {};
+
+            // Nails track
+            if (config.nails_enabled) {
+                const nailsTrack = await RewardTrackRepository.getOrCreate(userId, 'nails');
+                tracks.nails = {
+                    enabled: true,
+                    currentCount: nailsTrack.current_count || 0,
+                    milestone1: {
+                        target: config.nails_milestone_1_count,
+                        discount: config.nails_milestone_1_discount,
+                        reached: (nailsTrack.current_count || 0) >= config.nails_milestone_1_count
+                    },
+                    milestone2: {
+                        target: config.nails_milestone_2_count,
+                        discount: config.nails_milestone_2_discount,
+                        reached: (nailsTrack.current_count || 0) >= config.nails_milestone_2_count
+                    }
+                };
+            }
+
+            // Maintenance track
+            if (config.maintenance_enabled) {
+                const maintenanceTrack = await RewardTrackRepository.getOrCreate(userId, 'maintenance');
+                const count = maintenanceTrack.current_count || 0;
+                tracks.maintenance = {
+                    enabled: true,
+                    currentCount: count,
+                    milestone: {
+                        target: config.maintenance_milestone_count,
+                        discount: config.maintenance_discount,
+                        progress: count % config.maintenance_milestone_count,
+                        nextRewardAt: config.maintenance_milestone_count - (count % config.maintenance_milestone_count)
+                    }
+                };
+            }
+
+            // Spend track
+            if (config.spend_enabled) {
+                const spendTrack = await RewardTrackRepository.getOrCreate(userId, 'spend');
+                const currentAmount = spendTrack.current_amount || 0;
+                const progressInThreshold = currentAmount % config.spend_threshold;
+                tracks.spend = {
+                    enabled: true,
+                    currentAmount,
+                    threshold: config.spend_threshold,
+                    discount: config.spend_discount,
+                    progressAmount: progressInThreshold,
+                    progressPercent: Math.round((progressInThreshold / config.spend_threshold) * 100),
+                    amountToNextReward: config.spend_threshold - progressInThreshold
+                };
+            }
+
+            // Active rewards
+            const activeRewards = await UserRewardRepository.findActiveForUser(userId);
+
+            // Packages
+            const activePackages = await UserPackageRepository.findActiveForUser(userId);
+
+            return {
+                enabled: true,
+                programmeName: config.programme_name,
+                tracks,
+                activeRewards,
+                activePackages,
+                termsVersion: config.terms_version
+            };
+        } catch (error) {
+            console.error('Error getting user reward progress:', error);
+            return { enabled: false, error: error.message };
+        }
+    },
+
+    // Expire old rewards (call periodically)
+    async expireOldRewards() {
+        try {
+            await UserRewardRepository.expireOld();
+            await UserPackageRepository.expireOld();
+            console.log('Expired old rewards and packages');
+        } catch (error) {
+            console.error('Error expiring old rewards:', error);
+        }
+    }
+};
+
+// Run reward expiry check every hour
+setInterval(() => RewardsService.expireOldRewards(), 60 * 60 * 1000);
 
 // ============================================
 // AUTH ROUTES
@@ -2717,8 +3122,6 @@ app.get('/api/services/:serviceId/stylists', async (req, res) => {
                 st.name,
                 st.specialty,
                 st.tagline,
-                st.rating,
-                st.review_count,
                 st.clients_count,
                 st.years_experience,
                 st.instagram,
@@ -3338,6 +3741,20 @@ app.patch('/api/admin/bookings/:id/status', authenticateAdmin, async (req, res) 
         }
 
         const updatedBooking = await BookingRepository.updateById(req.params.id, updateData);
+
+        // Process rewards when booking is completed
+        if (statusUpper === 'COMPLETED' && booking.user_id) {
+            try {
+                const user = await UserRepository.findById(booking.user_id);
+                if (user) {
+                    const rewardsResult = await RewardsService.processCompletedBooking(updatedBooking, user);
+                    console.log('Rewards processed for completed booking:', rewardsResult);
+                }
+            } catch (rewardsError) {
+                // Log but don't fail the booking completion
+                console.error('Error processing rewards:', rewardsError);
+            }
+        }
 
         res.json({ success: true, booking: mapBookingResponse(updatedBooking) });
     } catch (error) {
@@ -4474,8 +4891,6 @@ app.post('/api/admin/staff', authenticateAdmin, async (req, res) => {
             name,
             specialty,
             tagline: tagline || '',
-            rating: 5.0,
-            reviewCount: 0,
             clientsCount: 0,
             yearsExperience: 0,
             instagram: instagram || '',
@@ -4839,6 +5254,608 @@ app.post('/api/admin/loyalty/reset', authenticateAdmin, (req, res) => {
         });
     } else {
         res.status(500).json({ success: false, message: 'Failed to reset loyalty settings' });
+    }
+});
+
+// ============================================
+// ADMIN REWARDS PROGRAMME SETTINGS
+// ============================================
+
+// Get rewards programme configuration (admin)
+app.get('/api/admin/rewards/config', authenticateAdmin, async (req, res) => {
+    try {
+        const config = await RewardsConfigRepository.get();
+        res.json({ success: true, config });
+    } catch (error) {
+        console.error('Error fetching rewards config:', error);
+        res.status(500).json({ success: false, message: 'Failed to load rewards settings' });
+    }
+});
+
+// Update rewards programme configuration (admin)
+app.put('/api/admin/rewards/config', authenticateAdmin, async (req, res) => {
+    try {
+        const updates = req.body;
+
+        // Validate numeric fields
+        const numericFields = [
+            'nails_milestone_1_count', 'nails_milestone_1_discount',
+            'nails_milestone_2_count', 'nails_milestone_2_discount',
+            'nails_reward_expiry_days', 'maintenance_milestone_count',
+            'maintenance_discount', 'maintenance_reward_expiry_days',
+            'spend_threshold', 'spend_discount', 'spend_reward_expiry_days',
+            'referral_min_booking_value', 'wash_blowdry_package_sessions',
+            'wash_blowdry_package_discount'
+        ];
+
+        for (const field of numericFields) {
+            if (updates[field] !== undefined && (isNaN(updates[field]) || updates[field] < 0)) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid value for ${field}`
+                });
+            }
+        }
+
+        await RewardsConfigRepository.update(updates);
+        const config = await RewardsConfigRepository.get();
+
+        res.json({
+            success: true,
+            message: 'Rewards settings updated successfully',
+            config
+        });
+    } catch (error) {
+        console.error('Error updating rewards config:', error);
+        res.status(500).json({ success: false, message: 'Failed to update rewards settings' });
+    }
+});
+
+// Get all user rewards (admin view)
+app.get('/api/admin/rewards', authenticateAdmin, async (req, res) => {
+    try {
+        const { status, userId, trackType, limit = 100, offset = 0 } = req.query;
+
+        let query = `
+            SELECT ur.*, u.name as user_name, u.email as user_email
+            FROM user_rewards ur
+            LEFT JOIN users u ON ur.user_id = u.id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (status) {
+            query += ' AND ur.status = ?';
+            params.push(status);
+        }
+        if (userId) {
+            query += ' AND ur.user_id = ?';
+            params.push(userId);
+        }
+        if (trackType) {
+            query += ' AND ur.track_type = ?';
+            params.push(trackType);
+        }
+
+        query += ' ORDER BY ur.created_at DESC LIMIT ? OFFSET ?';
+        params.push(parseInt(limit), parseInt(offset));
+
+        const rewards = await db.all(query, params);
+
+        // Get count
+        let countQuery = `SELECT COUNT(*) as total FROM user_rewards ur WHERE 1=1`;
+        const countParams = [];
+        if (status) {
+            countQuery += ' AND ur.status = ?';
+            countParams.push(status);
+        }
+        if (userId) {
+            countQuery += ' AND ur.user_id = ?';
+            countParams.push(userId);
+        }
+        if (trackType) {
+            countQuery += ' AND ur.track_type = ?';
+            countParams.push(trackType);
+        }
+
+        const countResult = await db.get(countQuery, countParams);
+
+        res.json({
+            success: true,
+            rewards,
+            total: countResult.total,
+            limit: parseInt(limit),
+            offset: parseInt(offset)
+        });
+    } catch (error) {
+        console.error('Error fetching rewards:', error);
+        res.status(500).json({ success: false, message: 'Failed to load rewards' });
+    }
+});
+
+// Manually issue a reward to user (admin)
+app.post('/api/admin/rewards', authenticateAdmin, async (req, res) => {
+    try {
+        const { userId, trackType, rewardType, value, description, expiryDays = 90 } = req.body;
+
+        if (!userId || !trackType || !rewardType || !description) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: userId, trackType, rewardType, description'
+            });
+        }
+
+        // Verify user exists
+        const user = await UserRepository.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const reward = await RewardsService.issueReward(
+            userId,
+            trackType,
+            rewardType,
+            value,
+            expiryDays,
+            description
+        );
+
+        res.json({
+            success: true,
+            message: 'Reward issued successfully',
+            reward
+        });
+    } catch (error) {
+        console.error('Error issuing reward:', error);
+        res.status(500).json({ success: false, message: 'Failed to issue reward' });
+    }
+});
+
+// Revoke/cancel a reward (admin)
+app.delete('/api/admin/rewards/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const reward = await UserRewardRepository.findById(id);
+        if (!reward) {
+            return res.status(404).json({ success: false, message: 'Reward not found' });
+        }
+
+        if (reward.status === 'redeemed') {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot revoke a redeemed reward'
+            });
+        }
+
+        await UserRewardRepository.updateStatus(id, 'revoked');
+
+        res.json({
+            success: true,
+            message: 'Reward revoked successfully'
+        });
+    } catch (error) {
+        console.error('Error revoking reward:', error);
+        res.status(500).json({ success: false, message: 'Failed to revoke reward' });
+    }
+});
+
+// Get reward tracks summary (admin analytics)
+app.get('/api/admin/rewards/analytics', authenticateAdmin, async (req, res) => {
+    try {
+        // Get reward statistics
+        const stats = await db.get(`
+            SELECT
+                COUNT(*) as total_rewards,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_rewards,
+                SUM(CASE WHEN status = 'redeemed' THEN 1 ELSE 0 END) as redeemed_rewards,
+                SUM(CASE WHEN status = 'expired' THEN 1 ELSE 0 END) as expired_rewards,
+                COUNT(DISTINCT user_id) as users_with_rewards
+            FROM user_rewards
+        `);
+
+        // Get rewards by track type
+        const byTrackType = await db.all(`
+            SELECT track_type, COUNT(*) as count,
+                SUM(CASE WHEN status = 'redeemed' THEN 1 ELSE 0 END) as redeemed
+            FROM user_rewards
+            GROUP BY track_type
+        `);
+
+        // Get recent rewards
+        const recentRewards = await db.all(`
+            SELECT ur.*, u.name as user_name
+            FROM user_rewards ur
+            LEFT JOIN users u ON ur.user_id = u.id
+            ORDER BY ur.created_at DESC
+            LIMIT 10
+        `);
+
+        // Get package stats
+        const packageStats = await db.get(`
+            SELECT
+                COUNT(*) as total_packages,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_packages,
+                SUM(sessions_used) as total_sessions_used,
+                SUM(total_sessions) as total_sessions_sold
+            FROM user_packages
+        `);
+
+        res.json({
+            success: true,
+            stats,
+            byTrackType,
+            recentRewards,
+            packageStats
+        });
+    } catch (error) {
+        console.error('Error fetching rewards analytics:', error);
+        res.status(500).json({ success: false, message: 'Failed to load analytics' });
+    }
+});
+
+// Get user's reward tracks (admin view)
+app.get('/api/admin/rewards/user/:userId', authenticateAdmin, async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const user = await UserRepository.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const progress = await RewardsService.getUserProgress(userId);
+        const rewardHistory = await db.all(`
+            SELECT * FROM user_rewards
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+        `, [userId]);
+
+        res.json({
+            success: true,
+            user: { id: user.id, name: user.name, email: user.email },
+            progress,
+            rewardHistory
+        });
+    } catch (error) {
+        console.error('Error fetching user rewards:', error);
+        res.status(500).json({ success: false, message: 'Failed to load user rewards' });
+    }
+});
+
+// ============================================
+// ADMIN SERVICE PACKAGES
+// ============================================
+
+// Get available service packages (admin)
+app.get('/api/admin/packages', authenticateAdmin, async (req, res) => {
+    try {
+        const packages = await ServicePackageRepository.findAll();
+        res.json({ success: true, packages });
+    } catch (error) {
+        console.error('Error fetching packages:', error);
+        res.status(500).json({ success: false, message: 'Failed to load packages' });
+    }
+});
+
+// Create a service package (admin)
+app.post('/api/admin/packages', authenticateAdmin, async (req, res) => {
+    try {
+        const {
+            name, description, serviceId, sessions,
+            discountPercent, validDays, price, active = true
+        } = req.body;
+
+        if (!name || !serviceId || !sessions || !price) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: name, serviceId, sessions, price'
+            });
+        }
+
+        const pkg = await ServicePackageRepository.create({
+            id: uuidv4(),
+            name,
+            description,
+            serviceId,
+            sessions,
+            discountPercent: discountPercent || 0,
+            validDays: validDays || 30,
+            price,
+            active
+        });
+
+        res.json({
+            success: true,
+            message: 'Package created successfully',
+            package: pkg
+        });
+    } catch (error) {
+        console.error('Error creating package:', error);
+        res.status(500).json({ success: false, message: 'Failed to create package' });
+    }
+});
+
+// Update a service package (admin)
+app.put('/api/admin/packages/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+
+        const pkg = await ServicePackageRepository.findById(id);
+        if (!pkg) {
+            return res.status(404).json({ success: false, message: 'Package not found' });
+        }
+
+        await ServicePackageRepository.update(id, updates);
+        const updated = await ServicePackageRepository.findById(id);
+
+        res.json({
+            success: true,
+            message: 'Package updated successfully',
+            package: updated
+        });
+    } catch (error) {
+        console.error('Error updating package:', error);
+        res.status(500).json({ success: false, message: 'Failed to update package' });
+    }
+});
+
+// Delete a service package (admin)
+app.delete('/api/admin/packages/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Check if any active user packages reference this
+        const activeCount = await db.get(`
+            SELECT COUNT(*) as count FROM user_packages
+            WHERE package_id = ? AND status = 'active'
+        `, [id]);
+
+        if (activeCount.count > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete package with active user subscriptions'
+            });
+        }
+
+        await ServicePackageRepository.delete(id);
+
+        res.json({
+            success: true,
+            message: 'Package deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting package:', error);
+        res.status(500).json({ success: false, message: 'Failed to delete package' });
+    }
+});
+
+// ============================================
+// CUSTOMER REWARDS ENDPOINTS
+// ============================================
+
+// Get current user's reward progress
+app.get('/api/rewards/my-progress', authenticateToken, async (req, res) => {
+    try {
+        const progress = await RewardsService.getUserProgress(req.user.id);
+        res.json({ success: true, ...progress });
+    } catch (error) {
+        console.error('Error fetching reward progress:', error);
+        res.status(500).json({ success: false, message: 'Failed to load reward progress' });
+    }
+});
+
+// Get available rewards for current user
+app.get('/api/rewards/available', authenticateToken, async (req, res) => {
+    try {
+        const rewards = await UserRewardRepository.findActiveForUser(req.user.id);
+        res.json({ success: true, rewards });
+    } catch (error) {
+        console.error('Error fetching available rewards:', error);
+        res.status(500).json({ success: false, message: 'Failed to load rewards' });
+    }
+});
+
+// Get rewards applicable to a specific booking
+app.get('/api/rewards/for-booking/:bookingId', authenticateToken, async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+
+        const booking = await BookingRepository.findById(bookingId);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        // Verify user owns this booking
+        if (booking.user_id !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+
+        const rewards = await UserRewardRepository.findApplicableForBooking(
+            req.user.id,
+            booking.service_id
+        );
+
+        res.json({ success: true, rewards });
+    } catch (error) {
+        console.error('Error fetching rewards for booking:', error);
+        res.status(500).json({ success: false, message: 'Failed to load rewards' });
+    }
+});
+
+// Apply reward to booking
+app.post('/api/rewards/apply', authenticateToken, async (req, res) => {
+    try {
+        const { bookingId, rewardId } = req.body;
+
+        if (!bookingId || !rewardId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing bookingId or rewardId'
+            });
+        }
+
+        const booking = await BookingRepository.findById(bookingId);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        // Verify user owns this booking
+        if (booking.user_id !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+
+        // Verify reward belongs to user
+        const reward = await UserRewardRepository.findById(rewardId);
+        if (!reward || reward.user_id !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Invalid reward' });
+        }
+
+        const result = await RewardsService.applyRewardToBooking(bookingId, rewardId);
+
+        if (result.success) {
+            res.json({
+                success: true,
+                message: 'Reward applied successfully',
+                discountAmount: result.discountAmount
+            });
+        } else {
+            res.status(400).json({ success: false, message: result.message });
+        }
+    } catch (error) {
+        console.error('Error applying reward:', error);
+        res.status(500).json({ success: false, message: 'Failed to apply reward' });
+    }
+});
+
+// Get user's reward history
+app.get('/api/rewards/history', authenticateToken, async (req, res) => {
+    try {
+        const rewards = await db.all(`
+            SELECT * FROM user_rewards
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+        `, [req.user.id]);
+
+        res.json({ success: true, rewards });
+    } catch (error) {
+        console.error('Error fetching reward history:', error);
+        res.status(500).json({ success: false, message: 'Failed to load history' });
+    }
+});
+
+// ============================================
+// CUSTOMER PACKAGE ENDPOINTS
+// ============================================
+
+// Get available packages for purchase
+app.get('/api/packages', async (req, res) => {
+    try {
+        const packages = await ServicePackageRepository.findActive();
+        res.json({ success: true, packages });
+    } catch (error) {
+        console.error('Error fetching packages:', error);
+        res.status(500).json({ success: false, message: 'Failed to load packages' });
+    }
+});
+
+// Get user's active packages
+app.get('/api/packages/mine', authenticateToken, async (req, res) => {
+    try {
+        const packages = await UserPackageRepository.findActiveForUser(req.user.id);
+        res.json({ success: true, packages });
+    } catch (error) {
+        console.error('Error fetching user packages:', error);
+        res.status(500).json({ success: false, message: 'Failed to load packages' });
+    }
+});
+
+// Purchase a package
+app.post('/api/packages/:id/purchase', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const pkg = await ServicePackageRepository.findById(id);
+        if (!pkg || !pkg.active) {
+            return res.status(404).json({ success: false, message: 'Package not found or not available' });
+        }
+
+        // Calculate validity dates
+        const validFrom = new Date().toISOString().split('T')[0];
+        const validUntil = new Date();
+        validUntil.setDate(validUntil.getDate() + (pkg.validity_days || 30));
+
+        const userPackage = await UserPackageRepository.create({
+            userId: req.user.id,
+            packageId: id,
+            packageName: pkg.name,
+            totalSessions: pkg.total_sessions,
+            purchasePrice: pkg.final_price || pkg.base_price,
+            validFrom,
+            validUntil: validUntil.toISOString().split('T')[0]
+        });
+
+        res.json({
+            success: true,
+            message: 'Package purchased successfully',
+            userPackage
+        });
+    } catch (error) {
+        console.error('Error purchasing package:', error);
+        res.status(500).json({ success: false, message: 'Failed to purchase package' });
+    }
+});
+
+// Use a package session (called when booking with package)
+app.post('/api/packages/:userPackageId/use-session', authenticateToken, async (req, res) => {
+    try {
+        const { userPackageId } = req.params;
+        const { bookingId } = req.body;
+
+        const userPkg = await UserPackageRepository.findById(userPackageId);
+        if (!userPkg) {
+            return res.status(404).json({ success: false, message: 'Package not found' });
+        }
+
+        // Verify ownership
+        if (userPkg.user_id !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied' });
+        }
+
+        // Check if expired or exhausted
+        if (userPkg.status !== 'active') {
+            return res.status(400).json({ success: false, message: 'Package is not active' });
+        }
+
+        if (userPkg.sessions_used >= userPkg.total_sessions) {
+            return res.status(400).json({ success: false, message: 'No sessions remaining' });
+        }
+
+        if (new Date(userPkg.valid_until) < new Date()) {
+            await UserPackageRepository.updateStatus(userPackageId, 'expired');
+            return res.status(400).json({ success: false, message: 'Package has expired' });
+        }
+
+        // Use the session - returns updated package
+        const updatedPkg = await UserPackageRepository.useSession(userPackageId, bookingId);
+
+        // Update booking to link to package
+        if (bookingId) {
+            await BookingRepository.updateById(bookingId, {
+                packageSessionId: userPackageId
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Session used successfully',
+            sessionsRemaining: updatedPkg.sessions_remaining,
+            package: updatedPkg
+        });
+    } catch (error) {
+        console.error('Error using package session:', error);
+        res.status(500).json({ success: false, message: 'Failed to use session' });
     }
 });
 
@@ -5241,8 +6258,6 @@ async function seedStylistsDefaults() {
                 name: 'Lisa Thompson',
                 specialty: 'Senior Stylist',
                 tagline: '8 years experience',
-                rating: 4.9,
-                reviewCount: 127,
                 clientsCount: 350,
                 yearsExperience: 8,
                 instagram: '@lisathompson',
@@ -5255,8 +6270,6 @@ async function seedStylistsDefaults() {
                 name: 'Emma Williams',
                 specialty: 'Extension Specialist',
                 tagline: 'Keratin Bonds, Volume',
-                rating: 4.8,
-                reviewCount: 94,
                 clientsCount: 280,
                 yearsExperience: 6,
                 instagram: '@emmaextensions',
@@ -5269,8 +6282,6 @@ async function seedStylistsDefaults() {
                 name: 'Sarah Martinez',
                 specialty: 'Color Expert',
                 tagline: 'Color Match, Balayage',
-                rating: 5.0,
-                reviewCount: 203,
                 clientsCount: 410,
                 yearsExperience: 10,
                 instagram: '@sarahcolor',
@@ -5283,8 +6294,6 @@ async function seedStylistsDefaults() {
                 name: 'Maya Johnson',
                 specialty: 'Maintenance Expert',
                 tagline: 'Maintenance, Repairs',
-                rating: 4.9,
-                reviewCount: 156,
                 clientsCount: 320,
                 yearsExperience: 5,
                 instagram: '@mayamaintains',
