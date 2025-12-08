@@ -4241,14 +4241,11 @@
                         <input type="text" class="form-input" id="staffName" placeholder="e.g., Lisa Thompson">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Role / Specialty</label>
+                        <label class="form-label">Role</label>
                         <select class="form-input" id="staffRole">
-                            <option value="Senior Stylist">Senior Stylist</option>
-                            <option value="Tape Extensions Specialist">Tape Extensions Specialist</option>
-                            <option value="Weft Installation Pro">Weft Installation Pro</option>
-                            <option value="Color Matching Expert">Color Matching Expert</option>
-                            <option value="Keratin & Maintenance">Keratin & Maintenance</option>
-                            <option value="Extension Specialist">Extension Specialist</option>
+                            <option value="Stylist">Stylist</option>
+                            <option value="Stylist & Extension Specialist">Stylist & Extension Specialist</option>
+                            <option value="Nail Babes">Nail Babes</option>
                         </select>
                     </div>
                 </div>
@@ -9173,7 +9170,7 @@
 
             // Prefill form fields
             document.getElementById('staffName').value = staff.name || '';
-            document.getElementById('staffRole').value = staff.specialty || 'Senior Stylist';
+            document.getElementById('staffRole').value = staff.specialty || 'Stylist';
             document.getElementById('staffTagline').value = staff.tagline || '';
             document.getElementById('staffExperience').value = staff.yearsExperience || '';
             document.getElementById('staffInstagram').value = staff.instagram || '';
@@ -9751,7 +9748,7 @@
         function openAddStaffModal() {
             editingStaffId = null;
             document.getElementById('staffName').value = '';
-            document.getElementById('staffRole').value = 'Senior Stylist';
+            document.getElementById('staffRole').value = 'Stylist';
             document.getElementById('staffTagline').value = '';
             document.getElementById('staffExperience').value = '';
             document.getElementById('staffInstagram').value = '';
