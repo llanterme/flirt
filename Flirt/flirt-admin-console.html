@@ -6181,10 +6181,12 @@
                                'July', 'August', 'September', 'October', 'November', 'December'];
             if (label) label.textContent = `${monthNames[month]} ${year}`;
 
-            // Group bookings by date
+            // Group bookings by date (use requestedDate for new booking system, fallback to date for legacy)
             const bookingsByDate = {};
             adminBookings.forEach(b => {
-                const dateKey = b.date.split('T')[0];
+                const bookingDate = b.requestedDate || b.date;
+                if (!bookingDate) return;
+                const dateKey = bookingDate.split('T')[0];
                 if (!bookingsByDate[dateKey]) bookingsByDate[dateKey] = [];
                 bookingsByDate[dateKey].push(b);
             });
