@@ -126,6 +126,74 @@ async function initializeDatabase() {
 
     // Booking completion tracking
     await ensureColumn('bookings', 'completed_at', 'TEXT');
+
+    // Migration: Recreate payment_transactions table to add 'eft' to payment_provider CHECK constraint
+    await migratePaymentTransactionsTable();
+}
+
+// Migration to add 'eft' to payment_provider CHECK constraint
+async function migratePaymentTransactionsTable() {
+    try {
+        // Check if the table needs migration by trying to insert an 'eft' value
+        // If it fails with constraint error, we need to migrate
+        const testId = '__migration_test__';
+        try {
+            await dbRun(`INSERT INTO payment_transactions (id, user_id, amount, payment_provider, status) VALUES (?, 'test', 0, 'eft', 'pending')`, [testId]);
+            // If successful, delete the test row and return - no migration needed
+            await dbRun(`DELETE FROM payment_transactions WHERE id = ?`, [testId]);
+            return;
+        } catch (e) {
+            if (!e.message.includes('CHECK constraint failed') && !e.message.includes('FOREIGN KEY constraint failed')) {
+                // Different error, might be foreign key - try another approach
+                // Check table schema directly
+                const tableInfo = await dbGet(`SELECT sql FROM sqlite_master WHERE type='table' AND name='payment_transactions'`);
+                if (tableInfo && tableInfo.sql && tableInfo.sql.includes("'eft'")) {
+                    return; // Already has 'eft', no migration needed
+                }
+            }
+        }
+
+        console.log('Migrating payment_transactions table to add eft payment provider...');
+
+        // Backup existing data
+        const existingData = await dbAll('SELECT * FROM payment_transactions');
+
+        // Drop and recreate table with new constraint
+        await dbRun('DROP TABLE IF EXISTS payment_transactions');
+        await dbRun(`
+            CREATE TABLE payment_transactions (
+                id TEXT PRIMARY KEY,
+                order_id TEXT REFERENCES orders(id),
+                booking_id TEXT REFERENCES bookings(id),
+                user_id TEXT NOT NULL REFERENCES users(id),
+                amount REAL NOT NULL,
+                currency TEXT DEFAULT 'ZAR',
+                payment_provider TEXT NOT NULL CHECK(payment_provider IN ('payfast', 'yoco', 'cash', 'card_on_site', 'eft')),
+                provider_transaction_id TEXT,
+                status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'completed', 'failed', 'refunded')),
+                metadata TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT
+            )
+        `);
+
+        // Recreate indexes
+        await dbRun('CREATE INDEX IF NOT EXISTS idx_payments_order ON payment_transactions(order_id)');
+        await dbRun('CREATE INDEX IF NOT EXISTS idx_payments_user ON payment_transactions(user_id)');
+        await dbRun('CREATE INDEX IF NOT EXISTS idx_payments_status ON payment_transactions(status)');
+
+        // Restore data
+        for (const row of existingData) {
+            await dbRun(`
+                INSERT INTO payment_transactions (id, order_id, booking_id, user_id, amount, currency, payment_provider, provider_transaction_id, status, metadata, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [row.id, row.order_id, row.booking_id, row.user_id, row.amount, row.currency, row.payment_provider, row.provider_transaction_id, row.status, row.metadata, row.created_at, row.updated_at]);
+        }
+
+        console.log(`Payment transactions table migrated successfully. ${existingData.length} records restored.`);
+    } catch (error) {
+        console.error('Error migrating payment_transactions table:', error.message);
+    }
 }
 
 // Utilities for lightweight migrations (add missing columns safely)

@@ -305,7 +305,7 @@ CREATE TABLE IF NOT EXISTS payment_transactions (
     user_id TEXT NOT NULL REFERENCES users(id),
     amount REAL NOT NULL,
     currency TEXT DEFAULT 'ZAR',
-    payment_provider TEXT NOT NULL CHECK(payment_provider IN ('payfast', 'yoco', 'cash', 'card_on_site')),
+    payment_provider TEXT NOT NULL CHECK(payment_provider IN ('payfast', 'yoco', 'cash', 'card_on_site', 'eft')),
     provider_transaction_id TEXT,
     status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'completed', 'failed', 'refunded')),
     metadata TEXT, -- JSON string for provider-specific data
