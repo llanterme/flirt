@@ -3393,13 +3393,10 @@ app.patch('/api/admin/bookings/:id', authenticateAdmin, async (req, res) => {
                 const effectiveServiceId = serviceId || booking.service_id;
 
                 // Check if stylist offers this service
-                const staffServiceRow = await new Promise((resolve, reject) => {
-                    db.get(
-                        'SELECT id FROM staff_services WHERE staff_id = ? AND service_id = ? AND active = 1',
-                        [stylistId, effectiveServiceId],
-                        (err, row) => err ? reject(err) : resolve(row)
-                    );
-                });
+                const staffServiceRow = await db.dbGet(
+                    'SELECT id FROM staff_services WHERE staff_id = ? AND service_id = ? AND active = 1',
+                    [stylistId, effectiveServiceId]
+                );
 
                 if (!staffServiceRow) {
                     // Fetch stylist and service names for better error message
