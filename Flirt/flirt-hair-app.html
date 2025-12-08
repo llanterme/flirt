@@ -8552,6 +8552,16 @@
             }
         }
 
+        // Convert time slot to time window (for server compatibility)
+        function timeToTimeWindow(time) {
+            if (!time) return 'MORNING';
+            const [hours] = time.split(':').map(Number);
+            if (hours < 12) return 'MORNING';
+            if (hours < 14) return 'AFTERNOON';
+            if (hours < 16) return 'LATE_AFTERNOON';
+            return 'EVENING';
+        }
+
         // Submit booking from modern flow
         async function submitModernBooking() {
             if (!currentUser) {
@@ -8567,6 +8577,7 @@
             }
 
             const notes = document.getElementById('modernBookingNotes')?.value || '';
+            const timeWindow = timeToTimeWindow(time);
 
             try {
                 // Construct full stylist ID if needed
@@ -8579,6 +8590,7 @@
                         stylistId: fullStylistId,
                         serviceId: serviceId,
                         date: dateStr,
+                        requestedTimeWindow: timeWindow,
                         time: time,
                         notes: notes
                     })
