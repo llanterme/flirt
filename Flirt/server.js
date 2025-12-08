@@ -2917,21 +2917,11 @@ app.put('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
 // Get business settings
 app.get('/api/admin/business-settings', authenticateAdmin, async (req, res) => {
     try {
-        const row = db.prepare('SELECT * FROM business_settings WHERE id = 1').get();
+        let row = await db.dbGet('SELECT * FROM business_settings WHERE id = 1');
         if (!row) {
             // Create default if not exists
-            db.prepare('INSERT OR IGNORE INTO business_settings (id) VALUES (1)').run();
-            const newRow = db.prepare('SELECT * FROM business_settings WHERE id = 1').get();
-            return res.json({
-                success: true,
-                settings: {
-                    businessName: newRow.business_name,
-                    email: newRow.email,
-                    phone: newRow.phone,
-                    address: newRow.address,
-                    hours: JSON.parse(newRow.hours_json || '{}')
-                }
-            });
+            await db.dbRun('INSERT OR IGNORE INTO business_settings (id) VALUES (1)');
+            row = await db.dbGet('SELECT * FROM business_settings WHERE id = 1');
         }
         res.json({
             success: true,
@@ -2961,7 +2951,7 @@ app.put('/api/admin/business-settings', authenticateAdmin, async (req, res) => {
 
         const hoursJson = hours ? JSON.stringify(hours) : null;
 
-        db.prepare(`
+        await db.dbRun(`
             UPDATE business_settings
             SET business_name = COALESCE(?, business_name),
                 email = COALESCE(?, email),
@@ -2970,9 +2960,9 @@ app.put('/api/admin/business-settings', authenticateAdmin, async (req, res) => {
                 hours_json = COALESCE(?, hours_json),
                 updated_at = datetime('now')
             WHERE id = 1
-        `).run(businessName, email, phone, address, hoursJson);
+        `, [businessName, email, phone, address, hoursJson]);
 
-        const updated = db.prepare('SELECT * FROM business_settings WHERE id = 1').get();
+        const updated = await db.dbGet('SELECT * FROM business_settings WHERE id = 1');
         res.json({
             success: true,
             message: 'Business settings updated successfully',
@@ -2997,19 +2987,11 @@ app.put('/api/admin/business-settings', authenticateAdmin, async (req, res) => {
 // Get delivery config
 app.get('/api/admin/delivery-config', authenticateAdmin, async (req, res) => {
     try {
-        const row = db.prepare('SELECT * FROM delivery_config WHERE id = 1').get();
+        let row = await db.dbGet('SELECT * FROM delivery_config WHERE id = 1');
         if (!row) {
             // Create default if not exists
-            db.prepare('INSERT OR IGNORE INTO delivery_config (id) VALUES (1)').run();
-            const newRow = db.prepare('SELECT * FROM delivery_config WHERE id = 1').get();
-            return res.json({
-                success: true,
-                config: {
-                    standardFee: newRow.standard_fee,
-                    expressFee: newRow.express_fee,
-                    freeThreshold: newRow.free_threshold
-                }
-            });
+            await db.dbRun('INSERT OR IGNORE INTO delivery_config (id) VALUES (1)');
+            row = await db.dbGet('SELECT * FROM delivery_config WHERE id = 1');
         }
         res.json({
             success: true,
@@ -3041,16 +3023,16 @@ app.put('/api/admin/delivery-config', authenticateAdmin, async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid free threshold' });
         }
 
-        db.prepare(`
+        await db.dbRun(`
             UPDATE delivery_config
             SET standard_fee = COALESCE(?, standard_fee),
                 express_fee = COALESCE(?, express_fee),
                 free_threshold = COALESCE(?, free_threshold),
                 updated_at = datetime('now')
             WHERE id = 1
-        `).run(standardFee, expressFee, freeThreshold);
+        `, [standardFee, expressFee, freeThreshold]);
 
-        const updated = db.prepare('SELECT * FROM delivery_config WHERE id = 1').get();
+        const updated = await db.dbGet('SELECT * FROM delivery_config WHERE id = 1');
         res.json({
             success: true,
             message: 'Delivery settings updated successfully',
