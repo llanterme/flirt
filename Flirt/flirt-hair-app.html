@@ -1486,9 +1486,96 @@
         }
 
         .booking-steps[data-step="1"]::after { width: 0%; }
-        .booking-steps[data-step="2"]::after { width: 33%; }
-        .booking-steps[data-step="3"]::after { width: 66%; }
-        .booking-steps[data-step="4"]::after { width: 100%; }
+        .booking-steps[data-step="2"]::after { width: 25%; }
+        .booking-steps[data-step="3"]::after { width: 50%; }
+        .booking-steps[data-step="4"]::after { width: 75%; }
+        .booking-steps[data-step="5"]::after { width: 100%; }
+
+        /* Service Type Selection Cards */
+        .service-type-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .service-type-card {
+            background: white;
+            border: 2px solid #E5E7EB;
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .service-type-card:hover {
+            border-color: var(--brand-pink);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(246, 117, 153, 0.15);
+        }
+
+        .service-type-card.selected {
+            border-color: var(--brand-pink);
+            box-shadow: 0 0 0 3px rgba(246, 117, 153, 0.2);
+        }
+
+        .service-type-card .card-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #FFE8EE 0%, #FFF5F8 100%);
+        }
+
+        .service-type-card .card-content {
+            padding: 16px;
+            text-align: center;
+        }
+
+        .service-type-card .card-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .service-type-card .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--brand-charcoal);
+            margin-bottom: 4px;
+        }
+
+        .service-type-card .card-subtitle {
+            font-size: 12px;
+            color: #6B7280;
+        }
+
+        .service-type-card .selected-check {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 24px;
+            height: 24px;
+            background: var(--brand-pink);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .service-type-card.selected .selected-check {
+            display: flex;
+        }
+
+        @media (max-width: 400px) {
+            .service-type-grid {
+                grid-template-columns: 1fr;
+            }
+            .service-type-card .card-image {
+                height: 100px;
+            }
+        }
 
         .step-item {
             display: flex;
@@ -5321,26 +5408,68 @@
                 <div class="booking-steps" data-step="1" id="bookingStepsIndicator">
                     <div class="step-item active" data-step="1">
                         <div class="step-circle">1</div>
-                        <div class="step-label">Service</div>
+                        <div class="step-label">Type</div>
                     </div>
                     <div class="step-item" data-step="2">
                         <div class="step-circle">2</div>
-                        <div class="step-label">Stylist</div>
+                        <div class="step-label">Service</div>
                     </div>
                     <div class="step-item" data-step="3">
                         <div class="step-circle">3</div>
-                        <div class="step-label">Date & Time</div>
+                        <div class="step-label" id="step3LabelText">Stylist</div>
                     </div>
                     <div class="step-item" data-step="4">
                         <div class="step-circle">4</div>
+                        <div class="step-label">Date & Time</div>
+                    </div>
+                    <div class="step-item" data-step="5">
+                        <div class="step-circle">5</div>
                         <div class="step-label">Confirm</div>
                     </div>
                 </div>
 
-                <!-- Step 1: Service Selection -->
+                <!-- Step 1: Service Type Selection (Hair vs Beauty) -->
                 <div class="booking-step" id="bookingStep1">
-                    <h2 class="section-title-modern">Select Your Service</h2>
-                    <p class="section-subtitle-modern">Choose the service you'd like to book</p>
+                    <h2 class="section-title-modern">What would you like to book?</h2>
+                    <p class="section-subtitle-modern">Choose the type of service you're looking for</p>
+
+                    <div class="service-type-grid">
+                        <div class="service-type-card" onclick="selectServiceType('hair', this)">
+                            <div class="selected-check">✓</div>
+                            <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Hair Extensions" class="card-image" onerror="this.style.display='none'">
+                            <div class="card-content">
+                                <div class="card-icon">💇‍♀️</div>
+                                <div class="card-title">Hair Extensions</div>
+                                <div class="card-subtitle">Tape, Weft, Keratin & more</div>
+                            </div>
+                        </div>
+                        <div class="service-type-card" onclick="selectServiceType('beauty', this)">
+                            <div class="selected-check">✓</div>
+                            <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg" alt="Beauty Services" class="card-image" onerror="this.style.display='none'">
+                            <div class="card-content">
+                                <div class="card-icon">💅</div>
+                                <div class="card-title">Nails & Beauty</div>
+                                <div class="card-subtitle">Nails, Brows, Lashes & more</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-continue" id="step1ContinueBtn" onclick="goToBookingStep(2)" disabled>
+                        Continue to Services
+                    </button>
+                </div>
+
+                <!-- Step 2: Service Selection -->
+                <div class="booking-step" id="bookingStep2" style="display: none;">
+                    <div class="back-link" onclick="goToBookingStep(1)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Service Type
+                    </div>
+
+                    <h2 class="section-title-modern" id="step2Title">Select Your Service</h2>
+                    <p class="section-subtitle-modern" id="step2Subtitle">Choose the service you'd like to book</p>
 
                     <div class="service-list-modern" id="modernServicesList">
                         <div style="text-align: center; padding: 40px; color: #6B7280;">
@@ -5349,14 +5478,14 @@
                         </div>
                     </div>
 
-                    <button class="btn-continue" id="step1ContinueBtn" onclick="goToBookingStep(2)" disabled>
+                    <button class="btn-continue" id="step2ContinueBtn" onclick="goToBookingStep(3)" disabled>
                         Continue to Stylist Selection
                     </button>
                 </div>
 
-                <!-- Step 2: Stylist Selection -->
-                <div class="booking-step" id="bookingStep2" style="display: none;">
-                    <div class="back-link" onclick="goToBookingStep(1)">
+                <!-- Step 3: Stylist Selection (for hair) / Skip for beauty -->
+                <div class="booking-step" id="bookingStep3" style="display: none;">
+                    <div class="back-link" onclick="goToBookingStep(2)">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M19 12H5M12 19l-7-7 7-7"/>
                         </svg>
@@ -5364,7 +5493,7 @@
                     </div>
 
                     <h2 class="section-title-modern">Choose Your Stylist</h2>
-                    <p class="section-subtitle-modern" id="step2ServiceInfo">For Tape Extensions - R2,500</p>
+                    <p class="section-subtitle-modern" id="step3ServiceInfo">For Tape Extensions - R2,500</p>
 
                     <div class="stylist-list-modern" id="modernStylistsList">
                         <div style="text-align: center; padding: 40px; color: #6B7280;">
@@ -5373,22 +5502,22 @@
                         </div>
                     </div>
 
-                    <button class="btn-continue" id="step2ContinueBtn" onclick="goToBookingStep(3)" disabled>
+                    <button class="btn-continue" id="step3ContinueBtn" onclick="goToBookingStep(4)" disabled>
                         Continue to Date & Time
                     </button>
                 </div>
 
-                <!-- Step 3: Date & Time Selection -->
-                <div class="booking-step" id="bookingStep3" style="display: none;">
-                    <div class="back-link" onclick="goToBookingStep(2)">
+                <!-- Step 4: Date & Time Selection -->
+                <div class="booking-step" id="bookingStep4" style="display: none;">
+                    <div class="back-link" id="step4BackLink" onclick="goToBookingStep(3)">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M19 12H5M12 19l-7-7 7-7"/>
                         </svg>
-                        Back to Stylist
+                        <span id="step4BackText">Back to Stylist</span>
                     </div>
 
                     <h2 class="section-title-modern">Select Date & Time</h2>
-                    <p class="section-subtitle-modern" id="step3StylistInfo">With Emma - Stylist & Extension Specialist</p>
+                    <p class="section-subtitle-modern" id="step4Info">With Emma - Stylist & Extension Specialist</p>
 
                     <div class="datetime-section">
                         <h4>📅 Select Date</h4>
@@ -5411,8 +5540,8 @@
                             <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '10:30')">10:30</div>
                             <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '11:00')">11:00</div>
                             <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '11:30')">11:30</div>
-                            <div class="time-slot-modern unavailable">12:00</div>
-                            <div class="time-slot-modern unavailable">12:30</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '12:00')">12:00</div>
+                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '12:30')">12:30</div>
                             <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '13:00')">13:00</div>
                             <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '13:30')">13:30</div>
                             <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '14:00')">14:00</div>
@@ -5424,14 +5553,14 @@
                         </div>
                     </div>
 
-                    <button class="btn-continue" id="step3ContinueBtn" onclick="goToBookingStep(4)" disabled>
+                    <button class="btn-continue" id="step4ContinueBtn" onclick="goToBookingStep(5)" disabled>
                         Review Booking
                     </button>
                 </div>
 
-                <!-- Step 4: Review & Confirm -->
-                <div class="booking-step" id="bookingStep4" style="display: none;">
-                    <div class="back-link" onclick="goToBookingStep(3)">
+                <!-- Step 5: Review & Confirm -->
+                <div class="booking-step" id="bookingStep5" style="display: none;">
+                    <div class="back-link" onclick="goToBookingStep(4)">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M19 12H5M12 19l-7-7 7-7"/>
                         </svg>
@@ -5447,28 +5576,28 @@
                             <span class="label">Service</span>
                             <span class="value">
                                 <span id="summaryService">Tape Extensions</span>
-                                <span class="edit-btn" onclick="goToBookingStep(1)">Edit</span>
+                                <span class="edit-btn" onclick="goToBookingStep(2)">Edit</span>
                             </span>
                         </div>
-                        <div class="summary-row">
+                        <div class="summary-row" id="summaryStylistRow">
                             <span class="label">Stylist</span>
                             <span class="value">
                                 <span id="summaryStylist">Emma Williams</span>
-                                <span class="edit-btn" onclick="goToBookingStep(2)">Edit</span>
+                                <span class="edit-btn" onclick="goToBookingStep(3)">Edit</span>
                             </span>
                         </div>
                         <div class="summary-row">
                             <span class="label">Date</span>
                             <span class="value">
                                 <span id="summaryDate">Monday, Dec 16, 2024</span>
-                                <span class="edit-btn" onclick="goToBookingStep(3)">Edit</span>
+                                <span class="edit-btn" onclick="goToBookingStep(4)">Edit</span>
                             </span>
                         </div>
                         <div class="summary-row">
                             <span class="label">Time</span>
                             <span class="value">
                                 <span id="summaryTime">10:00 AM</span>
-                                <span class="edit-btn" onclick="goToBookingStep(3)">Edit</span>
+                                <span class="edit-btn" onclick="goToBookingStep(4)">Edit</span>
                             </span>
                         </div>
                         <div class="summary-row">
@@ -5483,7 +5612,7 @@
 
                     <div class="form-group" style="margin-top: 20px;">
                         <label class="form-label">Special Requests or Notes (Optional)</label>
-                        <textarea class="form-input" id="modernBookingNotes" rows="3" placeholder="Any specific requirements, preferences, or questions for your stylist..."></textarea>
+                        <textarea class="form-input" id="modernBookingNotes" rows="3" placeholder="Any specific requirements, preferences, or questions..."></textarea>
                     </div>
 
                     <button class="btn-continue" onclick="submitModernBooking()">
@@ -8153,15 +8282,29 @@
         // Quick book a specific service type from home page
         function quickBookService(serviceType) {
             switchTab('booking');
-            // Pre-select booking type based on service
-            if (serviceType === 'hair' || serviceType === 'extensions') {
-                selectBookingType('hair');
-            } else if (serviceType === 'nails' || serviceType === 'beauty' || serviceType === 'facial' || serviceType === 'lashes' || serviceType === 'makeup') {
-                selectBookingType('beauty');
-            } else {
-                // Default to hair for unknown types
-                selectBookingType('hair');
+
+            // Determine the booking type
+            let type = 'hair';
+            if (serviceType === 'nails' || serviceType === 'beauty' || serviceType === 'facial' || serviceType === 'lashes' || serviceType === 'makeup') {
+                type = 'beauty';
             }
+
+            // Pre-select the service type card
+            const cards = document.querySelectorAll('.service-type-card');
+            cards.forEach(card => {
+                card.classList.remove('selected');
+                if ((type === 'hair' && card.querySelector('.card-title')?.textContent.includes('Hair')) ||
+                    (type === 'beauty' && card.querySelector('.card-title')?.textContent.includes('Nails'))) {
+                    card.classList.add('selected');
+                }
+            });
+
+            // Set state and enable continue
+            modernBookingState.bookingType = type;
+            document.getElementById('step1ContinueBtn').disabled = false;
+
+            // Optionally auto-advance to step 2
+            goToBookingStep(2);
         }
 
         // ============================================
@@ -8186,6 +8329,7 @@
         // ============================================
         let modernBookingState = {
             currentStep: 1,
+            bookingType: null, // 'hair' or 'beauty'
             service: null,
             serviceId: null,
             stylist: null,
@@ -8196,33 +8340,83 @@
             calendarMonthOffset: 0
         };
 
+        let beautyServicesRaw = []; // Raw beauty service data from API
+
         // Initialize modern booking on page load
         function initModernBooking() {
-            loadModernServices();
             renderModernCalendar();
         }
 
-        // Load services for modern booking flow
+        // Select service type (Hair vs Beauty)
+        function selectServiceType(type, element) {
+            // Remove selection from all type cards
+            document.querySelectorAll('.service-type-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selection to clicked card
+            element.classList.add('selected');
+
+            // Store selection
+            modernBookingState.bookingType = type;
+
+            // Enable continue button
+            document.getElementById('step1ContinueBtn').disabled = false;
+        }
+
+        // Load services based on type
         async function loadModernServices() {
             const container = document.getElementById('modernServicesList');
             if (!container) return;
 
+            const type = modernBookingState.bookingType;
+            const isHair = type === 'hair';
+
+            // Update step 2 UI based on type
+            document.getElementById('step2Title').textContent = isHair ? 'Select Your Hair Service' : 'Select Your Beauty Service';
+            document.getElementById('step2Subtitle').textContent = isHair
+                ? 'Choose from our hair extension and styling services'
+                : 'Choose from our nails, brows, and lashes services';
+
+            // Update step 2 continue button text
+            document.getElementById('step2ContinueBtn').textContent = isHair
+                ? 'Continue to Stylist Selection'
+                : 'Continue to Date & Time';
+
+            // Update step 3 label
+            document.getElementById('step3LabelText').textContent = isHair ? 'Stylist' : 'Skip';
+
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #6B7280;">
+                    <div class="loading-spinner" style="margin: 0 auto 15px;"></div>
+                    Loading services...
+                </div>
+            `;
+
             try {
-                const response = await fetch(`${API_BASE}/services/hair`);
+                const endpoint = isHair ? '/services/hair' : '/services/beauty';
+                const response = await fetch(`${API_BASE}${endpoint}`);
                 const data = await response.json();
 
                 if (!data.success || !data.services || data.services.length === 0) {
                     container.innerHTML = `
                         <div style="text-align: center; padding: 40px; color: #6B7280;">
-                            No services available at the moment.
+                            No ${isHair ? 'hair' : 'beauty'} services available at the moment.
                         </div>
                     `;
                     return;
                 }
 
-                hairServicesRaw = data.services;
+                // Cache services
+                if (isHair) {
+                    hairServicesRaw = data.services;
+                } else {
+                    beautyServicesRaw = data.services;
+                }
 
-                container.innerHTML = data.services
+                const servicesArray = isHair ? hairServicesRaw : beautyServicesRaw;
+
+                container.innerHTML = servicesArray
                     .filter(s => s.active !== 0)
                     .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
                     .map(service => {
@@ -8262,17 +8456,18 @@
             element.classList.add('selected');
 
             // Find service details
-            const service = hairServicesRaw.find(s => s.id === serviceId);
+            const servicesArray = modernBookingState.bookingType === 'hair' ? hairServicesRaw : beautyServicesRaw;
+            const service = servicesArray.find(s => s.id === serviceId);
             if (service) {
                 modernBookingState.service = service;
                 modernBookingState.serviceId = serviceId;
 
                 // Enable continue button
-                document.getElementById('step1ContinueBtn').disabled = false;
+                document.getElementById('step2ContinueBtn').disabled = false;
             }
         }
 
-        // Load stylists for selected service
+        // Load stylists for selected service (hair only)
         async function loadModernStylists() {
             const container = document.getElementById('modernStylistsList');
             if (!container || !modernBookingState.serviceId) return;
@@ -8281,7 +8476,7 @@
             const service = modernBookingState.service;
             if (service) {
                 const price = formatServicePrice(service.price);
-                document.getElementById('step2ServiceInfo').textContent = `For ${service.name} - ${price}`;
+                document.getElementById('step3ServiceInfo').textContent = `For ${service.name} - ${price}`;
             }
 
             container.innerHTML = `
@@ -8301,7 +8496,7 @@
                             <div style="font-size: 48px; margin-bottom: 15px;">😔</div>
                             <div style="font-weight: 600; margin-bottom: 10px;">No Stylists Available</div>
                             <div style="margin-bottom: 20px;">No stylists are currently assigned to this service.</div>
-                            <button class="btn btn-outline" onclick="goToBookingStep(1)">← Choose Different Service</button>
+                            <button class="btn btn-outline" onclick="goToBookingStep(2)">← Choose Different Service</button>
                         </div>
                     `;
                     return;
@@ -8359,14 +8554,28 @@
                 modernBookingState.stylistId = stylistId;
 
                 // Enable continue button
-                document.getElementById('step2ContinueBtn').disabled = false;
+                document.getElementById('step3ContinueBtn').disabled = false;
             }
         }
 
         // Navigate between booking steps
         function goToBookingStep(step) {
+            const isBeauty = modernBookingState.bookingType === 'beauty';
+
+            // For beauty: skip step 3 (stylist selection)
+            if (isBeauty) {
+                // Going forward from step 2, jump to step 4
+                if (step === 3 && modernBookingState.currentStep === 2) {
+                    step = 4;
+                }
+                // Going back from step 4, jump to step 2
+                if (step === 3 && modernBookingState.currentStep === 4) {
+                    step = 2;
+                }
+            }
+
             // Hide all steps
-            for (let i = 1; i <= 4; i++) {
+            for (let i = 1; i <= 5; i++) {
                 const stepEl = document.getElementById(`bookingStep${i}`);
                 if (stepEl) stepEl.style.display = 'none';
             }
@@ -8387,16 +8596,33 @@
 
             // Load step-specific data
             if (step === 2) {
-                loadModernStylists();
+                loadModernServices();
             } else if (step === 3) {
-                // Update stylist info display
-                if (modernBookingState.stylist) {
-                    const role = modernBookingState.stylist.specialty || 'Stylist';
-                    document.getElementById('step3StylistInfo').textContent =
-                        `With ${modernBookingState.stylist.name} - ${role}`;
-                }
-                renderModernCalendar();
+                // Only for hair - load stylists
+                loadModernStylists();
             } else if (step === 4) {
+                // Update step 4 back button based on type
+                const backText = document.getElementById('step4BackText');
+                const backLink = document.getElementById('step4BackLink');
+                if (isBeauty) {
+                    backText.textContent = 'Back to Services';
+                    backLink.onclick = () => goToBookingStep(2);
+                } else {
+                    backText.textContent = 'Back to Stylist';
+                    backLink.onclick = () => goToBookingStep(3);
+                }
+
+                // Update step 4 info display
+                const step4Info = document.getElementById('step4Info');
+                if (isBeauty) {
+                    step4Info.textContent = `For ${modernBookingState.service?.name || 'your service'}`;
+                } else if (modernBookingState.stylist) {
+                    const role = modernBookingState.stylist.specialty || 'Stylist';
+                    step4Info.textContent = `With ${modernBookingState.stylist.name} - ${role}`;
+                }
+
+                renderModernCalendar();
+            } else if (step === 5) {
                 updateBookingSummary();
             }
         }
@@ -8487,7 +8713,7 @@
             modernBookingState.date = new Date(dateStr + 'T00:00:00');
 
             // Check if time is also selected to enable continue
-            checkStep3Complete();
+            checkStep4Complete();
         }
 
         // Select time slot in modern booking
@@ -8505,12 +8731,12 @@
             modernBookingState.time = time;
 
             // Check if date is also selected to enable continue
-            checkStep3Complete();
+            checkStep4Complete();
         }
 
-        // Check if step 3 is complete
-        function checkStep3Complete() {
-            const btn = document.getElementById('step3ContinueBtn');
+        // Check if step 4 (date/time) is complete
+        function checkStep4Complete() {
+            const btn = document.getElementById('step4ContinueBtn');
             if (btn) {
                 btn.disabled = !(modernBookingState.dateStr && modernBookingState.time);
             }
@@ -8522,6 +8748,13 @@
             const stylist = modernBookingState.stylist;
             const date = modernBookingState.date;
             const time = modernBookingState.time;
+            const isBeauty = modernBookingState.bookingType === 'beauty';
+
+            // Show/hide stylist row based on booking type
+            const stylistRow = document.getElementById('summaryStylistRow');
+            if (stylistRow) {
+                stylistRow.style.display = isBeauty ? 'none' : 'flex';
+            }
 
             if (service) {
                 document.getElementById('summaryService').textContent = service.name;
@@ -8529,7 +8762,7 @@
                 document.getElementById('summaryTotal').textContent = formatServicePrice(service.price);
             }
 
-            if (stylist) {
+            if (stylist && !isBeauty) {
                 document.getElementById('summaryStylist').textContent = stylist.name;
             }
 
@@ -8569,10 +8802,18 @@
                 return;
             }
 
-            const { service, serviceId, stylist, stylistId, dateStr, time } = modernBookingState;
+            const { bookingType, service, serviceId, stylist, stylistId, dateStr, time } = modernBookingState;
+            const isBeauty = bookingType === 'beauty';
 
-            if (!serviceId || !stylistId || !dateStr || !time) {
+            // Validate required fields
+            if (!serviceId || !dateStr || !time) {
                 showToast({ type: 'error', title: 'Incomplete Booking', message: 'Please complete all booking details' });
+                return;
+            }
+
+            // Hair bookings require stylist
+            if (!isBeauty && !stylistId) {
+                showToast({ type: 'error', title: 'Incomplete Booking', message: 'Please select a stylist' });
                 return;
             }
 
@@ -8580,39 +8821,48 @@
             const timeWindow = timeToTimeWindow(time);
 
             try {
-                // Construct full stylist ID if needed
-                const fullStylistId = stylistId.startsWith('stylist_') ? stylistId : `stylist_${stylistId}`;
+                // Build request body based on booking type
+                const requestBody = {
+                    type: isBeauty ? 'beauty' : 'hair',
+                    serviceId: serviceId,
+                    date: dateStr,
+                    time: time,
+                    notes: notes
+                };
+
+                if (isBeauty) {
+                    // Beauty bookings don't need stylist or timeWindow
+                } else {
+                    // Hair bookings need stylist and timeWindow
+                    const fullStylistId = stylistId.startsWith('stylist_') ? stylistId : `stylist_${stylistId}`;
+                    requestBody.stylistId = fullStylistId;
+                    requestBody.requestedTimeWindow = timeWindow;
+                }
 
                 await apiCall('/bookings', {
                     method: 'POST',
-                    body: JSON.stringify({
-                        type: 'hair',
-                        stylistId: fullStylistId,
-                        serviceId: serviceId,
-                        date: dateStr,
-                        requestedTimeWindow: timeWindow,
-                        time: time,
-                        notes: notes
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 showToast({ type: 'success', title: 'Booking Confirmed!', message: 'Your appointment has been booked successfully!' });
 
                 // Show confirmation modal
+                const confirmationType = isBeauty ? 'Beauty Appointment' : 'Hair Appointment';
                 showBookingConfirmation({
-                    type: 'Hair Appointment',
+                    type: confirmationType,
                     service: service.name,
                     duration: formatDuration(service.duration),
                     price: formatServicePrice(service.price),
                     date: modernBookingState.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
                     time: time,
-                    stylist: stylist.name,
+                    stylist: isBeauty ? 'Any available' : (stylist?.name || 'N/A'),
                     points: 0
                 });
 
                 // Reset modern booking state
                 modernBookingState = {
                     currentStep: 1,
+                    bookingType: null,
                     service: null,
                     serviceId: null,
                     stylist: null,
@@ -8625,6 +8875,7 @@
 
                 // Reset UI
                 goToBookingStep(1);
+                document.querySelectorAll('.service-type-card').forEach(card => card.classList.remove('selected'));
                 document.querySelectorAll('.service-item-modern').forEach(item => item.classList.remove('selected'));
                 document.getElementById('step1ContinueBtn').disabled = true;
 
