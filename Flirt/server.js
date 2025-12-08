@@ -1457,6 +1457,19 @@ app.post('/api/payments/webhook/payfast', async (req, res) => {
 
         if (result.paymentId) {
             await PaymentRepository.updateStatus(result.paymentId, providerStatus, result.pfPaymentId, { itn: result });
+
+            // Check if this is a booking payment and update booking status
+            const payment = await PaymentRepository.findById(result.paymentId);
+            if (payment && payment.booking_id) {
+                console.log(`💳 Booking payment received for ${payment.booking_id}: ${paymentStatus}`);
+                await BookingRepository.recordPayment(payment.booking_id, {
+                    status: paymentStatus,
+                    method: 'payfast',
+                    amount: payment.amount,
+                    reference: result.pfPaymentId,
+                    date: new Date().toISOString()
+                });
+            }
         }
         if (result.orderId) {
             await OrderRepository.updatePaymentStatus(result.orderId, paymentStatus);
@@ -3418,6 +3431,276 @@ app.post('/api/admin/bookings/:id/assign-time', authenticateAdmin, async (req, r
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
+// ============================================
+// BOOKING PAYMENT ENDPOINTS
+// ============================================
+
+// Initiate payment for a booking (client or admin-generated link)
+app.post('/api/bookings/:id/payment/initiate', authenticateToken, async (req, res) => {
+    try {
+        const booking = await BookingRepository.findById(req.params.id);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        // Allow if user owns the booking or is admin
+        if (booking.user_id !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Unauthorized' });
+        }
+
+        if (booking.payment_status === 'paid') {
+            return res.status(400).json({ success: false, message: 'Booking already paid' });
+        }
+
+        const customer = await UserRepository.findById(booking.user_id);
+        if (!customer) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+
+        const configStatus = PaymentService.getPaymentConfigStatus();
+        if (!configStatus.payfast.configured) {
+            return res.status(400).json({ success: false, message: 'PayFast is not configured' });
+        }
+
+        // Create payment for booking
+        const paymentAmount = booking.service_price;
+        const paymentInit = await PaymentService.initializePayment(
+            'payfast',
+            {
+                id: `booking_${booking.id}`,
+                total: paymentAmount,
+                items: [{ name: booking.service_name, quantity: 1, price: paymentAmount }]
+            },
+            { id: customer.id, name: customer.name || customer.email, email: customer.email }
+        );
+
+        // Create payment transaction record
+        await PaymentRepository.create({
+            id: paymentInit.paymentId,
+            bookingId: booking.id,
+            userId: customer.id,
+            amount: paymentAmount,
+            currency: 'ZAR',
+            provider: 'payfast',
+            status: 'pending',
+            metadata: { providerResponse: paymentInit }
+        });
+
+        // Update booking payment status to pending
+        await BookingRepository.update(booking.id, {
+            paymentStatus: 'pending',
+            paymentAmount: paymentAmount
+        });
+
+        console.log(`💳 Payment initiated for booking ${booking.id}: R${paymentAmount}`);
+
+        res.json({
+            success: true,
+            payment: paymentInit,
+            message: 'Payment link generated'
+        });
+    } catch (error) {
+        console.error('Booking payment initiation error:', error);
+        res.status(500).json({ success: false, message: error.message || 'Failed to initiate payment' });
+    }
+});
+
+// Record manual payment for a booking (admin only)
+app.post('/api/admin/bookings/:id/payment/record', authenticateAdmin, async (req, res) => {
+    try {
+        const { method, amount, reference, notes } = req.body;
+
+        if (!method || !amount) {
+            return res.status(400).json({
+                success: false,
+                message: 'Payment method and amount are required'
+            });
+        }
+
+        const validMethods = ['cash', 'card_on_site', 'eft', 'payfast'];
+        if (!validMethods.includes(method)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid payment method. Must be one of: ${validMethods.join(', ')}`
+            });
+        }
+
+        const booking = await BookingRepository.findById(req.params.id);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        if (booking.payment_status === 'paid') {
+            return res.status(400).json({ success: false, message: 'Booking already paid' });
+        }
+
+        // Record the payment
+        const updatedBooking = await BookingRepository.recordPayment(req.params.id, {
+            status: 'paid',
+            method,
+            amount: parseFloat(amount),
+            reference: reference || null,
+            date: new Date().toISOString()
+        });
+
+        // Create payment transaction record for tracking
+        const paymentId = require('uuid').v4();
+        await PaymentRepository.create({
+            id: paymentId,
+            bookingId: booking.id,
+            userId: booking.user_id,
+            amount: parseFloat(amount),
+            currency: 'ZAR',
+            provider: method,
+            providerTransactionId: reference || null,
+            status: 'completed',
+            metadata: { recordedBy: req.user.id, notes }
+        });
+
+        // Update notes if provided
+        if (notes) {
+            const existingNotes = booking.notes || '';
+            const paymentNote = `[${new Date().toLocaleDateString()}] Payment recorded: R${amount} (${method})${reference ? ` - Ref: ${reference}` : ''}`;
+            await BookingRepository.update(req.params.id, {
+                notes: existingNotes ? `${existingNotes}\n${paymentNote}` : paymentNote
+            });
+        }
+
+        console.log(`💵 Manual payment recorded for booking ${req.params.id}: R${amount} (${method})`);
+
+        res.json({
+            success: true,
+            booking: mapBookingResponse(updatedBooking),
+            message: `Payment of R${amount} recorded successfully`
+        });
+    } catch (error) {
+        console.error('Record payment error:', error);
+        res.status(500).json({ success: false, message: error.message || 'Failed to record payment' });
+    }
+});
+
+// Send payment link to customer (admin only)
+app.post('/api/admin/bookings/:id/payment/send-link', authenticateAdmin, async (req, res) => {
+    try {
+        const { sendMethod = 'email' } = req.body; // 'email', 'sms', or 'both'
+
+        const booking = await BookingRepository.findById(req.params.id);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        if (booking.status !== 'CONFIRMED') {
+            return res.status(400).json({
+                success: false,
+                message: 'Can only send payment links for confirmed bookings'
+            });
+        }
+
+        if (booking.payment_status === 'paid') {
+            return res.status(400).json({ success: false, message: 'Booking already paid' });
+        }
+
+        const customer = await UserRepository.findById(booking.user_id);
+        if (!customer) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+
+        const configStatus = PaymentService.getPaymentConfigStatus();
+        if (!configStatus.payfast.configured) {
+            return res.status(400).json({ success: false, message: 'PayFast is not configured' });
+        }
+
+        // Generate payment link
+        const paymentAmount = booking.service_price;
+        const paymentInit = await PaymentService.initializePayment(
+            'payfast',
+            {
+                id: `booking_${booking.id}`,
+                total: paymentAmount,
+                items: [{ name: booking.service_name, quantity: 1, price: paymentAmount }]
+            },
+            { id: customer.id, name: customer.name || customer.email, email: customer.email }
+        );
+
+        // Create payment transaction record
+        await PaymentRepository.create({
+            id: paymentInit.paymentId,
+            bookingId: booking.id,
+            userId: customer.id,
+            amount: paymentAmount,
+            currency: 'ZAR',
+            provider: 'payfast',
+            status: 'pending',
+            metadata: { providerResponse: paymentInit, sentBy: req.user.id }
+        });
+
+        // Update booking payment status
+        await BookingRepository.update(booking.id, {
+            paymentStatus: 'pending',
+            paymentAmount: paymentAmount
+        });
+
+        // Send payment link via email
+        if (sendMethod === 'email' || sendMethod === 'both') {
+            if (customer.email) {
+                try {
+                    await emailService.sendPaymentLink(booking, customer, paymentInit.redirectUrl || paymentInit.formAction);
+                    console.log(`📧 Payment link sent to ${customer.email}`);
+                } catch (emailError) {
+                    console.error('Failed to send payment email:', emailError.message);
+                }
+            }
+        }
+
+        console.log(`💳 Payment link generated for booking ${booking.id} and sent to customer`);
+
+        res.json({
+            success: true,
+            payment: paymentInit,
+            customer: { name: customer.name, email: customer.email, phone: customer.phone },
+            message: `Payment link ${sendMethod === 'email' ? 'sent' : 'generated'} successfully`
+        });
+    } catch (error) {
+        console.error('Send payment link error:', error);
+        res.status(500).json({ success: false, message: error.message || 'Failed to send payment link' });
+    }
+});
+
+// Get payment status for a booking
+app.get('/api/bookings/:id/payment', authenticateToken, async (req, res) => {
+    try {
+        const booking = await BookingRepository.findById(req.params.id);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        // Allow if user owns the booking or is admin
+        if (booking.user_id !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Unauthorized' });
+        }
+
+        // Get payment transactions for this booking
+        const payments = await PaymentRepository.findByBookingId(booking.id);
+
+        res.json({
+            success: true,
+            paymentStatus: booking.payment_status || 'unpaid',
+            paymentMethod: booking.payment_method,
+            paymentAmount: booking.payment_amount,
+            paymentDate: booking.payment_date,
+            paymentReference: booking.payment_reference,
+            transactions: payments
+        });
+    } catch (error) {
+        console.error('Get booking payment error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch payment status' });
+    }
+});
+
+// Webhook handler for booking payments (PayFast ITN - extended)
+// This is handled by existing webhook but we need to also check for booking payments
+// (The existing webhook at /api/payments/webhook/payfast handles this via the payment transaction record)
 
 // Get all orders (admin)
 app.get('/api/admin/orders', authenticateAdmin, async (req, res) => {

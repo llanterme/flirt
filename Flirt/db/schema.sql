@@ -116,6 +116,13 @@ CREATE TABLE IF NOT EXISTS bookings (
     commission_rate REAL, -- override commission rate for this booking, NULL = use service/stylist default
     commission_amount REAL, -- calculated commission amount (snapshot when completed)
 
+    -- Payment tracking
+    payment_status TEXT DEFAULT 'unpaid' CHECK(payment_status IN ('unpaid', 'pending', 'paid', 'refunded')),
+    payment_method TEXT CHECK(payment_method IN ('payfast', 'yoco', 'cash', 'card_on_site', 'eft')),
+    payment_reference TEXT, -- for manual payments (receipt number, EFT reference, etc.)
+    payment_date TEXT, -- when payment was received
+    payment_amount REAL, -- actual amount paid (may differ from service_price with discounts)
+
     notes TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT
@@ -127,6 +134,7 @@ CREATE INDEX IF NOT EXISTS idx_bookings_requested_time_window ON bookings(reques
 CREATE INDEX IF NOT EXISTS idx_bookings_assigned_start_time ON bookings(assigned_start_time);
 CREATE INDEX IF NOT EXISTS idx_bookings_stylist ON bookings(stylist_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_bookings_payment_status ON bookings(payment_status);
 
 -- Legacy indexes (can be removed after migration)
 CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(date);

@@ -9796,15 +9796,31 @@ async function showNotifications() {
                         statusBadge = '<span style="background: var(--warning); color: var(--brand-charcoal); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">Pending</span>';
                     }
 
+                    // Payment status for confirmed bookings
+                    const paymentStatus = booking.paymentStatus || booking.payment_status || 'unpaid';
+                    let paymentBadge = '';
+                    let payButton = '';
+                    if (statusUpper === 'CONFIRMED') {
+                        if (paymentStatus === 'paid') {
+                            paymentBadge = '<span style="background: #e8f5e9; color: #388e3c; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px;">✓ Paid</span>';
+                        } else if (paymentStatus === 'pending') {
+                            paymentBadge = '<span style="background: #fff3e0; color: #f57c00; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px;">⏳ Payment Pending</span>';
+                        } else {
+                            // Show Pay Now button for unpaid confirmed bookings
+                            payButton = `<button class="btn btn-small btn-primary" onclick="initiateBookingPayment('${booking.id}')" style="background: var(--brand-pink);">💳 Pay R${booking.servicePrice || booking.service_price}</button>`;
+                        }
+                    }
+
                     return `
                         <div class="appointment-card" data-booking-id="${booking.id}">
-                            <div class="appointment-date">${formattedDate}${statusBadge}</div>
+                            <div class="appointment-date">${formattedDate}${statusBadge}${paymentBadge}</div>
                             <div class="appointment-details">
                                 <div class="appointment-info">
                                     <div class="appointment-service">${booking.serviceName}</div>
                                     <div class="appointment-time">⏰ ${timeDisplay} with ${stylistName}</div>
                                 </div>
                                 <div class="appointment-actions">
+                                    ${payButton}
                                     <button class="btn btn-small btn-outline" onclick="openRescheduleModal('${booking.id}')">Reschedule</button>
                                     <button class="btn btn-small" onclick="cancelBooking('${booking.id}')" style="background: none; color: var(--danger); border: 1px solid #e74c3c;">Cancel</button>
                                 </div>
@@ -9834,6 +9850,56 @@ async function showNotifications() {
                         <button class="btn btn-outline" onclick="loadUpcomingAppointment()">Retry</button>
                     </div>
                 `;
+            }
+        }
+
+        // ========== BOOKING PAYMENT FUNCTIONALITY ==========
+        async function initiateBookingPayment(bookingId) {
+            const booking = userBookingsData.find(b => b.id === bookingId);
+            if (!booking) {
+                showToast({ type: 'error', title: 'Booking not found', message: 'Please refresh and try again.' });
+                return;
+            }
+
+            try {
+                showToast({ type: 'loading', title: 'Preparing payment...', message: 'Please wait' });
+
+                const result = await apiCall(`/bookings/${bookingId}/payment/initiate`, {
+                    method: 'POST'
+                });
+
+                if (result.success && result.payment) {
+                    // Redirect to PayFast payment page
+                    if (result.payment.redirectUrl) {
+                        window.location.href = result.payment.redirectUrl;
+                    } else if (result.payment.formAction) {
+                        // Create and submit form
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = result.payment.formAction;
+
+                        // Add form fields
+                        if (result.payment.fields) {
+                            for (const [key, value] of Object.entries(result.payment.fields)) {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = key;
+                                input.value = value;
+                                form.appendChild(input);
+                            }
+                        }
+
+                        document.body.appendChild(form);
+                        form.submit();
+                    } else {
+                        showToast({ type: 'error', title: 'Payment Error', message: 'Unable to initiate payment. Please contact the salon.' });
+                    }
+                } else {
+                    showToast({ type: 'error', title: 'Payment Error', message: result.message || 'Failed to initiate payment' });
+                }
+            } catch (error) {
+                console.error('Payment initiation error:', error);
+                showToast({ type: 'error', title: 'Payment Error', message: error.message || 'Failed to initiate payment. Please try again.' });
             }
         }
 

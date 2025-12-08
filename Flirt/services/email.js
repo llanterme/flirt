@@ -448,6 +448,57 @@ async function sendWelcomeEmail(customer) {
     return sendEmail(customer.email, subject, html);
 }
 
+// Payment link email for booking
+async function sendPaymentLink(booking, customer, paymentUrl) {
+    const subject = `Complete Your Payment - ${booking.service_name || booking.serviceName}`;
+
+    const html = `
+        ${emailHeader('Complete Your Payment')}
+        <div class="content">
+            <p class="greeting">Hi ${customer.name},</p>
+            <p>Your appointment is confirmed! Please complete your payment to secure your booking.</p>
+
+            <div class="details-box">
+                <h3 style="margin: 0 0 15px; color: #F67599;">Booking Details</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Service</span>
+                    <span class="detail-value">${booking.service_name || booking.serviceName}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Date</span>
+                    <span class="detail-value">${formatEmailDate(booking.requested_date || booking.date)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Time</span>
+                    <span class="detail-value">${booking.assigned_start_time || booking.confirmedTime || booking.time || 'Confirmed'}</span>
+                </div>
+                <div class="detail-row total-row">
+                    <span class="detail-label">Amount Due</span>
+                    <span class="detail-value">R${booking.service_price || booking.servicePrice}</span>
+                </div>
+            </div>
+
+            <p style="text-align: center; margin: 30px 0;">
+                <a href="${paymentUrl}" class="cta-button">Pay Now - R${booking.service_price || booking.servicePrice}</a>
+            </p>
+
+            <p style="font-size: 14px; color: #6d6e70; text-align: center;">
+                This payment link is valid for 24 hours.<br>
+                If you have any questions, please contact us.
+            </p>
+
+            <div class="divider"></div>
+
+            <p style="font-size: 12px; color: #6d6e70;">
+                <strong>Secure Payment:</strong> This payment is processed securely via PayFast. Your card details are never stored by us.
+            </p>
+        </div>
+        ${emailFooter()}
+    `;
+
+    return sendEmail(customer.email, subject, html);
+}
+
 // Loyalty tier upgrade email
 async function sendTierUpgrade(customer, newTier) {
     const tierBenefits = {
@@ -486,6 +537,7 @@ module.exports = {
     sendEmail,
     sendBookingConfirmation,
     sendBookingReminder,
+    sendPaymentLink,
     sendOrderConfirmation,
     sendOrderShipped,
     sendOrderReady,

@@ -115,6 +115,14 @@ async function initializeDatabase() {
         )
     `);
     await ensureIndex('idx_inspo_photos_user', 'user_inspo_photos', 'user_id');
+
+    // Booking payment tracking columns
+    await ensureColumn('bookings', 'payment_status', "TEXT DEFAULT 'unpaid'");
+    await ensureColumn('bookings', 'payment_method', 'TEXT');
+    await ensureColumn('bookings', 'payment_reference', 'TEXT');
+    await ensureColumn('bookings', 'payment_date', 'TEXT');
+    await ensureColumn('bookings', 'payment_amount', 'REAL');
+    await ensureIndex('idx_bookings_payment_status', 'bookings', 'payment_status');
 }
 
 // Utilities for lightweight migrations (add missing columns safely)
@@ -765,7 +773,16 @@ const BookingRepository = {
             date: 'date',
             preferredTimeOfDay: 'preferred_time_of_day',
             time: 'time',
-            confirmedTime: 'confirmed_time'
+            confirmedTime: 'confirmed_time',
+            // Payment tracking fields
+            paymentStatus: 'payment_status',
+            paymentMethod: 'payment_method',
+            paymentReference: 'payment_reference',
+            paymentDate: 'payment_date',
+            paymentAmount: 'payment_amount',
+            // Commission fields
+            commissionRate: 'commission_rate',
+            commissionAmount: 'commission_amount'
         };
 
         for (const [key, dbField] of Object.entries(fieldMap)) {
@@ -825,6 +842,72 @@ const BookingRepository = {
         ]);
 
         return this.findById(bookingId);
+    },
+
+    // Record payment for a booking
+    async recordPayment(bookingId, paymentData) {
+        const sql = `
+            UPDATE bookings SET
+                payment_status = ?,
+                payment_method = ?,
+                payment_reference = ?,
+                payment_date = ?,
+                payment_amount = ?,
+                updated_at = datetime('now')
+            WHERE id = ?
+        `;
+
+        await dbRun(sql, [
+            paymentData.status || 'paid',
+            paymentData.method,
+            paymentData.reference || null,
+            paymentData.date || new Date().toISOString(),
+            paymentData.amount,
+            bookingId
+        ]);
+
+        return this.findById(bookingId);
+    },
+
+    // Find bookings with payment filters
+    async findWithPaymentStatus(filters = {}) {
+        let sql = `
+            SELECT b.*, u.name as customer_name, u.phone as customer_phone, u.email as customer_email,
+                   s.name as stylist_name
+            FROM bookings b
+            LEFT JOIN users u ON u.id = b.user_id
+            LEFT JOIN stylists s ON s.id = b.stylist_id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (filters.paymentStatus) {
+            sql += ' AND b.payment_status = ?';
+            params.push(filters.paymentStatus);
+        }
+
+        if (filters.stylistId) {
+            sql += ' AND b.stylist_id = ?';
+            params.push(filters.stylistId);
+        }
+
+        if (filters.status) {
+            sql += ' AND b.status = ?';
+            params.push(filters.status);
+        }
+
+        if (filters.dateFrom) {
+            sql += ' AND b.requested_date >= ?';
+            params.push(filters.dateFrom);
+        }
+
+        if (filters.dateTo) {
+            sql += ' AND b.requested_date <= ?';
+            params.push(filters.dateTo);
+        }
+
+        sql += ' ORDER BY b.requested_date DESC, b.assigned_start_time DESC';
+        return dbAll(sql, params);
     }
 };
 
@@ -1524,6 +1607,10 @@ const PaymentRepository = {
         return dbAll('SELECT * FROM payment_transactions WHERE order_id = ?', [orderId]);
     },
 
+    async findByBookingId(bookingId) {
+        return dbAll('SELECT * FROM payment_transactions WHERE booking_id = ? ORDER BY created_at DESC', [bookingId]);
+    },
+
     async findByProviderId(providerId) {
         return dbGet('SELECT * FROM payment_transactions WHERE provider_transaction_id = ?', [providerId]);
     },
@@ -1812,8 +1899,10 @@ const PayrollRepository = {
             : `${year}-${String(month + 1).padStart(2, '0')}-01`;
 
         // Join with services to get service-level commission rate
+        // Include payment status for tracking (bookings are included regardless of payment status)
         const bookings = await dbAll(`
-            SELECT b.*, s.commission_rate as service_commission_rate
+            SELECT b.*, s.commission_rate as service_commission_rate,
+                   b.payment_status, b.payment_method, b.payment_date, b.payment_amount
             FROM bookings b
             LEFT JOIN services s ON b.service_id = s.id
             WHERE b.stylist_id = ?
@@ -1860,9 +1949,24 @@ const PayrollRepository = {
                 date: b.requested_date || b.date,
                 commissionRate: effectiveRate,
                 commissionAmount: bookingCommission,
-                rateSource: rateSource
+                rateSource: rateSource,
+                // Payment tracking
+                paymentStatus: b.payment_status || 'unpaid',
+                paymentMethod: b.payment_method,
+                paymentDate: b.payment_date,
+                paymentAmount: b.payment_amount
             };
         });
+
+        // Calculate payment statistics
+        const paidBookings = bookingDetails.filter(b => b.paymentStatus === 'paid').length;
+        const unpaidBookings = bookingDetails.filter(b => b.paymentStatus !== 'paid').length;
+        const paidRevenue = bookingDetails
+            .filter(b => b.paymentStatus === 'paid')
+            .reduce((sum, b) => sum + b.servicePrice, 0);
+        const unpaidRevenue = bookingDetails
+            .filter(b => b.paymentStatus !== 'paid')
+            .reduce((sum, b) => sum + b.servicePrice, 0);
 
         const basicPay = stylist.basic_monthly_pay || 0;
         const grossPay = basicPay + totalCommission;
@@ -1884,7 +1988,15 @@ const PayrollRepository = {
             totalServiceRevenueExVat,
             commissionAmount: totalCommission,
             grossPay,
-            bookings: bookingDetails
+            bookings: bookingDetails,
+            // Payment statistics
+            paymentStats: {
+                paidBookings,
+                unpaidBookings,
+                paidRevenue,
+                unpaidRevenue,
+                percentPaid: totalBookings > 0 ? Math.round((paidBookings / totalBookings) * 100) : 0
+            }
         };
     },
 
