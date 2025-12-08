@@ -497,3 +497,163 @@ CREATE TABLE IF NOT EXISTS delivery_config (
 
 -- Insert default row if not exists
 INSERT OR IGNORE INTO delivery_config (id) VALUES (1);
+
+-- ============================================
+-- REFERRALS (User referral tracking)
+-- ============================================
+CREATE TABLE IF NOT EXISTS referrals (
+    id TEXT PRIMARY KEY,
+    referrer_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    referee_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    referral_code TEXT NOT NULL,
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'completed', 'expired')),
+    referee_first_booking_value REAL,
+    reward_issued INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    completed_at TEXT,
+    UNIQUE(referee_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id);
+CREATE INDEX IF NOT EXISTS idx_referrals_referee ON referrals(referee_id);
+CREATE INDEX IF NOT EXISTS idx_referrals_code ON referrals(referral_code);
+
+-- ============================================
+-- REWARDS PROGRAMME CONFIGURATION (Admin-configurable)
+-- ============================================
+CREATE TABLE IF NOT EXISTS rewards_config (
+    id INTEGER PRIMARY KEY CHECK (id = 1), -- Singleton
+    programme_enabled INTEGER DEFAULT 1,
+    programme_name TEXT DEFAULT 'Salon Rewards',
+    terms_conditions TEXT,
+    terms_version TEXT DEFAULT '1.0',
+    -- Nails track config
+    nails_enabled INTEGER DEFAULT 1,
+    nails_milestone_1_count INTEGER DEFAULT 6,
+    nails_milestone_1_discount REAL DEFAULT 10,
+    nails_milestone_2_count INTEGER DEFAULT 12,
+    nails_milestone_2_discount REAL DEFAULT 50,
+    nails_reward_expiry_days INTEGER DEFAULT 90,
+    -- Maintenance track config
+    maintenance_enabled INTEGER DEFAULT 1,
+    maintenance_milestone_count INTEGER DEFAULT 6,
+    maintenance_discount REAL DEFAULT 10,
+    maintenance_reward_expiry_days INTEGER DEFAULT 90,
+    -- Spend track config
+    spend_enabled INTEGER DEFAULT 1,
+    spend_threshold REAL DEFAULT 10000,
+    spend_discount REAL DEFAULT 20,
+    spend_reward_expiry_days INTEGER DEFAULT 90,
+    -- Referral config
+    referral_enabled INTEGER DEFAULT 1,
+    referral_min_booking_value REAL DEFAULT 1000,
+    referral_reward_service_id TEXT,
+    referral_reward_description TEXT DEFAULT 'Complimentary wash & blow-dry',
+    -- Package config
+    packages_enabled INTEGER DEFAULT 1,
+    wash_blowdry_package_sessions INTEGER DEFAULT 4,
+    wash_blowdry_package_discount REAL DEFAULT 20,
+    wash_blowdry_service_id TEXT,
+    -- General
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+
+INSERT OR IGNORE INTO rewards_config (id) VALUES (1);
+
+-- ============================================
+-- REWARD TRACKS (User progress tracking)
+-- ============================================
+CREATE TABLE IF NOT EXISTS reward_tracks (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    track_type TEXT NOT NULL CHECK(track_type IN ('nails', 'maintenance', 'spend')),
+    current_count INTEGER DEFAULT 0,
+    current_amount REAL DEFAULT 0,
+    lifetime_count INTEGER DEFAULT 0,
+    lifetime_amount REAL DEFAULT 0,
+    last_milestone_count INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, track_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_reward_tracks_user ON reward_tracks(user_id);
+CREATE INDEX IF NOT EXISTS idx_reward_tracks_type ON reward_tracks(track_type);
+
+-- ============================================
+-- USER REWARDS (Earned vouchers/discounts)
+-- ============================================
+CREATE TABLE IF NOT EXISTS user_rewards (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reward_type TEXT NOT NULL CHECK(reward_type IN ('percentage_discount', 'fixed_discount', 'free_service')),
+    reward_value REAL NOT NULL,
+    applicable_to TEXT, -- NULL=any, 'nails', 'maintenance', 'hair', or specific service_id
+    description TEXT NOT NULL,
+    source_track TEXT NOT NULL, -- 'nails', 'maintenance', 'spend', 'referral', 'manual', 'package'
+    source_milestone TEXT,
+    status TEXT DEFAULT 'active' CHECK(status IN ('active', 'redeemed', 'expired', 'voided')),
+    expires_at TEXT,
+    redeemed_at TEXT,
+    redeemed_booking_id TEXT REFERENCES bookings(id),
+    voided_by TEXT REFERENCES users(id),
+    voided_reason TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_rewards_user ON user_rewards(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_rewards_status ON user_rewards(status);
+CREATE INDEX IF NOT EXISTS idx_user_rewards_expires ON user_rewards(expires_at);
+
+-- ============================================
+-- SERVICE PACKAGES (Purchasable bundles)
+-- ============================================
+CREATE TABLE IF NOT EXISTS service_packages (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    service_type TEXT NOT NULL,
+    applicable_service_id TEXT REFERENCES services(id),
+    total_sessions INTEGER NOT NULL,
+    base_price REAL NOT NULL,
+    discount_percent REAL NOT NULL,
+    final_price REAL NOT NULL,
+    validity_type TEXT DEFAULT 'calendar_month' CHECK(validity_type IN ('calendar_month', 'days_from_purchase')),
+    validity_days INTEGER,
+    active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_service_packages_active ON service_packages(active);
+
+-- ============================================
+-- USER PACKAGES (Purchased bundles)
+-- ============================================
+CREATE TABLE IF NOT EXISTS user_packages (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    package_id TEXT NOT NULL REFERENCES service_packages(id),
+    package_name TEXT NOT NULL,
+    total_sessions INTEGER NOT NULL,
+    sessions_used INTEGER DEFAULT 0,
+    purchase_price REAL NOT NULL,
+    valid_from TEXT NOT NULL,
+    valid_until TEXT NOT NULL,
+    status TEXT DEFAULT 'active' CHECK(status IN ('active', 'fully_used', 'expired')),
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_packages_user ON user_packages(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_packages_status ON user_packages(status);
+
+-- ============================================
+-- PACKAGE SESSIONS (Usage log)
+-- ============================================
+CREATE TABLE IF NOT EXISTS package_sessions (
+    id TEXT PRIMARY KEY,
+    user_package_id TEXT NOT NULL REFERENCES user_packages(id) ON DELETE CASCADE,
+    booking_id TEXT REFERENCES bookings(id),
+    used_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_package_sessions_package ON package_sessions(user_package_id);

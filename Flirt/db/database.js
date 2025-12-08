@@ -132,6 +132,10 @@ async function initializeDatabase() {
     await ensureColumn('bookings', 'discount_amount', 'REAL DEFAULT 0');
     await ensureColumn('bookings', 'package_session_id', 'TEXT');
 
+    // Commission tracking columns for bookings
+    await ensureColumn('bookings', 'commission_rate', 'REAL');
+    await ensureColumn('bookings', 'commission_amount', 'REAL');
+
     // Ensure referrals table exists (for older databases)
     await ensureTable('referrals', `
         CREATE TABLE IF NOT EXISTS referrals (

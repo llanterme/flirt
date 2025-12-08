@@ -479,7 +479,7 @@ const RewardsService = {
     // Get referral record for a user (as referee)
     async getReferralRecord(refereeId) {
         try {
-            const result = await db.get('SELECT * FROM referrals WHERE referee_id = ?', [refereeId]);
+            const result = await db.dbGet('SELECT * FROM referrals WHERE referee_id = ?', [refereeId]);
             return result;
         } catch (error) {
             return null;
@@ -489,7 +489,7 @@ const RewardsService = {
     // Mark referral as having issued reward
     async markReferralRewarded(refereeId, bookingValue) {
         try {
-            await db.run(`
+            await db.dbRun(`
                 UPDATE referrals
                 SET referee_first_booking_value = ?, reward_issued = 1
                 WHERE referee_id = ?
@@ -5340,7 +5340,7 @@ app.get('/api/admin/rewards', authenticateAdmin, async (req, res) => {
         query += ' ORDER BY ur.created_at DESC LIMIT ? OFFSET ?';
         params.push(parseInt(limit), parseInt(offset));
 
-        const rewards = await db.all(query, params);
+        const rewards = await db.dbAll(query, params);
 
         // Get count
         let countQuery = `SELECT COUNT(*) as total FROM user_rewards ur WHERE 1=1`;
@@ -5358,7 +5358,7 @@ app.get('/api/admin/rewards', authenticateAdmin, async (req, res) => {
             countParams.push(trackType);
         }
 
-        const countResult = await db.get(countQuery, countParams);
+        const countResult = await db.dbGet(countQuery, countParams);
 
         res.json({
             success: true,
@@ -5444,7 +5444,7 @@ app.delete('/api/admin/rewards/:id', authenticateAdmin, async (req, res) => {
 app.get('/api/admin/rewards/analytics', authenticateAdmin, async (req, res) => {
     try {
         // Get reward statistics
-        const stats = await db.get(`
+        const stats = await db.dbGet(`
             SELECT
                 COUNT(*) as total_rewards,
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_rewards,
@@ -5455,15 +5455,15 @@ app.get('/api/admin/rewards/analytics', authenticateAdmin, async (req, res) => {
         `);
 
         // Get rewards by track type
-        const byTrackType = await db.all(`
-            SELECT track_type, COUNT(*) as count,
+        const byTrackType = await db.dbAll(`
+            SELECT source_track as track_type, COUNT(*) as count,
                 SUM(CASE WHEN status = 'redeemed' THEN 1 ELSE 0 END) as redeemed
             FROM user_rewards
-            GROUP BY track_type
+            GROUP BY source_track
         `);
 
         // Get recent rewards
-        const recentRewards = await db.all(`
+        const recentRewards = await db.dbAll(`
             SELECT ur.*, u.name as user_name
             FROM user_rewards ur
             LEFT JOIN users u ON ur.user_id = u.id
@@ -5472,7 +5472,7 @@ app.get('/api/admin/rewards/analytics', authenticateAdmin, async (req, res) => {
         `);
 
         // Get package stats
-        const packageStats = await db.get(`
+        const packageStats = await db.dbGet(`
             SELECT
                 COUNT(*) as total_packages,
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_packages,
@@ -5505,7 +5505,7 @@ app.get('/api/admin/rewards/user/:userId', authenticateAdmin, async (req, res) =
         }
 
         const progress = await RewardsService.getUserProgress(userId);
-        const rewardHistory = await db.all(`
+        const rewardHistory = await db.dbAll(`
             SELECT * FROM user_rewards
             WHERE user_id = ?
             ORDER BY created_at DESC
@@ -5607,7 +5607,7 @@ app.delete('/api/admin/packages/:id', authenticateAdmin, async (req, res) => {
         const { id } = req.params;
 
         // Check if any active user packages reference this
-        const activeCount = await db.get(`
+        const activeCount = await db.dbGet(`
             SELECT COUNT(*) as count FROM user_packages
             WHERE package_id = ? AND status = 'active'
         `, [id]);
@@ -5732,7 +5732,7 @@ app.post('/api/rewards/apply', authenticateToken, async (req, res) => {
 // Get user's reward history
 app.get('/api/rewards/history', authenticateToken, async (req, res) => {
     try {
-        const rewards = await db.all(`
+        const rewards = await db.dbAll(`
             SELECT * FROM user_rewards
             WHERE user_id = ?
             ORDER BY created_at DESC
