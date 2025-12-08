@@ -4137,15 +4137,18 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Service Type *</label>
-                            <input type="text" id="serviceType" class="form-input" required
-                                   placeholder="e.g., hair, beauty, spa">
-                            <small style="color: var(--text-subtle);">Can be any custom type</small>
+                            <select id="serviceType" class="form-input" required onchange="onServiceTypeChange()">
+                                <option value="">Select a type...</option>
+                            </select>
+                            <small style="color: var(--text-subtle);"><a href="#" onclick="showManageTypesModal(); return false;">Manage types</a></small>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">Category</label>
-                            <input type="text" id="serviceCategory" class="form-input"
-                                   placeholder="e.g., Extensions, Nails">
+                            <select id="serviceCategory" class="form-input">
+                                <option value="">Select a category...</option>
+                            </select>
+                            <small style="color: var(--text-subtle);"><a href="#" onclick="showManageCategoriesModal(); return false;">Manage categories</a></small>
                         </div>
                     </div>
 
@@ -4162,13 +4165,27 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Image URL</label>
-                        <input type="url" id="serviceImageUrl" class="form-input"
-                               placeholder="https://example.com/image.jpg"
-                               oninput="updateServiceImagePreview()">
-                        <small style="color: var(--text-subtle);">URL to service image</small>
+                        <label class="form-label">Service Image</label>
+                        <div style="display: flex; gap: 10px; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <input type="file" id="serviceImageFile" accept="image/jpeg,image/png,image/gif,image/webp"
+                                       onchange="onServiceImageFileSelect()" style="display: none;">
+                                <button type="button" class="btn btn-outline" onclick="document.getElementById('serviceImageFile').click()" style="width: 100%;">
+                                    <span id="serviceImageBtnText">Choose Image</span>
+                                </button>
+                                <small style="color: var(--text-subtle); display: block; margin-top: 5px;">Max 5MB. JPEG, PNG, GIF, or WebP</small>
+                            </div>
+                            <div style="flex: 1;">
+                                <input type="url" id="serviceImageUrl" class="form-input"
+                                       placeholder="Or paste image URL"
+                                       oninput="updateServiceImagePreview()">
+                            </div>
+                        </div>
                         <div id="serviceImagePreview" style="margin-top: 10px; display: none;">
-                            <img id="serviceImagePreviewImg" src="" alt="Preview" style="max-width: 100%; max-height: 150px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-color);">
+                            <div style="position: relative; display: inline-block;">
+                                <img id="serviceImagePreviewImg" src="" alt="Preview" style="max-width: 100%; max-height: 150px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border-color);">
+                                <button type="button" onclick="clearServiceImage()" style="position: absolute; top: 5px; right: 5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px;">&times;</button>
+                            </div>
                             <div id="serviceImagePreviewError" style="display: none; color: var(--danger); font-size: 12px; margin-top: 5px;">Failed to load image</div>
                         </div>
                     </div>
@@ -9531,8 +9548,67 @@
             `).join('');
         }
 
-        function openServiceModal() {
+        // Service types and categories data
+        let serviceTypes = [];
+        let serviceCategories = [];
+        let pendingImageFile = null;
+
+        // Load service types and categories
+        async function loadServiceTypesAndCategories() {
+            try {
+                const [typesRes, categoriesRes] = await Promise.all([
+                    apiCall('/admin/service-types'),
+                    apiCall('/admin/service-categories')
+                ]);
+                if (typesRes.success) serviceTypes = typesRes.types || [];
+                if (categoriesRes.success) serviceCategories = categoriesRes.categories || [];
+            } catch (error) {
+                console.error('Error loading service types/categories:', error);
+            }
+        }
+
+        // Populate service type dropdown
+        function populateServiceTypeDropdown(selectedValue = '') {
+            const select = document.getElementById('serviceType');
+            select.innerHTML = '<option value="">Select a type...</option>';
+            serviceTypes.filter(t => t.active === 1).forEach(type => {
+                const option = document.createElement('option');
+                option.value = type.name;
+                option.textContent = type.name.charAt(0).toUpperCase() + type.name.slice(1);
+                if (type.name === selectedValue) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        // Populate category dropdown based on selected type
+        function populateCategoryDropdown(serviceTypeName, selectedValue = '') {
+            const select = document.getElementById('serviceCategory');
+            select.innerHTML = '<option value="">Select a category...</option>';
+
+            if (!serviceTypeName) return;
+
+            const type = serviceTypes.find(t => t.name === serviceTypeName);
+            if (!type) return;
+
+            const filtered = serviceCategories.filter(c => c.service_type_id === type.id && c.active === 1);
+            filtered.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.name;
+                option.textContent = cat.name;
+                if (cat.name === selectedValue) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+
+        // Handle service type change
+        function onServiceTypeChange() {
+            const selectedType = document.getElementById('serviceType').value;
+            populateCategoryDropdown(selectedType);
+        }
+
+        async function openServiceModal() {
             editingServiceId = null;
+            pendingImageFile = null;
             document.getElementById('serviceModalTitle').textContent = 'Add New Service';
             document.getElementById('serviceForm').reset();
             document.getElementById('serviceId').value = '';
@@ -9540,13 +9616,67 @@
             document.getElementById('serviceCommissionRate').value = '';
             document.getElementById('serviceActive').checked = true;
             document.getElementById('serviceImagePreview').style.display = 'none';
+            document.getElementById('serviceImageBtnText').textContent = 'Choose Image';
+            document.getElementById('serviceImageFile').value = '';
+
+            // Load and populate dropdowns
+            await loadServiceTypesAndCategories();
+            populateServiceTypeDropdown();
+            populateCategoryDropdown('');
+
             document.getElementById('serviceModal').style.display = 'flex';
         }
 
         function closeServiceModal() {
             document.getElementById('serviceModal').style.display = 'none';
             document.getElementById('serviceImagePreview').style.display = 'none';
+            pendingImageFile = null;
             editingServiceId = null;
+        }
+
+        // Handle file selection for service image
+        function onServiceImageFileSelect() {
+            const fileInput = document.getElementById('serviceImageFile');
+            const file = fileInput.files[0];
+
+            if (!file) return;
+
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                showAdminToast('Image file is too large. Maximum size is 5MB.', 'error');
+                fileInput.value = '';
+                return;
+            }
+
+            // Store the file for upload after save
+            pendingImageFile = file;
+            document.getElementById('serviceImageBtnText').textContent = file.name.substring(0, 20) + (file.name.length > 20 ? '...' : '');
+
+            // Clear URL input
+            document.getElementById('serviceImageUrl').value = '';
+
+            // Show preview using FileReader
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.getElementById('serviceImagePreview');
+                const img = document.getElementById('serviceImagePreviewImg');
+                const error = document.getElementById('serviceImagePreviewError');
+
+                preview.style.display = 'block';
+                img.style.display = 'block';
+                img.src = e.target.result;
+                error.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Clear service image
+        function clearServiceImage() {
+            pendingImageFile = null;
+            document.getElementById('serviceImageFile').value = '';
+            document.getElementById('serviceImageUrl').value = '';
+            document.getElementById('serviceImagePreview').style.display = 'none';
+            document.getElementById('serviceImageBtnText').textContent = 'Choose Image';
         }
 
         // Update image preview when URL changes
@@ -9560,6 +9690,11 @@
                 preview.style.display = 'none';
                 return;
             }
+
+            // Clear file input when URL is entered
+            pendingImageFile = null;
+            document.getElementById('serviceImageFile').value = '';
+            document.getElementById('serviceImageBtnText').textContent = 'Choose Image';
 
             // Show preview container
             preview.style.display = 'block';
@@ -9582,12 +9717,17 @@
             if (!service) return;
 
             editingServiceId = id;
+            pendingImageFile = null;
+
+            // Load and populate dropdowns first
+            await loadServiceTypesAndCategories();
+            populateServiceTypeDropdown(service.service_type);
+            populateCategoryDropdown(service.service_type, service.category || '');
+
             document.getElementById('serviceModalTitle').textContent = 'Edit Service';
             document.getElementById('serviceId').value = service.id;
             document.getElementById('serviceName').value = service.name;
             document.getElementById('serviceDescription').value = service.description || '';
-            document.getElementById('serviceType').value = service.service_type;
-            document.getElementById('serviceCategory').value = service.category || '';
             document.getElementById('servicePrice').value = service.price;
             document.getElementById('serviceDuration').value = service.duration || '';
             document.getElementById('serviceImageUrl').value = service.image_url || '';
@@ -9596,6 +9736,8 @@
                 ? (service.commission_rate * 100).toFixed(0)
                 : '';
             document.getElementById('serviceActive').checked = service.active === 1;
+            document.getElementById('serviceImageBtnText').textContent = 'Choose Image';
+            document.getElementById('serviceImageFile').value = '';
 
             // Update image preview
             updateServiceImagePreview();
@@ -9616,32 +9758,300 @@
                 category: document.getElementById('serviceCategory').value.trim() || null,
                 price: parseFloat(document.getElementById('servicePrice').value),
                 duration: parseInt(document.getElementById('serviceDuration').value) || null,
-                image_url: document.getElementById('serviceImageUrl').value.trim() || null,
+                image_url: pendingImageFile ? null : (document.getElementById('serviceImageUrl').value.trim() || null),
                 display_order: parseInt(document.getElementById('serviceDisplayOrder').value) || 0,
                 commission_rate: commissionRate,
                 active: document.getElementById('serviceActive').checked ? 1 : 0
             };
 
             try {
+                let serviceId = editingServiceId;
+
                 if (editingServiceId) {
                     await apiCall(`/admin/services/${editingServiceId}`, {
                         method: 'PUT',
                         body: JSON.stringify(serviceData)
                     });
-                    showAdminToast('Service updated successfully', 'success');
                 } else {
-                    await apiCall('/admin/services', {
+                    const result = await apiCall('/admin/services', {
                         method: 'POST',
                         body: JSON.stringify(serviceData)
                     });
-                    showAdminToast('Service created successfully', 'success');
+                    serviceId = result.service?.id;
                 }
 
+                // Upload image if file was selected
+                if (pendingImageFile && serviceId) {
+                    const formData = new FormData();
+                    formData.append('image', pendingImageFile);
+
+                    const token = localStorage.getItem('adminToken');
+                    const response = await fetch(`${API_BASE}/admin/services/${serviceId}/image`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to upload image');
+                    }
+                }
+
+                showAdminToast(editingServiceId ? 'Service updated successfully' : 'Service created successfully', 'success');
                 closeServiceModal();
                 loadServices();
             } catch (error) {
                 console.error('Error saving service:', error);
                 showAdminToast(error.message || 'Error saving service', 'error');
+            }
+        }
+
+        // ============================================
+        // SERVICE TYPES & CATEGORIES MANAGEMENT MODALS
+        // ============================================
+
+        function showManageTypesModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'manageTypesModal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Manage Service Types</h3>
+                        <button class="modal-close" onclick="closeManageTypesModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="newTypeName" class="form-input" placeholder="New type name" style="flex: 1;">
+                                <button class="btn btn-primary" onclick="addServiceType()">Add</button>
+                            </div>
+                        </div>
+                        <div id="serviceTypesList" style="max-height: 300px; overflow-y: auto;">
+                            <p style="color: var(--text-subtle);">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            loadServiceTypesList();
+        }
+
+        function closeManageTypesModal() {
+            const modal = document.getElementById('manageTypesModal');
+            if (modal) modal.remove();
+        }
+
+        async function loadServiceTypesList() {
+            try {
+                const result = await apiCall('/admin/service-types');
+                const container = document.getElementById('serviceTypesList');
+
+                if (!result.success || !result.types || result.types.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-subtle);">No service types found.</p>';
+                    return;
+                }
+
+                container.innerHTML = result.types.map(type => `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid var(--border-color);">
+                        <div>
+                            <strong>${type.name}</strong>
+                            ${type.active === 0 ? '<span style="color: var(--danger); font-size: 12px; margin-left: 8px;">(Inactive)</span>' : ''}
+                        </div>
+                        <div style="display: flex; gap: 5px;">
+                            <button class="btn btn-sm btn-outline" onclick="toggleServiceType('${type.id}', ${type.active})">${type.active === 1 ? 'Disable' : 'Enable'}</button>
+                            <button class="btn btn-sm btn-outline" onclick="deleteServiceType('${type.id}')" style="color: var(--danger);">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading service types:', error);
+                document.getElementById('serviceTypesList').innerHTML = '<p style="color: var(--danger);">Error loading types.</p>';
+            }
+        }
+
+        async function addServiceType() {
+            const name = document.getElementById('newTypeName').value.trim();
+            if (!name) {
+                showAdminToast('Please enter a type name', 'error');
+                return;
+            }
+
+            try {
+                await apiCall('/admin/service-types', {
+                    method: 'POST',
+                    body: JSON.stringify({ name })
+                });
+                document.getElementById('newTypeName').value = '';
+                showAdminToast('Service type added', 'success');
+                loadServiceTypesList();
+                await loadServiceTypesAndCategories();
+                populateServiceTypeDropdown();
+            } catch (error) {
+                showAdminToast(error.message || 'Error adding type', 'error');
+            }
+        }
+
+        async function toggleServiceType(id, currentActive) {
+            try {
+                await apiCall(`/admin/service-types/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ active: currentActive === 1 ? 0 : 1 })
+                });
+                loadServiceTypesList();
+                await loadServiceTypesAndCategories();
+                populateServiceTypeDropdown();
+            } catch (error) {
+                showAdminToast(error.message || 'Error updating type', 'error');
+            }
+        }
+
+        async function deleteServiceType(id) {
+            if (!confirm('Are you sure you want to delete this service type?')) return;
+
+            try {
+                await apiCall(`/admin/service-types/${id}`, { method: 'DELETE' });
+                showAdminToast('Service type deleted', 'success');
+                loadServiceTypesList();
+                await loadServiceTypesAndCategories();
+                populateServiceTypeDropdown();
+            } catch (error) {
+                showAdminToast(error.message || 'Error deleting type', 'error');
+            }
+        }
+
+        function showManageCategoriesModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'manageCategoriesModal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 700px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Manage Service Categories</h3>
+                        <button class="modal-close" onclick="closeManageCategoriesModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <select id="newCategoryType" class="form-input" style="flex: 1; min-width: 150px;">
+                                    <option value="">Select type...</option>
+                                    ${serviceTypes.filter(t => t.active === 1).map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+                                </select>
+                                <input type="text" id="newCategoryName" class="form-input" placeholder="New category name" style="flex: 2; min-width: 150px;">
+                                <button class="btn btn-primary" onclick="addServiceCategory()">Add</button>
+                            </div>
+                        </div>
+                        <div id="serviceCategoriesList" style="max-height: 350px; overflow-y: auto;">
+                            <p style="color: var(--text-subtle);">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            loadServiceCategoriesList();
+        }
+
+        function closeManageCategoriesModal() {
+            const modal = document.getElementById('manageCategoriesModal');
+            if (modal) modal.remove();
+        }
+
+        async function loadServiceCategoriesList() {
+            try {
+                const result = await apiCall('/admin/service-categories');
+                const container = document.getElementById('serviceCategoriesList');
+
+                if (!result.success || !result.categories || result.categories.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-subtle);">No categories found.</p>';
+                    return;
+                }
+
+                // Group by service type
+                const grouped = {};
+                result.categories.forEach(cat => {
+                    const typeName = cat.service_type_name || 'Unknown';
+                    if (!grouped[typeName]) grouped[typeName] = [];
+                    grouped[typeName].push(cat);
+                });
+
+                container.innerHTML = Object.entries(grouped).map(([typeName, cats]) => `
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="color: var(--primary); margin-bottom: 10px; text-transform: capitalize;">${typeName}</h4>
+                        ${cats.map(cat => `
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: var(--bg-secondary); border-radius: 4px; margin-bottom: 5px;">
+                                <div>
+                                    <span>${cat.name}</span>
+                                    ${cat.active === 0 ? '<span style="color: var(--danger); font-size: 12px; margin-left: 8px;">(Inactive)</span>' : ''}
+                                </div>
+                                <div style="display: flex; gap: 5px;">
+                                    <button class="btn btn-sm btn-outline" onclick="toggleServiceCategory('${cat.id}', ${cat.active})">${cat.active === 1 ? 'Disable' : 'Enable'}</button>
+                                    <button class="btn btn-sm btn-outline" onclick="deleteServiceCategory('${cat.id}')" style="color: var(--danger);">Delete</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading service categories:', error);
+                document.getElementById('serviceCategoriesList').innerHTML = '<p style="color: var(--danger);">Error loading categories.</p>';
+            }
+        }
+
+        async function addServiceCategory() {
+            const typeId = document.getElementById('newCategoryType').value;
+            const name = document.getElementById('newCategoryName').value.trim();
+
+            if (!typeId) {
+                showAdminToast('Please select a service type', 'error');
+                return;
+            }
+            if (!name) {
+                showAdminToast('Please enter a category name', 'error');
+                return;
+            }
+
+            try {
+                await apiCall('/admin/service-categories', {
+                    method: 'POST',
+                    body: JSON.stringify({ name, service_type_id: typeId })
+                });
+                document.getElementById('newCategoryName').value = '';
+                showAdminToast('Category added', 'success');
+                loadServiceCategoriesList();
+                await loadServiceTypesAndCategories();
+            } catch (error) {
+                showAdminToast(error.message || 'Error adding category', 'error');
+            }
+        }
+
+        async function toggleServiceCategory(id, currentActive) {
+            try {
+                await apiCall(`/admin/service-categories/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ active: currentActive === 1 ? 0 : 1 })
+                });
+                loadServiceCategoriesList();
+                await loadServiceTypesAndCategories();
+            } catch (error) {
+                showAdminToast(error.message || 'Error updating category', 'error');
+            }
+        }
+
+        async function deleteServiceCategory(id) {
+            if (!confirm('Are you sure you want to delete this category?')) return;
+
+            try {
+                await apiCall(`/admin/service-categories/${id}`, { method: 'DELETE' });
+                showAdminToast('Category deleted', 'success');
+                loadServiceCategoriesList();
+                await loadServiceTypesAndCategories();
+            } catch (error) {
+                showAdminToast(error.message || 'Error deleting category', 'error');
             }
         }
 

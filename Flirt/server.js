@@ -6,6 +6,46 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const querystring = require('querystring');
+const multer = require('multer');
+
+// Configure multer for file uploads
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const UPLOADS_SERVICES_DIR = path.join(UPLOADS_DIR, 'services');
+
+// Ensure upload directories exist
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+if (!fs.existsSync(UPLOADS_SERVICES_DIR)) fs.mkdirSync(UPLOADS_SERVICES_DIR, { recursive: true });
+
+// Multer storage configuration for service images
+const serviceImageStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, UPLOADS_SERVICES_DIR);
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        const filename = `service_${Date.now()}_${uuidv4().slice(0, 8)}${ext}`;
+        cb(null, filename);
+    }
+});
+
+// File filter for images
+const imageFileFilter = (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Only image files (JPEG, PNG, GIF, WebP) are allowed'), false);
+    }
+};
+
+// Multer upload instances
+const uploadServiceImage = multer({
+    storage: serviceImageStorage,
+    fileFilter: imageFileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB max
+    }
+});
 
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
@@ -121,6 +161,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Increase limit for base64 images
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Needed for PayFast form callbacks
 app.use(express.static(__dirname));
+app.use('/uploads', express.static(UPLOADS_DIR)); // Serve uploaded files
 
 // ============================================
 // SEED ADMIN USER
@@ -2815,18 +2856,6 @@ app.get('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
     }
 });
 
-// Get unique service types (for dropdown/filter)
-app.get('/api/admin/service-types', authenticateAdmin, async (req, res) => {
-    try {
-        const services = await ServiceRepository.findAll();
-        const types = [...new Set(services.map(s => s.service_type))].sort();
-        res.json({ success: true, types });
-    } catch (error) {
-        console.error('Error fetching service types:', error.message);
-        res.status(500).json({ success: false, message: 'Failed to fetch service types' });
-    }
-});
-
 // Create new service
 app.post('/api/admin/services', authenticateAdmin, async (req, res) => {
     try {
@@ -2967,6 +2996,404 @@ app.delete('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
         console.error('Error deleting service:', error.message);
         res.status(500).json({ success: false, message: 'Failed to delete service' });
     }
+});
+
+// ============================================
+// ADMIN - SERVICE TYPES MANAGEMENT
+// ============================================
+
+// Get all service types
+app.get('/api/admin/service-types', authenticateAdmin, async (req, res) => {
+    try {
+        const types = await db.dbAll(`
+            SELECT * FROM service_types
+            ORDER BY display_order, name
+        `);
+        res.json({ success: true, types });
+    } catch (error) {
+        console.error('Error fetching service types:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to load service types' });
+    }
+});
+
+// Get service types (public - for dropdowns)
+app.get('/api/service-types', async (req, res) => {
+    try {
+        const types = await db.dbAll(`
+            SELECT id, name, description FROM service_types
+            WHERE active = 1
+            ORDER BY display_order, name
+        `);
+        res.json({ success: true, types });
+    } catch (error) {
+        console.error('Error fetching service types:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to load service types' });
+    }
+});
+
+// Create service type
+app.post('/api/admin/service-types', authenticateAdmin, async (req, res) => {
+    try {
+        const { name, description, display_order = 0 } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ success: false, message: 'Name is required' });
+        }
+
+        // Check for duplicate name
+        const existing = await db.dbGet('SELECT id FROM service_types WHERE LOWER(name) = LOWER(?)', [name]);
+        if (existing) {
+            return res.status(400).json({ success: false, message: 'A service type with this name already exists' });
+        }
+
+        const id = `type_${uuidv4()}`;
+        await db.dbRun(
+            `INSERT INTO service_types (id, name, description, display_order) VALUES (?, ?, ?, ?)`,
+            [id, name.toLowerCase(), description || null, display_order]
+        );
+
+        const newType = await db.dbGet('SELECT * FROM service_types WHERE id = ?', [id]);
+        res.json({ success: true, type: newType });
+    } catch (error) {
+        console.error('Error creating service type:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to create service type' });
+    }
+});
+
+// Update service type
+app.put('/api/admin/service-types/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, display_order, active } = req.body;
+
+        const existing = await db.dbGet('SELECT * FROM service_types WHERE id = ?', [id]);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: 'Service type not found' });
+        }
+
+        // Check for duplicate name if changing
+        if (name && name.toLowerCase() !== existing.name) {
+            const duplicate = await db.dbGet('SELECT id FROM service_types WHERE LOWER(name) = LOWER(?) AND id != ?', [name, id]);
+            if (duplicate) {
+                return res.status(400).json({ success: false, message: 'A service type with this name already exists' });
+            }
+        }
+
+        await db.dbRun(
+            `UPDATE service_types SET
+                name = COALESCE(?, name),
+                description = COALESCE(?, description),
+                display_order = COALESCE(?, display_order),
+                active = COALESCE(?, active)
+            WHERE id = ?`,
+            [name ? name.toLowerCase() : null, description, display_order, active, id]
+        );
+
+        const updated = await db.dbGet('SELECT * FROM service_types WHERE id = ?', [id]);
+        res.json({ success: true, type: updated });
+    } catch (error) {
+        console.error('Error updating service type:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to update service type' });
+    }
+});
+
+// Delete service type
+app.delete('/api/admin/service-types/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Check if type is in use by any services
+        const servicesUsingType = await db.dbGet(
+            'SELECT COUNT(*) as count FROM services WHERE service_type = (SELECT name FROM service_types WHERE id = ?)',
+            [id]
+        );
+
+        if (servicesUsingType && servicesUsingType.count > 0) {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot delete - ${servicesUsingType.count} service(s) are using this type`
+            });
+        }
+
+        await db.dbRun('DELETE FROM service_types WHERE id = ?', [id]);
+        res.json({ success: true, message: 'Service type deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting service type:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to delete service type' });
+    }
+});
+
+// ============================================
+// ADMIN - SERVICE CATEGORIES MANAGEMENT
+// ============================================
+
+// Get all categories (optionally filtered by service type)
+app.get('/api/admin/service-categories', authenticateAdmin, async (req, res) => {
+    try {
+        const { service_type_id } = req.query;
+
+        let query = `
+            SELECT sc.*, st.name as service_type_name
+            FROM service_categories sc
+            LEFT JOIN service_types st ON sc.service_type_id = st.id
+        `;
+        const params = [];
+
+        if (service_type_id) {
+            query += ' WHERE sc.service_type_id = ?';
+            params.push(service_type_id);
+        }
+
+        query += ' ORDER BY st.display_order, sc.display_order, sc.name';
+
+        const categories = await db.dbAll(query, params);
+        res.json({ success: true, categories });
+    } catch (error) {
+        console.error('Error fetching service categories:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to load service categories' });
+    }
+});
+
+// Get categories for a service type (public - for dropdowns)
+app.get('/api/service-categories', async (req, res) => {
+    try {
+        const { service_type_id, service_type } = req.query;
+
+        let query = `
+            SELECT sc.id, sc.name, sc.description, sc.service_type_id
+            FROM service_categories sc
+            LEFT JOIN service_types st ON sc.service_type_id = st.id
+            WHERE sc.active = 1
+        `;
+        const params = [];
+
+        if (service_type_id) {
+            query += ' AND sc.service_type_id = ?';
+            params.push(service_type_id);
+        } else if (service_type) {
+            query += ' AND st.name = ?';
+            params.push(service_type.toLowerCase());
+        }
+
+        query += ' ORDER BY sc.display_order, sc.name';
+
+        const categories = await db.dbAll(query, params);
+        res.json({ success: true, categories });
+    } catch (error) {
+        console.error('Error fetching service categories:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to load service categories' });
+    }
+});
+
+// Create service category
+app.post('/api/admin/service-categories', authenticateAdmin, async (req, res) => {
+    try {
+        const { name, service_type_id, description, display_order = 0 } = req.body;
+
+        if (!name || !service_type_id) {
+            return res.status(400).json({ success: false, message: 'Name and service type are required' });
+        }
+
+        // Verify service type exists
+        const typeExists = await db.dbGet('SELECT id FROM service_types WHERE id = ?', [service_type_id]);
+        if (!typeExists) {
+            return res.status(400).json({ success: false, message: 'Invalid service type' });
+        }
+
+        // Check for duplicate name within same type
+        const existing = await db.dbGet(
+            'SELECT id FROM service_categories WHERE LOWER(name) = LOWER(?) AND service_type_id = ?',
+            [name, service_type_id]
+        );
+        if (existing) {
+            return res.status(400).json({ success: false, message: 'A category with this name already exists for this service type' });
+        }
+
+        const id = uuidv4();
+        await db.dbRun(
+            `INSERT INTO service_categories (id, name, service_type_id, description, display_order) VALUES (?, ?, ?, ?, ?)`,
+            [id, name, service_type_id, description || null, display_order]
+        );
+
+        const newCategory = await db.dbGet(`
+            SELECT sc.*, st.name as service_type_name
+            FROM service_categories sc
+            LEFT JOIN service_types st ON sc.service_type_id = st.id
+            WHERE sc.id = ?
+        `, [id]);
+        res.json({ success: true, category: newCategory });
+    } catch (error) {
+        console.error('Error creating service category:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to create service category' });
+    }
+});
+
+// Update service category
+app.put('/api/admin/service-categories/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, service_type_id, description, display_order, active } = req.body;
+
+        const existing = await db.dbGet('SELECT * FROM service_categories WHERE id = ?', [id]);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: 'Service category not found' });
+        }
+
+        // Check for duplicate name within same type if changing
+        const newTypeId = service_type_id || existing.service_type_id;
+        if (name && (name !== existing.name || newTypeId !== existing.service_type_id)) {
+            const duplicate = await db.dbGet(
+                'SELECT id FROM service_categories WHERE LOWER(name) = LOWER(?) AND service_type_id = ? AND id != ?',
+                [name, newTypeId, id]
+            );
+            if (duplicate) {
+                return res.status(400).json({ success: false, message: 'A category with this name already exists for this service type' });
+            }
+        }
+
+        await db.dbRun(
+            `UPDATE service_categories SET
+                name = COALESCE(?, name),
+                service_type_id = COALESCE(?, service_type_id),
+                description = COALESCE(?, description),
+                display_order = COALESCE(?, display_order),
+                active = COALESCE(?, active)
+            WHERE id = ?`,
+            [name, service_type_id, description, display_order, active, id]
+        );
+
+        const updated = await db.dbGet(`
+            SELECT sc.*, st.name as service_type_name
+            FROM service_categories sc
+            LEFT JOIN service_types st ON sc.service_type_id = st.id
+            WHERE sc.id = ?
+        `, [id]);
+        res.json({ success: true, category: updated });
+    } catch (error) {
+        console.error('Error updating service category:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to update service category' });
+    }
+});
+
+// Delete service category
+app.delete('/api/admin/service-categories/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Check if category is in use by any services
+        const categoryName = await db.dbGet('SELECT name FROM service_categories WHERE id = ?', [id]);
+        if (categoryName) {
+            const servicesUsingCategory = await db.dbGet(
+                'SELECT COUNT(*) as count FROM services WHERE category = ?',
+                [categoryName.name]
+            );
+
+            if (servicesUsingCategory && servicesUsingCategory.count > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Cannot delete - ${servicesUsingCategory.count} service(s) are using this category`
+                });
+            }
+        }
+
+        await db.dbRun('DELETE FROM service_categories WHERE id = ?', [id]);
+        res.json({ success: true, message: 'Service category deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting service category:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to delete service category' });
+    }
+});
+
+// ============================================
+// ADMIN - SERVICE IMAGE UPLOAD
+// ============================================
+
+// Upload service image
+app.post('/api/admin/services/:id/image', authenticateAdmin, uploadServiceImage.single('image'), async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No image file provided' });
+        }
+
+        const service = await ServiceRepository.findById(id);
+        if (!service) {
+            // Delete uploaded file if service not found
+            fs.unlinkSync(req.file.path);
+            return res.status(404).json({ success: false, message: 'Service not found' });
+        }
+
+        // Delete old image if it's a local upload
+        if (service.image_url && service.image_url.startsWith('/uploads/')) {
+            const oldImagePath = path.join(__dirname, service.image_url);
+            if (fs.existsSync(oldImagePath)) {
+                fs.unlinkSync(oldImagePath);
+            }
+        }
+
+        // Build the URL for the uploaded image
+        const imageUrl = `/uploads/services/${req.file.filename}`;
+
+        // Update service with new image URL
+        await ServiceRepository.updateById(id, { image_url: imageUrl });
+
+        const updated = await ServiceRepository.findById(id);
+        res.json({
+            success: true,
+            message: 'Image uploaded successfully',
+            imageUrl,
+            service: updated
+        });
+    } catch (error) {
+        console.error('Error uploading service image:', error.message);
+        // Clean up uploaded file on error
+        if (req.file) {
+            try { fs.unlinkSync(req.file.path); } catch (e) {}
+        }
+        res.status(500).json({ success: false, message: 'Failed to upload image' });
+    }
+});
+
+// Delete service image
+app.delete('/api/admin/services/:id/image', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const service = await ServiceRepository.findById(id);
+        if (!service) {
+            return res.status(404).json({ success: false, message: 'Service not found' });
+        }
+
+        // Delete image file if it's a local upload
+        if (service.image_url && service.image_url.startsWith('/uploads/')) {
+            const imagePath = path.join(__dirname, service.image_url);
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+        }
+
+        // Update service to remove image URL
+        await ServiceRepository.updateById(id, { image_url: null });
+
+        res.json({ success: true, message: 'Image deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting service image:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to delete image' });
+    }
+});
+
+// Multer error handler for service image uploads
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ success: false, message: 'File too large. Maximum size is 5MB.' });
+        }
+        return res.status(400).json({ success: false, message: err.message });
+    } else if (err && err.message && err.message.includes('image files')) {
+        return res.status(400).json({ success: false, message: err.message });
+    }
+    next(err);
 });
 
 // ========== STAFF SERVICES MANAGEMENT ==========

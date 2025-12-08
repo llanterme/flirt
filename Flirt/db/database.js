@@ -136,6 +136,36 @@ async function initializeDatabase() {
     await ensureColumn('bookings', 'commission_rate', 'REAL');
     await ensureColumn('bookings', 'commission_amount', 'REAL');
 
+    // ============================================
+    // SERVICE TYPES AND CATEGORIES (for configurable dropdowns)
+    // ============================================
+    await ensureTable('service_types', `
+        CREATE TABLE IF NOT EXISTS service_types (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            description TEXT,
+            display_order INTEGER DEFAULT 0,
+            active INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    `);
+
+    await ensureTable('service_categories', `
+        CREATE TABLE IF NOT EXISTS service_categories (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            service_type_id TEXT NOT NULL REFERENCES service_types(id) ON DELETE CASCADE,
+            description TEXT,
+            display_order INTEGER DEFAULT 0,
+            active INTEGER DEFAULT 1,
+            created_at TEXT DEFAULT (datetime('now')),
+            UNIQUE(name, service_type_id)
+        )
+    `);
+
+    // Seed default service types if empty
+    await seedDefaultServiceTypes();
+
     // Ensure referrals table exists (for older databases)
     await ensureTable('referrals', `
         CREATE TABLE IF NOT EXISTS referrals (
@@ -371,6 +401,81 @@ async function ensureTable(tableName, createStatement) {
         await dbRun(createStatement);
         console.log(`Created missing table: ${tableName}`);
     }
+}
+
+// Seed default service types and categories if tables are empty
+async function seedDefaultServiceTypes() {
+    const existingTypes = await dbGet('SELECT COUNT(*) as count FROM service_types');
+    if (existingTypes && existingTypes.count > 0) {
+        return; // Already has types, don't seed
+    }
+
+    const { v4: uuidv4 } = require('uuid');
+
+    // Default service types
+    const types = [
+        { id: 'type_hair', name: 'hair', description: 'Hair services including extensions, styling, and treatments', display_order: 1 },
+        { id: 'type_beauty', name: 'beauty', description: 'Beauty services including nails, makeup, and skincare', display_order: 2 },
+        { id: 'type_spa', name: 'spa', description: 'Spa and wellness treatments', display_order: 3 }
+    ];
+
+    for (const type of types) {
+        await dbRun(
+            `INSERT OR IGNORE INTO service_types (id, name, description, display_order) VALUES (?, ?, ?, ?)`,
+            [type.id, type.name, type.description, type.display_order]
+        );
+    }
+
+    // Default categories for hair
+    const hairCategories = [
+        { name: 'Extensions', description: 'Hair extension services' },
+        { name: 'Maintenance', description: 'Extension maintenance and tightening' },
+        { name: 'Styling', description: 'Hair styling services' },
+        { name: 'Treatments', description: 'Hair treatments and conditioning' },
+        { name: 'Consultation', description: 'Color matching and consultations' }
+    ];
+
+    for (let i = 0; i < hairCategories.length; i++) {
+        const cat = hairCategories[i];
+        await dbRun(
+            `INSERT OR IGNORE INTO service_categories (id, name, service_type_id, description, display_order) VALUES (?, ?, ?, ?, ?)`,
+            [uuidv4(), cat.name, 'type_hair', cat.description, i + 1]
+        );
+    }
+
+    // Default categories for beauty
+    const beautyCategories = [
+        { name: 'Nails', description: 'Nail services' },
+        { name: 'Brows & Lashes', description: 'Eyebrow and lash services' },
+        { name: 'Makeup', description: 'Makeup application services' },
+        { name: 'Skincare', description: 'Facial and skincare treatments' },
+        { name: 'Waxing', description: 'Hair removal services' }
+    ];
+
+    for (let i = 0; i < beautyCategories.length; i++) {
+        const cat = beautyCategories[i];
+        await dbRun(
+            `INSERT OR IGNORE INTO service_categories (id, name, service_type_id, description, display_order) VALUES (?, ?, ?, ?, ?)`,
+            [uuidv4(), cat.name, 'type_beauty', cat.description, i + 1]
+        );
+    }
+
+    // Default categories for spa
+    const spaCategories = [
+        { name: 'Massage', description: 'Massage therapies' },
+        { name: 'Body Treatments', description: 'Body wraps and scrubs' },
+        { name: 'Wellness', description: 'Wellness and relaxation services' }
+    ];
+
+    for (let i = 0; i < spaCategories.length; i++) {
+        const cat = spaCategories[i];
+        await dbRun(
+            `INSERT OR IGNORE INTO service_categories (id, name, service_type_id, description, display_order) VALUES (?, ?, ?, ?, ?)`,
+            [uuidv4(), cat.name, 'type_spa', cat.description, i + 1]
+        );
+    }
+
+    console.log('Seeded default service types and categories');
 }
 
 // Ensure an index exists (for migrations)
