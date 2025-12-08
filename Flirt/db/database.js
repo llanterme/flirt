@@ -123,6 +123,9 @@ async function initializeDatabase() {
     await ensureColumn('bookings', 'payment_date', 'TEXT');
     await ensureColumn('bookings', 'payment_amount', 'REAL');
     await ensureIndex('idx_bookings_payment_status', 'bookings', 'payment_status');
+
+    // Booking completion tracking
+    await ensureColumn('bookings', 'completed_at', 'TEXT');
 }
 
 // Utilities for lightweight migrations (add missing columns safely)
@@ -782,7 +785,10 @@ const BookingRepository = {
             paymentAmount: 'payment_amount',
             // Commission fields
             commissionRate: 'commission_rate',
-            commissionAmount: 'commission_amount'
+            commissionAmount: 'commission_amount',
+            // Timestamps
+            updatedAt: 'updated_at',
+            completedAt: 'completed_at'
         };
 
         for (const [key, dbField] of Object.entries(fieldMap)) {
