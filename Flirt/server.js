@@ -3076,8 +3076,8 @@ app.post('/api/admin/services/seed-hair', authenticateAdmin, async (req, res) =>
             }
         }
 
-        // Delete existing hair services
-        await db.dbRun("DELETE FROM services WHERE service_type = 'hair'");
+        // Deactivate existing hair services (don't delete - foreign key constraints with bookings)
+        await db.dbRun("UPDATE services SET active = 0 WHERE service_type = 'hair'");
 
         // Insert all new services
         for (const service of services) {
