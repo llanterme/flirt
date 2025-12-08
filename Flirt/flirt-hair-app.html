@@ -9935,7 +9935,7 @@
 
                 html += `
                     <div class="service-category-group" id="${catId}">
-                        <div class="service-category-header" onclick="toggleServiceCategory('${catId}')">
+                        <div class="service-category-header" onclick="toggleServiceCategoryById('${catId}')">
                             <div class="service-category-header-left">
                                 <span class="service-category-title">${category}</span>
                                 <span class="service-category-count">${services.length}</span>
@@ -9971,8 +9971,8 @@
             container.innerHTML = html;
         }
 
-        // Toggle service category expand/collapse
-        function toggleServiceCategory(catId) {
+        // Toggle service category expand/collapse by ID (for beauty services grid)
+        function toggleServiceCategoryById(catId) {
             const group = document.getElementById(catId);
             if (group) {
                 const isExpanded = group.classList.contains('expanded');
