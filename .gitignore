@@ -9,8 +9,8 @@ node_modules/
 .env.test
 
 # Database files (SQLite)
-*.db
 *.db-journal
+# Note: flirt.db is tracked intentionally for Railway deployment
 
 # Logs
 logs/
