@@ -137,6 +137,11 @@ async function initializeDatabase() {
     await ensureColumn('bookings', 'commission_rate', 'REAL');
     await ensureColumn('bookings', 'commission_amount', 'REAL');
 
+    // Commission rate columns for stylists and services (for invoice commission calculation)
+    await ensureColumn('stylists', 'commission_rate', 'REAL DEFAULT 0.30');
+    await ensureColumn('stylists', 'basic_monthly_pay', 'REAL DEFAULT 0');
+    await ensureColumn('services', 'commission_rate', 'REAL');
+
     // ============================================
     // SERVICE TYPES AND CATEGORIES (for configurable dropdowns)
     // ============================================
