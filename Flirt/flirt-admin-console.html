@@ -3220,7 +3220,7 @@
                         <div class="modal-body">
                             <input type="text" id="service-search" placeholder="Search services..."
                                 style="width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid var(--border-soft); border-radius: 6px;"
-                                oninput="filterServices()">
+                                oninput="filterInvoiceServices()">
                             <div id="service-list" style="max-height: 400px; overflow-y: auto;">
                                 <!-- Populated dynamically -->
                             </div>
@@ -3238,7 +3238,7 @@
                         <div class="modal-body">
                             <input type="text" id="product-search" placeholder="Search products..."
                                 style="width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid var(--border-soft); border-radius: 6px;"
-                                oninput="filterProducts()">
+                                oninput="filterInvoiceProducts()">
                             <div id="product-list" style="max-height: 400px; overflow-y: auto;">
                                 <!-- Populated dynamically -->
                             </div>
@@ -12194,10 +12194,10 @@
             }
         };
 
-        let allServices = [];
-        let allProducts = [];
-        let allStylists = [];
-        let allCustomers = [];
+        let invoiceServices = [];
+        let invoiceProducts = [];
+        let invoiceStylists = [];
+        let invoiceCustomers = [];
         let currentPaymentInvoice = null;
 
         // Load invoices
@@ -12374,7 +12374,7 @@
                 const beautyData = await beautyResponse.json();
 
                 // Combine both service types
-                allServices = [
+                invoiceServices = [
                     ...(hairData.services || []),
                     ...(beautyData.services || [])
                 ];
@@ -12390,7 +12390,7 @@
                     headers: { 'Authorization': `Bearer ${getToken()}` }
                 });
                 const data = await response.json();
-                allProducts = data.products || [];
+                invoiceProducts = data.products || [];
             } catch (error) {
                 console.error('Error loading products:', error);
                 showNotification('Failed to load products. Please refresh and try again.', 'error');
@@ -12403,7 +12403,7 @@
                     headers: { 'Authorization': `Bearer ${getToken()}` }
                 });
                 const data = await response.json();
-                allStylists = data.staff || [];
+                invoiceStylists = data.staff || [];
 
                 const stylistSelects = document.querySelectorAll('#invoice-stylist, #invoice-stylist-filter, #commission-stylist');
                 stylistSelects.forEach(select => {
@@ -12412,7 +12412,7 @@
 
                     select.innerHTML = filterSelect ? '<option value="">All Stylists</option>' : '<option value="">Select stylist...</option>';
 
-                    allStylists.forEach(stylist => {
+                    invoiceStylists.forEach(stylist => {
                         const option = document.createElement('option');
                         option.value = stylist.id;
                         option.textContent = stylist.name;
@@ -12433,12 +12433,12 @@
                     headers: { 'Authorization': `Bearer ${getToken()}` }
                 });
                 const data = await response.json();
-                allCustomers = data.customers || [];
+                invoiceCustomers = data.customers || [];
 
                 const customerSelect = document.getElementById('invoice-customer');
                 customerSelect.innerHTML = '<option value="">Select customer...</option>';
 
-                allCustomers.forEach(customer => {
+                invoiceCustomers.forEach(customer => {
                     const option = document.createElement('option');
                     option.value = customer.id;
                     option.textContent = `${customer.name} (${customer.email})`;
@@ -12452,7 +12452,7 @@
 
         // Service picker
         function showServicePicker() {
-            renderServiceList(allServices);
+            renderServiceList(invoiceServices);
             document.getElementById('service-picker-modal').classList.add('active');
         }
 
@@ -12460,9 +12460,9 @@
             document.getElementById('service-picker-modal').classList.remove('active');
         }
 
-        function filterServices() {
+        function filterInvoiceServices() {
             const search = document.getElementById('service-search').value.toLowerCase();
-            const filtered = allServices.filter(s =>
+            const filtered = invoiceServices.filter(s =>
                 s.name.toLowerCase().includes(search) ||
                 s.category?.toLowerCase().includes(search)
             );
@@ -12491,7 +12491,7 @@
         }
 
         function addServiceToInvoice(serviceId) {
-            const service = allServices.find(s => s.id === serviceId);
+            const service = invoiceServices.find(s => s.id === serviceId);
             if (!service) return;
 
             currentInvoice.services.push({
@@ -12538,7 +12538,7 @@
 
         // Product picker
         function showProductPicker() {
-            renderProductList(allProducts);
+            renderProductList(invoiceProducts);
             document.getElementById('product-picker-modal').classList.add('active');
         }
 
@@ -12546,9 +12546,9 @@
             document.getElementById('product-picker-modal').classList.remove('active');
         }
 
-        function filterProducts() {
+        function filterInvoiceProducts() {
             const search = document.getElementById('product-search').value.toLowerCase();
-            const filtered = allProducts.filter(p =>
+            const filtered = invoiceProducts.filter(p =>
                 p.name.toLowerCase().includes(search) ||
                 p.category?.toLowerCase().includes(search)
             );
@@ -12580,7 +12580,7 @@
         }
 
         function showProductQuantityModal(productId) {
-            const product = allProducts.find(p => p.id === productId);
+            const product = invoiceProducts.find(p => p.id === productId);
             if (!product) return;
 
             const quantity = prompt(`How many units of "${product.name}"?`, '1');
