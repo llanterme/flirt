@@ -6770,6 +6770,20 @@
                     </div>
                     <span>›</span>
                 </li>
+                <li class="menu-item" onclick="viewInvoices()">
+                    <div class="menu-item-content">
+                        <span class="menu-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                        </span>
+                        <span class="menu-text">My Invoices</span>
+                    </div>
+                    <span>›</span>
+                </li>
                 <li class="menu-item" onclick="viewPayments()">
                     <div class="menu-item-content">
                         <span class="menu-icon">
@@ -7261,6 +7275,32 @@
             </div>
             <div class="modal-body" id="ordersModalBody" style="padding: 20px; max-height: 400px; overflow-y: auto;">
                 <!-- Orders will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoices List Modal -->
+    <div class="modal" id="invoicesModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">My Invoices</h3>
+                <button class="modal-close" onclick="closeInvoicesModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="invoicesModalBody" style="padding: 20px; max-height: 400px; overflow-y: auto;">
+                <!-- Invoices will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Detail Modal -->
+    <div class="modal" id="invoiceDetailModal">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Invoice Details</h3>
+                <button class="modal-close" onclick="closeInvoiceDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="invoiceDetailBody" style="padding: 20px; max-height: 500px; overflow-y: auto;">
+                <!-- Invoice details will be loaded here -->
             </div>
         </div>
     </div>
@@ -11423,6 +11463,261 @@ async function showNotifications() {
 
         function closeOrdersModal() {
             document.getElementById('ordersModal').classList.remove('show');
+        }
+
+        // Invoice Functions
+        const invoicePaymentColors = {
+            'unpaid': 'var(--danger)',
+            'partial': 'var(--warning)',
+            'paid': 'var(--success)',
+            'refunded': 'var(--gray-medium)',
+            'written_off': 'var(--gray-medium)'
+        };
+
+        const invoicePaymentLabels = {
+            'unpaid': 'Unpaid',
+            'partial': 'Partial',
+            'paid': 'Paid',
+            'refunded': 'Refunded',
+            'written_off': 'Written Off'
+        };
+
+        async function viewInvoices() {
+            if (!currentUser) {
+                showAuthModal();
+                return;
+            }
+            const modal = document.getElementById('invoicesModal');
+            const body = document.getElementById('invoicesModalBody');
+            body.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-subtle);">Loading...</div>';
+            modal.classList.add('show');
+
+            try {
+                const data = await apiCall('/invoices/my-invoices');
+                if (!data.invoices || data.invoices.length === 0) {
+                    body.innerHTML = `
+                        <div style="text-align: center; padding: 30px;">
+                            <div style="font-size: 48px; margin-bottom: 15px;">📄</div>
+                            <div style="font-weight: 600; margin-bottom: 8px;">No invoices yet</div>
+                            <p style="color: var(--text-subtle); margin-bottom: 15px;">Your finalized invoices will appear here after your appointments.</p>
+                            <button class="btn btn-primary" onclick="closeInvoicesModal();" style="background: var(--brand-pink);">Got it</button>
+                        </div>
+                    `;
+                } else {
+                    body.innerHTML = data.invoices.map(inv => {
+                        const serviceDate = inv.service_date ? new Date(inv.service_date) : null;
+                        const statusColor = invoicePaymentColors[inv.payment_status] || 'var(--brand-charcoal)';
+                        const statusLabel = invoicePaymentLabels[inv.payment_status] || inv.payment_status;
+                        const amountDue = inv.amount_due || 0;
+                        return `
+                            <div style="background: var(--surface-muted); border-radius: 12px; padding: 15px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid ${statusColor};" onclick="viewInvoiceDetail('${inv.id}')">
+                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600; font-size: 16px; margin-bottom: 4px;">${inv.invoice_number || 'Invoice'}</div>
+                                        <div style="color: var(--text-muted); font-size: 14px;">R${(inv.total || 0).toLocaleString('en-ZA', {minimumFractionDigits: 2})}</div>
+                                        ${serviceDate ? `<div style="color: var(--text-subtle); font-size: 13px; margin-top: 4px;">${formatDateDisplay(serviceDate)}</div>` : ''}
+                                        ${amountDue > 0 ? `<div style="color: var(--danger); font-size: 13px; margin-top: 4px; font-weight: 500;">Due: R${amountDue.toLocaleString('en-ZA', {minimumFractionDigits: 2})}</div>` : ''}
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                                        <span style="background: ${statusColor}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;">${statusLabel}</span>
+                                        <span style="color: var(--brand-pink); font-size: 13px;">View Details →</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                body.innerHTML = `<div style="text-align: center; color: var(--danger); padding: 20px;">Error loading invoices: ${error.message}</div>`;
+            }
+        }
+
+        function closeInvoicesModal() {
+            document.getElementById('invoicesModal').classList.remove('show');
+        }
+
+        async function viewInvoiceDetail(invoiceId) {
+            const modal = document.getElementById('invoiceDetailModal');
+            const body = document.getElementById('invoiceDetailBody');
+            body.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-subtle);">Loading invoice details...</div>';
+            modal.classList.add('show');
+
+            try {
+                const data = await apiCall(`/invoices/${invoiceId}`);
+                const inv = data.invoice;
+                if (!inv) {
+                    body.innerHTML = '<div style="text-align: center; color: var(--danger); padding: 20px;">Invoice not found</div>';
+                    return;
+                }
+
+                const serviceDate = inv.service_date ? new Date(inv.service_date) : null;
+                const statusColor = invoicePaymentColors[inv.payment_status] || 'var(--brand-charcoal)';
+                const statusLabel = invoicePaymentLabels[inv.payment_status] || inv.payment_status;
+                const services = inv.services || [];
+                const products = inv.products || [];
+                const payments = inv.payments || [];
+                const amountDue = inv.amount_due || 0;
+                const showPayButton = (inv.payment_status === 'unpaid' || inv.payment_status === 'partial') && amountDue > 0;
+
+                let html = `
+                    <div style="border-bottom: 1px solid var(--border-soft); padding-bottom: 15px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 18px; color: var(--brand-charcoal);">${inv.invoice_number || 'Invoice'}</div>
+                                ${serviceDate ? `<div style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">${formatDateDisplay(serviceDate)}</div>` : ''}
+                                ${inv.stylist_name ? `<div style="color: var(--text-subtle); font-size: 13px; margin-top: 4px;">Stylist: ${inv.stylist_name}</div>` : ''}
+                            </div>
+                            <span style="background: ${statusColor}; color: white; padding: 6px 12px; border-radius: 12px; font-size: 13px; font-weight: 500;">${statusLabel}</span>
+                        </div>
+                    </div>
+                `;
+
+                // Services
+                if (services.length > 0) {
+                    html += `
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-weight: 600; font-size: 14px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Services</div>
+                            ${services.map(s => `
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-soft);">
+                                    <div>
+                                        <div style="font-weight: 500;">${s.service_name || 'Service'}</div>
+                                        ${s.quantity > 1 ? `<div style="font-size: 13px; color: var(--text-subtle);">Qty: ${s.quantity}</div>` : ''}
+                                    </div>
+                                    <div style="font-weight: 500;">R${(s.total || 0).toLocaleString('en-ZA', {minimumFractionDigits: 2})}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                // Products
+                if (products.length > 0) {
+                    html += `
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-weight: 600; font-size: 14px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Products</div>
+                            ${products.map(p => `
+                                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-soft);">
+                                    <div>
+                                        <div style="font-weight: 500;">${p.product_name || 'Product'}</div>
+                                        ${p.quantity > 1 ? `<div style="font-size: 13px; color: var(--text-subtle);">Qty: ${p.quantity}</div>` : ''}
+                                    </div>
+                                    <div style="font-weight: 500;">R${(p.total || 0).toLocaleString('en-ZA', {minimumFractionDigits: 2})}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                // Totals
+                html += `
+                    <div style="background: var(--surface-muted); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--text-muted);">Subtotal</span>
+                            <span>R${(inv.subtotal || 0).toLocaleString('en-ZA', {minimumFractionDigits: 2})}</span>
+                        </div>
+                        ${inv.discount_amount > 0 ? `
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--success);">
+                                <span>Discount${inv.discount_reason ? ` (${inv.discount_reason})` : ''}</span>
+                                <span>-R${inv.discount_amount.toLocaleString('en-ZA', {minimumFractionDigits: 2})}</span>
+                            </div>
+                        ` : ''}
+                        ${inv.tax_amount > 0 ? `
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="color: var(--text-muted);">VAT (${((inv.tax_rate || 0) * 100).toFixed(0)}%)</span>
+                                <span>R${inv.tax_amount.toLocaleString('en-ZA', {minimumFractionDigits: 2})}</span>
+                            </div>
+                        ` : ''}
+                        <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 16px; border-top: 1px solid var(--border-soft); padding-top: 10px; margin-top: 10px;">
+                            <span>Total</span>
+                            <span>R${(inv.total || 0).toLocaleString('en-ZA', {minimumFractionDigits: 2})}</span>
+                        </div>
+                        ${inv.amount_paid > 0 ? `
+                            <div style="display: flex; justify-content: space-between; margin-top: 8px; color: var(--success);">
+                                <span>Paid</span>
+                                <span>R${inv.amount_paid.toLocaleString('en-ZA', {minimumFractionDigits: 2})}</span>
+                            </div>
+                        ` : ''}
+                        ${amountDue > 0 ? `
+                            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-weight: 700; color: var(--danger);">
+                                <span>Amount Due</span>
+                                <span>R${amountDue.toLocaleString('en-ZA', {minimumFractionDigits: 2})}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                // Payment History
+                if (payments.length > 0) {
+                    html += `
+                        <div style="margin-bottom: 15px;">
+                            <div style="font-weight: 600; font-size: 14px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Payment History</div>
+                            ${payments.map(p => {
+                                const payDate = p.payment_date ? new Date(p.payment_date) : null;
+                                return `
+                                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-soft);">
+                                        <div>
+                                            <div style="font-weight: 500;">${payDate ? formatDateDisplay(payDate) : 'Payment'}</div>
+                                            <div style="font-size: 13px; color: var(--text-subtle);">${p.payment_method || 'N/A'}${p.payment_reference ? ` - ${p.payment_reference}` : ''}</div>
+                                        </div>
+                                        <div style="font-weight: 500; color: var(--success);">R${(p.amount || 0).toLocaleString('en-ZA', {minimumFractionDigits: 2})}</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+
+                // Client Notes
+                if (inv.client_notes) {
+                    html += `
+                        <div style="background: var(--surface-muted); border-radius: 10px; padding: 15px; margin-bottom: 15px;">
+                            <div style="font-weight: 600; font-size: 14px; color: var(--text-muted); margin-bottom: 8px;">Note</div>
+                            <p style="color: var(--text-muted); font-size: 14px; margin: 0;">${inv.client_notes}</p>
+                        </div>
+                    `;
+                }
+
+                // Pay Button
+                if (showPayButton) {
+                    html += `
+                        <button onclick="payInvoice('${inv.id}')" class="btn btn-primary" style="width: 100%; background: var(--brand-pink); padding: 15px; font-size: 16px; font-weight: 600;">
+                            Pay Now - R${amountDue.toLocaleString('en-ZA', {minimumFractionDigits: 2})}
+                        </button>
+                    `;
+                }
+
+                // Back Button
+                html += `
+                    <button onclick="closeInvoiceDetailModal(); viewInvoices();" class="btn btn-outline" style="width: 100%; margin-top: 10px; padding: 12px;">
+                        ← Back to Invoices
+                    </button>
+                `;
+
+                body.innerHTML = html;
+            } catch (error) {
+                body.innerHTML = `<div style="text-align: center; color: var(--danger); padding: 20px;">Error loading invoice: ${error.message}</div>`;
+            }
+        }
+
+        function closeInvoiceDetailModal() {
+            document.getElementById('invoiceDetailModal').classList.remove('show');
+        }
+
+        async function payInvoice(invoiceId) {
+            try {
+                showToast({ type: 'info', title: 'Processing', message: 'Redirecting to payment...' });
+                const data = await apiCall(`/invoices/${invoiceId}/pay`, {
+                    method: 'POST',
+                    body: JSON.stringify({ payment_method: 'payfast' })
+                });
+                if (data.payment_url) {
+                    window.location.href = data.payment_url;
+                } else {
+                    showToast({ type: 'error', title: 'Error', message: 'Could not initiate payment. Please try again.' });
+                }
+            } catch (error) {
+                showToast({ type: 'error', title: 'Payment Error', message: error.message || 'Failed to initiate payment' });
+            }
         }
 
         // Payment Methods Modal
