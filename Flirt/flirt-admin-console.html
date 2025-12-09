@@ -3171,22 +3171,21 @@
                                 </div>
                             </div>
                             <div style="padding: 20px;">
-                                <!-- Day View -->
+                                <!-- Day View - Salon Schedule with Stylist Columns -->
                                 <div id="calendarDayView" style="display: none;">
                                     <div style="border: 1px solid var(--gray-light); border-radius: 8px; overflow: hidden;">
-                                        <div style="background: var(--gray-light); padding: 12px 15px; font-weight: 600; border-bottom: 1px solid var(--gray-light);">
+                                        <div style="background: var(--gray-light); padding: 12px 15px; font-weight: 600; border-bottom: 1px solid var(--gray-light); display: flex; justify-content: space-between; align-items: center;">
                                             <span id="dayViewDate">Thursday, November 28, 2025</span>
-                                        </div>
-                                        <div id="dayViewGrid" style="position: relative; height: 600px; overflow-y: auto;">
-                                            <!-- Time slots 6 AM to 10 PM -->
-                                            <div style="display: grid; grid-template-columns: 80px 1fr; border-bottom: 1px solid var(--gray-light);">
-                                                <div style="border-right: 1px solid var(--gray-light); padding: 0;">
-                                                    <!-- Time labels -->
-                                                </div>
-                                                <div style="position: relative; min-height: 600px;">
-                                                    <!-- Booking slots -->
-                                                </div>
+                                            <div style="display: flex; gap: 8px; align-items: center;">
+                                                <span id="dayViewPendingCount" style="background: #fff3cd; color: #856404; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;">0 pending</span>
                                             </div>
+                                        </div>
+                                        <!-- Stylist columns header -->
+                                        <div id="dayViewStylistHeader" style="display: grid; background: var(--gray-light); border-bottom: 1px solid var(--gray-light);">
+                                            <!-- Dynamic stylist columns header -->
+                                        </div>
+                                        <div id="dayViewGrid" style="position: relative; height: 700px; overflow: auto;">
+                                            <!-- Salon schedule grid with stylist columns -->
                                         </div>
                                     </div>
                                 </div>
@@ -3247,7 +3246,7 @@
                         <div class="modal" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column;">
                             <div class="modal-header">
                                 <h3 class="modal-title">Edit Booking</h3>
-                                <button class="modal-close" onclick="closeModal('editBookingModal')">&times;</button>
+                                <button class="modal-close" onclick="closeEditBookingModal()">&times;</button>
                             </div>
                             <div class="modal-body" style="flex: 1; overflow-y: auto;">
                                 <div class="form-group">
@@ -3291,10 +3290,11 @@
                                 <div class="form-group">
                                     <label class="form-label">Status</label>
                                     <select id="editBookingStatus" class="form-input">
-                                        <option value="pending">Pending</option>
-                                        <option value="confirmed">Confirmed</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="cancelled">Cancelled</option>
+                                        <option value="REQUESTED">Requested</option>
+                                        <option value="CONFIRMED">Confirmed</option>
+                                        <option value="COMPLETED">Completed</option>
+                                        <option value="CANCELLED">Cancelled</option>
+                                        <option value="NO_SHOW">No Show</option>
                                     </select>
                                 </div>
 
@@ -3312,7 +3312,7 @@
                                 <div id="editBookingError" style="color: var(--danger); margin-bottom: 15px; display: none;"></div>
 
                                 <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                                    <button class="btn btn-outline" onclick="closeModal('editBookingModal')">Cancel</button>
+                                    <button class="btn btn-outline" onclick="closeEditBookingModal()">Cancel</button>
                                     <button class="btn btn-primary" onclick="saveBookingEdit()">Save Changes</button>
                                 </div>
                             </div>
@@ -5983,6 +5983,36 @@
         </div>
     </div>
 
+    <!-- Time Input Dialog -->
+    <div class="modal-overlay stacked" id="timeInputDialog" style="display: none;">
+        <div class="modal" style="max-width: 380px; width: 90%;">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--brand-pink) 0%, var(--brand-pink-dark) 100%); color: white; border-radius: 12px 12px 0 0;">
+                <h3 class="modal-title" style="color: white;">
+                    <svg style="width:20px;height:20px;vertical-align:middle;margin-right:8px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span id="timeInputDialogTitle">Set Time</span>
+                </h3>
+                <button class="modal-close" style="color: white;" onclick="resolveTimeInput(false)">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <p id="timeInputDialogMessage" style="font-size: 14px; color: var(--brand-charcoal); margin: 0 0 16px 0;">Enter the time:</p>
+                <div style="margin-bottom: 20px;">
+                    <input type="time" id="timeInputValue" value="09:00"
+                           style="width: 100%; padding: 14px 16px; border: 2px solid var(--border-soft); border-radius: 10px; font-size: 18px; transition: border-color 0.2s; text-align: center;"
+                           onfocus="this.style.borderColor='var(--brand-pink)'"
+                           onblur="this.style.borderColor='var(--border-soft)'"
+                           onkeydown="if(event.key==='Enter'){document.getElementById('timeInputDialogConfirm').click()}">
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 16px 24px; background: var(--surface-muted); border-radius: 0 0 12px 12px;">
+                <button class="btn btn-outline" onclick="resolveTimeInput(false)">Cancel</button>
+                <button class="btn btn-primary" id="timeInputDialogConfirm" onclick="resolveTimeInput(true)" style="background: var(--brand-pink);">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <div class="admin-toast-container" id="adminToastContainer"></div>
 
     <!-- Add Staff Modal -->
@@ -8401,10 +8431,15 @@
             }
         }
 
-        function renderDayView() {
+        async function renderDayView() {
+            // Ensure we have stylists data
+            await ensureAdminBookingData();
+
             const dateLabel = document.getElementById('dayViewDate');
             const grid = document.getElementById('dayViewGrid');
+            const header = document.getElementById('dayViewStylistHeader');
             const label = document.getElementById('bookingsCalendarLabel');
+            const pendingCount = document.getElementById('dayViewPendingCount');
 
             const formattedDate = formatDateDisplay(calendarViewDate, {
                 weekday: 'long'
@@ -8413,7 +8448,20 @@
             label.textContent = formattedDate;
 
             const dateKey = calendarViewDate.toISOString().split('T')[0];
-            const dayBookings = adminBookings.filter(b => b.date.split('T')[0] === dateKey);
+            const dayBookings = adminBookings.filter(b => {
+                const bookingDate = (b.requestedDate || b.date).split('T')[0];
+                return bookingDate === dateKey;
+            });
+
+            // Count pending (REQUESTED) bookings
+            const pendingBookings = dayBookings.filter(b => b.status === 'REQUESTED');
+            pendingCount.textContent = `${pendingBookings.length} pending`;
+            pendingCount.style.display = pendingBookings.length > 0 ? 'inline-block' : 'none';
+
+            // Get active stylists for columns
+            const stylists = adminBookingStylists.filter(s => s.active !== false && s.status !== 'inactive');
+            const stylistColumns = [...stylists, { id: null, name: 'Unassigned' }];
+            const numColumns = stylistColumns.length;
 
             // Helper: Calculate duration in minutes from start/end times
             function calculateDuration(booking) {
@@ -8422,126 +8470,160 @@
                     const [endH, endM] = booking.assignedEndTime.split(':').map(Number);
                     return (endH * 60 + endM) - (startH * 60 + startM);
                 }
-                return 60; // Default to 60 minutes if no end time
+                return booking.duration || 60;
             }
 
-            // Helper: Calculate position in minutes from start of day (6 AM)
+            // Helper: Calculate position in minutes from start of day (7 AM)
             function calculatePosition(timeStr) {
+                if (!timeStr) return -1;
                 const [h, m] = timeStr.split(':').map(Number);
-                return (h * 60 + m) - (6 * 60); // Offset from 6 AM
+                return (h * 60 + m) - (7 * 60); // Offset from 7 AM
             }
 
             // Prepare bookings with calculated positions and durations
             const bookingsWithLayout = dayBookings.map(b => {
-                const time = b.assignedStartTime || b.confirmedTime || b.time || '09:00';
+                const time = b.assignedStartTime || b.confirmedTime || b.time;
                 return {
                     ...b,
-                    time,
-                    position: calculatePosition(time),
-                    duration: calculateDuration(b)
+                    displayTime: time || null,
+                    position: time ? calculatePosition(time) : -1,
+                    duration: calculateDuration(b),
+                    stylistColumnId: b.stylistId || null
                 };
-            }).filter(b => b.position >= 0 && b.position < 960); // Only bookings between 6 AM and 10 PM
-
-            // Sort by time
-            bookingsWithLayout.sort((a, b) => a.position - b.position);
-
-            // Group bookings that overlap horizontally
-            const bookingGroups = [];
-            bookingsWithLayout.forEach(booking => {
-                // Find a group where this booking overlaps with any booking in the group
-                let placed = false;
-                for (let group of bookingGroups) {
-                    const overlaps = group.some(gb => {
-                        const gbEnd = gb.position + gb.duration;
-                        const bEnd = booking.position + booking.duration;
-                        return !(booking.position >= gbEnd || bEnd <= gb.position);
-                    });
-                    if (overlaps) {
-                        group.push(booking);
-                        placed = true;
-                        break;
-                    }
-                }
-                if (!placed) {
-                    bookingGroups.push([booking]);
-                }
             });
 
-            // Calculate horizontal positions for overlapping bookings
-            bookingsWithLayout.forEach(b => {
-                b.column = 0;
-                b.columnCount = 1;
-            });
-
-            bookingGroups.forEach(group => {
-                if (group.length > 1) {
-                    group.forEach((b, idx) => {
-                        b.column = idx;
-                        b.columnCount = group.length;
-                    });
-                }
-            });
-
-            const PIXELS_PER_MINUTE = 1; // 1px per minute means 60px per hour
-            const START_HOUR = 6;
-            const END_HOUR = 22;
+            const PIXELS_PER_MINUTE = 1.2;
+            const START_HOUR = 7;
+            const END_HOUR = 20;
             const TOTAL_HEIGHT = (END_HOUR - START_HOUR) * 60 * PIXELS_PER_MINUTE;
+            const TIME_COL_WIDTH = 60;
 
-            let html = '<div style="display: grid; grid-template-columns: 80px 1fr;">';
-
-            // Time slots from 6 AM to 10 PM
-            for (let hour = START_HOUR; hour <= END_HOUR; hour++) {
-                const displayTime = hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
-
-                html += `
-                    <div style="border-right: 1px solid var(--gray-light); border-bottom: 1px solid var(--gray-light); padding: 8px 10px; font-size: 11px; color: var(--gray-medium); text-align: right; height: ${60 * PIXELS_PER_MINUTE}px;">
-                        ${displayTime}
-                    </div>
-                    <div style="border-bottom: 1px solid var(--gray-light); position: relative; height: ${60 * PIXELS_PER_MINUTE}px;">
+            // Render stylist columns header
+            header.style.gridTemplateColumns = `${TIME_COL_WIDTH}px repeat(${numColumns}, 1fr)`;
+            let headerHtml = `<div style="border-right: 1px solid var(--gray-light); padding: 10px 5px; text-align: center; font-size: 11px; color: var(--gray-medium);">TIME</div>`;
+            stylistColumns.forEach((s, idx) => {
+                const stylistBookings = dayBookings.filter(b => (b.stylistId || null) === s.id);
+                const stylistPending = stylistBookings.filter(b => b.status === 'REQUESTED').length;
+                headerHtml += `
+                    <div style="border-right: ${idx < numColumns - 1 ? '1px solid var(--gray-light)' : 'none'}; padding: 10px 8px; text-align: center; font-weight: 600; font-size: 12px;">
+                        ${s.name}
+                        <div style="font-size: 10px; font-weight: 400; color: var(--gray-medium);">
+                            ${stylistBookings.length} booking${stylistBookings.length !== 1 ? 's' : ''}
+                            ${stylistPending > 0 ? `<span style="color: #856404;">(${stylistPending} pending)</span>` : ''}
+                        </div>
                     </div>
                 `;
+            });
+            header.innerHTML = headerHtml;
+
+            // Render the grid
+            let html = `<div style="display: grid; grid-template-columns: ${TIME_COL_WIDTH}px repeat(${numColumns}, 1fr); position: relative;">`;
+
+            // Time slots from 7 AM to 8 PM
+            for (let hour = START_HOUR; hour <= END_HOUR; hour++) {
+                const displayTime = hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`;
+                const isWorkingHour = hour >= 8 && hour <= 18;
+
+                html += `<div style="border-right: 1px solid var(--gray-light); border-bottom: 1px solid var(--gray-light); padding: 4px 6px; font-size: 10px; color: var(--gray-medium); text-align: right; height: ${60 * PIXELS_PER_MINUTE}px; background: ${isWorkingHour ? 'white' : '#fafafa'};">
+                    ${displayTime}
+                </div>`;
+
+                // Cell for each stylist column
+                for (let colIdx = 0; colIdx < numColumns; colIdx++) {
+                    html += `<div style="border-right: ${colIdx < numColumns - 1 ? '1px solid var(--gray-light)' : 'none'}; border-bottom: 1px solid var(--gray-light); position: relative; height: ${60 * PIXELS_PER_MINUTE}px; background: ${isWorkingHour ? 'white' : '#fafafa'};"></div>`;
+                }
             }
 
             html += '</div>';
 
-            // Overlay bookings with absolute positioning
-            html += '<div style="position: absolute; top: 0; left: 80px; right: 0; height: ' + TOTAL_HEIGHT + 'px; pointer-events: none;">';
+            // Overlay bookings with absolute positioning per stylist column
+            html += `<div style="position: absolute; top: 0; left: ${TIME_COL_WIDTH}px; right: 0; height: ${TOTAL_HEIGHT}px; pointer-events: none; display: grid; grid-template-columns: repeat(${numColumns}, 1fr);">`;
 
-            bookingsWithLayout.forEach(b => {
-                const statusColors = {
-                    'REQUESTED': 'background: #fff3cd; border-left: 3px solid #856404;',
-                    'CONFIRMED': 'background: #d4edda; border-left: 3px solid #155724;',
-                    'COMPLETED': 'background: #d1ecf1; border-left: 3px solid #0c5460;',
-                    'CANCELLED': 'background: #f8d7da; border-left: 3px solid #721c24;'
-                };
+            // Create a container for each stylist column
+            stylistColumns.forEach((stylist, colIdx) => {
+                const columnBookings = bookingsWithLayout.filter(b => b.stylistColumnId === stylist.id);
 
-                const topPos = b.position * PIXELS_PER_MINUTE;
-                const height = b.duration * PIXELS_PER_MINUTE;
-                const leftPercent = (b.column / b.columnCount) * 100;
-                const widthPercent = (1 / b.columnCount) * 100;
+                html += `<div style="position: relative; border-right: ${colIdx < numColumns - 1 ? '1px solid transparent' : 'none'};">`;
 
-                html += `
-                    <div class="calendar-booking-item" data-booking-id="${b.id}"
-                         style="position: absolute;
-                                top: ${topPos}px;
-                                left: ${leftPercent}%;
-                                width: calc(${widthPercent}% - 4px);
-                                height: ${height}px;
-                                min-height: 40px;
-                                padding: 8px 10px;
-                                border-radius: 4px;
-                                ${statusColors[b.status] || statusColors['CONFIRMED']}
-                                cursor: pointer;
-                                pointer-events: auto;
-                                overflow: hidden;
-                                box-sizing: border-box;"
-                         title="Click to edit booking">
-                        <div style="font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${b.customerName || 'Guest'}</div>
-                        <div style="font-size: 11px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${b.serviceName}</div>
-                        <div style="font-size: 10px; color: var(--gray-medium); margin-top: 2px;">${b.time} (${b.duration}min)</div>
-                        <div style="position: absolute; top: 5px; right: 5px; font-size: 10px; opacity: 0.7;">✏️</div>
-                    </div>
-                `;
+                columnBookings.forEach(b => {
+                    const statusStyles = {
+                        'REQUESTED': { bg: '#fff3cd', border: '#f0ad4e', text: '#856404' },
+                        'CONFIRMED': { bg: '#d4edda', border: '#28a745', text: '#155724' },
+                        'COMPLETED': { bg: '#d1ecf1', border: '#17a2b8', text: '#0c5460' },
+                        'CANCELLED': { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
+                        'NO_SHOW': { bg: '#e2e3e5', border: '#6c757d', text: '#383d41' }
+                    };
+                    const style = statusStyles[b.status] || statusStyles['CONFIRMED'];
+
+                    // For unscheduled bookings, stack them at the top
+                    let topPos, height;
+                    if (b.position < 0) {
+                        topPos = -5; // Stack at top
+                        height = 50;
+                    } else {
+                        topPos = b.position * PIXELS_PER_MINUTE;
+                        height = Math.max(b.duration * PIXELS_PER_MINUTE, 45);
+                    }
+
+                    // Quick action buttons based on status
+                    let quickActions = '';
+                    if (b.status === 'REQUESTED') {
+                        quickActions = `
+                            <div class="day-view-quick-actions" style="position: absolute; bottom: 3px; right: 3px; display: flex; gap: 3px;">
+                                <button class="quick-confirm-btn" data-booking-id="${b.id}" title="Confirm" style="background: #28a745; color: white; border: none; border-radius: 3px; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">✓</button>
+                            </div>
+                        `;
+                    } else if (b.status === 'CONFIRMED') {
+                        quickActions = `
+                            <div class="day-view-quick-actions" style="position: absolute; bottom: 3px; right: 3px; display: flex; gap: 3px;">
+                                <button class="quick-complete-btn" data-booking-id="${b.id}" title="Complete" style="background: #17a2b8; color: white; border: none; border-radius: 3px; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">✓</button>
+                            </div>
+                        `;
+                    }
+
+                    // Show time window for REQUESTED bookings without assigned time
+                    let timeDisplay = '';
+                    if (b.displayTime) {
+                        timeDisplay = b.displayTime;
+                        if (b.assignedEndTime) {
+                            timeDisplay += `-${b.assignedEndTime.substring(0, 5)}`;
+                        }
+                    } else if (b.requestedTimeWindow || b.preferredTimeOfDay) {
+                        const tw = window.BookingConstants?.getTimeWindow(b.requestedTimeWindow || b.preferredTimeOfDay);
+                        timeDisplay = tw ? `${tw.icon} ${tw.label}` : (b.requestedTimeWindow || b.preferredTimeOfDay);
+                    } else {
+                        timeDisplay = 'No time';
+                    }
+
+                    html += `
+                        <div class="calendar-booking-item day-view-booking" data-booking-id="${b.id}"
+                             style="position: absolute;
+                                    top: ${topPos}px;
+                                    left: 2px;
+                                    right: 2px;
+                                    height: ${height}px;
+                                    min-height: 45px;
+                                    padding: 6px 8px;
+                                    border-radius: 6px;
+                                    background: ${style.bg};
+                                    border-left: 4px solid ${style.border};
+                                    cursor: pointer;
+                                    pointer-events: auto;
+                                    overflow: hidden;
+                                    box-sizing: border-box;
+                                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                    transition: transform 0.1s, box-shadow 0.1s;"
+                             onmouseenter="this.style.transform='scale(1.02)'; this.style.boxShadow='0 3px 8px rgba(0,0,0,0.15)';"
+                             onmouseleave="this.style.transform='scale(1)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.1)';">
+                            <div style="font-weight: 600; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: ${style.text};">${b.customerName || 'Guest'}</div>
+                            <div style="font-size: 10px; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.8;">${b.serviceName}</div>
+                            <div style="font-size: 10px; color: ${style.text}; margin-top: 1px; opacity: 0.7;">${timeDisplay}</div>
+                            ${quickActions}
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
             });
 
             html += '</div>';
@@ -8554,20 +8636,97 @@
         }
 
         function attachCalendarBookingListeners() {
-            const items = document.querySelectorAll('.calendar-booking-item');
-            console.log('Attaching calendar booking listeners to', items.length, 'items');
-            items.forEach(item => {
+            // Main booking click - edit
+            document.querySelectorAll('.calendar-booking-item').forEach(item => {
                 item.addEventListener('click', function(e) {
+                    // Don't trigger if clicking on quick action buttons
+                    if (e.target.closest('.day-view-quick-actions')) return;
                     e.stopPropagation();
                     const bookingId = this.getAttribute('data-booking-id');
-                    console.log('Calendar booking clicked:', bookingId);
-                    if (typeof openEditBookingModal === 'function') {
-                        openEditBookingModal(bookingId);
-                    } else {
-                        console.error('openEditBookingModal function not found!');
-                    }
+                    openEditBookingModal(bookingId);
                 });
             });
+
+            // Quick confirm buttons
+            document.querySelectorAll('.quick-confirm-btn').forEach(btn => {
+                btn.addEventListener('click', async function(e) {
+                    e.stopPropagation();
+                    const bookingId = this.getAttribute('data-booking-id');
+                    await quickConfirmBooking(bookingId);
+                });
+            });
+
+            // Quick complete buttons
+            document.querySelectorAll('.quick-complete-btn').forEach(btn => {
+                btn.addEventListener('click', async function(e) {
+                    e.stopPropagation();
+                    const bookingId = this.getAttribute('data-booking-id');
+                    await quickCompleteBooking(bookingId);
+                });
+            });
+        }
+
+        // Quick confirm booking - prompts for time if not set
+        async function quickConfirmBooking(bookingId) {
+            const booking = adminBookings.find(b => b.id === bookingId);
+            if (!booking) return;
+
+            // If booking already has a time, confirm directly
+            if (booking.assignedStartTime || booking.confirmedTime || booking.time) {
+                await confirmBookingDirect(bookingId);
+                return;
+            }
+
+            // Otherwise, open edit modal to set time
+            openEditBookingModal(bookingId);
+            showAdminToast('Please set a time before confirming', 'info');
+        }
+
+        // Direct confirm without time prompt
+        async function confirmBookingDirect(bookingId) {
+            try {
+                const booking = adminBookings.find(b => b.id === bookingId);
+                const time = booking.assignedStartTime || booking.confirmedTime || booking.time || '09:00';
+
+                await apiCall(`/admin/bookings/${bookingId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'CONFIRMED', time })
+                });
+
+                showAdminToast('Booking confirmed!', 'success');
+                await loadBookings();
+
+                // Re-render current view
+                if (currentCalendarView === 'day') {
+                    renderDayView();
+                } else {
+                    renderBookingsCalendar();
+                }
+            } catch (error) {
+                showAdminToast('Error confirming booking: ' + error.message, 'error');
+            }
+        }
+
+        // Quick complete booking
+        async function quickCompleteBooking(bookingId) {
+            try {
+                await apiCall(`/admin/bookings/${bookingId}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: 'COMPLETED' })
+                });
+
+                showAdminToast('Booking completed!', 'success');
+                await loadBookings();
+
+                // Re-render current view
+                if (currentCalendarView === 'day') {
+                    renderDayView();
+                } else {
+                    renderBookingsCalendar();
+                }
+            } catch (error) {
+                showAdminToast('Error completing booking: ' + error.message, 'error');
+            }
         }
 
         function renderWeekView() {
@@ -8665,15 +8824,20 @@
 
         // Edit booking functionality
         let currentEditingBookingId = null;
+        let editBookingSourcePopupOpen = false; // Track if day popup was open when edit was triggered
 
         async function openEditBookingModal(bookingId) {
             currentEditingBookingId = bookingId;
             const booking = adminBookings.find(b => b.id === bookingId);
 
             if (!booking) {
-                alert('Booking not found');
+                showAdminToast('Booking not found', 'error');
                 return;
             }
+
+            // Track if day popup is currently visible (to restore it later)
+            const dayPopup = document.getElementById('bookingsDayPopup');
+            editBookingSourcePopupOpen = dayPopup && dayPopup.style.display === 'flex';
 
             // Ensure data is loaded
             await ensureAdminBookingData();
@@ -8697,8 +8861,8 @@
             document.getElementById('editBookingCustomer').value = booking.customerName || 'Guest';
             document.getElementById('editBookingService').value = booking.serviceId || '';
             document.getElementById('editBookingStylist').value = booking.stylistId || '';
-            document.getElementById('editBookingDate').value = booking.date.split('T')[0];
-            document.getElementById('editBookingTime').value = booking.confirmedTime || booking.time || '';
+            document.getElementById('editBookingDate').value = (booking.requestedDate || booking.date).split('T')[0];
+            document.getElementById('editBookingTime').value = booking.assignedStartTime || booking.confirmedTime || booking.time || '';
             document.getElementById('editBookingDuration').value = booking.duration || 60;
             document.getElementById('editBookingStatus').value = booking.status;
             document.getElementById('editBookingCommissionRate').value = booking.commission_rate !== null && booking.commission_rate !== undefined
@@ -8713,11 +8877,27 @@
                 errorEl.textContent = '';
             }
 
-            // Close day popup if open
-            closeBookingsDayPopup();
+            // Hide day popup temporarily (but keep track of it)
+            if (dayPopup) {
+                dayPopup.style.display = 'none';
+            }
 
             // Open edit modal
             openModal('editBookingModal');
+        }
+
+        // Close edit booking modal and restore day popup if needed
+        function closeEditBookingModal() {
+            closeModal('editBookingModal');
+            currentEditingBookingId = null;
+
+            // If the edit was initiated from the day popup, restore it and refresh content
+            if (editBookingSourcePopupOpen) {
+                // Get the date from the current calendar view or the booking
+                const dateKey = calendarViewDate.toISOString().split('T')[0];
+                showBookingsForDay(dateKey);
+                editBookingSourcePopupOpen = false;
+            }
         }
 
         async function saveBookingEdit() {
@@ -8779,8 +8959,15 @@
                 });
 
                 showAdminToast('Booking updated successfully!', 'success');
-                closeModal('editBookingModal');
-                loadBookings();
+                await loadBookings();
+                closeEditBookingModal();
+
+                // Re-render current view
+                if (currentCalendarView === 'day') {
+                    renderDayView();
+                } else {
+                    renderBookingsCalendar();
+                }
 
             } catch (error) {
                 if (errorEl) {
@@ -8809,7 +8996,15 @@
                 showAdminToast('Booking deleted successfully', 'success');
                 closeBookingsDayPopup();
                 closeModal('editBookingModal');
-                loadBookings();
+                editBookingSourcePopupOpen = false;
+                await loadBookings();
+
+                // Re-render current view
+                if (currentCalendarView === 'day') {
+                    renderDayView();
+                } else {
+                    renderBookingsCalendar();
+                }
 
             } catch (error) {
                 showAdminToast('Error deleting booking: ' + (error.message || ''), 'error');
@@ -8829,25 +9024,72 @@
                     body: JSON.stringify({ status: 'COMPLETED' })
                 });
                 showAdminToast('Booking marked as completed', 'success');
-                loadBookings();
+                await loadBookings();
+
+                // Re-render current view
+                if (currentCalendarView === 'day') {
+                    renderDayView();
+                } else {
+                    renderBookingsCalendar();
+                }
             } catch (error) {
                 showAdminToast('Error completing booking: ' + (error.message || 'Database error'), 'error');
             }
         }
 
         async function confirmBookingTime(id) {
-            const time = prompt('Enter confirmed time (e.g., 10:00):');
+            // Use a styled time input modal instead of prompt
+            const time = await openTimeInputDialog({
+                title: 'Confirm Booking Time',
+                message: 'Enter the confirmed appointment time:',
+                confirmText: 'Confirm'
+            });
+
             if (time) {
                 try {
                     await apiCall(`/admin/bookings/${id}/confirm`, {
                         method: 'PATCH',
                         body: JSON.stringify({ confirmedTime: time })
                     });
-                    alert('Booking confirmed!');
-                    loadBookings();
+                    showAdminToast('Booking confirmed!', 'success');
+                    await loadBookings();
+
+                    // Re-render current view
+                    if (currentCalendarView === 'day') {
+                        renderDayView();
+                    } else {
+                        renderBookingsCalendar();
+                    }
                 } catch (error) {
-                    alert('Error: ' + error.message);
+                    showAdminToast('Error: ' + error.message, 'error');
                 }
+            }
+        }
+
+        // Time input dialog for styled time picker
+        let timeInputResolver = null;
+        async function openTimeInputDialog({ title, message, confirmText = 'Confirm' }) {
+            return new Promise(resolve => {
+                timeInputResolver = resolve;
+                document.getElementById('timeInputDialogTitle').textContent = title;
+                document.getElementById('timeInputDialogMessage').textContent = message;
+                document.getElementById('timeInputDialogConfirm').textContent = confirmText;
+                document.getElementById('timeInputValue').value = '09:00';
+                document.getElementById('timeInputDialog').style.display = 'flex';
+                setTimeout(() => document.getElementById('timeInputValue').focus(), 100);
+            });
+        }
+
+        function resolveTimeInput(confirmed) {
+            const dialog = document.getElementById('timeInputDialog');
+            dialog.style.display = 'none';
+            if (timeInputResolver) {
+                if (confirmed) {
+                    timeInputResolver(document.getElementById('timeInputValue').value);
+                } else {
+                    timeInputResolver(null);
+                }
+                timeInputResolver = null;
             }
         }
 
@@ -8865,7 +9107,14 @@
                     body: JSON.stringify({ status: 'CANCELLED' })
                 });
                 showAdminToast('Booking cancelled', 'success');
-                loadBookings();
+                await loadBookings();
+
+                // Re-render current view
+                if (currentCalendarView === 'day') {
+                    renderDayView();
+                } else {
+                    renderBookingsCalendar();
+                }
             } catch (error) {
                 showAdminToast('Error cancelling booking: ' + (error.message || 'Database error'), 'error');
             }
