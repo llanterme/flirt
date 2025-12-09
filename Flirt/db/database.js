@@ -7,7 +7,21 @@ const fs = require('fs');
 const loyaltyHelper = require('../helpers/loyalty');
 const InvoiceRepositoryClass = require('./repositories/InvoiceRepository');
 
-const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'flirt.db');
+// Database path configuration:
+// 1. DATABASE_PATH env var (for Railway Volume: /data/flirt.db)
+// 2. RAILWAY_VOLUME_MOUNT_PATH env var + /flirt.db (auto-detect Railway Volume)
+// 3. Default: ./db/flirt.db (local development)
+function getDatabasePath() {
+    if (process.env.DATABASE_PATH) {
+        return process.env.DATABASE_PATH;
+    }
+    if (process.env.RAILWAY_VOLUME_MOUNT_PATH) {
+        return path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'flirt.db');
+    }
+    return path.join(__dirname, 'flirt.db');
+}
+
+const DB_PATH = getDatabasePath();
 
 let db = null;
 
@@ -18,6 +32,13 @@ function getDb() {
         const dbDir = path.dirname(DB_PATH);
         if (!fs.existsSync(dbDir)) {
             fs.mkdirSync(dbDir, { recursive: true });
+            console.log('Created database directory:', dbDir);
+        }
+
+        // Check if this is a new database (for logging purposes)
+        const isNewDb = !fs.existsSync(DB_PATH);
+        if (isNewDb) {
+            console.log('Creating new database at:', DB_PATH);
         }
 
         db = new sqlite3.Database(DB_PATH, (err) => {
@@ -26,10 +47,14 @@ function getDb() {
                 throw err;
             }
             console.log('Connected to SQLite database:', DB_PATH);
+            if (process.env.RAILWAY_VOLUME_MOUNT_PATH) {
+                console.log('Using Railway persistent volume storage');
+            }
         });
 
-        // Enable foreign keys
+        // Enable foreign keys and WAL mode for better concurrent access
         db.run('PRAGMA foreign_keys = ON');
+        db.run('PRAGMA journal_mode = WAL');
     }
     return db;
 }
