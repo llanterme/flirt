@@ -10719,7 +10719,14 @@ async function showNotifications() {
 
         function closeModal(modalId) {
             const modal = document.getElementById(modalId);
-            if (modal) modal.classList.remove('show');
+            if (modal) {
+                // Remove both 'show' and 'active' classes (different modals use different classes)
+                modal.classList.remove('show', 'active');
+                // For modals that use inline display style, hide them
+                if (modal.style.display) {
+                    modal.style.display = 'none';
+                }
+            }
         }
 
         // ========== LOYALTY CONFIG ==========
@@ -12663,13 +12670,7 @@ async function showNotifications() {
             modal.style.display = 'flex';
         }
 
-        function closeModal(modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.classList.remove('active');
-                modal.style.display = 'none';
-            }
-        }
+        // closeModal is defined earlier in the file
 
         // Booking Confirmation Modal
         function showBookingConfirmation(booking) {
