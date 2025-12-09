@@ -8251,7 +8251,35 @@
                 content.innerHTML = '<p style="color: var(--gray-medium); text-align: center;">No bookings for this day</p>';
             } else {
                 content.innerHTML = dayBookings.map(b => {
-                    const timeStr = b.confirmedTime || b.time || b.preferredTimeOfDay || 'Time TBC';
+                    // Format time based on booking status
+                    let timeStr;
+                    let requestedTimeStr = '';
+
+                    if (b.assignedStartTime) {
+                        // Has assigned time - format it nicely
+                        const startTime = new Date(`2000-01-01T${b.assignedStartTime}`);
+                        timeStr = startTime.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: false });
+                        if (b.assignedEndTime) {
+                            const endTime = new Date(`2000-01-01T${b.assignedEndTime}`);
+                            timeStr += ` - ${endTime.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
+                        }
+                    } else if (b.confirmedTime || b.time) {
+                        timeStr = b.confirmedTime || b.time;
+                    } else {
+                        timeStr = 'Not assigned';
+                    }
+
+                    // Always show requested time window for context
+                    const requestedWindow = b.requestedTimeWindow || b.preferredTimeOfDay;
+                    if (requestedWindow) {
+                        const timeWindow = window.BookingConstants?.getTimeWindow(requestedWindow);
+                        if (timeWindow) {
+                            requestedTimeStr = `<div style="font-size: 13px; color: var(--gray-medium); margin-top: 2px;">${timeWindow.icon} Requested: ${timeWindow.label} (${timeWindow.description})</div>`;
+                        } else {
+                            requestedTimeStr = `<div style="font-size: 13px; color: var(--gray-medium); margin-top: 2px;">Requested: ${requestedWindow}</div>`;
+                        }
+                    }
+
                     return `
                         <div style="padding: 15px; border: 1px solid var(--gray-light); border-radius: 10px; margin-bottom: 10px;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
@@ -8262,7 +8290,10 @@
                                 <span class="status-badge status-${b.status}">${b.status}</span>
                             </div>
                             <div style="font-size: 14px; margin-bottom: 5px;"><strong>Service:</strong> ${b.serviceName}</div>
-                            <div style="font-size: 14px; margin-bottom: 5px;"><strong>Time:</strong> ${timeStr}</div>
+                            <div style="font-size: 14px; margin-bottom: 5px;">
+                                <strong>Time:</strong> ${timeStr}
+                                ${requestedTimeStr}
+                            </div>
                             ${b.stylistName ? `<div style="font-size: 14px; margin-bottom: 5px;"><strong>Stylist:</strong> ${b.stylistName}</div>` : ''}
                             ${b.notes ? `<div style="font-size: 12px; color: var(--gray-medium); margin-top: 8px; padding: 8px; background: var(--gray-light); border-radius: 4px;"><strong>Notes:</strong> ${b.notes}</div>` : ''}
                             <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
