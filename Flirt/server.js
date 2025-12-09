@@ -1309,27 +1309,30 @@ function addDuration(timeStr, durationMinutes) {
 
 // Create booking
 app.post('/api/bookings', authenticateToken, async (req, res) => {
-    const { type, stylistId, serviceId, date, requestedTimeWindow, preferredTimeOfDay, time, notes } = req.body;
+    const { type, stylistId, serviceId, date, requestedTimeWindow, preferredTimeOfDay, time, notes, assignedStartTime, assignedEndTime } = req.body;
 
     // Support both new (requestedTimeWindow) and legacy (preferredTimeOfDay) parameters
     const timeWindow = requestedTimeWindow || preferredTimeOfDay;
+
+    // Check if exact times are provided (real-time availability flow)
+    const hasExactTimes = assignedStartTime && assignedEndTime;
 
     if (!type || !serviceId || !date) {
         return res.status(400).json({ success: false, message: 'Type, service, and date are required' });
     }
 
-    // For the new two-step booking flow, require time window instead of exact time
-    if (type === 'hair' && !timeWindow) {
-        return res.status(400).json({ success: false, message: 'Time window is required for hair bookings (MORNING, AFTERNOON, LATE_AFTERNOON, or EVENING)' });
+    // For hair bookings: require either exact times OR time window
+    if (type === 'hair' && !hasExactTimes && !timeWindow) {
+        return res.status(400).json({ success: false, message: 'Time window or exact time is required for hair bookings' });
     }
 
-    if (type === 'beauty' && !time) {
+    if (type === 'beauty' && !time && !hasExactTimes) {
         return res.status(400).json({ success: false, message: 'Time is required for beauty bookings' });
     }
 
-    // Validate time window for hair bookings
+    // Validate time window for hair bookings (only if using time window flow)
     const validTimeWindows = ['MORNING', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING'];
-    if (type === 'hair' && timeWindow && !validTimeWindows.includes(timeWindow)) {
+    if (type === 'hair' && timeWindow && !hasExactTimes && !validTimeWindows.includes(timeWindow)) {
         return res.status(400).json({
             success: false,
             message: `Invalid time window. Must be one of: ${validTimeWindows.join(', ')}`
@@ -1345,11 +1348,24 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
     }
 
     try {
-        const normalizedTime = normalizeTimeStr(time);
+        const normalizedTime = normalizeTimeStr(time) || assignedStartTime;
 
-        // Check for booking conflicts (exact same stylist, date, time)
-        // Only for beauty bookings with exact time - hair bookings will be checked when admin assigns time
-        if (normalizedTime && type === 'beauty' && stylistId) {
+        // Check for booking conflicts when exact times are provided
+        if (hasExactTimes && stylistId) {
+            const conflict = await BookingRepository.findConflict(stylistId, assignedStartTime, assignedEndTime);
+            if (conflict) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'This time slot is no longer available. Please select a different time.',
+                    conflict: {
+                        date: conflict.requested_date || conflict.date,
+                        time: conflict.assigned_start_time || conflict.confirmed_time || conflict.time
+                    }
+                });
+            }
+        }
+        // Legacy conflict check for beauty bookings without exact times
+        else if (normalizedTime && type === 'beauty' && stylistId) {
             const conflict = await BookingRepository.findConflict(stylistId, date, normalizedTime);
             if (conflict) {
                 return res.status(409).json({
@@ -1386,6 +1402,10 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
             }
         }
 
+        // Determine if booking should be immediately confirmed
+        // Confirmed if: beauty booking OR hair booking with exact times provided
+        const isConfirmed = type === 'beauty' || hasExactTimes;
+
         const newBooking = {
             id: uuidv4(),
             userId: req.user.id,
@@ -1396,15 +1416,15 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
             servicePrice: service.price,
             // New two-step booking fields
             requestedDate: date,
-            requestedTimeWindow: type === 'hair' ? timeWindow : null,
-            assignedStartTime: type === 'beauty' ? normalizedTime : null,
-            assignedEndTime: type === 'beauty' && normalizedTime ? addHoursToTime(normalizedTime, 1) : null,
-            status: type === 'hair' ? 'REQUESTED' : 'CONFIRMED',
+            requestedTimeWindow: !hasExactTimes && type === 'hair' ? timeWindow : null,
+            assignedStartTime: hasExactTimes ? assignedStartTime : (type === 'beauty' ? normalizedTime : null),
+            assignedEndTime: hasExactTimes ? assignedEndTime : (type === 'beauty' && normalizedTime ? addHoursToTime(normalizedTime, 1) : null),
+            status: isConfirmed ? 'CONFIRMED' : 'REQUESTED',
             // Legacy fields (for backward compatibility)
             date,
-            preferredTimeOfDay: type === 'hair' ? timeWindow : null,
-            time: type === 'beauty' ? normalizedTime : null,
-            confirmedTime: type === 'beauty' ? normalizedTime : null,
+            preferredTimeOfDay: !hasExactTimes && type === 'hair' ? timeWindow : null,
+            time: normalizedTime || assignedStartTime || null,
+            confirmedTime: isConfirmed ? (assignedStartTime || normalizedTime) : null,
             notes: notes || null
         };
 
@@ -1428,9 +1448,9 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: type === 'hair'
-                ? 'Booking request submitted! We will assign an exact time within 24 hours and notify you.'
-                : 'Booking confirmed!',
+            message: isConfirmed
+                ? 'Booking confirmed!'
+                : 'Booking request submitted! We will assign an exact time within 24 hours and notify you.',
             booking: bookingResponse
         });
     } catch (error) {
@@ -1447,6 +1467,179 @@ app.get('/api/bookings', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Database error fetching user bookings:', error.message);
         res.status(500).json({ success: false, message: 'Failed to fetch bookings' });
+    }
+});
+
+// Get stylist availability for a given date and service
+app.get('/api/availability/:stylistId', async (req, res) => {
+    try {
+        const { stylistId } = req.params;
+        const { date, serviceId } = req.query;
+
+        // Validate required params
+        if (!date) {
+            return res.status(400).json({ success: false, message: 'Date is required' });
+        }
+
+        // Validate date format and ensure it's not in the past
+        const requestedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (isNaN(requestedDate.getTime())) {
+            return res.status(400).json({ success: false, message: 'Invalid date format' });
+        }
+        if (requestedDate < today) {
+            return res.status(400).json({ success: false, message: 'Cannot check availability for past dates' });
+        }
+
+        // Get stylist info
+        const stylist = await StylistRepository.findById(stylistId);
+        if (!stylist) {
+            return res.status(404).json({ success: false, message: 'Stylist not found' });
+        }
+
+        // Get service duration (default 60 mins if not specified)
+        let serviceDuration = 60;
+        if (serviceId) {
+            const service = await ServiceRepository.findById(serviceId);
+            if (service && service.duration) {
+                serviceDuration = service.duration;
+            }
+        }
+
+        // Get business hours for the day of week
+        const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+        const dayOfWeek = dayNames[requestedDate.getDay()];
+
+        let businessHours = null;
+        const settingsRow = await db.dbGet('SELECT hours_json FROM business_settings WHERE id = 1');
+        if (settingsRow && settingsRow.hours_json) {
+            const hoursObj = JSON.parse(settingsRow.hours_json);
+            businessHours = hoursObj[dayOfWeek];
+        }
+
+        // Default hours if not configured
+        if (!businessHours) {
+            if (dayOfWeek === 'sun') {
+                // Closed on Sunday
+                return res.json({
+                    success: true,
+                    date,
+                    stylist: { id: stylist.id, name: stylist.name },
+                    serviceDuration,
+                    closed: true,
+                    message: 'Salon is closed on this day',
+                    slots: []
+                });
+            }
+            // Default hours: Mon-Fri 8-18, Sat 9-16
+            businessHours = dayOfWeek === 'sat'
+                ? { open: '09:00', close: '16:00' }
+                : { open: '08:00', close: '18:00' };
+        }
+
+        // Check if closed
+        if (!businessHours.open || !businessHours.close) {
+            return res.json({
+                success: true,
+                date,
+                stylist: { id: stylist.id, name: stylist.name },
+                serviceDuration,
+                closed: true,
+                message: 'Salon is closed on this day',
+                slots: []
+            });
+        }
+
+        // Parse business hours
+        const [openHour, openMin] = businessHours.open.split(':').map(Number);
+        const [closeHour, closeMin] = businessHours.close.split(':').map(Number);
+        const openMinutes = openHour * 60 + openMin;
+        const closeMinutes = closeHour * 60 + closeMin;
+
+        // Generate 30-minute slots within business hours
+        const slotInterval = 30;
+        const slots = [];
+
+        for (let mins = openMinutes; mins < closeMinutes; mins += slotInterval) {
+            const hour = Math.floor(mins / 60);
+            const minute = mins % 60;
+            const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+
+            // Check if service would end after closing
+            const endMins = mins + serviceDuration;
+            if (endMins > closeMinutes) {
+                // Service won't fit before closing
+                slots.push({ time: timeStr, available: false, reason: 'too_late' });
+                continue;
+            }
+
+            slots.push({ time: timeStr, available: true });
+        }
+
+        // Get existing bookings for this stylist on this date
+        const existingBookings = await db.dbAll(`
+            SELECT assigned_start_time, assigned_end_time, status
+            FROM bookings
+            WHERE stylist_id = ?
+            AND requested_date = ?
+            AND status IN ('CONFIRMED', 'REQUESTED')
+            AND assigned_start_time IS NOT NULL
+            AND assigned_end_time IS NOT NULL
+        `, [stylistId, date]);
+
+        // Mark slots as unavailable if they conflict with existing bookings
+        for (const slot of slots) {
+            if (!slot.available) continue;
+
+            const [slotHour, slotMin] = slot.time.split(':').map(Number);
+            const slotStartMins = slotHour * 60 + slotMin;
+            const slotEndMins = slotStartMins + serviceDuration;
+
+            // Check against each existing booking
+            for (const booking of existingBookings) {
+                const [bookStartHour, bookStartMin] = booking.assigned_start_time.split(':').map(Number);
+                const [bookEndHour, bookEndMin] = booking.assigned_end_time.split(':').map(Number);
+                const bookStartMins = bookStartHour * 60 + bookStartMin;
+                const bookEndMins = bookEndHour * 60 + bookEndMin;
+
+                // Check for overlap
+                const overlaps = (slotStartMins < bookEndMins && slotEndMins > bookStartMins);
+
+                if (overlaps) {
+                    slot.available = false;
+                    slot.reason = 'booked';
+                    break;
+                }
+            }
+        }
+
+        // Filter out past slots if date is today
+        const now = new Date();
+        if (requestedDate.toDateString() === now.toDateString()) {
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            for (const slot of slots) {
+                const [slotHour, slotMin] = slot.time.split(':').map(Number);
+                const slotMins = slotHour * 60 + slotMin;
+                if (slotMins <= currentMins) {
+                    slot.available = false;
+                    slot.reason = 'past';
+                }
+            }
+        }
+
+        res.json({
+            success: true,
+            date,
+            stylist: { id: stylist.id, name: stylist.name },
+            businessHours,
+            serviceDuration,
+            slots
+        });
+
+    } catch (error) {
+        console.error('Error fetching availability:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch availability' });
     }
 });
 

@@ -4687,6 +4687,124 @@
             color: var(--primary);
         }
 
+        /* Real-time availability time slots */
+        .availability-container {
+            margin-top: 15px;
+        }
+
+        .availability-loading {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-muted);
+        }
+
+        .availability-closed {
+            text-align: center;
+            padding: 30px;
+            background: var(--surface-muted);
+            border-radius: 12px;
+            color: var(--text-muted);
+        }
+
+        .availability-closed .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .time-slots-section {
+            margin-bottom: 20px;
+        }
+
+        .time-slots-section-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .time-slots-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        @media (max-width: 400px) {
+            .time-slots-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .time-slot {
+            padding: 12px 8px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .time-slot.available {
+            background: var(--surface-muted);
+            border: 2px solid transparent;
+            cursor: pointer;
+            color: var(--brand-charcoal);
+        }
+
+        .time-slot.available:hover {
+            border-color: var(--brand-pink);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(246, 117, 153, 0.2);
+        }
+
+        .time-slot.available.selected {
+            background: var(--brand-pink);
+            color: white;
+            border-color: var(--brand-pink);
+            box-shadow: 0 4px 12px rgba(246, 117, 153, 0.3);
+        }
+
+        .time-slot.booked {
+            background: var(--gray-light);
+            color: var(--gray-medium);
+            cursor: not-allowed;
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .time-slot.past {
+            background: var(--gray-light);
+            color: var(--gray-medium);
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+
+        .time-slot.too-late {
+            background: var(--gray-light);
+            color: var(--gray-medium);
+            cursor: not-allowed;
+            opacity: 0.5;
+            font-size: 12px;
+        }
+
+        .availability-note {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(246, 117, 153, 0.1);
+            border-radius: 10px;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .availability-note strong {
+            color: var(--brand-pink);
+        }
+
+
         /* ============================================
            AUTH REQUIRED STATE - Defense in Depth
            Body starts with auth-required class.
@@ -5672,23 +5790,23 @@
                         </div>
 
                         <h4 style="margin-top: 24px;">🕐 Select Time</h4>
-                        <div class="time-slots-modern" id="modernTimeSlots">
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '09:00')">09:00</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '09:30')">09:30</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '10:00')">10:00</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '10:30')">10:30</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '11:00')">11:00</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '11:30')">11:30</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '12:00')">12:00</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '12:30')">12:30</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '13:00')">13:00</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '13:30')">13:30</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '14:00')">14:00</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '14:30')">14:30</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '15:00')">15:00</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '15:30')">15:30</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '16:00')">16:00</div>
-                            <div class="time-slot-modern" onclick="selectModernTimeSlot(this, '16:30')">16:30</div>
+                        <div class="availability-container" id="availabilityContainer">
+                            <div class="availability-loading" id="availabilityLoading" style="display: none;">
+                                <span class="loading-spinner"></span>
+                                <p>Loading available times...</p>
+                            </div>
+                            <div class="availability-closed" id="availabilityClosed" style="display: none;">
+                                <div class="icon">🚫</div>
+                                <p id="availabilityClosedMessage">Salon is closed on this day</p>
+                            </div>
+                            <div id="availabilitySlots">
+                                <!-- Time slots will be loaded dynamically -->
+                                <p style="text-align: center; color: var(--text-muted); padding: 20px;">Select a date to see available times</p>
+                            </div>
+                        </div>
+                        <div class="availability-note" id="availabilityNote" style="display: none;">
+                            Service duration: <strong id="availabilityDuration">60 mins</strong> -
+                            Times shown have enough room for your service
                         </div>
                     </div>
 
@@ -9039,11 +9157,189 @@
             modernBookingState.dateStr = dateStr;
             modernBookingState.date = new Date(dateStr + 'T00:00:00');
 
+            // Clear previously selected time
+            modernBookingState.time = null;
+
+            // Fetch availability for this date
+            fetchAndDisplayAvailability();
+
             // Check if time is also selected to enable continue
             checkStep4Complete();
         }
 
-        // Select time slot in modern booking
+        // Fetch and display availability for selected date/stylist/service
+        async function fetchAndDisplayAvailability() {
+            const { stylistId, serviceId, dateStr } = modernBookingState;
+            const isBeauty = modernBookingState.bookingType === 'beauty';
+
+            // For beauty bookings without a specific stylist, show all times as available
+            if (isBeauty || !stylistId) {
+                displayGenericTimeSlots();
+                return;
+            }
+
+            if (!dateStr) {
+                document.getElementById('availabilitySlots').innerHTML =
+                    '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Select a date to see available times</p>';
+                return;
+            }
+
+            // Show loading
+            document.getElementById('availabilityLoading').style.display = 'flex';
+            document.getElementById('availabilityClosed').style.display = 'none';
+            document.getElementById('availabilitySlots').innerHTML = '';
+            document.getElementById('availabilityNote').style.display = 'none';
+
+            try {
+                const url = `/availability/${stylistId}?date=${dateStr}${serviceId ? `&serviceId=${serviceId}` : ''}`;
+                const data = await apiCall(url);
+
+                document.getElementById('availabilityLoading').style.display = 'none';
+
+                if (!data.success) {
+                    document.getElementById('availabilitySlots').innerHTML =
+                        `<p style="text-align: center; color: var(--danger); padding: 20px;">${data.message || 'Failed to load availability'}</p>`;
+                    return;
+                }
+
+                // Check if salon is closed
+                if (data.closed) {
+                    document.getElementById('availabilityClosed').style.display = 'block';
+                    document.getElementById('availabilityClosedMessage').textContent = data.message || 'Salon is closed on this day';
+                    document.getElementById('availabilitySlots').innerHTML = '';
+                    return;
+                }
+
+                // Show service duration note
+                if (data.serviceDuration) {
+                    document.getElementById('availabilityDuration').textContent = `${data.serviceDuration} mins`;
+                    document.getElementById('availabilityNote').style.display = 'block';
+                }
+
+                // Group slots by time of day
+                const morning = data.slots.filter(s => {
+                    const hour = parseInt(s.time.split(':')[0]);
+                    return hour < 12;
+                });
+                const afternoon = data.slots.filter(s => {
+                    const hour = parseInt(s.time.split(':')[0]);
+                    return hour >= 12 && hour < 17;
+                });
+                const evening = data.slots.filter(s => {
+                    const hour = parseInt(s.time.split(':')[0]);
+                    return hour >= 17;
+                });
+
+                let html = '';
+
+                if (morning.length > 0) {
+                    html += renderTimeSlotsSection('Morning', morning);
+                }
+                if (afternoon.length > 0) {
+                    html += renderTimeSlotsSection('Afternoon', afternoon);
+                }
+                if (evening.length > 0) {
+                    html += renderTimeSlotsSection('Evening', evening);
+                }
+
+                if (html === '') {
+                    html = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">No available times for this date</p>';
+                }
+
+                document.getElementById('availabilitySlots').innerHTML = html;
+
+            } catch (error) {
+                document.getElementById('availabilityLoading').style.display = 'none';
+                document.getElementById('availabilitySlots').innerHTML =
+                    `<p style="text-align: center; color: var(--danger); padding: 20px;">Error loading availability: ${error.message}</p>`;
+            }
+        }
+
+        // Render a section of time slots (Morning/Afternoon/Evening)
+        function renderTimeSlotsSection(title, slots) {
+            const availableCount = slots.filter(s => s.available).length;
+            let html = `
+                <div class="time-slots-section">
+                    <div class="time-slots-section-title">${title} (${availableCount} available)</div>
+                    <div class="time-slots-grid">
+            `;
+
+            for (const slot of slots) {
+                const timeDisplay = formatTimeSlot(slot.time);
+                let slotClass = 'time-slot';
+
+                if (slot.available) {
+                    slotClass += ' available';
+                    html += `<div class="${slotClass}" onclick="selectAvailableTimeSlot(this, '${slot.time}')">${timeDisplay}</div>`;
+                } else {
+                    if (slot.reason === 'booked') {
+                        slotClass += ' booked';
+                    } else if (slot.reason === 'past') {
+                        slotClass += ' past';
+                    } else if (slot.reason === 'too_late') {
+                        slotClass += ' too-late';
+                    } else {
+                        slotClass += ' booked';
+                    }
+                    html += `<div class="${slotClass}">${timeDisplay}</div>`;
+                }
+            }
+
+            html += '</div></div>';
+            return html;
+        }
+
+        // Format time slot for display (24h to 12h)
+        function formatTimeSlot(time) {
+            const [hours, mins] = time.split(':').map(Number);
+            const period = hours >= 12 ? 'PM' : 'AM';
+            const displayHour = hours % 12 || 12;
+            return `${displayHour}:${mins.toString().padStart(2, '0')} ${period}`;
+        }
+
+        // Display generic time slots (for beauty bookings or when no stylist selected)
+        function displayGenericTimeSlots() {
+            const slots = [];
+            for (let hour = 8; hour < 18; hour++) {
+                for (const min of [0, 30]) {
+                    const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+                    slots.push({ time, available: true });
+                }
+            }
+
+            const morning = slots.filter(s => parseInt(s.time.split(':')[0]) < 12);
+            const afternoon = slots.filter(s => {
+                const h = parseInt(s.time.split(':')[0]);
+                return h >= 12 && h < 17;
+            });
+            const evening = slots.filter(s => parseInt(s.time.split(':')[0]) >= 17);
+
+            let html = '';
+            if (morning.length) html += renderTimeSlotsSection('Morning', morning);
+            if (afternoon.length) html += renderTimeSlotsSection('Afternoon', afternoon);
+            if (evening.length) html += renderTimeSlotsSection('Evening', evening);
+
+            document.getElementById('availabilitySlots').innerHTML = html;
+            document.getElementById('availabilityNote').style.display = 'none';
+        }
+
+        // Select an available time slot
+        function selectAvailableTimeSlot(element, time) {
+            // Remove selection from all time slots
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                slot.classList.remove('selected');
+            });
+
+            // Add selection to clicked slot
+            element.classList.add('selected');
+
+            modernBookingState.time = time;
+
+            // Check if date is also selected to enable continue
+            checkStep4Complete();
+        }
+
+        // Select time slot in modern booking (legacy - keeping for compatibility)
         function selectModernTimeSlot(element, time) {
             if (element.classList.contains('unavailable')) return;
 
@@ -9122,6 +9418,15 @@
             return 'EVENING';
         }
 
+        // Calculate end time from start time and duration (in minutes)
+        function calculateEndTime(startTime, durationMins) {
+            const [hours, mins] = startTime.split(':').map(Number);
+            const totalMins = hours * 60 + mins + durationMins;
+            const endHours = Math.floor(totalMins / 60);
+            const endMins = totalMins % 60;
+            return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+        }
+
         // Submit booking from modern flow
         async function submitModernBooking() {
             if (!currentUser) {
@@ -9145,7 +9450,8 @@
             }
 
             const notes = document.getElementById('modernBookingNotes')?.value || '';
-            const timeWindow = timeToTimeWindow(time);
+            const serviceDuration = service?.duration || 60; // Default to 60 mins
+            const endTime = calculateEndTime(time, serviceDuration);
 
             try {
                 // Build request body based on booking type
@@ -9154,16 +9460,16 @@
                     serviceId: serviceId,
                     date: dateStr,
                     time: time,
-                    notes: notes
+                    notes: notes,
+                    // Send exact times for immediate confirmation
+                    assignedStartTime: time,
+                    assignedEndTime: endTime
                 };
 
-                if (isBeauty) {
-                    // Beauty bookings don't need stylist or timeWindow
-                } else {
-                    // Hair bookings need stylist and timeWindow
+                if (!isBeauty) {
+                    // Hair bookings need stylist
                     const fullStylistId = stylistId.startsWith('stylist_') ? stylistId : `stylist_${stylistId}`;
                     requestBody.stylistId = fullStylistId;
-                    requestBody.requestedTimeWindow = timeWindow;
                 }
 
                 await apiCall('/bookings', {
