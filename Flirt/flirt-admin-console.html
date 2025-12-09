@@ -1500,6 +1500,95 @@
             background: var(--brand-pink);
             color: white;
         }
+
+        /* ============================================ */
+        /* INVOICE SYSTEM STYLES */
+        /* ============================================ */
+        .line-items-container {
+            border: 1px solid var(--border-soft);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .line-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-soft);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .line-item:hover {
+            background: var(--surface-muted);
+        }
+
+        .line-item:last-child {
+            border-bottom: none;
+        }
+
+        .line-item-info {
+            flex: 1;
+        }
+
+        .line-item-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .line-item-details {
+            font-size: 13px;
+            color: var(--text-subtle);
+        }
+
+        .line-item-price {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 16px;
+            margin-right: 16px;
+        }
+
+        .line-item-remove {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .line-item-remove:hover {
+            opacity: 0.8;
+        }
+
+        .service-picker-item, .product-picker-item {
+            padding: 12px;
+            border: 1px solid var(--border-soft);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .service-picker-item:hover, .product-picker-item:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success { background: rgba(76, 175, 80, 0.12); color: var(--success); }
+        .badge-warning { background: rgba(255, 152, 0, 0.12); color: var(--warning); }
+        .badge-danger { background: rgba(231, 76, 60, 0.12); color: var(--danger); }
+        .badge-info { background: rgba(33, 150, 243, 0.12); color: var(--info); }
+        .badge-secondary { background: var(--surface-muted); color: var(--text-muted); }
     </style>
 
     <!-- Booking Constants (shared with client app) -->
@@ -1590,6 +1679,24 @@
                     </svg>
                     Orders
                     <span class="nav-badge">5</span>
+                </a>
+                <a class="nav-item" onclick="showSection('invoices', event)">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Invoices
+                    <span class="nav-badge" id="unpaid-invoices-count" style="display: none;">0</span>
+                </a>
+                <a class="nav-item" onclick="showSection('commissions', event)">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    Commissions
                 </a>
 
                 <div class="nav-section" style="margin-top: 20px;">
@@ -2890,6 +2997,398 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </section>
+
+                <!-- ============================================ -->
+                <!-- INVOICES SECTION -->
+                <!-- ============================================ -->
+                <section id="invoices" class="page-section">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Invoice Management</h1>
+                            <p class="page-subtitle">Create and manage invoices for completed services</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="showCreateInvoice()">
+                            <svg style="width:18px;height:18px;margin-right:8px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Create Invoice
+                        </button>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="card" style="margin-bottom: 24px;">
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 200px;">
+                                <input type="text" id="invoice-search" placeholder="Search invoices..."
+                                    style="width: 100%; padding: 10px; border: 1px solid var(--border-soft); border-radius: 6px;"
+                                    oninput="loadInvoices()">
+                            </div>
+                            <select id="invoice-status-filter" onchange="loadInvoices()"
+                                style="padding: 10px; border: 1px solid var(--border-soft); border-radius: 6px;">
+                                <option value="">All Statuses</option>
+                                <option value="draft">Draft</option>
+                                <option value="finalized">Finalized</option>
+                                <option value="sent">Sent</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            <select id="invoice-payment-filter" onchange="loadInvoices()"
+                                style="padding: 10px; border: 1px solid var(--border-soft); border-radius: 6px;">
+                                <option value="">All Payment Status</option>
+                                <option value="unpaid">Unpaid</option>
+                                <option value="partial">Partial</option>
+                                <option value="paid">Paid</option>
+                            </select>
+                            <select id="invoice-stylist-filter" onchange="loadInvoices()"
+                                style="padding: 10px; border: 1px solid var(--border-soft); border-radius: 6px;">
+                                <option value="">All Stylists</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Invoice List -->
+                    <div class="card">
+                        <div id="invoice-list-container">
+                            <div class="loading-state">
+                                <div class="spinner"></div>
+                                <p>Loading invoices...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ============================================ -->
+                <!-- CREATE/EDIT INVOICE MODAL -->
+                <!-- ============================================ -->
+                <div id="invoice-modal" class="modal">
+                    <div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow-y: auto;">
+                        <div class="modal-header">
+                            <h2 id="invoice-modal-title">Create Invoice</h2>
+                            <button class="modal-close" onclick="closeInvoiceModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="invoice-form" onsubmit="saveInvoice(event)">
+                                <!-- Customer & Stylist Selection -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                                    <div class="form-group">
+                                        <label>Customer *</label>
+                                        <select id="invoice-customer" required class="form-control">
+                                            <option value="">Select customer...</option>
+                                            <!-- Populated dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Stylist *</label>
+                                        <select id="invoice-stylist" required class="form-control">
+                                            <option value="">Select stylist...</option>
+                                            <!-- Populated dynamically -->
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                                    <div class="form-group">
+                                        <label>Service Date *</label>
+                                        <input type="date" id="invoice-service-date" required class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Link to Booking (Optional)</label>
+                                        <select id="invoice-booking" class="form-control">
+                                            <option value="">No booking (walk-in)</option>
+                                            <!-- Populated dynamically -->
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Services Section -->
+                                <div style="margin-bottom: 24px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <h3 style="margin: 0;">Services</h3>
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="showServicePicker()">
+                                            <svg style="width:16px;height:16px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                            Add Service
+                                        </button>
+                                    </div>
+                                    <div id="invoice-services-list" class="line-items-container">
+                                        <p style="text-align: center; color: var(--text-subtle); padding: 20px;">No services added yet</p>
+                                    </div>
+                                </div>
+
+                                <!-- Products Section -->
+                                <div style="margin-bottom: 24px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <h3 style="margin: 0;">Products</h3>
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="showProductPicker()">
+                                            <svg style="width:16px;height:16px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                            Add Product
+                                        </button>
+                                    </div>
+                                    <div id="invoice-products-list" class="line-items-container">
+                                        <p style="text-align: center; color: var(--text-subtle); padding: 20px;">No products added yet</p>
+                                    </div>
+                                </div>
+
+                                <!-- Discount Section -->
+                                <div style="margin-bottom: 24px; padding: 16px; background: var(--surface-muted); border-radius: 8px;">
+                                    <h3 style="margin-bottom: 12px;">Discount (Optional)</h3>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 12px;">
+                                        <select id="invoice-discount-type" class="form-control" onchange="calculateInvoiceTotals()">
+                                            <option value="">No Discount</option>
+                                            <option value="percentage">Percentage</option>
+                                            <option value="fixed">Fixed Amount</option>
+                                            <option value="loyalty_points">Loyalty Points</option>
+                                        </select>
+                                        <input type="number" id="invoice-discount-value" placeholder="Value" class="form-control"
+                                            step="0.01" min="0" oninput="calculateInvoiceTotals()">
+                                        <input type="text" id="invoice-discount-reason" placeholder="Reason (e.g., VIP client)" class="form-control">
+                                    </div>
+                                </div>
+
+                                <!-- Totals -->
+                                <div style="margin-bottom: 24px; padding: 20px; background: var(--primary-light); border-radius: 8px; border: 2px solid var(--primary);">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span>Services Subtotal:</span>
+                                        <strong id="invoice-services-subtotal">R0.00</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span>Products Subtotal:</span>
+                                        <strong id="invoice-products-subtotal">R0.00</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding-top: 8px; border-top: 1px solid var(--border-soft);">
+                                        <span>Subtotal:</span>
+                                        <strong id="invoice-subtotal">R0.00</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--danger);">
+                                        <span>Discount:</span>
+                                        <strong id="invoice-discount-amount">R0.00</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                        <span>Tax (15% VAT):</span>
+                                        <strong id="invoice-tax-amount">R0.00</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid var(--primary); font-size: 20px;">
+                                        <span><strong>TOTAL:</strong></span>
+                                        <strong style="color: var(--primary);" id="invoice-total">R0.00</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-soft); color: var(--success);">
+                                        <span>Stylist Commission:</span>
+                                        <strong id="invoice-commission">R0.00</strong>
+                                    </div>
+                                </div>
+
+                                <!-- Notes -->
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                                    <div class="form-group">
+                                        <label>Client Notes (visible on invoice)</label>
+                                        <textarea id="invoice-client-notes" rows="3" class="form-control"
+                                            placeholder="Thank you for your visit!"></textarea>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Internal Notes (admin only)</label>
+                                        <textarea id="invoice-internal-notes" rows="3" class="form-control"
+                                            placeholder="Internal notes..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                                    <button type="button" class="btn btn-secondary" onclick="closeInvoiceModal()">Cancel</button>
+                                    <button type="button" class="btn btn-outline" onclick="saveInvoiceAsDraft()">Save as Draft</button>
+                                    <button type="submit" class="btn btn-primary">Finalize Invoice</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service Picker Modal -->
+                <div id="service-picker-modal" class="modal">
+                    <div class="modal-content" style="max-width: 800px;">
+                        <div class="modal-header">
+                            <h3>Add Service</h3>
+                            <button class="modal-close" onclick="closeServicePicker()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="text" id="service-search" placeholder="Search services..."
+                                style="width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid var(--border-soft); border-radius: 6px;"
+                                oninput="filterServices()">
+                            <div id="service-list" style="max-height: 400px; overflow-y: auto;">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Picker Modal -->
+                <div id="product-picker-modal" class="modal">
+                    <div class="modal-content" style="max-width: 800px;">
+                        <div class="modal-header">
+                            <h3>Add Product</h3>
+                            <button class="modal-close" onclick="closeProductPicker()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="text" id="product-search" placeholder="Search products..."
+                                style="width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid var(--border-soft); border-radius: 6px;"
+                                oninput="filterProducts()">
+                            <div id="product-list" style="max-height: 400px; overflow-y: auto;">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Modal -->
+                <div id="payment-modal" class="modal">
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h3>Record Payment</h3>
+                            <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="payment-form" onsubmit="recordPayment(event)">
+                                <div class="form-group">
+                                    <label>Invoice</label>
+                                    <p id="payment-invoice-info" style="font-weight: 600; color: var(--primary);"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>Amount Due</label>
+                                    <p id="payment-amount-due" style="font-size: 24px; font-weight: 700; color: var(--danger);"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>Payment Amount *</label>
+                                    <input type="number" id="payment-amount" required class="form-control"
+                                        step="0.01" min="0.01" placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label>Payment Method *</label>
+                                    <select id="payment-method" required class="form-control">
+                                        <option value="">Select method...</option>
+                                        <option value="cash">Cash</option>
+                                        <option value="card_on_site">Card (On Site)</option>
+                                        <option value="eft">EFT</option>
+                                        <option value="payfast">PayFast</option>
+                                        <option value="yoco">Yoco</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Reference Number (Optional)</label>
+                                    <input type="text" id="payment-reference" class="form-control"
+                                        placeholder="Transaction ID, Receipt #, etc.">
+                                </div>
+                                <div class="form-group">
+                                    <label>Notes (Optional)</label>
+                                    <textarea id="payment-notes" rows="2" class="form-control"></textarea>
+                                </div>
+                                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+                                    <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Record Payment</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- COMMISSIONS SECTION -->
+                <!-- ============================================ -->
+                <section id="commissions" class="page-section">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">Commission Reports</h1>
+                            <p class="page-subtitle">View and manage stylist commissions</p>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="card" style="margin-bottom: 24px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px;">
+                            <div class="form-group">
+                                <label>Stylist</label>
+                                <select id="commission-stylist" class="form-control">
+                                    <option value="">Select stylist...</option>
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Start Date</label>
+                                <input type="date" id="commission-start-date" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>End Date</label>
+                                <input type="date" id="commission-end-date" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label style="visibility: hidden;">Action</label>
+                                <button class="btn btn-primary" onclick="loadCommissionReport()" style="width: 100%;">
+                                    View Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Commission Summary -->
+                    <div id="commission-summary" style="display: none; margin-bottom: 24px;">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: var(--primary-light); color: var(--primary);">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">Paid Invoices</div>
+                                    <div class="stat-value" id="comm-invoices-count">0</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: rgba(76, 175, 80, 0.12); color: var(--success);">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                    </svg>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">Total Sales</div>
+                                    <div class="stat-value" id="comm-total-sales">R0.00</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: rgba(33, 150, 243, 0.12); color: var(--info);">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-label">Total Commission</div>
+                                    <div class="stat-value" id="comm-total-commission">R0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Commission Detail -->
+                    <div class="card" id="commission-detail" style="display: none;">
+                        <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+                            <h3>Commission Breakdown</h3>
+                            <button class="btn btn-primary" onclick="markCommissionsAsPaid()" id="mark-paid-btn">
+                                Mark Selected as Paid
+                            </button>
+                        </div>
+                        <div id="commission-list-container">
+                            <!-- Populated dynamically -->
+                        </div>
                     </div>
                 </section>
 
@@ -11572,6 +12071,1010 @@
                 initDashboard();
             }
         });
+
+        // ============================================
+        // INVOICING SYSTEM JAVASCRIPT
+        // ============================================
+
+        // Notification system for invoice operations
+        function showNotification(message, type = 'info') {
+            // Remove any existing notifications
+            const existing = document.getElementById('invoice-notification');
+            if (existing) existing.remove();
+
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.id = 'invoice-notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                min-width: 300px;
+                max-width: 500px;
+                padding: 16px 20px;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                animation: slideIn 0.3s ease-out;
+            `;
+
+            // Set border and icon based on type
+            const colors = {
+                success: { border: '#4CAF50', icon: '✓' },
+                error: { border: '#e74c3c', icon: '✕' },
+                warning: { border: '#FF9800', icon: '⚠' },
+                info: { border: '#2196F3', icon: 'ℹ' }
+            };
+
+            const config = colors[type] || colors.info;
+            notification.style.borderLeft = `4px solid ${config.border}`;
+
+            // Add icon
+            const icon = document.createElement('span');
+            icon.style.cssText = `
+                font-size: 20px;
+                font-weight: bold;
+                color: ${config.border};
+            `;
+            icon.textContent = config.icon;
+
+            // Add message
+            const messageEl = document.createElement('span');
+            messageEl.style.cssText = 'flex: 1; color: var(--brand-charcoal);';
+            messageEl.textContent = message;
+
+            // Add close button
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '×';
+            closeBtn.style.cssText = `
+                background: none;
+                border: none;
+                font-size: 24px;
+                color: #999;
+                cursor: pointer;
+                padding: 0;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            closeBtn.onclick = () => notification.remove();
+
+            notification.appendChild(icon);
+            notification.appendChild(messageEl);
+            notification.appendChild(closeBtn);
+
+            // Add animation styles if not already present
+            if (!document.getElementById('notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from {
+                            transform: translateX(400px);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            document.body.appendChild(notification);
+
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.animation = 'slideIn 0.3s ease-out reverse';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 4000);
+        }
+
+        // Global variables for invoice management
+        let currentInvoice = {
+            services: [],
+            products: [],
+            totals: {
+                services_subtotal: 0,
+                products_subtotal: 0,
+                subtotal: 0,
+                discount_amount: 0,
+                tax_amount: 0,
+                total: 0,
+                commission: 0
+            }
+        };
+
+        let allServices = [];
+        let allProducts = [];
+        let allStylists = [];
+        let allCustomers = [];
+        let currentPaymentInvoice = null;
+
+        // Load invoices
+        async function loadInvoices() {
+            try {
+                const search = document.getElementById('invoice-search')?.value || '';
+                const status = document.getElementById('invoice-status-filter')?.value || '';
+                const payment_status = document.getElementById('invoice-payment-filter')?.value || '';
+                const stylist_id = document.getElementById('invoice-stylist-filter')?.value || '';
+
+                const params = new URLSearchParams();
+                if (search) params.append('search', search);
+                if (status) params.append('status', status);
+                if (payment_status) params.append('payment_status', payment_status);
+                if (stylist_id) params.append('stylist_id', stylist_id);
+
+                const response = await fetch(`/api/admin/invoices?${params}`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    renderInvoiceList(data.invoices);
+                    updateUnpaidBadge(data.invoices);
+                }
+            } catch (error) {
+                console.error('Error loading invoices:', error);
+                if (typeof showNotification === 'function') showNotification('Failed to load invoices', 'error');
+            }
+        }
+
+        function renderInvoiceList(invoices) {
+            const container = document.getElementById('invoice-list-container');
+
+            if (!invoices || invoices.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-subtle);">
+                        <svg style="width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.3;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        <p style="font-size: 18px; margin-bottom: 8px;">No invoices found</p>
+                        <p style="font-size: 14px;">Create your first invoice to get started</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Stylist</th>
+                            <th>Total</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${invoices.map(inv => `
+                            <tr>
+                                <td><strong>${inv.invoice_number || 'DRAFT'}</strong></td>
+                                <td>${inv.service_date ? new Date(inv.service_date).toLocaleDateString('en-ZA') : 'N/A'}</td>
+                                <td>${inv.customer_name || 'Unknown'}</td>
+                                <td>${inv.stylist_name || 'Unknown'}</td>
+                                <td><strong>R${inv.total.toFixed(2)}</strong></td>
+                                <td>
+                                    <span class="badge badge-${getPaymentBadgeClass(inv.payment_status)}">
+                                        ${inv.payment_status.toUpperCase()}
+                                    </span>
+                                    ${inv.payment_status === 'partial' ? `<br><small>R${inv.amount_paid.toFixed(2)} / R${inv.total.toFixed(2)}</small>` : ''}
+                                </td>
+                                <td>
+                                    <span class="badge badge-${getStatusBadgeClass(inv.status)}">
+                                        ${inv.status.toUpperCase()}
+                                    </span>
+                                </td>
+                                <td>
+                                    ${inv.payment_status !== 'paid' && inv.status === 'finalized' ? `
+                                        <button class="btn-icon" onclick="showPaymentModal('${inv.id}')" title="Record Payment" style="color: var(--success);">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                            </svg>
+                                        </button>
+                                    ` : ''}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function getPaymentBadgeClass(status) {
+            const classes = {
+                'unpaid': 'danger',
+                'partial': 'warning',
+                'paid': 'success',
+                'refunded': 'secondary'
+            };
+            return classes[status] || 'secondary';
+        }
+
+        function getStatusBadgeClass(status) {
+            const classes = {
+                'draft': 'secondary',
+                'finalized': 'info',
+                'sent': 'success',
+                'cancelled': 'danger',
+                'void': 'secondary'
+            };
+            return classes[status] || 'secondary';
+        }
+
+        function updateUnpaidBadge(invoices) {
+            const unpaidCount = invoices.filter(inv =>
+                inv.status === 'finalized' && inv.payment_status === 'unpaid'
+            ).length;
+
+            const badge = document.getElementById('unpaid-invoices-count');
+            if (badge) {
+                if (unpaidCount > 0) {
+                    badge.textContent = unpaidCount;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        // Create invoice
+        async function showCreateInvoice() {
+            currentInvoice = {
+                services: [],
+                products: [],
+                totals: { services_subtotal: 0, products_subtotal: 0, subtotal: 0, discount_amount: 0, tax_amount: 0, total: 0, commission: 0 }
+            };
+
+            await Promise.all([
+                loadServicesForPicker(),
+                loadProductsForPicker(),
+                loadStylistsForInvoice(),
+                loadCustomersForInvoice()
+            ]);
+
+            document.getElementById('invoice-service-date').valueAsDate = new Date();
+            document.getElementById('invoice-form').reset();
+            document.getElementById('invoice-services-list').innerHTML = '<p style="text-align: center; color: var(--text-subtle); padding: 20px;">No services added yet</p>';
+            document.getElementById('invoice-products-list').innerHTML = '<p style="text-align: center; color: var(--text-subtle); padding: 20px;">No products added yet</p>';
+
+            calculateInvoiceTotals();
+
+            document.getElementById('invoice-modal-title').textContent = 'Create Invoice';
+            document.getElementById('invoice-modal').classList.add('active');
+        }
+
+        async function loadServicesForPicker() {
+            try {
+                // Load both hair and beauty services
+                const [hairResponse, beautyResponse] = await Promise.all([
+                    fetch('/api/services/hair', { headers: { 'Authorization': `Bearer ${getToken()}` } }),
+                    fetch('/api/services/beauty', { headers: { 'Authorization': `Bearer ${getToken()}` } })
+                ]);
+
+                const hairData = await hairResponse.json();
+                const beautyData = await beautyResponse.json();
+
+                // Combine both service types
+                allServices = [
+                    ...(hairData.services || []),
+                    ...(beautyData.services || [])
+                ];
+            } catch (error) {
+                console.error('Error loading services:', error);
+                showNotification('Failed to load services. Please refresh and try again.', 'error');
+            }
+        }
+
+        async function loadProductsForPicker() {
+            try {
+                const response = await fetch('/api/products', {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                const data = await response.json();
+                allProducts = data.products || [];
+            } catch (error) {
+                console.error('Error loading products:', error);
+                showNotification('Failed to load products. Please refresh and try again.', 'error');
+            }
+        }
+
+        async function loadStylistsForInvoice() {
+            try {
+                const response = await fetch('/api/admin/staff', {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                const data = await response.json();
+                allStylists = data.staff || [];
+
+                const stylistSelects = document.querySelectorAll('#invoice-stylist, #invoice-stylist-filter, #commission-stylist');
+                stylistSelects.forEach(select => {
+                    const currentValue = select.value;
+                    const filterSelect = select.id === 'invoice-stylist-filter' || select.id === 'commission-stylist';
+
+                    select.innerHTML = filterSelect ? '<option value="">All Stylists</option>' : '<option value="">Select stylist...</option>';
+
+                    allStylists.forEach(stylist => {
+                        const option = document.createElement('option');
+                        option.value = stylist.id;
+                        option.textContent = stylist.name;
+                        select.appendChild(option);
+                    });
+
+                    if (currentValue) select.value = currentValue;
+                });
+            } catch (error) {
+                console.error('Error loading stylists:', error);
+                showNotification('Failed to load stylists. Please refresh and try again.', 'error');
+            }
+        }
+
+        async function loadCustomersForInvoice() {
+            try {
+                const response = await fetch('/api/admin/customers', {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                const data = await response.json();
+                allCustomers = data.customers || [];
+
+                const customerSelect = document.getElementById('invoice-customer');
+                customerSelect.innerHTML = '<option value="">Select customer...</option>';
+
+                allCustomers.forEach(customer => {
+                    const option = document.createElement('option');
+                    option.value = customer.id;
+                    option.textContent = `${customer.name} (${customer.email})`;
+                    customerSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading customers:', error);
+                showNotification('Failed to load customers. Please refresh and try again.', 'error');
+            }
+        }
+
+        // Service picker
+        function showServicePicker() {
+            renderServiceList(allServices);
+            document.getElementById('service-picker-modal').classList.add('active');
+        }
+
+        function closeServicePicker() {
+            document.getElementById('service-picker-modal').classList.remove('active');
+        }
+
+        function filterServices() {
+            const search = document.getElementById('service-search').value.toLowerCase();
+            const filtered = allServices.filter(s =>
+                s.name.toLowerCase().includes(search) ||
+                s.category?.toLowerCase().includes(search)
+            );
+            renderServiceList(filtered);
+        }
+
+        function renderServiceList(services) {
+            const container = document.getElementById('service-list');
+
+            if (services.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-subtle); padding: 20px;">No services found</p>';
+                return;
+            }
+
+            container.innerHTML = services.map(service => `
+                <div class="service-picker-item" onclick="addServiceToInvoice('${service.id}')">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600;">${service.name}</div>
+                            <div style="font-size: 13px; color: var(--text-subtle);">${service.category || 'General'}</div>
+                        </div>
+                        <div style="font-weight: 700; color: var(--primary); font-size: 16px;">R${service.price.toFixed(2)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addServiceToInvoice(serviceId) {
+            const service = allServices.find(s => s.id === serviceId);
+            if (!service) return;
+
+            currentInvoice.services.push({
+                service_id: service.id,
+                service_name: service.name,
+                service_category: service.category || 'General',
+                unit_price: service.price,
+                quantity: 1,
+                discount: 0,
+                total: service.price,
+                commission_rate: service.commission_rate || null
+            });
+
+            renderInvoiceServices();
+            calculateInvoiceTotals();
+            closeServicePicker();
+        }
+
+        function renderInvoiceServices() {
+            const container = document.getElementById('invoice-services-list');
+
+            if (currentInvoice.services.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-subtle); padding: 20px;">No services added yet</p>';
+                return;
+            }
+
+            container.innerHTML = currentInvoice.services.map((service, index) => `
+                <div class="line-item">
+                    <div class="line-item-info">
+                        <div class="line-item-name">${service.service_name}</div>
+                        <div class="line-item-details">${service.service_category} • Qty: ${service.quantity}</div>
+                    </div>
+                    <div class="line-item-price">R${service.total.toFixed(2)}</div>
+                    <button class="line-item-remove" onclick="removeService(${index})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function removeService(index) {
+            currentInvoice.services.splice(index, 1);
+            renderInvoiceServices();
+            calculateInvoiceTotals();
+        }
+
+        // Product picker
+        function showProductPicker() {
+            renderProductList(allProducts);
+            document.getElementById('product-picker-modal').classList.add('active');
+        }
+
+        function closeProductPicker() {
+            document.getElementById('product-picker-modal').classList.remove('active');
+        }
+
+        function filterProducts() {
+            const search = document.getElementById('product-search').value.toLowerCase();
+            const filtered = allProducts.filter(p =>
+                p.name.toLowerCase().includes(search) ||
+                p.category?.toLowerCase().includes(search)
+            );
+            renderProductList(filtered);
+        }
+
+        function renderProductList(products) {
+            const container = document.getElementById('product-list');
+
+            if (products.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-subtle); padding: 20px;">No products found</p>';
+                return;
+            }
+
+            container.innerHTML = products.map(product => `
+                <div class="product-picker-item" onclick="showProductQuantityModal('${product.id}')">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600;">${product.name}</div>
+                            <div style="font-size: 13px; color: var(--text-subtle);">
+                                ${product.category || 'General'}
+                                ${product.stock > 0 ? `• Stock: ${product.stock}` : '• <span style="color: var(--danger);">Out of stock</span>'}
+                            </div>
+                        </div>
+                        <div style="font-weight: 700; color: var(--primary); font-size: 16px;">R${product.price.toFixed(2)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showProductQuantityModal(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+
+            const quantity = prompt(`How many units of "${product.name}"?`, '1');
+            if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0) return;
+
+            const qty = parseFloat(quantity);
+            const productType = confirm('Is this a retail product (customer takes home)?\nClick OK for Retail, Cancel for Service Product (used during treatment)') ? 'retail' : 'service_product';
+
+            addProductToInvoice(product, qty, productType);
+        }
+
+        function addProductToInvoice(product, quantity, productType) {
+            const total = product.price * quantity;
+
+            currentInvoice.products.push({
+                product_id: product.id,
+                product_name: product.name,
+                product_category: product.category || 'General',
+                product_type: productType,
+                unit_price: product.price,
+                quantity: quantity,
+                discount: 0,
+                total: total,
+                commission_rate: product.commission_rate || null
+            });
+
+            renderInvoiceProducts();
+            calculateInvoiceTotals();
+            closeProductPicker();
+        }
+
+        function renderInvoiceProducts() {
+            const container = document.getElementById('invoice-products-list');
+
+            if (currentInvoice.products.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-subtle); padding: 20px;">No products added yet</p>';
+                return;
+            }
+
+            container.innerHTML = currentInvoice.products.map((product, index) => `
+                <div class="line-item">
+                    <div class="line-item-info">
+                        <div class="line-item-name">${product.product_name}</div>
+                        <div class="line-item-details">
+                            ${product.product_category} •
+                            Qty: ${product.quantity} •
+                            ${product.product_type === 'retail' ? '🛍️ Retail' : '🎨 Service Product'}
+                        </div>
+                    </div>
+                    <div class="line-item-price">R${product.total.toFixed(2)}</div>
+                    <button class="line-item-remove" onclick="removeProduct(${index})">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function removeProduct(index) {
+            currentInvoice.products.splice(index, 1);
+            renderInvoiceProducts();
+            calculateInvoiceTotals();
+        }
+
+        // Calculate totals
+        function calculateInvoiceTotals() {
+            const services_subtotal = currentInvoice.services.reduce((sum, s) => sum + s.total, 0);
+            const products_subtotal = currentInvoice.products.reduce((sum, p) => sum + p.total, 0);
+            const subtotal = services_subtotal + products_subtotal;
+
+            const discountType = document.getElementById('invoice-discount-type')?.value || '';
+            const discountValue = parseFloat(document.getElementById('invoice-discount-value')?.value) || 0;
+
+            let discount_amount = 0;
+            if (discountType === 'percentage') {
+                discount_amount = subtotal * (discountValue / 100);
+            } else if (discountType === 'fixed') {
+                discount_amount = discountValue;
+            } else if (discountType === 'loyalty_points') {
+                discount_amount = discountValue / 10; // 100 points = R10
+            }
+
+            const taxable = subtotal - discount_amount;
+            const tax_amount = taxable * 0.15;
+            const total = taxable + tax_amount;
+            const commission = subtotal * 0.30; // Approximate 30%
+
+            document.getElementById('invoice-services-subtotal').textContent = `R${services_subtotal.toFixed(2)}`;
+            document.getElementById('invoice-products-subtotal').textContent = `R${products_subtotal.toFixed(2)}`;
+            document.getElementById('invoice-subtotal').textContent = `R${subtotal.toFixed(2)}`;
+            document.getElementById('invoice-discount-amount').textContent = `-R${discount_amount.toFixed(2)}`;
+            document.getElementById('invoice-tax-amount').textContent = `R${tax_amount.toFixed(2)}`;
+            document.getElementById('invoice-total').textContent = `R${total.toFixed(2)}`;
+            document.getElementById('invoice-commission').textContent = `R${commission.toFixed(2)}`;
+
+            currentInvoice.totals = {
+                services_subtotal, products_subtotal, subtotal, discount_amount, tax_amount, total, commission
+            };
+        }
+
+        // Save invoice
+        async function saveInvoiceAsDraft() {
+            await saveInvoice(null, false);
+        }
+
+        async function saveInvoice(event, finalize = true) {
+            if (event) event.preventDefault();
+
+            try {
+                const customerId = document.getElementById('invoice-customer').value;
+                const stylistId = document.getElementById('invoice-stylist').value;
+                const serviceDate = document.getElementById('invoice-service-date').value;
+                const bookingId = document.getElementById('invoice-booking').value || null;
+
+                if (!customerId || !stylistId || !serviceDate) {
+                    if (typeof showNotification === 'function') {
+                        showNotification('Please fill in all required fields', 'error');
+                    } else {
+                        alert('Please fill in all required fields');
+                    }
+                    return;
+                }
+
+                if (currentInvoice.services.length === 0 && currentInvoice.products.length === 0) {
+                    if (typeof showNotification === 'function') {
+                        showNotification('Please add at least one service or product', 'error');
+                    } else {
+                        alert('Please add at least one service or product');
+                    }
+                    return;
+                }
+
+                const discountType = document.getElementById('invoice-discount-type').value || null;
+                const discountValue = parseFloat(document.getElementById('invoice-discount-value').value) || 0;
+                const discountReason = document.getElementById('invoice-discount-reason').value || null;
+                const clientNotes = document.getElementById('invoice-client-notes').value || null;
+                const internalNotes = document.getElementById('invoice-internal-notes').value || null;
+
+                const invoiceData = {
+                    booking_id: bookingId,
+                    user_id: customerId,
+                    stylist_id: stylistId,
+                    service_date: serviceDate,
+                    services: currentInvoice.services,
+                    products: currentInvoice.products,
+                    discount_type: discountType,
+                    discount_value: discountValue,
+                    discount_reason: discountReason,
+                    client_notes: clientNotes,
+                    internal_notes: internalNotes
+                };
+
+                const response = await fetch('/api/admin/invoices', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify(invoiceData)
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to create invoice');
+                }
+
+                if (finalize) {
+                    const finalizeResponse = await fetch(`/api/admin/invoices/${data.invoice.id}/finalize`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${getToken()}`
+                        }
+                    });
+
+                    const finalizeData = await finalizeResponse.json();
+
+                    if (!finalizeData.success) {
+                        throw new Error(finalizeData.error || 'Failed to finalize invoice');
+                    }
+
+                    if (typeof showNotification === 'function') {
+                        showNotification(`Invoice ${finalizeData.invoice.invoice_number} created and finalized!`, 'success');
+                    } else {
+                        alert(`Invoice ${finalizeData.invoice.invoice_number} created and finalized!`);
+                    }
+                } else {
+                    if (typeof showNotification === 'function') {
+                        showNotification('Invoice saved as draft', 'success');
+                    } else {
+                        alert('Invoice saved as draft');
+                    }
+                }
+
+                closeInvoiceModal();
+                loadInvoices();
+
+            } catch (error) {
+                console.error('Error saving invoice:', error);
+                if (typeof showNotification === 'function') {
+                    showNotification(error.message || 'Failed to save invoice', 'error');
+                } else {
+                    alert(error.message || 'Failed to save invoice');
+                }
+            }
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoice-modal').classList.remove('active');
+        }
+
+        // Payment modal
+        async function showPaymentModal(invoiceId) {
+            try {
+                const response = await fetch(`/api/admin/invoices/${invoiceId}`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error('Invoice not found');
+                }
+
+                currentPaymentInvoice = data.invoice;
+
+                // Handle nested customer object and calculate amount due
+                const customerName = currentPaymentInvoice.customer?.name || currentPaymentInvoice.customer_name || 'Unknown';
+                const amountDue = currentPaymentInvoice.amount_due || (currentPaymentInvoice.total - (currentPaymentInvoice.amount_paid || 0));
+
+                document.getElementById('payment-invoice-info').textContent = `${currentPaymentInvoice.invoice_number} - ${customerName}`;
+                document.getElementById('payment-amount-due').textContent = `R${amountDue.toFixed(2)}`;
+                document.getElementById('payment-amount').value = amountDue.toFixed(2);
+
+                document.getElementById('payment-modal').classList.add('active');
+            } catch (error) {
+                console.error('Error loading invoice:', error);
+                if (typeof showNotification === 'function') {
+                    showNotification('Failed to load invoice', 'error');
+                } else {
+                    alert('Failed to load invoice');
+                }
+            }
+        }
+
+        function closePaymentModal() {
+            document.getElementById('payment-modal').classList.remove('active');
+            currentPaymentInvoice = null;
+        }
+
+        async function recordPayment(e) {
+            e.preventDefault();
+
+            if (!currentPaymentInvoice) return;
+
+            try {
+                const amount = parseFloat(document.getElementById('payment-amount').value);
+                const paymentMethod = document.getElementById('payment-method').value;
+                const reference = document.getElementById('payment-reference').value || null;
+                const notes = document.getElementById('payment-notes').value || null;
+
+                const response = await fetch(`/api/admin/invoices/${currentPaymentInvoice.id}/payments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        amount,
+                        payment_method: paymentMethod,
+                        payment_reference: reference,
+                        notes
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to record payment');
+                }
+
+                if (typeof showNotification === 'function') {
+                    showNotification('Payment recorded successfully!', 'success');
+                } else {
+                    alert('Payment recorded successfully!');
+                }
+                closePaymentModal();
+                loadInvoices();
+
+            } catch (error) {
+                console.error('Error recording payment:', error);
+                if (typeof showNotification === 'function') {
+                    showNotification(error.message || 'Failed to record payment', 'error');
+                } else {
+                    alert(error.message || 'Failed to record payment');
+                }
+            }
+        }
+
+        // Commission reports
+        async function loadCommissionReport() {
+            const stylistId = document.getElementById('commission-stylist').value;
+            const startDate = document.getElementById('commission-start-date').value;
+            const endDate = document.getElementById('commission-end-date').value;
+
+            if (!stylistId || !startDate || !endDate) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Please select stylist and date range', 'error');
+                } else {
+                    alert('Please select stylist and date range');
+                }
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `/api/admin/commissions?stylist_id=${stylistId}&start_date=${startDate}&end_date=${endDate}`,
+                    { headers: { 'Authorization': `Bearer ${getToken()}` } }
+                );
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load report');
+                }
+
+                renderCommissionReport(data.summary, data.commissions);
+
+            } catch (error) {
+                console.error('Error loading commission report:', error);
+                if (typeof showNotification === 'function') {
+                    showNotification(error.message || 'Failed to load report', 'error');
+                } else {
+                    alert(error.message || 'Failed to load report');
+                }
+            }
+        }
+
+        function renderCommissionReport(summary, commissions) {
+            // Add defensive checks for summary data
+            document.getElementById('comm-invoices-count').textContent = summary?.total_invoices || 0;
+            document.getElementById('comm-total-sales').textContent = `R${(summary?.total_sales || 0).toFixed(2)}`;
+            document.getElementById('comm-total-commission').textContent = `R${(summary?.total_commission || 0).toFixed(2)}`;
+
+            document.getElementById('commission-summary').style.display = 'block';
+            document.getElementById('commission-detail').style.display = 'block';
+
+            const container = document.getElementById('commission-list-container');
+
+            if (!commissions || commissions.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-subtle);">No commissions found for this period</p>';
+                return;
+            }
+
+            const html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" onchange="toggleAllCommissions(this)"></th>
+                            <th>Invoice</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Services Comm.</th>
+                            <th>Products Comm.</th>
+                            <th>Total Comm.</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${commissions.map(comm => `
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="commission-checkbox" value="${comm.invoice_id || comm.id || ''}"
+                                        ${comm.payment_status === 'paid' ? 'disabled' : ''}>
+                                </td>
+                                <td><strong>${comm.invoice_number || 'N/A'}</strong></td>
+                                <td>${comm.service_date ? new Date(comm.service_date).toLocaleDateString('en-ZA') : 'N/A'}</td>
+                                <td>${comm.customer_name || comm.customer?.name || 'Unknown'}</td>
+                                <td>R${(comm.invoice_total || 0).toFixed(2)}</td>
+                                <td>R${(comm.services_commission || 0).toFixed(2)}</td>
+                                <td>R${(comm.products_commission || 0).toFixed(2)}</td>
+                                <td><strong>R${(comm.total_commission || 0).toFixed(2)}</strong></td>
+                                <td>
+                                    <span class="badge badge-${comm.payment_status === 'paid' ? 'success' : 'warning'}">
+                                        ${(comm.payment_status || 'pending').toUpperCase()}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function toggleAllCommissions(checkbox) {
+            document.querySelectorAll('.commission-checkbox:not(:disabled)').forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+        }
+
+        async function markCommissionsAsPaid() {
+            const selected = Array.from(document.querySelectorAll('.commission-checkbox:checked')).map(cb => cb.value);
+
+            if (selected.length === 0) {
+                if (typeof showNotification === 'function') {
+                    showNotification('Please select commissions to mark as paid', 'error');
+                } else {
+                    alert('Please select commissions to mark as paid');
+                }
+                return;
+            }
+
+            if (!confirm(`Mark ${selected.length} commission(s) as paid?`)) return;
+
+            try {
+                const reference = prompt('Enter payroll reference:', `PAYROLL-${new Date().toISOString().slice(0, 7)}`);
+                if (!reference) return;
+
+                const response = await fetch('/api/admin/commissions/mark-paid', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        invoice_ids: selected,
+                        payment_reference: reference,
+                        payment_date: new Date().toISOString()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to mark commissions as paid');
+                }
+
+                if (typeof showNotification === 'function') {
+                    showNotification(`${selected.length} commission(s) marked as paid!`, 'success');
+                } else {
+                    alert(`${selected.length} commission(s) marked as paid!`);
+                }
+                loadCommissionReport();
+
+            } catch (error) {
+                console.error('Error marking commissions as paid:', error);
+                if (typeof showNotification === 'function') {
+                    showNotification(error.message || 'Failed to mark commissions as paid', 'error');
+                } else {
+                    alert(error.message || 'Failed to mark commissions as paid');
+                }
+            }
+        }
+
+        // Initialize when section is shown
+        function initInvoiceSection() {
+            loadInvoices();
+            loadStylistsForInvoice();
+
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+            if (document.getElementById('commission-start-date')) {
+                document.getElementById('commission-start-date').valueAsDate = firstDay;
+            }
+            if (document.getElementById('commission-end-date')) {
+                document.getElementById('commission-end-date').valueAsDate = lastDay;
+            }
+        }
+
+        // Hook into existing showSection function to initialize invoices
+        // Use a more robust approach to handle potential timing issues
+        function hookShowSection() {
+            const _originalShowSection = window.showSection;
+            if (_originalShowSection && typeof _originalShowSection === 'function') {
+                window.showSection = function(sectionId, event) {
+                    _originalShowSection(sectionId, event);
+                    if (sectionId === 'invoices' || sectionId === 'commissions') {
+                        initInvoiceSection();
+                    }
+                };
+            } else {
+                // If showSection doesn't exist yet, try again after a short delay
+                setTimeout(hookShowSection, 100);
+            }
+        }
+
+        // Try to hook immediately, or wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', hookShowSection);
+        } else {
+            hookShowSection();
+        }
     </script>
 </body>
 </html>
