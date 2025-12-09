@@ -1394,8 +1394,8 @@
         }
 
         /* Invoice Modal Redesign */
-        .invoice-modal-content {
-            max-width: 1000px;
+        .modal.invoice-modal-content {
+            max-width: 1100px;
             width: 95%;
             max-height: 92vh;
             border-radius: 16px;
@@ -1821,9 +1821,14 @@
         }
 
         /* Picker Modal Redesign */
-        .picker-modal-content {
+        .modal.picker-modal-content {
             max-width: 700px;
+            width: 95%;
+            max-height: 85vh;
             border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .picker-modal-header {
@@ -1930,8 +1935,9 @@
         }
 
         /* Payment Modal */
-        .payment-modal-content {
+        .modal.payment-modal-content {
             max-width: 480px;
+            width: 95%;
             border-radius: 16px;
         }
 
@@ -4118,8 +4124,8 @@
                 <!-- ============================================ -->
                 <!-- CREATE/EDIT INVOICE MODAL -->
                 <!-- ============================================ -->
-                <div id="invoice-modal" class="modal">
-                    <div class="modal-content invoice-modal-content">
+                <div id="invoice-modal" class="modal-overlay" style="display: none;">
+                    <div class="modal invoice-modal-content">
                         <div class="invoice-modal-header">
                             <h2 id="invoice-modal-title">
                                 <svg style="width:24px;height:24px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4339,8 +4345,8 @@
                 </div>
 
                 <!-- Service Picker Modal -->
-                <div id="service-picker-modal" class="modal">
-                    <div class="modal-content picker-modal-content">
+                <div id="service-picker-modal" class="modal-overlay stacked" style="display: none;">
+                    <div class="modal picker-modal-content">
                         <div class="picker-modal-header">
                             <h3>
                                 <svg style="width:22px;height:22px;vertical-align:middle;margin-right:8px;opacity:0.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4366,8 +4372,8 @@
                 </div>
 
                 <!-- Product Picker Modal -->
-                <div id="product-picker-modal" class="modal">
-                    <div class="modal-content picker-modal-content">
+                <div id="product-picker-modal" class="modal-overlay stacked" style="display: none;">
+                    <div class="modal picker-modal-content">
                         <div class="picker-modal-header">
                             <h3>
                                 <svg style="width:22px;height:22px;vertical-align:middle;margin-right:8px;opacity:0.7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4395,8 +4401,8 @@
                 </div>
 
                 <!-- Payment Modal -->
-                <div id="payment-modal" class="modal">
-                    <div class="modal-content payment-modal-content">
+                <div id="payment-modal" class="modal-overlay stacked" style="display: none;">
+                    <div class="modal payment-modal-content">
                         <div class="payment-modal-header">
                             <h3>
                                 <svg style="width:22px;height:22px;vertical-align:middle;margin-right:8px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -13617,7 +13623,9 @@
             calculateInvoiceTotals();
 
             document.getElementById('invoice-modal-title').textContent = 'Create Invoice';
-            document.getElementById('invoice-modal').classList.add('active');
+            const modal = document.getElementById('invoice-modal');
+            modal.style.display = 'flex';
+            modal.classList.add('show');
         }
 
         async function loadServicesForPicker() {
@@ -13711,11 +13719,15 @@
         // Service picker
         function showServicePicker() {
             renderServiceList(invoiceServices);
-            document.getElementById('service-picker-modal').classList.add('active');
+            const modal = document.getElementById('service-picker-modal');
+            modal.style.display = 'flex';
+            modal.classList.add('show');
         }
 
         function closeServicePicker() {
-            document.getElementById('service-picker-modal').classList.remove('active');
+            const modal = document.getElementById('service-picker-modal');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
         }
 
         function filterInvoiceServices() {
@@ -13831,11 +13843,15 @@
         // Product picker
         function showProductPicker() {
             renderProductList(invoiceProducts);
-            document.getElementById('product-picker-modal').classList.add('active');
+            const modal = document.getElementById('product-picker-modal');
+            modal.style.display = 'flex';
+            modal.classList.add('show');
         }
 
         function closeProductPicker() {
-            document.getElementById('product-picker-modal').classList.remove('active');
+            const modal = document.getElementById('product-picker-modal');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
         }
 
         function filterInvoiceProducts() {
@@ -14111,7 +14127,9 @@
         }
 
         function closeInvoiceModal() {
-            document.getElementById('invoice-modal').classList.remove('active');
+            const modal = document.getElementById('invoice-modal');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
         }
 
         // Payment modal
@@ -14137,7 +14155,9 @@
                 document.getElementById('payment-amount-due').textContent = `R${amountDue.toFixed(2)}`;
                 document.getElementById('payment-amount').value = amountDue.toFixed(2);
 
-                document.getElementById('payment-modal').classList.add('active');
+                const modal = document.getElementById('payment-modal');
+                modal.style.display = 'flex';
+                modal.classList.add('show');
             } catch (error) {
                 console.error('Error loading invoice:', error);
                 if (typeof showNotification === 'function') {
@@ -14149,7 +14169,9 @@
         }
 
         function closePaymentModal() {
-            document.getElementById('payment-modal').classList.remove('active');
+            const modal = document.getElementById('payment-modal');
+            modal.classList.remove('show');
+            modal.style.display = 'none';
             currentPaymentInvoice = null;
         }
 

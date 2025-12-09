@@ -688,3 +688,211 @@ CREATE TABLE IF NOT EXISTS package_sessions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_package_sessions_package ON package_sessions(user_package_id);
+
+-- ============================================
+-- INVOICE SETTINGS (Business rules configuration)
+-- ============================================
+CREATE TABLE IF NOT EXISTS invoice_settings (
+    id INTEGER PRIMARY KEY CHECK(id = 1),
+    tax_enabled INTEGER DEFAULT 1,
+    tax_rate REAL DEFAULT 0.15,
+    tax_name TEXT DEFAULT 'VAT',
+    tax_inclusive INTEGER DEFAULT 0,
+    default_service_commission_rate REAL DEFAULT 0.30,
+    default_product_commission_rate REAL DEFAULT 0.10,
+    default_service_product_commission_rate REAL DEFAULT 0.05,
+    invoice_number_prefix TEXT DEFAULT 'INV',
+    invoice_number_format TEXT DEFAULT '{PREFIX}-{YEAR}-{NUMBER}',
+    next_invoice_number INTEGER DEFAULT 1,
+    allow_partial_payments INTEGER DEFAULT 1,
+    payment_due_days INTEGER DEFAULT 0,
+    max_discount_percentage REAL DEFAULT 100,
+    require_discount_reason INTEGER DEFAULT 1,
+    deduct_stock_on_finalize INTEGER DEFAULT 1,
+    allow_negative_stock INTEGER DEFAULT 0,
+    auto_create_invoice_on_completion INTEGER DEFAULT 0,
+    require_booking_for_invoice INTEGER DEFAULT 0,
+    auto_approve_commission_on_payment INTEGER DEFAULT 1,
+    require_admin_commission_approval INTEGER DEFAULT 0,
+    auto_send_invoice_email INTEGER DEFAULT 0,
+    invoice_email_template TEXT DEFAULT 'default',
+    updated_by TEXT REFERENCES users(id),
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+
+INSERT OR IGNORE INTO invoice_settings (id) VALUES (1);
+
+-- ============================================
+-- INVOICES TABLE (Main invoice header)
+-- ============================================
+CREATE TABLE IF NOT EXISTS invoices (
+    id TEXT PRIMARY KEY,
+    invoice_number TEXT UNIQUE,
+    booking_id TEXT REFERENCES bookings(id),
+    user_id TEXT NOT NULL REFERENCES users(id),
+    stylist_id TEXT NOT NULL REFERENCES stylists(id),
+    services_subtotal REAL DEFAULT 0,
+    products_subtotal REAL DEFAULT 0,
+    subtotal REAL NOT NULL,
+    discount_type TEXT CHECK(discount_type IN ('percentage', 'fixed', 'loyalty_points', 'promo_code', 'manual')),
+    discount_value REAL DEFAULT 0,
+    discount_amount REAL DEFAULT 0,
+    discount_reason TEXT,
+    tax_rate REAL DEFAULT 0.15,
+    tax_amount REAL DEFAULT 0,
+    total REAL NOT NULL,
+    payment_status TEXT DEFAULT 'unpaid' CHECK(payment_status IN ('unpaid', 'partial', 'paid', 'refunded', 'written_off')),
+    amount_paid REAL DEFAULT 0,
+    amount_due REAL DEFAULT 0,
+    commission_total REAL DEFAULT 0,
+    commission_paid INTEGER DEFAULT 0,
+    commission_paid_date TEXT,
+    status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'finalized', 'sent', 'cancelled', 'void')),
+    service_date TEXT NOT NULL,
+    invoice_date TEXT DEFAULT (date('now')),
+    due_date TEXT,
+    finalized_at TEXT,
+    internal_notes TEXT,
+    client_notes TEXT,
+    created_by TEXT REFERENCES users(id),
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoices_booking ON invoices(booking_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_stylist ON invoices(stylist_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
+CREATE INDEX IF NOT EXISTS idx_invoices_payment_status ON invoices(payment_status);
+CREATE INDEX IF NOT EXISTS idx_invoices_service_date ON invoices(service_date);
+
+-- ============================================
+-- INVOICE_SERVICES TABLE (Service line items)
+-- ============================================
+CREATE TABLE IF NOT EXISTS invoice_services (
+    id TEXT PRIMARY KEY,
+    invoice_id TEXT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+    service_id TEXT REFERENCES services(id),
+    service_name TEXT NOT NULL,
+    service_description TEXT,
+    service_category TEXT,
+    unit_price REAL NOT NULL,
+    quantity REAL DEFAULT 1,
+    discount REAL DEFAULT 0,
+    total REAL NOT NULL,
+    commission_rate REAL,
+    commission_amount REAL,
+    duration_minutes INTEGER,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoice_services_invoice ON invoice_services(invoice_id);
+
+-- ============================================
+-- INVOICE_PRODUCTS TABLE (Product line items)
+-- ============================================
+CREATE TABLE IF NOT EXISTS invoice_products (
+    id TEXT PRIMARY KEY,
+    invoice_id TEXT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+    product_id TEXT REFERENCES products(id),
+    product_name TEXT NOT NULL,
+    product_category TEXT,
+    product_type TEXT CHECK(product_type IN ('service_product', 'retail')),
+    unit_price REAL NOT NULL,
+    quantity REAL NOT NULL,
+    discount REAL DEFAULT 0,
+    total REAL NOT NULL,
+    commission_rate REAL,
+    commission_amount REAL,
+    deducted_from_stock INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoice_products_invoice ON invoice_products(invoice_id);
+
+-- ============================================
+-- INVOICE_PAYMENTS TABLE (Payment transactions)
+-- ============================================
+CREATE TABLE IF NOT EXISTS invoice_payments (
+    id TEXT PRIMARY KEY,
+    invoice_id TEXT NOT NULL REFERENCES invoices(id),
+    amount REAL NOT NULL,
+    payment_method TEXT NOT NULL CHECK(payment_method IN ('payfast', 'yoco', 'cash', 'card_on_site', 'eft', 'loyalty_points')),
+    payment_reference TEXT,
+    payment_date TEXT DEFAULT (datetime('now')),
+    processor_transaction_id TEXT,
+    processor_status TEXT,
+    processor_response TEXT,
+    notes TEXT,
+    processed_by TEXT REFERENCES users(id),
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoice_payments_invoice ON invoice_payments(invoice_id);
+
+-- ============================================
+-- INVOICE_COMMISSIONS TABLE (Commission tracking)
+-- ============================================
+CREATE TABLE IF NOT EXISTS invoice_commissions (
+    id TEXT PRIMARY KEY,
+    invoice_id TEXT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+    stylist_id TEXT NOT NULL REFERENCES stylists(id),
+    services_commission REAL DEFAULT 0,
+    products_commission REAL DEFAULT 0,
+    total_commission REAL NOT NULL,
+    payment_status TEXT DEFAULT 'pending' CHECK(payment_status IN ('pending', 'approved', 'paid', 'cancelled')),
+    payment_date TEXT,
+    payment_reference TEXT,
+    approved_by TEXT REFERENCES users(id),
+    approved_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoice_commissions_invoice ON invoice_commissions(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_invoice_commissions_stylist ON invoice_commissions(stylist_id);
+
+-- ============================================
+-- PAYMENT METHODS (Configurable payment options)
+-- ============================================
+CREATE TABLE IF NOT EXISTS payment_methods (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    enabled INTEGER DEFAULT 1,
+    transaction_fee_type TEXT DEFAULT 'none' CHECK(transaction_fee_type IN ('none', 'percentage', 'fixed')),
+    transaction_fee_value REAL DEFAULT 0,
+    description TEXT,
+    display_order INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+INSERT OR IGNORE INTO payment_methods (id, name, description, display_order) VALUES
+('cash', 'Cash', 'Cash payment at reception', 1),
+('card_on_site', 'Card (On Site)', 'Card payment at salon', 2),
+('eft', 'EFT', 'Electronic Funds Transfer', 3),
+('payfast', 'PayFast', 'Online payment via PayFast', 4),
+('yoco', 'Yoco', 'Online payment via Yoco', 5),
+('loyalty_points', 'Loyalty Points', 'Pay using loyalty points', 6);
+
+-- ============================================
+-- DISCOUNT PRESETS (Quick discount templates)
+-- ============================================
+CREATE TABLE IF NOT EXISTS discount_presets (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    discount_type TEXT NOT NULL CHECK(discount_type IN ('percentage', 'fixed')),
+    discount_value REAL NOT NULL,
+    enabled INTEGER DEFAULT 1,
+    requires_approval INTEGER DEFAULT 0,
+    display_order INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+INSERT OR IGNORE INTO discount_presets (id, name, discount_type, discount_value, display_order) VALUES
+('staff', 'Staff Discount', 'percentage', 20, 1),
+('loyalty_gold', 'Gold Member', 'percentage', 10, 2),
+('loyalty_platinum', 'Platinum Member', 'percentage', 15, 3),
+('first_time', 'First Visit', 'percentage', 10, 4),
+('referral', 'Referral Bonus', 'fixed', 50, 5);

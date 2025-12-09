@@ -315,6 +315,239 @@ async function initializeDatabase() {
         )
     `);
     await ensureIndex('idx_package_sessions_package', 'package_sessions', 'user_package_id');
+
+    // ============================================
+    // INVOICE TABLES (migration for existing databases)
+    // ============================================
+    await ensureTable('invoice_settings', `
+        CREATE TABLE IF NOT EXISTS invoice_settings (
+            id INTEGER PRIMARY KEY CHECK(id = 1),
+            tax_enabled INTEGER DEFAULT 1,
+            tax_rate REAL DEFAULT 0.15,
+            tax_name TEXT DEFAULT 'VAT',
+            tax_inclusive INTEGER DEFAULT 0,
+            default_service_commission_rate REAL DEFAULT 0.30,
+            default_product_commission_rate REAL DEFAULT 0.10,
+            default_service_product_commission_rate REAL DEFAULT 0.05,
+            invoice_number_prefix TEXT DEFAULT 'INV',
+            invoice_number_format TEXT DEFAULT '{PREFIX}-{YEAR}-{NUMBER}',
+            next_invoice_number INTEGER DEFAULT 1,
+            allow_partial_payments INTEGER DEFAULT 1,
+            payment_due_days INTEGER DEFAULT 0,
+            max_discount_percentage REAL DEFAULT 100,
+            require_discount_reason INTEGER DEFAULT 1,
+            deduct_stock_on_finalize INTEGER DEFAULT 1,
+            allow_negative_stock INTEGER DEFAULT 0,
+            auto_create_invoice_on_completion INTEGER DEFAULT 0,
+            require_booking_for_invoice INTEGER DEFAULT 0,
+            auto_approve_commission_on_payment INTEGER DEFAULT 1,
+            require_admin_commission_approval INTEGER DEFAULT 0,
+            auto_send_invoice_email INTEGER DEFAULT 0,
+            invoice_email_template TEXT DEFAULT 'default',
+            updated_by TEXT REFERENCES users(id),
+            updated_at TEXT DEFAULT (datetime('now')),
+            CHECK(tax_rate >= 0 AND tax_rate <= 1),
+            CHECK(default_service_commission_rate >= 0 AND default_service_commission_rate <= 1),
+            CHECK(default_product_commission_rate >= 0 AND default_product_commission_rate <= 1)
+        )
+    `);
+    // Insert default settings if empty
+    await dbRun('INSERT OR IGNORE INTO invoice_settings (id) VALUES (1)');
+
+    await ensureTable('invoices', `
+        CREATE TABLE IF NOT EXISTS invoices (
+            id TEXT PRIMARY KEY,
+            invoice_number TEXT UNIQUE,
+            booking_id TEXT REFERENCES bookings(id),
+            user_id TEXT NOT NULL REFERENCES users(id),
+            stylist_id TEXT NOT NULL REFERENCES stylists(id),
+            services_subtotal REAL DEFAULT 0,
+            products_subtotal REAL DEFAULT 0,
+            subtotal REAL NOT NULL,
+            discount_type TEXT CHECK(discount_type IN ('percentage', 'fixed', 'loyalty_points', 'promo_code', 'manual')),
+            discount_value REAL DEFAULT 0,
+            discount_amount REAL DEFAULT 0,
+            discount_reason TEXT,
+            tax_rate REAL DEFAULT 0.15,
+            tax_amount REAL DEFAULT 0,
+            total REAL NOT NULL,
+            payment_status TEXT DEFAULT 'unpaid' CHECK(payment_status IN ('unpaid', 'partial', 'paid', 'refunded', 'written_off')),
+            amount_paid REAL DEFAULT 0,
+            amount_due REAL DEFAULT 0,
+            commission_total REAL DEFAULT 0,
+            commission_paid INTEGER DEFAULT 0,
+            commission_paid_date TEXT,
+            status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'finalized', 'sent', 'cancelled', 'void')),
+            service_date TEXT NOT NULL,
+            invoice_date TEXT DEFAULT (date('now')),
+            due_date TEXT,
+            finalized_at TEXT,
+            internal_notes TEXT,
+            client_notes TEXT,
+            created_by TEXT REFERENCES users(id),
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT,
+            FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE SET NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (stylist_id) REFERENCES stylists(id)
+        )
+    `);
+    await ensureIndex('idx_invoices_booking', 'invoices', 'booking_id');
+    await ensureIndex('idx_invoices_user', 'invoices', 'user_id');
+    await ensureIndex('idx_invoices_stylist', 'invoices', 'stylist_id');
+    await ensureIndex('idx_invoices_status', 'invoices', 'status');
+    await ensureIndex('idx_invoices_payment_status', 'invoices', 'payment_status');
+    await ensureIndex('idx_invoices_service_date', 'invoices', 'service_date');
+    await ensureIndex('idx_invoices_invoice_number', 'invoices', 'invoice_number');
+
+    await ensureTable('invoice_services', `
+        CREATE TABLE IF NOT EXISTS invoice_services (
+            id TEXT PRIMARY KEY,
+            invoice_id TEXT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+            service_id TEXT REFERENCES services(id),
+            service_name TEXT NOT NULL,
+            service_description TEXT,
+            service_category TEXT,
+            unit_price REAL NOT NULL,
+            quantity REAL DEFAULT 1,
+            discount REAL DEFAULT 0,
+            total REAL NOT NULL,
+            commission_rate REAL,
+            commission_amount REAL,
+            duration_minutes INTEGER,
+            notes TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
+            FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL
+        )
+    `);
+    await ensureIndex('idx_invoice_services_invoice', 'invoice_services', 'invoice_id');
+    await ensureIndex('idx_invoice_services_service', 'invoice_services', 'service_id');
+
+    await ensureTable('invoice_products', `
+        CREATE TABLE IF NOT EXISTS invoice_products (
+            id TEXT PRIMARY KEY,
+            invoice_id TEXT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+            product_id TEXT REFERENCES products(id),
+            product_name TEXT NOT NULL,
+            product_category TEXT,
+            product_type TEXT CHECK(product_type IN ('service_product', 'retail')),
+            unit_price REAL NOT NULL,
+            quantity REAL NOT NULL,
+            discount REAL DEFAULT 0,
+            total REAL NOT NULL,
+            commission_rate REAL,
+            commission_amount REAL,
+            deducted_from_stock INTEGER DEFAULT 0,
+            notes TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+        )
+    `);
+    await ensureIndex('idx_invoice_products_invoice', 'invoice_products', 'invoice_id');
+    await ensureIndex('idx_invoice_products_product', 'invoice_products', 'product_id');
+    await ensureIndex('idx_invoice_products_type', 'invoice_products', 'product_type');
+
+    await ensureTable('invoice_payments', `
+        CREATE TABLE IF NOT EXISTS invoice_payments (
+            id TEXT PRIMARY KEY,
+            invoice_id TEXT NOT NULL REFERENCES invoices(id) ON DELETE RESTRICT,
+            amount REAL NOT NULL,
+            payment_method TEXT NOT NULL CHECK(payment_method IN ('payfast', 'yoco', 'cash', 'card_on_site', 'eft', 'loyalty_points')),
+            payment_reference TEXT,
+            payment_date TEXT DEFAULT (datetime('now')),
+            processor_transaction_id TEXT,
+            processor_status TEXT,
+            processor_response TEXT,
+            notes TEXT,
+            processed_by TEXT REFERENCES users(id),
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE RESTRICT,
+            FOREIGN KEY (processed_by) REFERENCES users(id)
+        )
+    `);
+    await ensureIndex('idx_invoice_payments_invoice', 'invoice_payments', 'invoice_id');
+    await ensureIndex('idx_invoice_payments_date', 'invoice_payments', 'payment_date');
+    await ensureIndex('idx_invoice_payments_method', 'invoice_payments', 'payment_method');
+
+    await ensureTable('invoice_commissions', `
+        CREATE TABLE IF NOT EXISTS invoice_commissions (
+            id TEXT PRIMARY KEY,
+            invoice_id TEXT NOT NULL REFERENCES invoices(id) ON DELETE CASCADE,
+            stylist_id TEXT NOT NULL REFERENCES stylists(id),
+            services_commission REAL DEFAULT 0,
+            products_commission REAL DEFAULT 0,
+            total_commission REAL NOT NULL,
+            payment_status TEXT DEFAULT 'pending' CHECK(payment_status IN ('pending', 'approved', 'paid', 'cancelled')),
+            payment_date TEXT,
+            payment_reference TEXT,
+            approved_by TEXT REFERENCES users(id),
+            approved_at TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
+            FOREIGN KEY (stylist_id) REFERENCES stylists(id),
+            FOREIGN KEY (approved_by) REFERENCES users(id)
+        )
+    `);
+    await ensureIndex('idx_invoice_commissions_invoice', 'invoice_commissions', 'invoice_id');
+    await ensureIndex('idx_invoice_commissions_stylist', 'invoice_commissions', 'stylist_id');
+    await ensureIndex('idx_invoice_commissions_status', 'invoice_commissions', 'payment_status');
+    await ensureIndex('idx_invoice_commissions_date', 'invoice_commissions', 'payment_date');
+
+    await ensureTable('payment_methods', `
+        CREATE TABLE IF NOT EXISTS payment_methods (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            enabled INTEGER DEFAULT 1,
+            transaction_fee_type TEXT DEFAULT 'none' CHECK(transaction_fee_type IN ('none', 'percentage', 'fixed')),
+            transaction_fee_value REAL DEFAULT 0,
+            description TEXT,
+            display_order INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    `);
+    await ensureIndex('idx_payment_methods_enabled', 'payment_methods', 'enabled');
+    // Insert default payment methods if empty
+    const paymentMethodsExist = await dbGet('SELECT COUNT(*) as count FROM payment_methods');
+    if (!paymentMethodsExist || paymentMethodsExist.count === 0) {
+        await dbRun(`INSERT OR IGNORE INTO payment_methods (id, name, description, display_order) VALUES ('cash', 'Cash', 'Cash payment at reception', 1)`);
+        await dbRun(`INSERT OR IGNORE INTO payment_methods (id, name, description, display_order) VALUES ('card_on_site', 'Card (On Site)', 'Card payment at salon using card machine', 2)`);
+        await dbRun(`INSERT OR IGNORE INTO payment_methods (id, name, description, display_order) VALUES ('eft', 'EFT', 'Electronic Funds Transfer', 3)`);
+        await dbRun(`INSERT OR IGNORE INTO payment_methods (id, name, description, display_order) VALUES ('payfast', 'PayFast', 'Online payment via PayFast', 4)`);
+        await dbRun(`INSERT OR IGNORE INTO payment_methods (id, name, description, display_order) VALUES ('yoco', 'Yoco', 'Online payment via Yoco', 5)`);
+        await dbRun(`INSERT OR IGNORE INTO payment_methods (id, name, description, display_order) VALUES ('loyalty_points', 'Loyalty Points', 'Pay using loyalty points', 6)`);
+    }
+
+    await ensureTable('discount_presets', `
+        CREATE TABLE IF NOT EXISTS discount_presets (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            discount_type TEXT NOT NULL CHECK(discount_type IN ('percentage', 'fixed')),
+            discount_value REAL NOT NULL,
+            enabled INTEGER DEFAULT 1,
+            requires_approval INTEGER DEFAULT 0,
+            display_order INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    `);
+    await ensureIndex('idx_discount_presets_enabled', 'discount_presets', 'enabled');
+    // Insert default discount presets if empty
+    const discountPresetsExist = await dbGet('SELECT COUNT(*) as count FROM discount_presets');
+    if (!discountPresetsExist || discountPresetsExist.count === 0) {
+        await dbRun(`INSERT OR IGNORE INTO discount_presets (id, name, description, discount_type, discount_value, display_order) VALUES ('vip-10', 'VIP Client (10%)', '10% discount for VIP clients', 'percentage', 10, 1)`);
+        await dbRun(`INSERT OR IGNORE INTO discount_presets (id, name, description, discount_type, discount_value, display_order) VALUES ('vip-15', 'VIP Client (15%)', '15% discount for VIP clients', 'percentage', 15, 2)`);
+        await dbRun(`INSERT OR IGNORE INTO discount_presets (id, name, description, discount_type, discount_value, display_order) VALUES ('first-time', 'First Time Client', 'R50 off for first-time clients', 'fixed', 50, 3)`);
+        await dbRun(`INSERT OR IGNORE INTO discount_presets (id, name, description, discount_type, discount_value, display_order) VALUES ('staff-discount', 'Staff Discount (20%)', '20% discount for staff members', 'percentage', 20, 4)`);
+        await dbRun(`INSERT OR IGNORE INTO discount_presets (id, name, description, discount_type, discount_value, display_order) VALUES ('loyalty-reward', 'Loyalty Reward', 'Reward for loyal customers', 'percentage', 5, 5)`);
+    }
+
+    // Booking columns for invoice integration
+    await ensureColumn('bookings', 'invoice_id', 'TEXT REFERENCES invoices(id)');
+    await ensureColumn('bookings', 'invoiced', 'INTEGER DEFAULT 0');
+    await ensureIndex('idx_bookings_invoice', 'bookings', 'invoice_id');
+    await ensureIndex('idx_bookings_invoiced', 'bookings', 'invoiced');
 }
 
 // Migration to add 'eft' to payment_provider CHECK constraint
