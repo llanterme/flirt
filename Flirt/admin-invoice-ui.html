@@ -1,0 +1,508 @@
+<!-- ============================================ -->
+<!-- INVOICING SYSTEM UI COMPONENT -->
+<!-- Insert this into flirt-admin-console.html -->
+<!-- ============================================ -->
+
+<!-- ADD TO NAVIGATION (after Orders nav-item, line ~1593) -->
+<a class="nav-item" onclick="showSection('invoices', event)">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10 9 9 9 8 9"></polyline>
+    </svg>
+    Invoices
+    <span class="nav-badge" id="unpaid-invoices-count" style="display: none;">0</span>
+</a>
+
+<a class="nav-item" onclick="showSection('commissions', event)">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="1" x2="12" y2="23"></line>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+    </svg>
+    Commissions
+</a>
+
+<!-- ADD SECTIONS (after Orders section, around line ~2897) -->
+
+<!-- ============================================ -->
+<!-- INVOICES SECTION -->
+<!-- ============================================ -->
+<section id="invoices" class="page-section">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Invoice Management</h1>
+            <p class="page-subtitle">Create and manage invoices for completed services</p>
+        </div>
+        <button class="btn btn-primary" onclick="showCreateInvoice()">
+            <svg style="width:18px;height:18px;margin-right:8px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Create Invoice
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 24px;">
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px;">
+                <input type="text" id="invoice-search" placeholder="Search invoices..."
+                    style="width: 100%; padding: 10px; border: 1px solid var(--border-soft); border-radius: 6px;"
+                    oninput="loadInvoices()">
+            </div>
+            <select id="invoice-status-filter" onchange="loadInvoices()"
+                style="padding: 10px; border: 1px solid var(--border-soft); border-radius: 6px;">
+                <option value="">All Statuses</option>
+                <option value="draft">Draft</option>
+                <option value="finalized">Finalized</option>
+                <option value="sent">Sent</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+            <select id="invoice-payment-filter" onchange="loadInvoices()"
+                style="padding: 10px; border: 1px solid var(--border-soft); border-radius: 6px;">
+                <option value="">All Payment Status</option>
+                <option value="unpaid">Unpaid</option>
+                <option value="partial">Partial</option>
+                <option value="paid">Paid</option>
+            </select>
+            <select id="invoice-stylist-filter" onchange="loadInvoices()"
+                style="padding: 10px; border: 1px solid var(--border-soft); border-radius: 6px;">
+                <option value="">All Stylists</option>
+                <!-- Populated dynamically -->
+            </select>
+        </div>
+    </div>
+
+    <!-- Invoice List -->
+    <div class="card">
+        <div id="invoice-list-container">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Loading invoices...</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- CREATE/EDIT INVOICE MODAL -->
+<!-- ============================================ -->
+<div id="invoice-modal" class="modal">
+    <div class="modal-content" style="max-width: 1200px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+            <h2 id="invoice-modal-title">Create Invoice</h2>
+            <button class="modal-close" onclick="closeInvoiceModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="invoice-form">
+                <!-- Customer & Stylist Selection -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div class="form-group">
+                        <label>Customer *</label>
+                        <select id="invoice-customer" required class="form-control">
+                            <option value="">Select customer...</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Stylist *</label>
+                        <select id="invoice-stylist" required class="form-control">
+                            <option value="">Select stylist...</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div class="form-group">
+                        <label>Service Date *</label>
+                        <input type="date" id="invoice-service-date" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Link to Booking (Optional)</label>
+                        <select id="invoice-booking" class="form-control">
+                            <option value="">No booking (walk-in)</option>
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Services Section -->
+                <div style="margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="margin: 0;">Services</h3>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="showServicePicker()">
+                            <svg style="width:16px;height:16px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Service
+                        </button>
+                    </div>
+                    <div id="invoice-services-list" class="line-items-container">
+                        <p style="text-align: center; color: var(--text-subtle); padding: 20px;">No services added yet</p>
+                    </div>
+                </div>
+
+                <!-- Products Section -->
+                <div style="margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="margin: 0;">Products</h3>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="showProductPicker()">
+                            <svg style="width:16px;height:16px;margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Product
+                        </button>
+                    </div>
+                    <div id="invoice-products-list" class="line-items-container">
+                        <p style="text-align: center; color: var(--text-subtle); padding: 20px;">No products added yet</p>
+                    </div>
+                </div>
+
+                <!-- Discount Section -->
+                <div style="margin-bottom: 24px; padding: 16px; background: var(--surface-muted); border-radius: 8px;">
+                    <h3 style="margin-bottom: 12px;">Discount (Optional)</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 12px;">
+                        <select id="invoice-discount-type" class="form-control" onchange="calculateInvoiceTotals()">
+                            <option value="">No Discount</option>
+                            <option value="percentage">Percentage</option>
+                            <option value="fixed">Fixed Amount</option>
+                            <option value="loyalty_points">Loyalty Points</option>
+                        </select>
+                        <input type="number" id="invoice-discount-value" placeholder="Value" class="form-control"
+                            step="0.01" min="0" oninput="calculateInvoiceTotals()">
+                        <input type="text" id="invoice-discount-reason" placeholder="Reason (e.g., VIP client)" class="form-control">
+                    </div>
+                </div>
+
+                <!-- Totals -->
+                <div style="margin-bottom: 24px; padding: 20px; background: var(--primary-light); border-radius: 8px; border: 2px solid var(--primary);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Services Subtotal:</span>
+                        <strong id="invoice-services-subtotal">R0.00</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Products Subtotal:</span>
+                        <strong id="invoice-products-subtotal">R0.00</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding-top: 8px; border-top: 1px solid var(--border-soft);">
+                        <span>Subtotal:</span>
+                        <strong id="invoice-subtotal">R0.00</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--danger);">
+                        <span>Discount:</span>
+                        <strong id="invoice-discount-amount">R0.00</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <span>Tax (15% VAT):</span>
+                        <strong id="invoice-tax-amount">R0.00</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 2px solid var(--primary); font-size: 20px;">
+                        <span><strong>TOTAL:</strong></span>
+                        <strong style="color: var(--primary);" id="invoice-total">R0.00</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-soft); color: var(--success);">
+                        <span>Stylist Commission:</span>
+                        <strong id="invoice-commission">R0.00</strong>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div class="form-group">
+                        <label>Client Notes (visible on invoice)</label>
+                        <textarea id="invoice-client-notes" rows="3" class="form-control"
+                            placeholder="Thank you for your visit!"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Internal Notes (admin only)</label>
+                        <textarea id="invoice-internal-notes" rows="3" class="form-control"
+                            placeholder="Internal notes..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeInvoiceModal()">Cancel</button>
+                    <button type="button" class="btn btn-outline" onclick="saveInvoiceAsDraft()">Save as Draft</button>
+                    <button type="submit" class="btn btn-primary">Finalize Invoice</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Service Picker Modal -->
+<div id="service-picker-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3>Add Service</h3>
+            <button class="modal-close" onclick="closeServicePicker()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="service-search" placeholder="Search services..."
+                style="width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid var(--border-soft); border-radius: 6px;"
+                oninput="filterServices()">
+            <div id="service-list" style="max-height: 400px; overflow-y: auto;">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Picker Modal -->
+<div id="product-picker-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3>Add Product</h3>
+            <button class="modal-close" onclick="closeProductPicker()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="product-search" placeholder="Search products..."
+                style="width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid var(--border-soft); border-radius: 6px;"
+                oninput="filterProducts()">
+            <div id="product-list" style="max-height: 400px; overflow-y: auto;">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div id="payment-modal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>Record Payment</h3>
+            <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="payment-form" onsubmit="recordPayment(event)">
+                <div class="form-group">
+                    <label>Invoice</label>
+                    <p id="payment-invoice-info" style="font-weight: 600; color: var(--primary);"></p>
+                </div>
+                <div class="form-group">
+                    <label>Amount Due</label>
+                    <p id="payment-amount-due" style="font-size: 24px; font-weight: 700; color: var(--danger);"></p>
+                </div>
+                <div class="form-group">
+                    <label>Payment Amount *</label>
+                    <input type="number" id="payment-amount" required class="form-control"
+                        step="0.01" min="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Payment Method *</label>
+                    <select id="payment-method" required class="form-control">
+                        <option value="">Select method...</option>
+                        <option value="cash">Cash</option>
+                        <option value="card_on_site">Card (On Site)</option>
+                        <option value="eft">EFT</option>
+                        <option value="payfast">PayFast</option>
+                        <option value="yoco">Yoco</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Reference Number (Optional)</label>
+                    <input type="text" id="payment-reference" class="form-control"
+                        placeholder="Transaction ID, Receipt #, etc.">
+                </div>
+                <div class="form-group">
+                    <label>Notes (Optional)</label>
+                    <textarea id="payment-notes" rows="2" class="form-control"></textarea>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+                    <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Record Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- COMMISSIONS SECTION -->
+<!-- ============================================ -->
+<section id="commissions" class="page-section">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Commission Reports</h1>
+            <p class="page-subtitle">View and manage stylist commissions</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 24px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px;">
+            <div class="form-group">
+                <label>Stylist</label>
+                <select id="commission-stylist" class="form-control">
+                    <option value="">Select stylist...</option>
+                    <!-- Populated dynamically -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Start Date</label>
+                <input type="date" id="commission-start-date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>End Date</label>
+                <input type="date" id="commission-end-date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label style="visibility: hidden;">Action</label>
+                <button class="btn btn-primary" onclick="loadCommissionReport()" style="width: 100%;">
+                    View Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Commission Summary -->
+    <div id="commission-summary" style="display: none; margin-bottom: 24px;">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--primary-light); color: var(--primary);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Paid Invoices</div>
+                    <div class="stat-value" id="comm-invoices-count">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(76, 175, 80, 0.12); color: var(--success);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Sales</div>
+                    <div class="stat-value" id="comm-total-sales">R0.00</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: rgba(33, 150, 243, 0.12); color: var(--info);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Commission</div>
+                    <div class="stat-value" id="comm-total-commission">R0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Commission Detail -->
+    <div class="card" id="commission-detail" style="display: none;">
+        <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <h3>Commission Breakdown</h3>
+            <button class="btn btn-primary" onclick="markCommissionsAsPaid()" id="mark-paid-btn">
+                Mark Selected as Paid
+            </button>
+        </div>
+        <div id="commission-list-container">
+            <!-- Populated dynamically -->
+        </div>
+    </div>
+</section>
+
+<!-- ADD STYLES -->
+<style>
+.line-items-container {
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.line-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.line-item:hover {
+    background: var(--surface-muted);
+}
+
+.line-item:last-child {
+    border-bottom: none;
+}
+
+.line-item-info {
+    flex: 1;
+}
+
+.line-item-name {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.line-item-details {
+    font-size: 13px;
+    color: var(--text-subtle);
+}
+
+.line-item-price {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 16px;
+    margin-right: 16px;
+}
+
+.line-item-remove {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.line-item-remove:hover {
+    opacity: 0.8;
+}
+
+.service-picker-item, .product-picker-item {
+    padding: 12px;
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.service-picker-item:hover, .product-picker-item:hover {
+    background: var(--primary-light);
+    border-color: var(--primary);
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-success { background: rgba(76, 175, 80, 0.12); color: var(--success); }
+.badge-warning { background: rgba(255, 152, 0, 0.12); color: var(--warning); }
+.badge-danger { background: rgba(231, 76, 60, 0.12); color: var(--danger); }
+.badge-info { background: rgba(33, 150, 243, 0.12); color: var(--info); }
+.badge-secondary { background: var(--surface-muted); color: var(--text-muted); }
+</style>

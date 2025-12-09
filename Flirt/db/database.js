@@ -5,6 +5,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 const loyaltyHelper = require('../helpers/loyalty');
+const InvoiceRepositoryClass = require('./repositories/InvoiceRepository');
 
 const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'flirt.db');
 
@@ -2939,6 +2940,9 @@ const UserPackageRepository = {
     }
 };
 
+// Initialize Invoice Repository
+const InvoiceRepository = new InvoiceRepositoryClass(getDb());
+
 module.exports = {
     getDb,
     dbRun,
@@ -2968,5 +2972,7 @@ module.exports = {
     RewardTrackRepository,
     UserRewardRepository,
     ServicePackageRepository,
-    UserPackageRepository
+    UserPackageRepository,
+    // Invoicing System
+    InvoiceRepository
 };
