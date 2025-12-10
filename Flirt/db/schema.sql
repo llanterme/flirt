@@ -75,9 +75,11 @@ CREATE TABLE IF NOT EXISTS services (
     name TEXT NOT NULL,
     description TEXT,
     price REAL NOT NULL,
+    cost_price REAL, -- cost price for profit calculation
     duration INTEGER, -- in minutes
     service_type TEXT NOT NULL, -- e.g., 'hair', 'beauty', 'spa', 'nails' (validated in application)
     category TEXT,
+    supplier TEXT, -- supplier name
     image_url TEXT,
     display_order INTEGER DEFAULT 0,
     commission_rate REAL, -- per-service commission rate (e.g., 0.30 for 30%), NULL = use stylist default
@@ -179,9 +181,13 @@ CREATE TABLE IF NOT EXISTS products (
     category TEXT NOT NULL,
     description TEXT,
     price REAL NOT NULL,
+    cost_price REAL, -- cost price for profit calculation
     sale_price REAL,
     on_sale INTEGER DEFAULT 0,
     stock INTEGER DEFAULT 0,
+    supplier TEXT, -- supplier name
+    commission_rate REAL, -- commission rate for product sales
+    is_service_product INTEGER DEFAULT 0, -- 1 = used during treatments, 0 = retail product
     image_url TEXT,
     active INTEGER DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))

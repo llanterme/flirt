@@ -167,6 +167,14 @@ async function initializeDatabase() {
     await ensureColumn('stylists', 'basic_monthly_pay', 'REAL DEFAULT 0');
     await ensureColumn('services', 'commission_rate', 'REAL');
 
+    // Pricelist import columns (cost_price, supplier for services and products)
+    await ensureColumn('services', 'cost_price', 'REAL');
+    await ensureColumn('services', 'supplier', 'TEXT');
+    await ensureColumn('products', 'cost_price', 'REAL');
+    await ensureColumn('products', 'supplier', 'TEXT');
+    await ensureColumn('products', 'commission_rate', 'REAL');
+    await ensureColumn('products', 'is_service_product', 'INTEGER DEFAULT 0');
+
     // ============================================
     // SERVICE TYPES AND CATEGORIES (for configurable dropdowns)
     // ============================================
