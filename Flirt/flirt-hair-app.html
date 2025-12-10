@@ -6611,6 +6611,64 @@
             <!-- Hidden message for no install (used by JS) -->
             <p id="trackerNoInstallMessage" style="display: none;"></p>
 
+            <!-- Always Visible: Hair Profile & Photos (independent of tracker setup) -->
+            <div id="hairProfilePhotosSection">
+                <!-- Hair Profile Section -->
+                <div class="section-header" style="margin-top: 20px;">
+                    <h3 class="section-title">Your Hair Profile</h3>
+                </div>
+
+                <div class="card" id="trackerHairProfileCard">
+                    <div id="hairProfileDisplay" style="display: none;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <div style="font-size: 12px; color: var(--gray-medium); text-transform: uppercase; letter-spacing: 0.5px;">Hair Type</div>
+                                <div id="profileHairType" style="font-weight: 600; margin-top: 4px;">–</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; color: var(--gray-medium); text-transform: uppercase; letter-spacing: 0.5px;">Extension Type</div>
+                                <div id="profileExtensionType" style="font-weight: 600; margin-top: 4px;">–</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; color: var(--gray-medium); text-transform: uppercase; letter-spacing: 0.5px;">Preferred Stylist</div>
+                                <div id="profilePreferredStylist" style="font-weight: 600; margin-top: 4px;">–</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; color: var(--gray-medium); text-transform: uppercase; letter-spacing: 0.5px;">Notes</div>
+                                <div id="profileNotes" style="font-weight: 600; margin-top: 4px;">–</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-small btn-outline" style="margin-top: 15px;" onclick="hairProfile()">
+                            Edit Profile
+                        </button>
+                    </div>
+                    <div id="hairProfileEmpty">
+                        <div style="text-align: center; padding: 15px 0;">
+                            <div style="font-size: 40px; margin-bottom: 10px;">💇‍♀️</div>
+                            <p style="color: var(--gray-medium); margin-bottom: 15px;">Help us personalize your experience by telling us about your hair.</p>
+                            <button class="btn btn-primary" onclick="hairProfile()">Set Up Hair Profile</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Hair Photos Section -->
+                <div class="section-header" style="margin-top: 30px;">
+                    <h3 class="section-title">My Hair Photos</h3>
+                </div>
+
+                <div class="card" id="trackerHairPhotosCard">
+                    <p style="color: var(--gray-medium); font-size: 14px; margin-bottom: 15px;">
+                        Upload photos of your hair to share with your stylist during consultations.
+                    </p>
+                    <button class="btn btn-primary" style="width: 100%; margin-bottom: 15px;" onclick="openPhotoUpload()">
+                        <span style="margin-right: 8px;">+</span> Upload New Photo
+                    </button>
+                    <div id="trackerHairPhotosGallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">
+                        <!-- Photos loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Main tracker content (shown when tracker is set up) -->
             <div id="trackerMainContent" style="display: none;">
                 <!-- Maintenance Overdue Alert Banner -->
@@ -6720,61 +6778,6 @@
                     <ul id="trackerTipsList" style="margin-top: 10px; padding-left: 20px; color: var(--gray-medium);">
                         <li>Loading tips...</li>
                     </ul>
-                </div>
-
-                <!-- Hair Profile Section -->
-                <div class="section-header" style="margin-top: 30px;">
-                    <h3 class="section-title">Your Hair Profile</h3>
-                </div>
-
-                <div class="card" id="trackerHairProfileCard">
-                    <div id="hairProfileDisplay" style="display: none;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                            <div>
-                                <div style="font-size: 12px; color: var(--gray-medium); text-transform: uppercase; letter-spacing: 0.5px;">Hair Type</div>
-                                <div id="profileHairType" style="font-weight: 600; margin-top: 4px;">–</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 12px; color: var(--gray-medium); text-transform: uppercase; letter-spacing: 0.5px;">Extension Type</div>
-                                <div id="profileExtensionType" style="font-weight: 600; margin-top: 4px;">–</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 12px; color: var(--gray-medium); text-transform: uppercase; letter-spacing: 0.5px;">Preferred Stylist</div>
-                                <div id="profilePreferredStylist" style="font-weight: 600; margin-top: 4px;">–</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 12px; color: var(--gray-medium); text-transform: uppercase; letter-spacing: 0.5px;">Notes</div>
-                                <div id="profileNotes" style="font-weight: 600; margin-top: 4px;">–</div>
-                            </div>
-                        </div>
-                        <button class="btn btn-small btn-outline" style="margin-top: 15px;" onclick="hairProfile()">
-                            Edit Profile
-                        </button>
-                    </div>
-                    <div id="hairProfileEmpty">
-                        <div style="text-align: center; padding: 15px 0;">
-                            <div style="font-size: 40px; margin-bottom: 10px;">💇‍♀️</div>
-                            <p style="color: var(--gray-medium); margin-bottom: 15px;">Help us personalize your experience by telling us about your hair.</p>
-                            <button class="btn btn-primary" onclick="hairProfile()">Set Up Hair Profile</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- My Hair Photos Section -->
-                <div class="section-header" style="margin-top: 30px;">
-                    <h3 class="section-title">My Hair Photos</h3>
-                </div>
-
-                <div class="card" id="trackerHairPhotosCard">
-                    <p style="color: var(--gray-medium); font-size: 14px; margin-bottom: 15px;">
-                        Upload photos of your hair to share with your stylist during consultations.
-                    </p>
-                    <button class="btn btn-primary" style="width: 100%; margin-bottom: 15px;" onclick="openPhotoUpload()">
-                        <span style="margin-right: 8px;">+</span> Upload New Photo
-                    </button>
-                    <div id="trackerHairPhotosGallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">
-                        <!-- Photos loaded dynamically -->
-                    </div>
                 </div>
 
                 <!-- Edit tracker button -->
@@ -11074,6 +11077,10 @@ async function showNotifications() {
 
         // Load hair tracker data and config
         async function loadHairTracker() {
+            // Always load hair profile and photos (independent of tracker setup)
+            loadHairProfileForTracker();
+            loadTrackerHairPhotos();
+
             if (!currentUser) {
                 // Show setup prompt for non-logged in users
                 document.getElementById('trackerSetupPrompt').style.display = 'block';
@@ -11095,11 +11102,6 @@ async function showNotifications() {
                 }
 
                 renderHairTracker();
-
-                // Also load hair profile for the tracker page
-                loadHairProfileForTracker();
-                // Load hair photos for the tracker page
-                loadTrackerHairPhotos();
             } catch (error) {
                 console.error('Failed to load hair tracker:', error);
                 showToast({ type: 'error', title: 'Error', message: 'Failed to load hair tracker data' });
@@ -11112,6 +11114,20 @@ async function showNotifications() {
             const emptyEl = document.getElementById('hairProfileEmpty');
 
             if (!displayEl || !emptyEl) return;
+
+            // Handle non-logged in users
+            if (!currentUser) {
+                displayEl.style.display = 'none';
+                emptyEl.innerHTML = `
+                    <div style="text-align: center; padding: 15px 0;">
+                        <div style="font-size: 40px; margin-bottom: 10px;">💇‍♀️</div>
+                        <p style="color: var(--gray-medium); margin-bottom: 15px;">Sign in to create your personalized hair profile.</p>
+                        <button class="btn btn-primary" onclick="showModal('authModal')">Sign In</button>
+                    </div>
+                `;
+                emptyEl.style.display = 'block';
+                return;
+            }
 
             try {
                 const data = await apiCall('/hair-profile');
@@ -11152,14 +11168,28 @@ async function showNotifications() {
                     document.getElementById('profilePreferredStylist').textContent = hp.preferredStylistName || hp.preferredStylist || '–';
                     document.getElementById('profileNotes').textContent = hp.notes || '–';
                 } else {
-                    // Show empty state
+                    // Show empty state with setup button
                     displayEl.style.display = 'none';
+                    emptyEl.innerHTML = `
+                        <div style="text-align: center; padding: 15px 0;">
+                            <div style="font-size: 40px; margin-bottom: 10px;">💇‍♀️</div>
+                            <p style="color: var(--gray-medium); margin-bottom: 15px;">Help us personalize your experience by telling us about your hair.</p>
+                            <button class="btn btn-primary" onclick="hairProfile()">Set Up Hair Profile</button>
+                        </div>
+                    `;
                     emptyEl.style.display = 'block';
                 }
             } catch (error) {
                 console.error('Failed to load hair profile for tracker:', error);
                 // Show empty state on error
                 displayEl.style.display = 'none';
+                emptyEl.innerHTML = `
+                    <div style="text-align: center; padding: 15px 0;">
+                        <div style="font-size: 40px; margin-bottom: 10px;">💇‍♀️</div>
+                        <p style="color: var(--gray-medium); margin-bottom: 15px;">Help us personalize your experience by telling us about your hair.</p>
+                        <button class="btn btn-primary" onclick="hairProfile()">Set Up Hair Profile</button>
+                    </div>
+                `;
                 emptyEl.style.display = 'block';
             }
         }
@@ -11167,11 +11197,21 @@ async function showNotifications() {
         // Load and display hair photos in tracker section
         async function loadTrackerHairPhotos() {
             const gallery = document.getElementById('trackerHairPhotosGallery');
+            const photosCard = document.getElementById('trackerHairPhotosCard');
             if (!gallery) return;
 
             const token = getToken();
-            if (!token) {
-                gallery.innerHTML = '<p style="text-align: center; color: var(--gray-medium); grid-column: 1/-1;">Sign in to view your photos</p>';
+            if (!token || !currentUser) {
+                // Update card content for non-logged in users
+                if (photosCard) {
+                    photosCard.innerHTML = `
+                        <div style="text-align: center; padding: 15px 0;">
+                            <div style="font-size: 40px; margin-bottom: 10px;">📸</div>
+                            <p style="color: var(--gray-medium); margin-bottom: 15px;">Sign in to upload and view your hair photos.</p>
+                            <button class="btn btn-primary" onclick="showModal('authModal')">Sign In</button>
+                        </div>
+                    `;
+                }
                 return;
             }
 
