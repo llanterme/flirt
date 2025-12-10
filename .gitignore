@@ -9,13 +9,11 @@ node_modules/
 .env.test
 
 # Database files (SQLite)
-*.db
+# *.db  -- temporarily allowing flirt.db for feature_fix_db branch
 *.db-journal
 *.db-wal
 *.db-shm
-# IMPORTANT: Database must NOT be tracked in git!
-# Railway uses ephemeral filesystem - production data is stored on a Volume
-# Set DATABASE_PATH=/data/flirt.db in Railway environment variables
+!Flirt/db/flirt.db
 
 # Logs
 logs/
