@@ -217,10 +217,6 @@ async function seedAdminUser() {
     }
 }
 
-// Run seed on startup
-seedAdminUser();
-
-
 // Validation helpers
 function validateEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -8740,8 +8736,19 @@ function adminOrStaff(req, res, next) {
 // START SERVER
 // ============================================
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`
+// Async initialization and server startup
+(async function startServer() {
+    try {
+        console.log('🔄 Initializing database and seeding data...');
+
+        // Wait for database initialization and seeding to complete
+        await seedAdminUser();
+
+        console.log('✅ Database initialization complete');
+
+        // Now start the server
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`
     ========================================
     Flirt Hair & Beauty - Backend Server
     ========================================
@@ -8791,5 +8798,11 @@ app.listen(PORT, '0.0.0.0', () => {
       CRUD /api/admin/promos
 
     ========================================
-    `);
-});
+            `);
+        });
+    } catch (error) {
+        console.error('❌ Failed to start server:', error.message);
+        console.error(error.stack);
+        process.exit(1);
+    }
+})();
