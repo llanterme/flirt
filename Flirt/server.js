@@ -3380,6 +3380,76 @@ app.post('/api/admin/bulk-import', authenticateAdmin, async (req, res) => {
     }
 });
 
+// Bulk import customers from JSON data
+app.post('/api/admin/bulk-import-customers', authenticateAdmin, async (req, res) => {
+    try {
+        const { customers, skipExisting = true } = req.body;
+        const results = { created: 0, skipped: 0, errors: [] };
+
+        if (!customers || !Array.isArray(customers)) {
+            return res.status(400).json({ success: false, message: 'customers array is required' });
+        }
+
+        for (const customer of customers) {
+            try {
+                // Check if email already exists
+                const existing = await db.dbGet('SELECT id FROM users WHERE email = ? COLLATE NOCASE', [customer.email]);
+                if (existing) {
+                    if (skipExisting) {
+                        results.skipped++;
+                        continue;
+                    }
+                    // Update existing customer
+                    await db.dbRun(`
+                        UPDATE users SET
+                            name = ?, phone = ?, points = ?, tier = ?, referral_code = ?
+                        WHERE id = ?
+                    `, [
+                        customer.name, customer.phone || null, customer.points || 0,
+                        customer.tier || 'bronze', customer.referral_code || null, existing.id
+                    ]);
+                    results.skipped++;
+                    continue;
+                }
+
+                // Create new customer
+                await db.dbRun(`
+                    INSERT INTO users (
+                        id, email, password_hash, name, phone, role,
+                        points, tier, referral_code, must_change_password, created_at
+                    ) VALUES (?, ?, ?, ?, ?, 'customer', ?, ?, ?, 1, datetime('now'))
+                `, [
+                    customer.id,
+                    customer.email,
+                    customer.password_hash,
+                    customer.name || 'Customer',
+                    customer.phone || null,
+                    customer.points || 0,
+                    customer.tier || 'bronze',
+                    customer.referral_code || null
+                ]);
+                results.created++;
+            } catch (error) {
+                if (error.message.includes('UNIQUE constraint failed')) {
+                    results.skipped++;
+                } else {
+                    results.errors.push({ email: customer.email, error: error.message });
+                }
+            }
+        }
+
+        console.log(`Customer bulk import: ${results.created} created, ${results.skipped} skipped, ${results.errors.length} errors`);
+        res.json({
+            success: true,
+            message: 'Customer import completed',
+            results
+        });
+    } catch (error) {
+        console.error('Error in customer bulk import:', error.message);
+        res.status(500).json({ success: false, message: 'Customer bulk import failed: ' + error.message });
+    }
+});
+
 // ============================================
 // ADMIN - SERVICE TYPES MANAGEMENT
 // ============================================
