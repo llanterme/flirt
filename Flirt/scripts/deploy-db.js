@@ -36,14 +36,32 @@ function deployDatabase() {
       fs.mkdirSync(productionDir, { recursive: true });
     }
 
-    // Always copy the database from git to production volume
+    // Clean up any existing database files (including WAL, SHM, journal)
+    // This prevents corruption from old auxiliary files
+    const filesToClean = [
+      targetDb,
+      `${targetDb}-wal`,
+      `${targetDb}-shm`,
+      `${targetDb}-journal`
+    ];
+
+    let cleanedFiles = false;
+    filesToClean.forEach(file => {
+      if (fs.existsSync(file)) {
+        const size = fs.statSync(file).size;
+        fs.unlinkSync(file);
+        console.log(`🗑️  Deleted: ${path.basename(file)} (${(size / 1024).toFixed(2)} KB)`);
+        cleanedFiles = true;
+      }
+    });
+
+    if (cleanedFiles) {
+      console.log('✅ Cleaned up existing database files');
+    }
+
+    // Copy the fresh database from git
     console.log('📋 Copying database from:', sourceDb);
     console.log('📋 Copying database to:', targetDb);
-
-    if (fs.existsSync(targetDb)) {
-      const existingSize = fs.statSync(targetDb).size;
-      console.log(`⚠️  Overwriting existing database (${(existingSize / 1024 / 1024).toFixed(2)} MB)`);
-    }
 
     fs.copyFileSync(sourceDb, targetDb);
 

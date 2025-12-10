@@ -173,12 +173,36 @@ async function seedAdminUser() {
         // Initialize database first
         await db.initializeDatabase();
 
-        // Seed stylists into DB if missing
-        await seedStylistsDefaults();
-        // Seed services into DB if missing
-        await seedServicesDefaults();
-        // Seed hair tips into DB if missing
-        await seedHairTipsDefaults();
+        // Seed all default data (with error handling for each)
+        try {
+            await seedStylistsDefaults();
+        } catch (err) {
+            console.error('Warning: Failed to seed stylists:', err.message);
+        }
+
+        try {
+            await seedServicesDefaults();
+        } catch (err) {
+            console.error('Warning: Failed to seed services:', err.message);
+        }
+
+        try {
+            await seedHairTipsDefaults();
+        } catch (err) {
+            console.error('Warning: Failed to seed hair tips:', err.message);
+        }
+
+        try {
+            await seedGalleryDefaults();
+        } catch (err) {
+            console.error('Warning: Failed to seed gallery:', err.message);
+        }
+
+        try {
+            await seedProductsDefaults();
+        } catch (err) {
+            console.error('Warning: Failed to seed products:', err.message);
+        }
 
         // Load persisted payment configuration into runtime (if any)
         try {
@@ -212,8 +236,9 @@ async function seedAdminUser() {
             console.log('⚠️  Admin must change password on first login');
         }
     } catch (error) {
-        console.error('❌ Failed to seed admin user in database:', error.message);
-        throw error; // Re-throw to prevent server from starting with broken admin setup
+        console.error('❌ Failed to initialize database:', error.message);
+        console.error(error.stack);
+        throw error; // Re-throw to prevent server from starting with broken setup
     }
 }
 
@@ -7271,10 +7296,6 @@ async function seedHairTipsDefaults() {
     }
 }
 
-seedHairTipsDefaults();
-// Seed gallery defaults into DB if empty
-seedGalleryDefaults();
-
 // Seed default gallery items from flirthair.co.za assets if gallery is empty
 async function seedGalleryDefaults() {
     try {
@@ -7348,8 +7369,6 @@ async function seedGalleryDefaults() {
         console.error('Failed to seed gallery defaults:', err.message);
     }
 }
-
-seedGalleryDefaults();
 
 // Seed default products if none exist
 async function seedProductsDefaults() {
@@ -7516,8 +7535,6 @@ async function seedProductsDefaults() {
         console.error('Failed to seed products:', err.message);
     }
 }
-
-seedProductsDefaults();
 
 // Optional auth middleware - sets req.user if token is valid, but doesn't fail if not
 function optionalAuth(req, res, next) {
