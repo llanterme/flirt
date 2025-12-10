@@ -36,17 +36,25 @@ function deployDatabase() {
       fs.mkdirSync(productionDir, { recursive: true });
     }
 
-    // Only copy if target doesn't exist (don't overwrite existing production data)
+    // Check if target exists and has meaningful data (> 100KB)
     if (fs.existsSync(targetDb)) {
-      console.log('✅ Production database already exists at:', targetDb);
-      console.log('   Skipping copy to preserve existing data.');
-
-      // Show file sizes for comparison
-      const sourceSize = fs.statSync(sourceDb).size;
       const targetSize = fs.statSync(targetDb).size;
-      console.log(`   Source: ${(sourceSize / 1024 / 1024).toFixed(2)} MB`);
-      console.log(`   Target: ${(targetSize / 1024 / 1024).toFixed(2)} MB`);
-      return;
+      const minSize = 100 * 1024; // 100KB minimum
+
+      if (targetSize > minSize) {
+        console.log('✅ Production database already exists at:', targetDb);
+        console.log('   Skipping copy to preserve existing data.');
+
+        // Show file sizes for comparison
+        const sourceSize = fs.statSync(sourceDb).size;
+        console.log(`   Source: ${(sourceSize / 1024 / 1024).toFixed(2)} MB`);
+        console.log(`   Target: ${(targetSize / 1024 / 1024).toFixed(2)} MB`);
+        return;
+      } else {
+        console.log('⚠️  Production database exists but is empty/corrupted');
+        console.log(`   Size: ${targetSize} bytes (expected > ${minSize} bytes)`);
+        console.log('   Overwriting with seed database...');
+      }
     }
 
     // Copy the database
