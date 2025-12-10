@@ -8601,6 +8601,8 @@
 
             // Set state and enable continue
             modernBookingState.bookingType = type;
+            // Store the target category to auto-expand in step 2
+            modernBookingState.targetCategory = serviceType;
             document.getElementById('step1ContinueBtn').disabled = false;
 
             // Optionally auto-advance to step 2
@@ -8875,6 +8877,39 @@
                 // Group services by category for both hair and beauty
                 if (activeServices.length > 0) {
                     container.innerHTML = renderCategorizedServices(activeServices);
+
+                    // Auto-expand category based on quickBookService target
+                    if (modernBookingState.targetCategory) {
+                        const targetCat = modernBookingState.targetCategory.toLowerCase();
+                        // Map quick book categories to actual service categories
+                        const categoryMap = {
+                            'hair': ['Hair Extensions', 'Extensions', 'Hair'],
+                            'nails': ['Nails', 'Nails - Acrylic', 'Nails - Polygel'],
+                            'lashes': ['Brows & Lashes', 'Lashes'],
+                            'makeup': ['Makeup'],
+                            'facial': ['Facial Add-Ons', 'Facials', 'Facial']
+                        };
+
+                        const matchCategories = categoryMap[targetCat] || [];
+                        const categoryGroups = container.querySelectorAll('.service-category-group');
+
+                        for (const group of categoryGroups) {
+                            const categoryName = group.dataset.category;
+                            if (matchCategories.some(m => categoryName.toLowerCase().includes(m.toLowerCase()))) {
+                                const header = group.querySelector('.service-category-header');
+                                if (header) {
+                                    header.classList.add('expanded');
+                                    const content = header.nextElementSibling;
+                                    if (content) content.classList.add('expanded');
+                                    // Scroll the category into view
+                                    setTimeout(() => group.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                                }
+                                break;
+                            }
+                        }
+                        // Clear the target after use
+                        modernBookingState.targetCategory = null;
+                    }
                 } else {
                     container.innerHTML = `
                         <div style="text-align: center; padding: 40px; color: #6B7280;">
