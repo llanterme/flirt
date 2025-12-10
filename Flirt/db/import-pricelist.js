@@ -122,8 +122,7 @@ async function importPricelist(filePath, options = {}) {
                                 commission_rate = ?,
                                 category = ?,
                                 active = 1,
-                                service_type = ?,
-                                updated_at = datetime('now')
+                                service_type = ?
                             WHERE id = ?
                         `, [price, costPrice, commissionRate, category, 'beauty', existing.id]);
 

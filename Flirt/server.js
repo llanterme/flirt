@@ -3291,6 +3291,95 @@ app.post('/api/admin/services/seed-hair', authenticateAdmin, async (req, res) =>
     }
 });
 
+// Bulk import services and products from JSON data
+app.post('/api/admin/bulk-import', authenticateAdmin, async (req, res) => {
+    try {
+        const { services: importServices, products: importProducts, clearExisting = false } = req.body;
+        const results = { services: { created: 0, updated: 0 }, products: { created: 0, updated: 0 } };
+
+        // Optionally clear existing data
+        if (clearExisting) {
+            await db.dbRun("DELETE FROM services WHERE 1=1");
+            await db.dbRun("DELETE FROM products WHERE 1=1");
+            console.log('Cleared existing services and products');
+        }
+
+        // Import services
+        if (importServices && Array.isArray(importServices)) {
+            for (const svc of importServices) {
+                const existing = await db.dbGet('SELECT id FROM services WHERE name = ? COLLATE NOCASE', [svc.name]);
+                if (existing) {
+                    await db.dbRun(`
+                        UPDATE services SET
+                            price = ?, cost_price = ?, description = ?, category = ?,
+                            service_type = ?, commission_rate = ?, duration = ?, active = ?
+                        WHERE id = ?
+                    `, [
+                        svc.price || 0, svc.cost_price || 0, svc.description || '',
+                        svc.category || 'General', svc.service_type || 'hair',
+                        svc.commission_rate || 0.30, svc.duration || null, svc.active !== false ? 1 : 0,
+                        existing.id
+                    ]);
+                    results.services.updated++;
+                } else {
+                    const serviceId = svc.id || `svc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    await db.dbRun(`
+                        INSERT INTO services (id, name, description, price, cost_price, duration, service_type, category, commission_rate, active, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                    `, [
+                        serviceId, svc.name, svc.description || '', svc.price || 0, svc.cost_price || 0,
+                        svc.duration || null, svc.service_type || 'hair', svc.category || 'General',
+                        svc.commission_rate || 0.30, svc.active !== false ? 1 : 0
+                    ]);
+                    results.services.created++;
+                }
+            }
+        }
+
+        // Import products
+        if (importProducts && Array.isArray(importProducts)) {
+            for (const prod of importProducts) {
+                const existing = await db.dbGet('SELECT id FROM products WHERE name = ? COLLATE NOCASE', [prod.name]);
+                if (existing) {
+                    await db.dbRun(`
+                        UPDATE products SET
+                            price = ?, cost_price = ?, description = ?, category = ?,
+                            stock = ?, commission_rate = ?, is_service_product = ?, supplier = ?, active = ?
+                        WHERE id = ?
+                    `, [
+                        prod.price || 0, prod.cost_price || 0, prod.description || '',
+                        prod.category || 'General', prod.stock || 0, prod.commission_rate || 0.10,
+                        prod.is_service_product ? 1 : 0, prod.supplier || '', prod.active !== false ? 1 : 0,
+                        existing.id
+                    ]);
+                    results.products.updated++;
+                } else {
+                    const productId = prod.id || `prod-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    await db.dbRun(`
+                        INSERT INTO products (id, name, description, price, cost_price, category, stock, commission_rate, is_service_product, supplier, active, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                    `, [
+                        productId, prod.name, prod.description || '', prod.price || 0, prod.cost_price || 0,
+                        prod.category || 'General', prod.stock || 0, prod.commission_rate || 0.10,
+                        prod.is_service_product ? 1 : 0, prod.supplier || '', prod.active !== false ? 1 : 0
+                    ]);
+                    results.products.created++;
+                }
+            }
+        }
+
+        console.log(`Bulk import complete: ${results.services.created} services created, ${results.services.updated} updated; ${results.products.created} products created, ${results.products.updated} updated`);
+        res.json({
+            success: true,
+            message: 'Bulk import completed',
+            results
+        });
+    } catch (error) {
+        console.error('Error in bulk import:', error.message);
+        res.status(500).json({ success: false, message: 'Bulk import failed: ' + error.message });
+    }
+});
+
 // ============================================
 // ADMIN - SERVICE TYPES MANAGEMENT
 // ============================================
@@ -7133,6 +7222,174 @@ async function seedGalleryDefaults() {
 }
 
 seedGalleryDefaults();
+
+// Seed default products if none exist
+async function seedProductsDefaults() {
+    try {
+        const existing = await ProductRepository.findAll({});
+        if (existing && existing.length > 0) return;
+
+        const defaults = [
+            // Kevin Murphy Products
+            {
+                id: 'prod_kevin-murphy-doo-over',
+                name: 'Kevin Murphy – Doo.Over',
+                category: 'Kevin Murphy',
+                description: 'A dry powder finishing spray that allows for natural movement, yet holds everything in just the right place. The end result is your dream hair with a soft, velvety feel.',
+                price: 495,
+                stock: 20,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU387_DOO.OVER_250ml-02-300x300.png'
+            },
+            {
+                id: 'prod_kevin-murphy-plumping-wash',
+                name: 'Kevin Murphy – Plumping Wash',
+                category: 'Kevin Murphy',
+                description: 'A densifying shampoo that thickens and strengthens fine, limp hair. Ginger Root and Nettle extracts help stimulate the scalp.',
+                price: 450,
+                stock: 15,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU249_PLUMPING.WASH_250ml-03-300x300.png'
+            },
+            {
+                id: 'prod_kevin-murphy-session-spray',
+                name: 'Kevin Murphy – Session Spray Flex',
+                category: 'Kevin Murphy',
+                description: 'A lightweight finishing spray with a flexible hold. Perfect for creating styles that move naturally.',
+                price: 520,
+                stock: 18,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU491_SESSION.SPRAY_FLEX_400ML_EU-02-300x300.png'
+            },
+            {
+                id: 'prod_kevin-murphy-stimulate-me',
+                name: 'Kevin Murphy – Stimulate-Me Wash',
+                category: 'Kevin Murphy',
+                description: 'An invigorating shampoo for hair and scalp. Enriched with Camphor Crystals and Bergamot to refresh and awaken.',
+                price: 450,
+                stock: 12,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU291_STIMULATE-ME.WASH_250ml-03-300x300.png'
+            },
+            {
+                id: 'prod_kevin-murphy-hydrate-me',
+                name: 'Kevin Murphy – Hydrate-Me Wash',
+                category: 'Kevin Murphy',
+                description: 'A moisturising shampoo for coloured hair. Kakadu Plum provides intensive hydration without weighing hair down.',
+                price: 450,
+                stock: 14,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/HYDRATE-ME.WASH_250ml-300x300.png'
+            },
+            {
+                id: 'prod_kevin-murphy-hydrate-me-rinse',
+                name: 'Kevin Murphy – Hydrate-Me Rinse',
+                category: 'Kevin Murphy',
+                description: 'A smoothing conditioner that deeply hydrates dry, coloured hair while adding shine and softness.',
+                price: 480,
+                stock: 14,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/HYDRATE-ME.RINSE_250ml-300x300.png'
+            },
+            // Hair Extensions
+            {
+                id: 'prod_tape-extensions-18',
+                name: 'Tape Extensions 18"',
+                category: 'Hair Extensions',
+                description: 'Premium quality tape-in hair extensions, 18 inches long. Natural human hair, available in various colours.',
+                price: 2800,
+                stock: 25,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg'
+            },
+            {
+                id: 'prod_tape-extensions-22',
+                name: 'Tape Extensions 22"',
+                category: 'Hair Extensions',
+                description: 'Premium quality tape-in hair extensions, 22 inches long. Natural human hair for length and volume.',
+                price: 3500,
+                stock: 20,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg'
+            },
+            {
+                id: 'prod_weft-extensions-18',
+                name: 'Weft Extensions 18"',
+                category: 'Hair Extensions',
+                description: 'Hand-tied weft extensions, 18 inches. Perfect for adding volume and length with minimal damage.',
+                price: 3200,
+                stock: 15,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg'
+            },
+            {
+                id: 'prod_weft-extensions-22',
+                name: 'Weft Extensions 22"',
+                category: 'Hair Extensions',
+                description: 'Hand-tied weft extensions, 22 inches. Luxurious length for stunning transformations.',
+                price: 4000,
+                stock: 12,
+                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg'
+            },
+            // Hair Care Tools
+            {
+                id: 'prod_extension-brush',
+                name: 'Extension Care Brush',
+                category: 'Hair Care Tools',
+                description: 'Specially designed brush for hair extensions. Gentle bristles prevent tangling and damage.',
+                price: 280,
+                stock: 30,
+                imageUrl: null
+            },
+            {
+                id: 'prod_heat-protectant',
+                name: 'Heat Protectant Spray',
+                category: 'Hair Care Tools',
+                description: 'Thermal protection spray for styling. Protects hair from heat damage up to 230°C.',
+                price: 195,
+                stock: 25,
+                imageUrl: null
+            },
+            {
+                id: 'prod_silk-pillowcase',
+                name: 'Silk Pillowcase',
+                category: 'Hair Care Tools',
+                description: 'Mulberry silk pillowcase to reduce friction and extend the life of your extensions.',
+                price: 450,
+                stock: 20,
+                imageUrl: null
+            },
+            // Maintenance Products
+            {
+                id: 'prod_tape-adhesive-remover',
+                name: 'Tape Adhesive Remover',
+                category: 'Maintenance',
+                description: 'Professional-grade adhesive remover for safe tape extension removal.',
+                price: 185,
+                stock: 40,
+                imageUrl: null
+            },
+            {
+                id: 'prod_replacement-tape',
+                name: 'Replacement Tape Tabs',
+                category: 'Maintenance',
+                description: 'High-quality replacement tape tabs for re-application. Pack of 40.',
+                price: 120,
+                stock: 50,
+                imageUrl: null
+            }
+        ];
+
+        for (const product of defaults) {
+            await ProductRepository.create({
+                id: product.id,
+                name: product.name,
+                category: product.category,
+                description: product.description,
+                price: product.price,
+                stock: product.stock,
+                imageUrl: product.imageUrl,
+                active: true
+            });
+        }
+        console.log('Seeded default products');
+    } catch (err) {
+        console.error('Failed to seed products:', err.message);
+    }
+}
+
+seedProductsDefaults();
 
 // Optional auth middleware - sets req.user if token is valid, but doesn't fail if not
 function optionalAuth(req, res, next) {
