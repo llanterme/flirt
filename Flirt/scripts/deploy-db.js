@@ -36,30 +36,14 @@ function deployDatabase() {
       fs.mkdirSync(productionDir, { recursive: true });
     }
 
-    // Check if target exists and has meaningful data (> 100KB)
-    if (fs.existsSync(targetDb)) {
-      const targetSize = fs.statSync(targetDb).size;
-      const minSize = 100 * 1024; // 100KB minimum
-
-      if (targetSize > minSize) {
-        console.log('✅ Production database already exists at:', targetDb);
-        console.log('   Skipping copy to preserve existing data.');
-
-        // Show file sizes for comparison
-        const sourceSize = fs.statSync(sourceDb).size;
-        console.log(`   Source: ${(sourceSize / 1024 / 1024).toFixed(2)} MB`);
-        console.log(`   Target: ${(targetSize / 1024 / 1024).toFixed(2)} MB`);
-        return;
-      } else {
-        console.log('⚠️  Production database exists but is empty/corrupted');
-        console.log(`   Size: ${targetSize} bytes (expected > ${minSize} bytes)`);
-        console.log('   Overwriting with seed database...');
-      }
-    }
-
-    // Copy the database
+    // Always copy the database from git to production volume
     console.log('📋 Copying database from:', sourceDb);
     console.log('📋 Copying database to:', targetDb);
+
+    if (fs.existsSync(targetDb)) {
+      const existingSize = fs.statSync(targetDb).size;
+      console.log(`⚠️  Overwriting existing database (${(existingSize / 1024 / 1024).toFixed(2)} MB)`);
+    }
 
     fs.copyFileSync(sourceDb, targetDb);
 
