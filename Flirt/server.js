@@ -3450,6 +3450,68 @@ app.post('/api/admin/bulk-import-customers', authenticateAdmin, async (req, res)
     }
 });
 
+// Delete a customer by ID
+app.delete('/api/admin/customers/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Check customer exists
+        const customer = await db.dbGet('SELECT id, email, role FROM users WHERE id = ?', [id]);
+        if (!customer) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+
+        // Don't allow deleting admins or staff
+        if (customer.role !== 'customer') {
+            return res.status(403).json({ success: false, message: 'Cannot delete non-customer accounts' });
+        }
+
+        // Delete the customer
+        await db.dbRun('DELETE FROM users WHERE id = ?', [id]);
+
+        console.log(`Deleted customer: ${customer.email}`);
+        res.json({ success: true, message: 'Customer deleted' });
+    } catch (error) {
+        console.error('Error deleting customer:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to delete customer: ' + error.message });
+    }
+});
+
+// Bulk delete customers by ID list
+app.post('/api/admin/customers/bulk-delete', authenticateAdmin, async (req, res) => {
+    try {
+        const { ids } = req.body;
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ success: false, message: 'ids array is required' });
+        }
+
+        let deleted = 0;
+        let skipped = 0;
+
+        for (const id of ids) {
+            const customer = await db.dbGet('SELECT id, role FROM users WHERE id = ?', [id]);
+            if (!customer) {
+                skipped++;
+                continue;
+            }
+            if (customer.role !== 'customer') {
+                skipped++;
+                continue;
+            }
+
+            await db.dbRun('DELETE FROM users WHERE id = ?', [id]);
+            deleted++;
+        }
+
+        console.log(`Bulk delete: ${deleted} deleted, ${skipped} skipped`);
+        res.json({ success: true, deleted, skipped });
+    } catch (error) {
+        console.error('Error in bulk delete:', error.message);
+        res.status(500).json({ success: false, message: 'Bulk delete failed: ' + error.message });
+    }
+});
+
 // ============================================
 // ADMIN - SERVICE TYPES MANAGEMENT
 // ============================================
