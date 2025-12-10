@@ -11,6 +11,8 @@ package-lock.json
 # Database files
 db/*.db
 db/*.db-journal
+# EXCEPTION: Allow the seed database for Railway deployment
+!db/flirt.db
 
 # Claude Code documentation
 .claude/docs/
