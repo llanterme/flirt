@@ -6,7 +6,8 @@
   "scripts": {
     "start": "cd Flirt && node server.js",
     "dev": "cd Flirt && node server.js",
-    "db:migrate": "cd Flirt && node db/run-migration.js"
+    "db:migrate": "cd Flirt && node db/run-migration.js",
+    "deploy": "cd Flirt && node scripts/deploy-db.js"
   },
   "keywords": ["hair", "beauty", "salon", "booking", "pwa"],
   "author": "Flirt Hair & Beauty",

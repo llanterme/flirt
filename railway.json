@@ -5,7 +5,7 @@
     "buildCommand": "cd Flirt && npm install"
   },
   "deploy": {
-    "startCommand": "cd Flirt && npm start",
+    "startCommand": "npm run deploy && cd Flirt && npm start",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",

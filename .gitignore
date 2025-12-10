@@ -13,9 +13,8 @@ node_modules/
 *.db-journal
 *.db-wal
 *.db-shm
-# IMPORTANT: Database must NOT be tracked in git!
-# Railway uses ephemeral filesystem - production data is stored on a Volume
-# Set DATABASE_PATH=/data/flirt.db in Railway environment variables
+# EXCEPTION: Allow the seed database for Railway deployment
+!Flirt/db/flirt.db
 
 # Logs
 logs/
@@ -39,6 +38,9 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Claude Code documentation
+.claude/
 
 # Temporary files
 *.tmp

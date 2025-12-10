@@ -2,7 +2,18 @@
   "permissions": {
     "allow": [
       "Bash(DATABASE_PATH=./Flirt/db/test-production.db node:*)",
-      "Bash(DATABASE_PATH=./db/test-production.db node -e \"\nconst { initializeDatabase } = require(''./db/database'');\ninitializeDatabase().then(() => {\n  console.log(''✅ Success! Database migration worked.'');\n}).catch(err => {\n  console.error(''❌ Failed:'', err.message);\n  console.error(err.stack);\n});\n\")"
+      "Bash(DATABASE_PATH=./db/test-production.db node -e \"\nconst { initializeDatabase } = require(''./db/database'');\ninitializeDatabase().then(() => {\n  console.log(''✅ Success! Database migration worked.'');\n}).catch(err => {\n  console.error(''❌ Failed:'', err.message);\n  console.error(err.stack);\n});\n\")",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(git stash:*)",
+      "Bash(for:*)",
+      "Bash(do mv \"$file\" ./.claude/docs/)",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash([ -f .env ])",
+      "Bash(ls:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
