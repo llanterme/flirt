@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS bookings (
 
     -- New two-step booking fields
     requested_date TEXT NOT NULL,
-    requested_time_window TEXT CHECK(requested_time_window IN ('MORNING', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING')),
+    requested_time_window TEXT CHECK(requested_time_window IN ('MORNING', 'MIDDAY', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING')),
     assigned_start_time TEXT,
     assigned_end_time TEXT,
     status TEXT DEFAULT 'REQUESTED' CHECK(status IN ('REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED')),

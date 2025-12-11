@@ -260,6 +260,9 @@ async function initializeDatabase() {
     // Migration: Recreate payment_transactions table to add 'eft' to payment_provider CHECK constraint
     await migratePaymentTransactionsTable();
 
+    // Migration: Add 'MIDDAY' to bookings requested_time_window CHECK constraint
+    await migrateBookingsTimeWindow();
+
     // ============================================
     // REWARDS PROGRAMME TABLES (migration for existing databases)
     // ============================================
@@ -833,6 +836,79 @@ async function migratePaymentTransactionsTable() {
         console.log(`Payment transactions table migrated successfully. ${existingData.length} records restored.`);
     } catch (error) {
         console.error('Error migrating payment_transactions table:', error.message);
+    }
+}
+
+// Migration to add 'MIDDAY' to bookings requested_time_window CHECK constraint
+async function migrateBookingsTimeWindow() {
+    try {
+        // Check if the table already supports MIDDAY by checking the schema
+        const tableInfo = await dbGet(`SELECT sql FROM sqlite_master WHERE type='table' AND name='bookings'`);
+        if (tableInfo && tableInfo.sql && tableInfo.sql.includes("'MIDDAY'")) {
+            return; // Already has 'MIDDAY', no migration needed
+        }
+
+        console.log('Migrating bookings table to add MIDDAY time window...');
+
+        // Backup existing data
+        const existingData = await dbAll('SELECT * FROM bookings');
+
+        // Drop and recreate table with new constraint
+        await dbRun('DROP TABLE IF EXISTS bookings');
+        await dbRun(`
+            CREATE TABLE bookings (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id),
+                booking_type TEXT NOT NULL CHECK(booking_type IN ('hair', 'beauty')),
+                stylist_id TEXT REFERENCES stylists(id),
+                service_id TEXT NOT NULL REFERENCES services(id),
+                service_name TEXT NOT NULL,
+                service_price REAL NOT NULL,
+                requested_date TEXT NOT NULL,
+                requested_time_window TEXT CHECK(requested_time_window IN ('MORNING', 'MIDDAY', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING')),
+                assigned_start_time TEXT,
+                assigned_end_time TEXT,
+                status TEXT DEFAULT 'REQUESTED' CHECK(status IN ('REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED')),
+                date TEXT,
+                preferred_time_of_day TEXT,
+                time TEXT,
+                confirmed_time TEXT,
+                commission_rate REAL,
+                commission_amount REAL,
+                notes TEXT,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT
+            )
+        `);
+
+        // Recreate indexes
+        await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings(user_id)');
+        await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_stylist ON bookings(stylist_id)');
+        await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(requested_date)');
+        await dbRun('CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status)');
+
+        // Restore data
+        for (const row of existingData) {
+            await dbRun(`
+                INSERT INTO bookings (
+                    id, user_id, booking_type, stylist_id, service_id, service_name, service_price,
+                    requested_date, requested_time_window, assigned_start_time, assigned_end_time,
+                    status, date, preferred_time_of_day, time, confirmed_time,
+                    commission_rate, commission_amount, notes, created_at, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                row.id, row.user_id, row.booking_type, row.stylist_id, row.service_id,
+                row.service_name, row.service_price, row.requested_date, row.requested_time_window,
+                row.assigned_start_time, row.assigned_end_time, row.status, row.date,
+                row.preferred_time_of_day, row.time, row.confirmed_time,
+                row.commission_rate, row.commission_amount, row.notes, row.created_at, row.updated_at
+            ]);
+        }
+
+        console.log(`Bookings table migrated successfully. ${existingData.length} records restored.`);
+    } catch (error) {
+        console.error('Error migrating bookings table:', error.message);
     }
 }
 
