@@ -6530,8 +6530,8 @@
                 </div>
             </div>
 
-            <!-- Uploaded Inspo Gallery -->
-            <div id="inspoGallerySection" style="margin-bottom: 30px;">
+            <!-- Uploaded Inspo Gallery - Hidden until photos exist -->
+            <div id="inspoGallerySection" style="margin-bottom: 30px; display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 class="section-title" style="margin: 0;">Your Inspiration Board</h3>
                     <span id="inspoCount" style="font-size: 13px; color: var(--gray-medium);"></span>
@@ -14431,18 +14431,22 @@ async function showNotifications() {
                 const data = await response.json();
                 const photos = data.photos || [];
 
+                // Update photo count and section visibility
+                const countEl = document.getElementById('inspoCount');
+                const sectionEl = document.getElementById('inspoGallerySection');
+
                 if (photos.length === 0) {
-                    gallery.innerHTML = `
-                        <div class="card" style="text-align: center; padding: 40px; background: linear-gradient(135deg, var(--pink-light) 0%, var(--pink) 100%); border: none; color: white;">
-                            <div style="font-size: 48px; margin-bottom: 15px;">📸✨</div>
-                            <h3 style="margin-bottom: 10px; color: white;">No Inspiration Photos Yet</h3>
-                            <p style="color: rgba(255,255,255,0.9); margin-bottom: 0;">
-                                Click "Choose Photos" above to share your dream hairstyles with your stylist!
-                            </p>
-                        </div>
-                    `;
+                    gallery.innerHTML = '';
+                    if (countEl) countEl.textContent = '';
+                    // Hide entire section when no photos
+                    if (sectionEl) sectionEl.style.display = 'none';
                     return;
                 }
+
+                // Show section when photos exist
+                if (sectionEl) sectionEl.style.display = 'block';
+                if (countEl) countEl.textContent = photos.length + ' photo' + (photos.length !== 1 ? 's' : '');
+
 
                 let galleryHTML = '';
 

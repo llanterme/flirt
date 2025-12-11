@@ -5965,11 +5965,12 @@
                         <input type="text" class="form-input" id="staffInstagram" placeholder="@lisahair">
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="staffServicesGroup">
                     <label class="form-label">Services Offered</label>
-                    <button type="button" class="btn btn-outline" onclick="openStaffServicesModal(editingTeamMemberId)" style="width: 100%;">
+                    <button type="button" class="btn btn-outline" onclick="handleManageServicesClick()" style="width: 100%;">
                         Manage Services & Pricing
                     </button>
+                    <small id="staffServicesHint" style="display: block; margin-top: 5px; color: #666;"></small>
                 </div>
             </div>
             <div class="modal-footer">
@@ -13052,9 +13053,66 @@
                 preview.dataset.imageUrl = '';
                 preview.style.display = 'none';
             }
-            document.querySelector('#addStaffModal .modal-title').textContent = 'Add Staff Member';
-            document.getElementById('staffSaveBtn').textContent = 'Add Staff Member';
+            // Update hint for services
+            const hint = document.getElementById('staffServicesHint');
+            if (hint) hint.textContent = 'Team member will be saved first, then you can add services.';
+
+            document.querySelector('#addStaffModal .modal-title').textContent = 'Add Team Member';
+            document.getElementById('staffSaveBtn').textContent = 'Add Team Member';
             openModal('addStaffModal');
+        }
+
+        // Handle clicking "Manage Services" - auto-save if new team member
+        async function handleManageServicesClick() {
+            // If editing existing team member, just open the modal
+            if (editingTeamMemberId) {
+                openStaffServicesModal(editingTeamMemberId);
+                return;
+            }
+
+            // For new team member, validate and save first
+            const name = document.getElementById('staffName').value.trim();
+            const specialty = document.getElementById('staffRole').value;
+
+            if (!name) {
+                showAdminToast('Please enter a name first', 'error');
+                document.getElementById('staffName').focus();
+                return;
+            }
+
+            // Save the team member first
+            const tagline = document.getElementById('staffTagline').value.trim();
+            const yearsExperience = document.getElementById('staffExperience').value;
+            const instagram = document.getElementById('staffInstagram').value.trim();
+            const preview = document.getElementById('staffPhotoPreview');
+            const imageUrl = preview?.dataset?.imageUrl || '';
+
+            const staffData = { name, specialty, tagline, yearsExperience, instagram, imageUrl };
+
+            try {
+                showAdminToast('Saving team member...', 'info');
+                const result = await apiCall('/admin/staff', {
+                    method: 'POST',
+                    body: JSON.stringify(staffData)
+                });
+
+                // Get the new team member ID
+                editingTeamMemberId = result.staff?.id || result.id;
+                teamListCache = []; // Clear cache
+
+                // Update the modal to show we're now editing
+                document.querySelector('#addStaffModal .modal-title').textContent = 'Edit Team Member';
+                document.getElementById('staffSaveBtn').textContent = 'Save Changes';
+                const hint = document.getElementById('staffServicesHint');
+                if (hint) hint.textContent = '';
+
+                showAdminToast('Team member saved! Now add their services.', 'success');
+
+                // Now open the services modal
+                openStaffServicesModal(editingTeamMemberId);
+            } catch (error) {
+                showAdminToast('Error saving team member: ' + (error.message || ''), 'error');
+            }
         }
 
         // Reset product modal for adding new
