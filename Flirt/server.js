@@ -4577,7 +4577,7 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
         const allOrders = await OrderRepository.findAll();
         const allUsers = await UserRepository.findAll();
 
-        // Get invoices for the month
+        // Get invoices for the month (list() returns array directly)
         const monthInvoices = await InvoiceRepository.list({
             start_date: monthStart,
             end_date: today,
@@ -4585,7 +4585,7 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
         });
 
         // Revenue this month from PAID INVOICES (primary source of service revenue)
-        const invoiceRevenue = (monthInvoices.invoices || [])
+        const invoiceRevenue = (monthInvoices || [])
             .filter(inv => inv.payment_status === 'paid')
             .reduce((sum, inv) => sum + (parseFloat(inv.total) || 0), 0);
 
@@ -4674,14 +4674,13 @@ app.get('/api/admin/revenue-trend', authenticateAdmin, async (req, res) => {
         const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         const endDate = now.toISOString().split('T')[0];
 
-        // Get all paid invoices in the range
-        const invoiceData = await InvoiceRepository.list({
+        // Get all paid invoices in the range (list() returns array directly)
+        const paidInvoices = await InvoiceRepository.list({
             start_date: startDate,
             end_date: endDate,
             payment_status: 'paid',
             limit: 1000
-        });
-        const paidInvoices = invoiceData.invoices || [];
+        }) || [];
 
         // Build array of dates for the last N days
         const labels = [];
