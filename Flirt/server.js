@@ -177,6 +177,17 @@ async function seedAdminUser() {
         // Initialize database first
         await db.initializeDatabase();
 
+        // Ensure bookings table has duration column (migration)
+        try {
+            await db.dbRun('ALTER TABLE bookings ADD COLUMN duration INTEGER');
+            console.log('✅ Added duration column to bookings table');
+        } catch (err) {
+            // Column likely already exists, ignore
+            if (!err.message.includes('duplicate column')) {
+                console.log('Duration column check:', err.message);
+            }
+        }
+
         // Seed all default data (with error handling for each)
         try {
             await seedStylistsDefaults();
