@@ -4805,6 +4805,130 @@
             color: var(--brand-pink);
         }
 
+        /* Time Preference Cards (Morning/Midday/Afternoon) */
+        .time-preference-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 10px 0;
+        }
+
+        .time-preference-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            border-radius: 16px;
+            background: var(--surface-muted);
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .time-preference-card:hover {
+            border-color: var(--brand-pink);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(246, 117, 153, 0.15);
+        }
+
+        .time-preference-card.selected {
+            background: linear-gradient(135deg, rgba(246, 117, 153, 0.15) 0%, rgba(246, 117, 153, 0.08) 100%);
+            border-color: var(--brand-pink);
+            box-shadow: 0 6px 20px rgba(246, 117, 153, 0.2);
+        }
+
+        .time-preference-card.unavailable {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--gray-light);
+        }
+
+        .time-preference-card.unavailable:hover {
+            border-color: transparent;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .time-preference-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .time-preference-card[data-preference="morning"] .time-preference-icon {
+            background: linear-gradient(135deg, #FFE4B5 0%, #FFD700 100%);
+        }
+
+        .time-preference-card[data-preference="midday"] .time-preference-icon {
+            background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
+        }
+
+        .time-preference-card[data-preference="afternoon"] .time-preference-icon {
+            background: linear-gradient(135deg, #FFA07A 0%, #FF6347 100%);
+        }
+
+        .time-preference-content {
+            flex: 1;
+        }
+
+        .time-preference-title {
+            font-weight: 600;
+            font-size: 18px;
+            color: var(--brand-charcoal);
+            margin-bottom: 4px;
+        }
+
+        .time-preference-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .time-preference-check {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid var(--border-soft);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .time-preference-card.selected .time-preference-check {
+            background: var(--brand-pink);
+            border-color: var(--brand-pink);
+            color: white;
+        }
+
+        .time-preference-note {
+            margin-top: 16px;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, rgba(246, 117, 153, 0.08) 0%, rgba(246, 117, 153, 0.04) 100%);
+            border-radius: 12px;
+            border-left: 3px solid var(--brand-pink);
+        }
+
+        .time-preference-note-icon {
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .time-preference-note-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .time-preference-note-text strong {
+            color: var(--brand-charcoal);
+        }
+
 
         /* ============================================
            AUTH REQUIRED STATE - Defense in Depth
@@ -5781,24 +5905,63 @@
                             </div>
                         </div>
 
-                        <h4 style="margin-top: 24px;">🕐 Select Time</h4>
+                        <h4 style="margin-top: 24px;">🕐 Select Time Preference</h4>
                         <div class="availability-container" id="availabilityContainer">
                             <div class="availability-loading" id="availabilityLoading" style="display: none;">
                                 <span class="loading-spinner"></span>
-                                <p>Loading available times...</p>
+                                <p>Loading availability...</p>
                             </div>
                             <div class="availability-closed" id="availabilityClosed" style="display: none;">
                                 <div class="icon">🚫</div>
                                 <p id="availabilityClosedMessage">Salon is closed on this day</p>
                             </div>
                             <div id="availabilitySlots">
-                                <!-- Time slots will be loaded dynamically -->
-                                <p style="text-align: center; color: var(--text-muted); padding: 20px;">Select a date to see available times</p>
+                                <!-- Time preference cards -->
+                                <div class="time-preference-container">
+                                    <div class="time-preference-card" data-preference="morning" onclick="selectTimePreference(this, 'morning')">
+                                        <div class="time-preference-icon">🌅</div>
+                                        <div class="time-preference-content">
+                                            <div class="time-preference-title">Morning</div>
+                                            <div class="time-preference-subtitle">8:00 AM - 12:00 PM</div>
+                                        </div>
+                                        <div class="time-preference-check">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="time-preference-card" data-preference="midday" onclick="selectTimePreference(this, 'midday')">
+                                        <div class="time-preference-icon">☀️</div>
+                                        <div class="time-preference-content">
+                                            <div class="time-preference-title">Midday</div>
+                                            <div class="time-preference-subtitle">12:00 PM - 2:00 PM</div>
+                                        </div>
+                                        <div class="time-preference-check">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="time-preference-card" data-preference="afternoon" onclick="selectTimePreference(this, 'afternoon')">
+                                        <div class="time-preference-icon">🌇</div>
+                                        <div class="time-preference-content">
+                                            <div class="time-preference-title">Afternoon</div>
+                                            <div class="time-preference-subtitle">2:00 PM - 6:00 PM</div>
+                                        </div>
+                                        <div class="time-preference-check">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="time-preference-note">
+                                    <span class="time-preference-note-icon">💡</span>
+                                    <span class="time-preference-note-text">
+                                        Select your preferred time window. <strong>We'll confirm your exact appointment time</strong> via SMS or WhatsApp within 24 hours.
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                        <div class="availability-note" id="availabilityNote" style="display: none;">
-                            Service duration: <strong id="availabilityDuration">60 mins</strong> -
-                            Times shown have enough room for your service
                         </div>
                     </div>
 
@@ -5843,9 +6006,9 @@
                             </span>
                         </div>
                         <div class="summary-row">
-                            <span class="label">Time</span>
+                            <span class="label">Time Preference</span>
                             <span class="value">
-                                <span id="summaryTime">10:00 AM</span>
+                                <span id="summaryTime">Morning</span>
                                 <span class="edit-btn" onclick="goToBookingStep(4)">Edit</span>
                             </span>
                         </div>
@@ -6463,17 +6626,6 @@
                 </div>
             </div>
 
-            <!-- Active Rewards Section -->
-            <div class="section-header" style="margin-top: 30px;">
-                <h3 class="section-title">Your Active Rewards</h3>
-            </div>
-
-            <div id="activeRewardsContainer" class="card">
-                <div id="activeRewardsList" style="text-align: center; padding: 20px; color: var(--gray-medium);">
-                    Loading rewards...
-                </div>
-            </div>
-
             <!-- Points History Section -->
             <div class="section-header" style="margin-top: 30px;">
                 <h3 class="section-title">Points History</h3>
@@ -6999,9 +7151,10 @@
     <!-- Booking Confirmation Modal -->
     <div id="bookingConfirmationModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header" style="background: linear-gradient(135deg, var(--brand-pink) 0%, #e05a7f 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 15px 15px 0 0;">
-                <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
-                <h2 style="margin: 0; font-size: 24px; font-weight: 600;">Booking Confirmed!</h2>
+            <div id="bookingConfirmationHeader" class="modal-header" style="background: linear-gradient(135deg, var(--brand-pink) 0%, #e05a7f 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 15px 15px 0 0;">
+                <div id="bookingConfirmationIcon" style="font-size: 48px; margin-bottom: 10px;">✅</div>
+                <h2 id="bookingConfirmationTitle" style="margin: 0; font-size: 24px; font-weight: 600;">Booking Confirmed!</h2>
+                <p id="bookingConfirmationSubtitle" style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;"></p>
             </div>
             <div style="padding: 30px 20px;">
                 <div id="bookingConfirmationContent" style="line-height: 1.8;"></div>
@@ -7019,7 +7172,7 @@
                     </div>
                 </div>
 
-                <div style="background: var(--gray-light); padding: 15px; border-radius: 10px; font-size: 14px; color: var(--gray-dark); text-align: center;">
+                <div id="bookingConfirmationFooterNote" style="background: var(--gray-light); padding: 15px; border-radius: 10px; font-size: 14px; color: var(--gray-dark); text-align: center;">
                     📧 You will receive a confirmation email shortly
                 </div>
 
@@ -9472,6 +9625,36 @@
             checkStep4Complete();
         }
 
+        // Select time preference (Morning/Midday/Afternoon)
+        function selectTimePreference(element, preference) {
+            if (element.classList.contains('unavailable')) return;
+
+            // Remove selection from all time preference cards
+            document.querySelectorAll('.time-preference-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selection to clicked card
+            element.classList.add('selected');
+
+            // Store the preference (not an exact time)
+            modernBookingState.time = preference;
+            modernBookingState.timePreference = preference;
+
+            // Check if date is also selected to enable continue
+            checkStep4Complete();
+        }
+
+        // Get display text for time preference
+        function getTimePreferenceDisplay(preference) {
+            const displays = {
+                'morning': 'Morning (8:00 AM - 12:00 PM)',
+                'midday': 'Midday (12:00 PM - 2:00 PM)',
+                'afternoon': 'Afternoon (2:00 PM - 6:00 PM)'
+            };
+            return displays[preference] || preference;
+        }
+
         // Check if step 4 (date/time) is complete
         function checkStep4Complete() {
             const btn = document.getElementById('step4ContinueBtn');
@@ -9514,22 +9697,32 @@
             }
 
             if (time) {
-                // Convert 24h to 12h format
-                const [hours, mins] = time.split(':');
-                const hour = parseInt(hours);
-                const ampm = hour >= 12 ? 'PM' : 'AM';
-                const hour12 = hour % 12 || 12;
-                document.getElementById('summaryTime').textContent = `${hour12}:${mins} ${ampm}`;
+                // Check if it's a time preference (morning/midday/afternoon) or exact time
+                if (['morning', 'midday', 'afternoon'].includes(time)) {
+                    document.getElementById('summaryTime').textContent = getTimePreferenceDisplay(time);
+                } else {
+                    // Convert 24h to 12h format for exact times
+                    const [hours, mins] = time.split(':');
+                    const hour = parseInt(hours);
+                    const ampm = hour >= 12 ? 'PM' : 'AM';
+                    const hour12 = hour % 12 || 12;
+                    document.getElementById('summaryTime').textContent = `${hour12}:${mins} ${ampm}`;
+                }
             }
         }
 
-        // Convert time slot to time window (for server compatibility)
+        // Convert time preference to time window (for server compatibility)
         function timeToTimeWindow(time) {
             if (!time) return 'MORNING';
+            // Handle time preference strings
+            if (time === 'morning') return 'MORNING';
+            if (time === 'midday') return 'MIDDAY';
+            if (time === 'afternoon') return 'AFTERNOON';
+            // Handle exact time format (HH:MM)
             const [hours] = time.split(':').map(Number);
             if (hours < 12) return 'MORNING';
-            if (hours < 14) return 'AFTERNOON';
-            if (hours < 16) return 'LATE_AFTERNOON';
+            if (hours < 14) return 'MIDDAY';
+            if (hours < 18) return 'AFTERNOON';
             return 'EVENING';
         }
 
@@ -9565,20 +9758,18 @@
             }
 
             const notes = document.getElementById('modernBookingNotes')?.value || '';
-            const serviceDuration = service?.duration || 60; // Default to 60 mins
-            const endTime = calculateEndTime(time, serviceDuration);
+            const timeWindow = timeToTimeWindow(time);
 
             try {
                 // Build request body based on booking type
+                // Time preference is sent instead of exact time - salon will confirm the actual time
                 const requestBody = {
                     type: isBeauty ? 'beauty' : 'hair',
                     serviceId: serviceId,
                     date: dateStr,
-                    time: time,
-                    notes: notes,
-                    // Send exact times for immediate confirmation
-                    assignedStartTime: time,
-                    assignedEndTime: endTime
+                    timePreference: time, // morning, midday, or afternoon
+                    requestedTimeWindow: timeWindow, // MORNING, MIDDAY, or AFTERNOON
+                    notes: notes
                 };
 
                 if (!isBeauty) {
@@ -9592,7 +9783,7 @@
                     body: JSON.stringify(requestBody)
                 });
 
-                showToast({ type: 'success', title: 'Booking Confirmed!', message: 'Your appointment has been booked successfully!' });
+                showToast({ type: 'success', title: 'Booking Request Sent!', message: 'We\'ll confirm your appointment time shortly.' });
 
                 // Show confirmation modal
                 const confirmationType = isBeauty ? 'Beauty Appointment' : 'Hair Appointment';
@@ -9602,9 +9793,10 @@
                     duration: formatDuration(service.duration),
                     price: formatServicePrice(service.price),
                     date: modernBookingState.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }),
-                    time: time,
+                    time: getTimePreferenceDisplay(time),
                     stylist: isBeauty ? 'Any available' : (stylist?.name || 'N/A'),
-                    points: 0
+                    points: 0,
+                    isPending: true // Flag to show pending confirmation message
                 });
 
                 // Reset modern booking state
@@ -13007,6 +13199,24 @@ async function showNotifications() {
             const content = document.getElementById('bookingConfirmationContent');
             const pointsEl = document.getElementById('confirmationPoints');
             const loyaltySection = document.getElementById('loyaltyPointsSection');
+            const titleEl = document.getElementById('bookingConfirmationTitle');
+            const subtitleEl = document.getElementById('bookingConfirmationSubtitle');
+            const iconEl = document.getElementById('bookingConfirmationIcon');
+            const footerNoteEl = document.getElementById('bookingConfirmationFooterNote');
+
+            // Update header based on booking status
+            if (booking.isPending) {
+                iconEl.textContent = '📅';
+                titleEl.textContent = 'Booking Request Sent!';
+                subtitleEl.textContent = 'We\'ll confirm your time shortly';
+                subtitleEl.style.display = 'block';
+                footerNoteEl.innerHTML = '📱 We\'ll contact you via SMS or WhatsApp to confirm your appointment time';
+            } else {
+                iconEl.textContent = '✅';
+                titleEl.textContent = 'Booking Confirmed!';
+                subtitleEl.style.display = 'none';
+                footerNoteEl.innerHTML = '📧 You will receive a confirmation email shortly';
+            }
 
             let html = `
                 <div style="margin-bottom: 25px;">
@@ -13033,12 +13243,12 @@ async function showNotifications() {
                         </tr>
             `;
 
-            // Show time window for hair bookings (time to be assigned)
-            if (booking.timeWindow) {
+            // Show time preference for pending bookings (time to be confirmed by salon)
+            if (booking.isPending || booking.timeWindow) {
                 html += `
                         <tr style="border-bottom: 1px solid var(--gray-light);">
-                            <td style="padding: 12px 0; font-weight: 600; color: var(--gray-dark);">Time Window:</td>
-                            <td style="padding: 12px 0; text-align: right; color: var(--text-dark);">${booking.timeWindow}</td>
+                            <td style="padding: 12px 0; font-weight: 600; color: var(--gray-dark);">Time Preference:</td>
+                            <td style="padding: 12px 0; text-align: right; color: var(--text-dark);">${booking.time || booking.timeWindow}</td>
                         </tr>
                 `;
             } else if (booking.time && booking.time !== 'To be assigned') {
@@ -13065,14 +13275,16 @@ async function showNotifications() {
                 </div>
             `;
 
-            // Add info about time assignment for hair bookings
-            if (booking.timeWindow) {
+            // Add info about time assignment for bookings with time preferences
+            if (booking.isPending || booking.timeWindow) {
                 html += `
-                    <div style="background: #e3f2fd; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: flex-start; gap: 12px;">
-                        <span style="font-size: 20px;">ℹ️</span>
-                        <div style="font-size: 13px; color: #1565c0;">
-                            <strong>Time Confirmation</strong><br>
-                            Our salon team will assign an exact appointment time within 24 hours based on availability and your preferences. You will receive a confirmation email.
+                    <div style="background: linear-gradient(135deg, rgba(246, 117, 153, 0.1) 0%, rgba(246, 117, 153, 0.05) 100%); padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 3px solid var(--brand-pink);">
+                        <div style="display: flex; align-items: flex-start; gap: 12px;">
+                            <span style="font-size: 24px;">📱</span>
+                            <div style="font-size: 13px; color: var(--text-dark);">
+                                <strong style="color: var(--brand-pink);">What happens next?</strong><br>
+                                We'll confirm your exact appointment time via SMS or WhatsApp within 24 hours based on availability. Keep an eye on your phone!
+                            </div>
                         </div>
                     </div>
                 `

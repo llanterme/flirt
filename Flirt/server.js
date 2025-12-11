@@ -1498,13 +1498,14 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
         return res.status(400).json({ success: false, message: 'Time window or exact time is required for hair bookings' });
     }
 
-    if (type === 'beauty' && !time && !hasExactTimes) {
-        return res.status(400).json({ success: false, message: 'Time is required for beauty bookings' });
+    // Beauty bookings can also use time window (time preference) instead of exact time
+    if (type === 'beauty' && !time && !hasExactTimes && !timeWindow) {
+        return res.status(400).json({ success: false, message: 'Time or time preference is required for beauty bookings' });
     }
 
-    // Validate time window for hair bookings (only if using time window flow)
-    const validTimeWindows = ['MORNING', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING'];
-    if (type === 'hair' && timeWindow && !hasExactTimes && !validTimeWindows.includes(timeWindow)) {
+    // Validate time window for bookings (only if using time window flow)
+    const validTimeWindows = ['MORNING', 'MIDDAY', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING'];
+    if (timeWindow && !hasExactTimes && !validTimeWindows.includes(timeWindow)) {
         return res.status(400).json({
             success: false,
             message: `Invalid time window. Must be one of: ${validTimeWindows.join(', ')}`
@@ -1575,8 +1576,9 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
         }
 
         // Determine if booking should be immediately confirmed
-        // Confirmed if: beauty booking OR hair booking with exact times provided
-        const isConfirmed = type === 'beauty' || hasExactTimes;
+        // Confirmed ONLY if exact times are provided (real-time availability flow)
+        // Time preference bookings (morning/midday/afternoon) require salon confirmation
+        const isConfirmed = hasExactTimes;
 
         const newBooking = {
             id: uuidv4(),
@@ -1588,13 +1590,13 @@ app.post('/api/bookings', authenticateToken, async (req, res) => {
             servicePrice: service.price,
             // New two-step booking fields
             requestedDate: date,
-            requestedTimeWindow: !hasExactTimes && type === 'hair' ? timeWindow : null,
-            assignedStartTime: hasExactTimes ? assignedStartTime : (type === 'beauty' ? normalizedTime : null),
-            assignedEndTime: hasExactTimes ? assignedEndTime : (type === 'beauty' && normalizedTime ? addHoursToTime(normalizedTime, 1) : null),
+            requestedTimeWindow: !hasExactTimes ? timeWindow : null,
+            assignedStartTime: hasExactTimes ? assignedStartTime : null,
+            assignedEndTime: hasExactTimes ? assignedEndTime : null,
             status: isConfirmed ? 'CONFIRMED' : 'REQUESTED',
             // Legacy fields (for backward compatibility)
             date,
-            preferredTimeOfDay: !hasExactTimes && type === 'hair' ? timeWindow : null,
+            preferredTimeOfDay: !hasExactTimes ? timeWindow : null,
             time: normalizedTime || assignedStartTime || null,
             confirmedTime: isConfirmed ? (assignedStartTime || normalizedTime) : null,
             notes: notes || null
