@@ -9743,9 +9743,8 @@
                 };
 
                 if (!isBeauty) {
-                    // Hair bookings need stylist
-                    const fullStylistId = stylistId.startsWith('stylist_') ? stylistId : `stylist_${stylistId}`;
-                    requestBody.stylistId = fullStylistId;
+                    // Hair bookings need stylist (use ID as-is from database)
+                    requestBody.stylistId = stylistId;
                 }
 
                 await apiCall('/bookings', {
@@ -10860,8 +10859,8 @@
             const notes = document.querySelector('#bookingForm textarea')?.value || '';
 
             try {
-                // Construct full IDs for database (e.g., 'lisa' -> 'stylist_lisa')
-                const stylistId = selectedStylist.startsWith('stylist_') ? selectedStylist : `stylist_${selectedStylist}`;
+                // Use stylist ID directly from database (IDs are stored as-is, no prefix needed)
+                const stylistId = selectedStylist;
 
                 // Check for pending reward to apply
                 const pendingRewardId = sessionStorage.getItem('pendingRewardId');
