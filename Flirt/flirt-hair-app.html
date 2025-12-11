@@ -5286,14 +5286,12 @@
                 </svg>
                 <span>Shop</span>
             </button>
-            <!-- Rewards tab hidden - to be implemented later
             <button class="nav-tab" data-tab="rewards" onclick="switchTab('rewards', event)">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
                 </svg>
                 <span>Rewards</span>
             </button>
-            -->
             <button class="nav-tab" data-tab="team" onclick="switchTab('team', event)">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -6225,9 +6223,11 @@
                 <span id="productCount">Loading products...</span>
             </div>
 
-            <!-- Category Filter Pills -->
-            <div id="productCategoryFilters" style="display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px;">
-                <!-- Dynamically populated from product categories -->
+            <!-- Category Filter Dropdown -->
+            <div id="productCategoryFilters" style="margin-bottom: 20px;">
+                <select id="productCategorySelect" onchange="filterProductsByCategory(this.value)" style="width: 100%; padding: 12px 16px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 15px; background: white; cursor: pointer; appearance: none; background-image: url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23666%22 stroke-width=%222%22%3E%3Cpolyline points=%226 9 12 15 18 9%22/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 12px center; background-size: 18px;">
+                    <option value="all">All Products</option>
+                </select>
             </div>
 
             <!-- Sale Products Section -->
@@ -6494,7 +6494,28 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="showRedeemOptions()">Redeem Points</button>
+            <!-- Active Rewards Section -->
+            <div class="section-header" style="margin-top: 30px;">
+                <h3 class="section-title">Your Active Rewards</h3>
+            </div>
+
+            <div id="activeRewardsContainer" class="card">
+                <div id="activeRewardsList" style="text-align: center; padding: 20px; color: var(--gray-medium);">
+                    Loading rewards...
+                </div>
+            </div>
+
+            <!-- Points History Section -->
+            <div class="section-header" style="margin-top: 30px;">
+                <h3 class="section-title">Points History</h3>
+                <a href="#" onclick="event.preventDefault(); loadFullPointsHistory();" style="font-size: 14px; color: var(--brand-pink);">View All</a>
+            </div>
+
+            <div id="pointsHistoryContainer" class="card">
+                <div id="pointsHistoryList" style="text-align: center; padding: 20px; color: var(--gray-medium);">
+                    Loading history...
+                </div>
+            </div>
         </div>
 
         <!-- Team Content -->
@@ -6848,6 +6869,40 @@
                 <div class="profile-avatar" id="profileAvatar">?</div>
                 <div class="profile-name" id="profileName">Guest</div>
                 <div class="profile-tier" id="profileTier" style="display: flex; align-items: center; justify-content: center; gap: 6px;"><svg viewBox="0 0 24 24" fill="#F67599" width="16" height="16"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> <span id="profileTierText">Sign in to unlock rewards</span></div>
+            </div>
+
+            <!-- Rewards Summary Card -->
+            <div id="profileRewardsCard" class="card" style="margin: 20px 0; background: linear-gradient(135deg, #fff5f8 0%, #ffe8ee 100%); border: none; cursor: pointer;" onclick="switchTab('rewards')">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--brand-pink) 0%, #e05a7f 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 24px;">🎁</span>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: var(--text-dark); font-size: 16px;">My Rewards</div>
+                            <div style="font-size: 14px; color: var(--gray-dark);">
+                                <span id="profilePointsDisplay">0</span> points | <span id="profileTierDisplay">Bronze</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span id="profileActiveRewardsCount" style="display: none; background: var(--brand-pink); color: white; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px;">0 active</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--brand-pink)" stroke-width="2" width="20" height="20">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Quick tier progress bar -->
+                <div style="margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-medium); margin-bottom: 5px;">
+                        <span id="profileTierProgressText">Loading tier progress...</span>
+                        <span id="profileTierLevelText"></span>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.8); height: 6px; border-radius: 6px; overflow: hidden;">
+                        <div id="profileTierProgressBar" style="background: linear-gradient(90deg, var(--brand-pink-dark), var(--brand-pink)); height: 100%; width: 0%; transition: width 0.5s;"></div>
+                    </div>
+                </div>
             </div>
 
             <ul class="menu-list">
@@ -8464,6 +8519,103 @@
             if (loyaltyConfig) {
                 updateTierDisplay();
             }
+
+            // Update profile rewards card
+            updateProfileRewardsCard();
+        }
+
+        // Update the rewards card on the profile page
+        function updateProfileRewardsCard() {
+            const rewardsCard = document.getElementById('profileRewardsCard');
+            if (!rewardsCard) return;
+
+            if (!currentUser) {
+                rewardsCard.style.display = 'none';
+                return;
+            }
+
+            rewardsCard.style.display = 'block';
+
+            // Update points and tier display
+            const pointsEl = document.getElementById('profilePointsDisplay');
+            const tierEl = document.getElementById('profileTierDisplay');
+            const progressTextEl = document.getElementById('profileTierProgressText');
+            const levelTextEl = document.getElementById('profileTierLevelText');
+            const progressBarEl = document.getElementById('profileTierProgressBar');
+
+            const points = currentUser.points || 0;
+            const tier = currentUser.tier || 'bronze';
+            const niceTier = tier.charAt(0).toUpperCase() + tier.slice(1);
+
+            if (pointsEl) pointsEl.textContent = points.toLocaleString();
+            if (tierEl) tierEl.textContent = niceTier;
+
+            // Calculate tier progress
+            if (loyaltyConfig?.tierThresholds) {
+                const thresholds = loyaltyConfig.tierThresholds;
+                let tierLevel = 1;
+                let nextTier = 'silver';
+                let nextThreshold = thresholds.silver;
+                let currentThreshold = 0;
+
+                if (points >= thresholds.platinum) {
+                    tierLevel = 4;
+                    nextTier = 'platinum';
+                    nextThreshold = thresholds.platinum;
+                    currentThreshold = thresholds.platinum;
+                } else if (points >= thresholds.gold) {
+                    tierLevel = 3;
+                    nextTier = 'platinum';
+                    nextThreshold = thresholds.platinum;
+                    currentThreshold = thresholds.gold;
+                } else if (points >= thresholds.silver) {
+                    tierLevel = 2;
+                    nextTier = 'gold';
+                    nextThreshold = thresholds.gold;
+                    currentThreshold = thresholds.silver;
+                }
+
+                const progressPercent = tierLevel === 4 ? 100 :
+                    Math.min(100, ((points - currentThreshold) / (nextThreshold - currentThreshold)) * 100);
+
+                if (progressBarEl) progressBarEl.style.width = `${progressPercent}%`;
+
+                if (progressTextEl) {
+                    if (tierLevel === 4) {
+                        progressTextEl.textContent = 'Maximum tier reached!';
+                    } else {
+                        const niceNextTier = nextTier.charAt(0).toUpperCase() + nextTier.slice(1);
+                        progressTextEl.textContent = `${nextThreshold - points} pts to ${niceNextTier}`;
+                    }
+                }
+
+                if (levelTextEl) levelTextEl.textContent = `Level ${tierLevel}/4`;
+            }
+
+            // Load and display active rewards count
+            loadActiveRewardsCount();
+        }
+
+        // Load active rewards count for the profile card badge
+        async function loadActiveRewardsCount() {
+            if (!currentUser) return;
+
+            try {
+                const result = await apiCall('/rewards/available');
+                const activeCount = result.rewards?.length || 0;
+
+                const badge = document.getElementById('profileActiveRewardsCount');
+                if (badge) {
+                    if (activeCount > 0) {
+                        badge.textContent = `${activeCount} active`;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.log('Error loading active rewards count:', error);
+            }
         }
 
         async function loadUserData() {
@@ -8555,6 +8707,10 @@
                 loadUserData();
                 loadLoyaltyConfig();
                 loadRewardsProgress();
+                // Also load active rewards and history in case progress API returns nothing
+                loadActiveRewardsList();
+                loadPointsHistory();
+                loadReferralStats();
             } else if (tabName === 'tracker') {
                 loadHairTracker();
             } else if (tabName === 'team') {
@@ -8565,6 +8721,10 @@
                 if (allProducts.length === 0) {
                     loadProducts();
                 }
+            } else if (tabName === 'profile') {
+                // Load loyalty config for profile rewards card
+                loadLoyaltyConfig();
+                updateProfileRewardsCard();
             }
         }
 
@@ -10624,19 +10784,33 @@
                 // Construct full IDs for database (e.g., 'lisa' -> 'stylist_lisa')
                 const stylistId = selectedStylist.startsWith('stylist_') ? selectedStylist : `stylist_${selectedStylist}`;
 
+                // Check for pending reward to apply
+                const pendingRewardId = sessionStorage.getItem('pendingRewardId');
+
+                const bookingPayload = {
+                    type: 'hair',
+                    stylistId: stylistId,
+                    serviceId: selectedServiceId || selectedService,
+                    date: selectedDateStr,
+                    requestedTimeWindow: requestedTimeWindow,
+                    notes
+                };
+
+                // Include reward if pending
+                if (pendingRewardId) {
+                    bookingPayload.rewardId = pendingRewardId;
+                    sessionStorage.removeItem('pendingRewardId');
+                }
+
                 await apiCall('/bookings', {
                     method: 'POST',
-                    body: JSON.stringify({
-                        type: 'hair',
-                        stylistId: stylistId,
-                        serviceId: selectedServiceId || selectedService,
-                        date: selectedDateStr,
-                        requestedTimeWindow: requestedTimeWindow,
-                        notes
-                    })
+                    body: JSON.stringify(bookingPayload)
                 });
 
                 showToast({ type: 'success', title: 'Request Submitted!', message: 'We will assign an exact time within 24 hours!' });
+
+                // Calculate points earned (50 points per booking by default)
+                const pointsEarned = loyaltyConfig?.pointsRules?.bookingPoints || 50;
 
                 // Show styled booking confirmation modal
                 showBookingConfirmation({
@@ -10648,7 +10822,8 @@
                     time: 'To be assigned',
                     therapist: `Stylist: ${stylist.name}`,
                     timeWindow: timeWindowDisplay,
-                    points: 0 // Hidden - rewards system disabled
+                    points: pointsEarned,
+                    rewardApplied: pendingRewardId ? true : false
                 });
 
                 // Reset booking state
@@ -11103,6 +11278,242 @@ async function showNotifications() {
                 document.getElementById('activeRewardsList').innerHTML = listHtml;
             } else {
                 document.getElementById('activeRewardsBanner').style.display = 'none';
+            }
+
+            // Also load the full active rewards list and points history
+            loadActiveRewardsList();
+            loadPointsHistory();
+            loadReferralStats();
+        }
+
+        // Load and display active rewards in the rewards section
+        async function loadActiveRewardsList() {
+            const container = document.getElementById('activeRewardsList');
+            if (!container) return;
+
+            if (!currentUser) {
+                container.innerHTML = '<p style="text-align: center; color: var(--gray-medium);">Sign in to view your rewards</p>';
+                return;
+            }
+
+            try {
+                const result = await apiCall('/rewards/available');
+                const rewards = result.rewards || [];
+
+                if (rewards.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <span style="font-size: 32px; display: block; margin-bottom: 10px;">🎯</span>
+                            <p style="color: var(--gray-medium); margin: 0;">No active rewards yet</p>
+                            <p style="color: var(--gray-medium); font-size: 13px; margin-top: 5px;">Keep visiting to earn rewards!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = rewards.map(r => {
+                    const expiryDate = r.expires_at ? new Date(r.expires_at) : null;
+                    const daysLeft = expiryDate ? Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                    const isExpiringSoon = daysLeft !== null && daysLeft <= 7;
+
+                    let valueDisplay = '';
+                    if (r.reward_type === 'percentage_discount') {
+                        valueDisplay = `${r.reward_value}% OFF`;
+                    } else if (r.reward_type === 'fixed_discount') {
+                        valueDisplay = `R${r.reward_value} OFF`;
+                    } else if (r.reward_type === 'free_service') {
+                        valueDisplay = 'FREE SERVICE';
+                    }
+
+                    return `
+                        <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: ${isExpiringSoon ? 'rgba(255, 152, 0, 0.1)' : 'var(--gray-light)'}; border-radius: 12px; margin-bottom: 10px; ${isExpiringSoon ? 'border-left: 4px solid #ff9800;' : ''}">
+                            <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--brand-pink) 0%, #e05a7f 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <span style="color: white; font-weight: 700; font-size: 14px;">${valueDisplay}</span>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: var(--text-dark);">${r.description || 'Reward'}</div>
+                                <div style="font-size: 13px; color: var(--gray-medium);">
+                                    ${r.applicable_to ? `For: ${r.applicable_to}` : 'Any service'}
+                                </div>
+                                ${daysLeft !== null ? `
+                                    <div style="font-size: 12px; color: ${isExpiringSoon ? '#ff9800' : 'var(--gray-medium)'}; margin-top: 4px;">
+                                        ${isExpiringSoon ? '⚠️ ' : ''}Expires in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <button onclick="useReward('${r.id}')" class="btn btn-small btn-primary" style="flex-shrink: 0;">
+                                Use Now
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error loading active rewards:', error);
+                container.innerHTML = '<p style="text-align: center; color: var(--danger);">Error loading rewards</p>';
+            }
+        }
+
+        // Use a reward - navigate to booking
+        function useReward(rewardId) {
+            // Store the reward ID to apply during booking
+            sessionStorage.setItem('pendingRewardId', rewardId);
+            showToast({
+                type: 'info',
+                title: 'Reward Selected',
+                message: 'Your reward will be applied at checkout!'
+            });
+            switchTab('book');
+        }
+
+        // Load and display points history
+        async function loadPointsHistory(limit = 5) {
+            const container = document.getElementById('pointsHistoryList');
+            if (!container) return;
+
+            if (!currentUser) {
+                container.innerHTML = '<p style="text-align: center; color: var(--gray-medium);">Sign in to view your points history</p>';
+                return;
+            }
+
+            try {
+                const result = await apiCall('/loyalty/history');
+                const transactions = (result.transactions || []).slice(0, limit);
+
+                if (transactions.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <span style="font-size: 32px; display: block; margin-bottom: 10px;">📊</span>
+                            <p style="color: var(--gray-medium); margin: 0;">No points activity yet</p>
+                            <p style="color: var(--gray-medium); font-size: 13px; margin-top: 5px;">Book an appointment to start earning!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = transactions.map(t => {
+                    const isEarned = t.transaction_type === 'earned' || t.points > 0;
+                    const pointsDisplay = t.points > 0 ? `+${t.points}` : t.points;
+                    const date = new Date(t.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
+
+                    const icons = {
+                        'earned': '✨',
+                        'redeemed': '🎁',
+                        'expired': '⏰',
+                        'adjusted': '🔧',
+                        'referral': '👥'
+                    };
+                    const icon = icons[t.transaction_type] || '💫';
+
+                    return `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--gray-light);">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 20px;">${icon}</span>
+                                <div>
+                                    <div style="font-weight: 500; color: var(--text-dark);">${t.description || t.transaction_type}</div>
+                                    <div style="font-size: 12px; color: var(--gray-medium);">${date}</div>
+                                </div>
+                            </div>
+                            <div style="font-weight: 600; color: ${isEarned ? 'var(--success)' : 'var(--danger)'};">
+                                ${pointsDisplay} pts
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error loading points history:', error);
+                container.innerHTML = '<p style="text-align: center; color: var(--danger);">Error loading history</p>';
+            }
+        }
+
+        // Load full points history in a modal
+        async function loadFullPointsHistory() {
+            try {
+                const result = await apiCall('/loyalty/history');
+                const transactions = result.transactions || [];
+
+                if (transactions.length === 0) {
+                    showToast({ type: 'info', title: 'No History', message: 'You have no points history yet.' });
+                    return;
+                }
+
+                const modalContent = `
+                    <div style="max-height: 60vh; overflow-y: auto;">
+                        ${transactions.map(t => {
+                            const isEarned = t.transaction_type === 'earned' || t.points > 0;
+                            const pointsDisplay = t.points > 0 ? `+${t.points}` : t.points;
+                            const date = new Date(t.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+
+                            return `
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--gray-light);">
+                                    <div>
+                                        <div style="font-weight: 500;">${t.description || t.transaction_type}</div>
+                                        <div style="font-size: 12px; color: var(--gray-medium);">${date}</div>
+                                    </div>
+                                    <div style="font-weight: 600; color: ${isEarned ? 'var(--success)' : 'var(--danger)'};">
+                                        ${pointsDisplay} pts
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+
+                showCustomModal('Points History', modalContent);
+            } catch (error) {
+                showToast({ type: 'error', title: 'Error', message: 'Could not load points history' });
+            }
+        }
+
+        // Show a custom modal
+        function showCustomModal(title, content) {
+            // Remove any existing custom modal
+            const existing = document.getElementById('customModal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'customModal';
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3 class="modal-title">${title}</h3>
+                        <button class="close-btn" onclick="document.getElementById('customModal').remove()">&times;</button>
+                    </div>
+                    <div style="padding: 20px;">
+                        ${content}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Load referral stats
+        async function loadReferralStats() {
+            if (!currentUser) return;
+
+            try {
+                const result = await apiCall('/referrals');
+                const referrals = result.referrals || [];
+
+                // Count completed referrals
+                const completedReferrals = referrals.filter(r => r.status === 'completed').length;
+
+                // Calculate total earned from referrals (assuming 100 points per referral as default)
+                const pointsPerReferral = loyaltyConfig?.pointsRules?.referralPoints || 100;
+                const totalEarned = completedReferrals * pointsPerReferral;
+
+                // Update UI
+                const countEl = document.getElementById('referralCount');
+                const earnedEl = document.getElementById('referralEarned');
+
+                if (countEl) countEl.textContent = completedReferrals.toString();
+                if (earnedEl) earnedEl.textContent = `R${totalEarned}`;
+
+            } catch (error) {
+                console.log('Error loading referral stats:', error);
             }
         }
 
@@ -13154,47 +13565,44 @@ async function showNotifications() {
             // Extract unique categories from products
             const categories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
 
-            const filterContainer = document.getElementById('productCategoryFilters');
-            if (!filterContainer) return;
+            const selectEl = document.getElementById('productCategorySelect');
+            if (!selectEl) return;
 
-            // Build filter buttons HTML
-            let filtersHTML = `
-                <button class="btn btn-small btn-primary" data-filter="all" onclick="filterProductsByCategory('all')" style="white-space: nowrap;">
-                    All Products
-                </button>
-                <button class="btn btn-small btn-outline" data-filter="sale" onclick="filterProductsByCategory('sale')" style="white-space: nowrap;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="vertical-align: middle; margin-right: 4px;">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                    </svg>
-                    On Sale
-                </button>
-            `;
-
-            // Add dynamic category buttons
-            categories.forEach(category => {
-                filtersHTML += `
-                    <button class="btn btn-small btn-outline" data-filter="${category}" onclick="filterProductsByCategory('${category}')" style="white-space: nowrap;">
-                        ${category}
-                    </button>
-                `;
+            // Count products per category
+            const categoryCounts = {};
+            allProducts.forEach(p => {
+                if (p.category) {
+                    categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
+                }
             });
 
-            filterContainer.innerHTML = filtersHTML;
+            // Count sale products
+            const saleCount = allProducts.filter(p => p.sale_price && p.sale_price < p.price).length;
+
+            // Build options HTML
+            let optionsHTML = `
+                <option value="all">All Products (${allProducts.length})</option>
+                ${saleCount > 0 ? `<option value="sale">⭐ On Sale (${saleCount})</option>` : ''}
+            `;
+
+            // Add dynamic category options
+            categories.forEach(category => {
+                const count = categoryCounts[category] || 0;
+                optionsHTML += `<option value="${category}">${category} (${count})</option>`;
+            });
+
+            selectEl.innerHTML = optionsHTML;
+            selectEl.value = currentCategory || 'all';
         }
 
         function filterProductsByCategory(category) {
             currentCategory = category;
 
-            // Update button states
-            document.querySelectorAll('[data-filter]').forEach(btn => {
-                if (btn.getAttribute('data-filter') === category) {
-                    btn.classList.remove('btn-outline');
-                    btn.classList.add('btn-primary');
-                } else {
-                    btn.classList.remove('btn-primary');
-                    btn.classList.add('btn-outline');
-                }
-            });
+            // Update dropdown selection
+            const selectEl = document.getElementById('productCategorySelect');
+            if (selectEl && selectEl.value !== category) {
+                selectEl.value = category;
+            }
 
             applyFilters();
         }
