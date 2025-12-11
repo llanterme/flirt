@@ -651,153 +651,33 @@ async function migrateServiceBookableFlag() {
     }
 }
 
-// Migration to update hair service categories to match price list
+// Migration to update hair service categories and set only price list services as bookable
 async function migrateHairServiceCategories() {
     try {
-        // Check if migration is already done (look for new category names)
-        const hasCutStyling = await dbGet("SELECT 1 FROM services WHERE category = 'Cut & Styling' LIMIT 1");
-        if (hasCutStyling) {
+        // Services that should be bookable (from price list only)
+        const BOOKABLE_SERVICES = [
+            'Consultation',
+            'Short Blow Dry', 'Medium Blow Dry', 'Long Blow Dry', 'XL Blow Dry',
+            'Cut & Style Short', 'Cut & Style Medium', 'Cut & Style Long', 'Cut & Style XL',
+            'Ladies Wash Only', 'Gents Cut',
+            'Root Refresh', 'Full Colour Service',
+            'Face Frame', 'T-Section Lightening', 'Half Head Lightening', 'Full Head Lightening', 'Highlight & Lowlights',
+            'Partial Balayage', 'Full Balayage',
+            'Inoar Brazilian Treatment', 'MK Treatment', 'Davines Experience', 'Wella Experience', 'Botox Treatment',
+            'Tape-In Maintenance', 'Weft Maintenance', 'Keratin Maintenance', 'Installation / Removal Only',
+        ];
+
+        // Check if migration is done by counting bookable services
+        const bookableCount = await dbGet("SELECT COUNT(*) as count FROM services WHERE service_type = 'hair' AND bookable = 1");
+        if (bookableCount && bookableCount.count > 0 && bookableCount.count <= 30) {
             return; // Migration already done
         }
 
-        console.log('Migrating hair service categories to match price list...');
+        console.log('Migrating hair services to match price list...');
 
-        // Individual service name to category mappings
-        const SERVICE_TO_CATEGORY = {
-            // General -> Cut & Styling
-            'Wash & Blow Dry Short': 'Cut & Styling',
-            'Wash & Blow Dry Medium': 'Cut & Styling',
-            'Wash & Blow Dry Long': 'Cut & Styling',
-            'Wash & Blow Dry XL': 'Cut & Styling',
-            'Cut & Blow dry Short': 'Cut & Styling',
-            'Cut & Blow dry Medium': 'Cut & Styling',
-            'Cut & Blow dry Long': 'Cut & Styling',
-            'Cut & Blow dry XL': 'Cut & Styling',
-            'Cut & Finish Short': 'Cut & Styling',
-            'Cut & Finish Medium': 'Cut & Styling',
-            'Cut & Finish Long hair': 'Cut & Styling',
-            'Cut & Finish Long': 'Cut & Styling',
-            'Gents Cut Short': 'Cut & Styling',
-            'Gents Cut Medium': 'Cut & Styling',
-            'Kids 12 and under': 'Cut & Styling',
-            'Fringe Cut': 'Cut & Styling',
-            'Curls': 'Cut & Styling',
-            'Braids / Vlegsel': 'Cut & Styling',
-
-            // Colour -> Colour Services
-            'Root Touch Up': 'Colour Services',
-            'Root Touch Up Med (60g)': 'Colour Services',
-            'Full Colour Short': 'Colour Services',
-            'Full Colour Medium': 'Colour Services',
-            'Full Colour Long': 'Colour Services',
-            'Full Colour XL': 'Colour Services',
-            'Toner / Gloss Short': 'Colour Services',
-            'Toner / Gloss Medium': 'Colour Services',
-            'Toner / Gloss Long': 'Colour Services',
-            'Toner / Gloss XL': 'Colour Services',
-            'Root Melt/Smudge': 'Colour Services',
-            'Colour Remover': 'Colour Services',
-            'Colour Change Short': 'Colour Services',
-            'Colour Change Medium': 'Colour Services',
-            'Colour Change Long': 'Colour Services',
-            'Colour Change XL': 'Colour Services',
-            'Colour Correction': 'Colour Services',
-            'Per Foil Short': 'Colour Services',
-            'Per Foil Medium': 'Colour Services',
-            'Per Foil Long': 'Colour Services',
-            'Per Foil XL': 'Colour Services',
-
-            // Colour -> Lightening Services
-            'Custom Lightening Full Head Short': 'Lightening Services',
-            'Custom Lightening Full Head Medium': 'Lightening Services',
-            'Custom Lightening Full Head Long': 'Lightening Services',
-            'Custom Lightening Full Head XL': 'Lightening Services',
-            'Custom Lightening Half Head Short': 'Lightening Services',
-            'Custom Lightening Half Head Medium': 'Lightening Services',
-            'Custom Lightening Half Head Long': 'Lightening Services',
-            'Custom Lightening Half Head XL': 'Lightening Services',
-            'T-Zone (20g)': 'Lightening Services',
-            'T-Zone Highlights Short': 'Lightening Services',
-            'T-Zone Highlights Medium': 'Lightening Services',
-            'T-Zone Highlights Long': 'Lightening Services',
-            'Foils & Colour Roots Medium': 'Lightening Services',
-            'Foils & Colour Roots Long': 'Lightening Services',
-            'Foils & Colour Roots XL': 'Lightening Services',
-            'Foils & Colour Medium': 'Lightening Services',
-            'Foils & Colour Long': 'Lightening Services',
-            'Foils & Colour XL': 'Lightening Services',
-
-            // Colour -> Balayage
-            'Balayage Hollywood': 'Balayage',
-            'Balayage W/O Roots Medium': 'Balayage',
-            'Balayage W/O Roots Long': 'Balayage',
-            'Balayage W/O Roots XL': 'Balayage',
-            'Balayage W/ Roots Medium': 'Balayage',
-            'Balayage W/ Roots Long': 'Balayage',
-            'Balayage W/ Roots  XL': 'Balayage',
-
-            // Treatment -> Treatments
-            'Inoar Brazilliian Fringe': 'Treatments',
-            'Inoar Brazilliian Short': 'Treatments',
-            'Inoar Brazilliian Medium': 'Treatments',
-            'Inoar Brazilliian Long': 'Treatments',
-            'Inoar Brazilliian XL': 'Treatments',
-            'MK Express': 'Treatments',
-            'MK Treatment Short': 'Treatments',
-            'MK Treatment Medium': 'Treatments',
-            'MK Treatment Long': 'Treatments',
-            'MK Treatment XL': 'Treatments',
-            'Davines Experience': 'Treatments',
-            'Wella Experience': 'Treatments',
-            'Botox': 'Treatments',
-            'Wellaplex': 'Treatments',
-
-            // consultation/extensions/maintenance fixes
-            'Color Matching': 'Consultation',
-            'Tape Extensions': 'Extensions Service',
-            'Weft Installation': 'Extensions Service',
-            'Maintenance': 'Extension Maintenance',
-        };
-
-        // Category-level mappings
-        const CATEGORY_MAPPINGS = {
-            'consultation': 'Consultation',
-            'Colour': 'Colour Services',
-            'Treatment': 'Treatments',
-            'extensions': 'Extensions Service',
-            'maintenance': 'Extension Maintenance',
-        };
-
-        let totalUpdated = 0;
-
-        // Update individual services by name
-        for (const [serviceName, newCategory] of Object.entries(SERVICE_TO_CATEGORY)) {
-            const result = await dbRun(
-                'UPDATE services SET category = ? WHERE name = ? AND category != ?',
-                [newCategory, serviceName, newCategory]
-            );
-            totalUpdated += result.changes;
-        }
-
-        // Fix category-level issues (lowercase etc)
-        for (const [oldCategory, newCategory] of Object.entries(CATEGORY_MAPPINGS)) {
-            const result = await dbRun(
-                'UPDATE services SET category = ? WHERE category = ?',
-                [newCategory, oldCategory]
-            );
-            totalUpdated += result.changes;
-        }
-
-        // Also update Consultation from General
-        const consultResult = await dbRun(
-            "UPDATE services SET category = 'Consultation' WHERE name = 'Consultation' AND category = 'General'"
-        );
-        totalUpdated += consultResult.changes;
-
-        console.log(`Hair service categories migration complete. ${totalUpdated} services updated.`);
-
-        // Add new services from price list if they don't exist
+        // New services from price list
         const NEW_SERVICES = [
+            { name: 'Consultation', category: 'Consultation', price: 0, description: 'A personalised session to discuss your hair goals, assess your hair, recommend the best options, and provide a customised quote before your appointment.' },
             { name: 'Short Blow Dry', category: 'Cut & Styling', price: 220, description: 'Enjoy a refreshing hair wash and head massage followed by a sleek, salon-quality blow dry tailored to your preferred style.' },
             { name: 'Medium Blow Dry', category: 'Cut & Styling', price: 290, description: 'Enjoy a refreshing hair wash and head massage followed by a sleek, salon-quality blow dry tailored to your preferred style.' },
             { name: 'Long Blow Dry', category: 'Cut & Styling', price: 360, description: 'Enjoy a refreshing hair wash and head massage followed by a sleek, salon-quality blow dry tailored to your preferred style.' },
@@ -819,6 +699,8 @@ async function migrateHairServiceCategories() {
             { name: 'Full Balayage', category: 'Balayage', price: 1750, description: 'A hand-painted colour technique applied throughout the entire head for a seamless, sun-kissed, and dimensional look. Perfect for a natural, luminous finish. Prices from R1750-R1900. Price excludes gloss, cut, and blow-dry.' },
             { name: 'Inoar Brazilian Treatment', category: 'Treatments', price: 850, description: 'A smoothing treatment that reduces frizz, adds shine, and leaves hair soft, sleek, and manageable. Ideal for all hair types and a long-lasting, polished finish. Prices from R850-R1400.' },
             { name: 'MK Treatment', category: 'Treatments', price: 1100, description: 'A nourishing and restorative treatment designed to repair, strengthen, and revitalize damaged or stressed hair, leaving it soft, smooth, and healthy-looking. Prices from R1100-R3350' },
+            { name: 'Davines Experience', category: 'Treatments', price: 550, description: "A personalised hair treatment tailored to your hair's unique needs." },
+            { name: 'Wella Experience', category: 'Treatments', price: 300, description: 'A professional salon treatment that nourishes, repairs, and strengthens your hair.' },
             { name: 'Botox Treatment', category: 'Treatments', price: 600, description: 'A deep-repair treatment that smooths, strengthens, and restores hair from within. Ideal for damaged, frizzy, or aging hair, leaving it soft, shiny, and revitalised.' },
             { name: 'Tape-In Maintenance', category: 'Extension Maintenance', price: 1000, description: 'Removal, retaping and reinstallation. Includes wash & blow-dry' },
             { name: 'Weft Maintenance', category: 'Extension Maintenance', price: 1600, description: 'Removal and reinstallation of wefts. Includes wash & blow-dry' },
@@ -826,6 +708,11 @@ async function migrateHairServiceCategories() {
             { name: 'Installation / Removal Only', category: 'Extension Maintenance', price: 450, description: 'Extension installation or removal service only.' },
         ];
 
+        // Step 1: Set ALL hair services to non-bookable
+        const resetResult = await dbRun("UPDATE services SET bookable = 0 WHERE service_type = 'hair'");
+        console.log(`  Reset ${resetResult.changes} hair services to non-bookable`);
+
+        // Step 2: Add new services from price list (if they don't exist)
         let added = 0;
         for (const svc of NEW_SERVICES) {
             const existing = await dbGet('SELECT id FROM services WHERE name = ? AND service_type = ?', [svc.name, 'hair']);
@@ -836,12 +723,24 @@ async function migrateHairServiceCategories() {
                     [id, svc.name, svc.description, svc.price, 60, 'hair', svc.category]
                 );
                 added++;
+            } else {
+                // Update existing service's category
+                await dbRun('UPDATE services SET category = ? WHERE id = ?', [svc.category, existing.id]);
             }
         }
-
         if (added > 0) {
-            console.log(`Added ${added} new services from price list.`);
+            console.log(`  Added ${added} new services from price list`);
         }
+
+        // Step 3: Set only price list services as bookable
+        let bookableUpdated = 0;
+        for (const name of BOOKABLE_SERVICES) {
+            const result = await dbRun("UPDATE services SET bookable = 1 WHERE name = ? AND service_type = 'hair'", [name]);
+            bookableUpdated += result.changes;
+        }
+        console.log(`  Set ${bookableUpdated} services as bookable for client booking`);
+
+        console.log('Hair service migration complete.');
 
     } catch (error) {
         console.error('Error migrating hair service categories:', error.message);
@@ -1805,6 +1704,11 @@ const ProductRepository = {
     async findAll(filters = {}) {
         let sql = 'SELECT * FROM products WHERE active = 1';
         const params = [];
+
+        // Filter for online availability (for public storefront)
+        if (filters.availableOnline) {
+            sql += ' AND available_online = 1';
+        }
 
         if (filters.category) {
             sql += ' AND category = ?';
