@@ -9435,92 +9435,11 @@
             checkStep4Complete();
         }
 
-        // Fetch and display availability for selected date/stylist/service
-        async function fetchAndDisplayAvailability() {
-            const { stylistId, serviceId, dateStr } = modernBookingState;
-            const isBeauty = modernBookingState.bookingType === 'beauty';
-
-            // For beauty bookings without a specific stylist, show all times as available
-            if (isBeauty || !stylistId) {
-                displayGenericTimeSlots();
-                return;
-            }
-
-            if (!dateStr) {
-                document.getElementById('availabilitySlots').innerHTML =
-                    '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Select a date to see available times</p>';
-                return;
-            }
-
-            // Show loading
-            document.getElementById('availabilityLoading').style.display = 'flex';
-            document.getElementById('availabilityClosed').style.display = 'none';
-            document.getElementById('availabilitySlots').innerHTML = '';
-            document.getElementById('availabilityNote').style.display = 'none';
-
-            try {
-                const url = `/availability/${stylistId}?date=${dateStr}${serviceId ? `&serviceId=${serviceId}` : ''}`;
-                const data = await apiCall(url);
-
-                document.getElementById('availabilityLoading').style.display = 'none';
-
-                if (!data.success) {
-                    document.getElementById('availabilitySlots').innerHTML =
-                        `<p style="text-align: center; color: var(--danger); padding: 20px;">${data.message || 'Failed to load availability'}</p>`;
-                    return;
-                }
-
-                // Check if salon is closed
-                if (data.closed) {
-                    document.getElementById('availabilityClosed').style.display = 'block';
-                    document.getElementById('availabilityClosedMessage').textContent = data.message || 'Salon is closed on this day';
-                    document.getElementById('availabilitySlots').innerHTML = '';
-                    return;
-                }
-
-                // Show service duration note
-                if (data.serviceDuration) {
-                    document.getElementById('availabilityDuration').textContent = `${data.serviceDuration} mins`;
-                    document.getElementById('availabilityNote').style.display = 'block';
-                }
-
-                // Group slots by time of day
-                const morning = data.slots.filter(s => {
-                    const hour = parseInt(s.time.split(':')[0]);
-                    return hour < 12;
-                });
-                const afternoon = data.slots.filter(s => {
-                    const hour = parseInt(s.time.split(':')[0]);
-                    return hour >= 12 && hour < 17;
-                });
-                const evening = data.slots.filter(s => {
-                    const hour = parseInt(s.time.split(':')[0]);
-                    return hour >= 17;
-                });
-
-                let html = '';
-
-                if (morning.length > 0) {
-                    html += renderTimeSlotsSection('Morning', morning);
-                }
-                if (afternoon.length > 0) {
-                    html += renderTimeSlotsSection('Afternoon', afternoon);
-                }
-                if (evening.length > 0) {
-                    html += renderTimeSlotsSection('Evening', evening);
-                }
-
-                if (html === '') {
-                    html = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">No available times for this date</p>';
-                }
-
-                document.getElementById('availabilitySlots').innerHTML = html;
-
-            } catch (error) {
-                document.getElementById('availabilityLoading').style.display = 'none';
-                document.getElementById('availabilitySlots').innerHTML =
-                    `<p style="text-align: center; color: var(--danger); padding: 20px;">Error loading availability: ${error.message}</p>`;
-            }
+        // Display time preference cards (no longer fetching individual time slots)
+        function fetchAndDisplayAvailability() {
+            // With time preference system, we just show the preference cards
+            // The salon will confirm the actual time based on availability
+            displayTimePreferenceCards();
         }
 
         // Render a section of time slots (Morning/Afternoon/Evening)
@@ -9565,30 +9484,81 @@
             return `${displayHour}:${mins.toString().padStart(2, '0')} ${period}`;
         }
 
-        // Display generic time slots (for beauty bookings or when no stylist selected)
-        function displayGenericTimeSlots() {
-            const slots = [];
-            for (let hour = 8; hour < 18; hour++) {
-                for (const min of [0, 30]) {
-                    const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-                    slots.push({ time, available: true });
-                }
+        // Display time preference cards
+        function displayTimePreferenceCards() {
+            // Reset any loading states
+            const loadingEl = document.getElementById('availabilityLoading');
+            const closedEl = document.getElementById('availabilityClosed');
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (closedEl) closedEl.style.display = 'none';
+
+            // The time preference cards are already in the HTML, just ensure they're visible
+            // and reset any previous selection
+            const container = document.getElementById('availabilitySlots');
+            if (!container) return;
+
+            // Check if preference cards already exist
+            const existingCards = container.querySelector('.time-preference-container');
+            if (existingCards) {
+                // Cards exist, just reset selection
+                document.querySelectorAll('.time-preference-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                return;
             }
 
-            const morning = slots.filter(s => parseInt(s.time.split(':')[0]) < 12);
-            const afternoon = slots.filter(s => {
-                const h = parseInt(s.time.split(':')[0]);
-                return h >= 12 && h < 17;
-            });
-            const evening = slots.filter(s => parseInt(s.time.split(':')[0]) >= 17);
+            // Cards don't exist (maybe cleared), regenerate them
+            container.innerHTML = `
+                <div class="time-preference-container">
+                    <div class="time-preference-card" data-preference="morning" onclick="selectTimePreference(this, 'morning')">
+                        <div class="time-preference-icon">🌅</div>
+                        <div class="time-preference-content">
+                            <div class="time-preference-title">Morning</div>
+                            <div class="time-preference-subtitle">8:00 AM - 12:00 PM</div>
+                        </div>
+                        <div class="time-preference-check">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="time-preference-card" data-preference="midday" onclick="selectTimePreference(this, 'midday')">
+                        <div class="time-preference-icon">☀️</div>
+                        <div class="time-preference-content">
+                            <div class="time-preference-title">Midday</div>
+                            <div class="time-preference-subtitle">12:00 PM - 2:00 PM</div>
+                        </div>
+                        <div class="time-preference-check">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="time-preference-card" data-preference="afternoon" onclick="selectTimePreference(this, 'afternoon')">
+                        <div class="time-preference-icon">🌇</div>
+                        <div class="time-preference-content">
+                            <div class="time-preference-title">Afternoon</div>
+                            <div class="time-preference-subtitle">2:00 PM - 6:00 PM</div>
+                        </div>
+                        <div class="time-preference-check">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="time-preference-note">
+                    <span class="time-preference-note-icon">💡</span>
+                    <span class="time-preference-note-text">
+                        Select your preferred time window. <strong>We'll confirm your exact appointment time</strong> via SMS or WhatsApp within 24 hours.
+                    </span>
+                </div>
+            `;
+        }
 
-            let html = '';
-            if (morning.length) html += renderTimeSlotsSection('Morning', morning);
-            if (afternoon.length) html += renderTimeSlotsSection('Afternoon', afternoon);
-            if (evening.length) html += renderTimeSlotsSection('Evening', evening);
-
-            document.getElementById('availabilitySlots').innerHTML = html;
-            document.getElementById('availabilityNote').style.display = 'none';
+        // Display generic time slots (legacy - now redirects to time preference cards)
+        function displayGenericTimeSlots() {
+            displayTimePreferenceCards();
         }
 
         // Select an available time slot
