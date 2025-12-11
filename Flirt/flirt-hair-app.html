@@ -7148,36 +7148,45 @@
     </div>
 
     <!-- Modals -->
-    <!-- Booking Confirmation Modal -->
+    <!-- Booking Confirmation Modal - Redesigned -->
     <div id="bookingConfirmationModal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 500px;">
-            <div id="bookingConfirmationHeader" class="modal-header" style="background: linear-gradient(135deg, var(--brand-pink) 0%, #e05a7f 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 15px 15px 0 0;">
-                <div id="bookingConfirmationIcon" style="font-size: 48px; margin-bottom: 10px;">✅</div>
-                <h2 id="bookingConfirmationTitle" style="margin: 0; font-size: 24px; font-weight: 600;">Booking Confirmed!</h2>
-                <p id="bookingConfirmationSubtitle" style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;"></p>
-            </div>
-            <div style="padding: 30px 20px;">
-                <div id="bookingConfirmationContent" style="line-height: 1.8;"></div>
+        <div class="modal-content" style="max-width: 420px; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.15);">
+            <!-- Success Header with Animation -->
+            <div id="bookingConfirmationHeader" style="background: linear-gradient(135deg, var(--brand-pink) 0%, #e05a7f 100%); color: white; padding: 32px 24px; text-align: center; position: relative; overflow: hidden;">
+                <!-- Decorative circles -->
+                <div style="position: absolute; top: -20px; left: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                <div style="position: absolute; bottom: -30px; right: -30px; width: 100px; height: 100px; background: rgba(255,255,255,0.08); border-radius: 50%;"></div>
 
-                <!-- Hidden: Loyalty points section - to be re-enabled when rewards system is implemented -->
-                <div id="loyaltyPointsSection" style="display: none; background: linear-gradient(135deg, #fff5f8 0%, #ffe8ee 100%); padding: 20px; border-radius: 12px; margin: 25px 0; border-left: 4px solid var(--brand-pink);">
+                <div id="bookingConfirmationIcon" style="font-size: 56px; margin-bottom: 12px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));">✅</div>
+                <h2 id="bookingConfirmationTitle" style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px;">Booking Confirmed!</h2>
+                <p id="bookingConfirmationSubtitle" style="margin: 8px 0 0 0; font-size: 13px; opacity: 0.9; display: none;"></p>
+            </div>
+
+            <div style="padding: 24px;">
+                <!-- Main booking details card -->
+                <div id="bookingConfirmationContent"></div>
+
+                <!-- Hidden: Loyalty points section -->
+                <div id="loyaltyPointsSection" style="display: none; background: linear-gradient(135deg, #fff5f8 0%, #ffe8ee 100%); padding: 16px; border-radius: 12px; margin-top: 16px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="font-size: 32px;">🎉</div>
+                        <div style="font-size: 28px;">🎉</div>
                         <div>
-                            <div style="font-weight: 600; color: var(--text-dark); margin-bottom: 4px;">Loyalty Points Earned!</div>
-                            <div style="font-size: 14px; color: var(--gray-dark);">
-                                <span id="confirmationPoints" style="font-weight: 600; color: var(--brand-pink); font-size: 18px;">+50</span> points added to your account
+                            <div style="font-weight: 600; color: var(--text-dark); font-size: 14px;">Points Earned!</div>
+                            <div style="font-size: 13px; color: var(--gray-dark);">
+                                <span id="confirmationPoints" style="font-weight: 700; color: var(--brand-pink); font-size: 16px;">+50</span> added to your account
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="bookingConfirmationFooterNote" style="background: var(--gray-light); padding: 15px; border-radius: 10px; font-size: 14px; color: var(--gray-dark); text-align: center;">
-                    📧 You will receive a confirmation email shortly
+                <!-- Next steps info -->
+                <div id="bookingConfirmationFooterNote" style="background: #f8f9fa; padding: 14px 16px; border-radius: 12px; font-size: 13px; color: #5a6168; text-align: center; margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span style="font-size: 16px;">📧</span>
+                    <span>Confirmation email on its way</span>
                 </div>
 
-                <button class="btn btn-primary" onclick="closeBookingConfirmation()" style="width: 100%; margin-top: 25px; padding: 14px;">
-                    Got it, thanks!
+                <button class="btn btn-primary" onclick="closeBookingConfirmation()" style="width: 100%; margin-top: 20px; padding: 14px 20px; font-size: 15px; font-weight: 600; border-radius: 12px;">
+                    View My Bookings
                 </button>
             </div>
         </div>
@@ -13162,7 +13171,7 @@ async function showNotifications() {
 
         // closeModal is defined earlier in the file
 
-        // Booking Confirmation Modal
+        // Booking Confirmation Modal - Redesigned for better UX
         function showBookingConfirmation(booking) {
             const modal = document.getElementById('bookingConfirmationModal');
             const content = document.getElementById('bookingConfirmationContent');
@@ -13176,88 +13185,86 @@ async function showNotifications() {
             // Update header based on booking status
             if (booking.isPending) {
                 iconEl.textContent = '📅';
-                titleEl.textContent = 'Booking Request Sent!';
-                subtitleEl.textContent = 'We\'ll confirm your time shortly';
+                titleEl.textContent = 'Request Received!';
+                subtitleEl.textContent = "We'll confirm your time within 24 hours";
                 subtitleEl.style.display = 'block';
-                footerNoteEl.innerHTML = '📱 We\'ll contact you via SMS or WhatsApp to confirm your appointment time';
+                footerNoteEl.innerHTML = '<span style="font-size: 16px;">📱</span><span>We\'ll text you to confirm your time</span>';
             } else {
                 iconEl.textContent = '✅';
-                titleEl.textContent = 'Booking Confirmed!';
+                titleEl.textContent = 'You\'re All Set!';
                 subtitleEl.style.display = 'none';
-                footerNoteEl.innerHTML = '📧 You will receive a confirmation email shortly';
+                footerNoteEl.innerHTML = '<span style="font-size: 16px;">📧</span><span>Confirmation email on its way</span>';
             }
 
+            // Build modern card-based layout
             let html = `
-                <div style="margin-bottom: 25px;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr style="border-bottom: 1px solid var(--gray-light);">
-                            <td style="padding: 12px 0; font-weight: 600; color: var(--gray-dark);">Booking Type:</td>
-                            <td style="padding: 12px 0; text-align: right; color: var(--text-dark);">${booking.type}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid var(--gray-light);">
-                            <td style="padding: 12px 0; font-weight: 600; color: var(--gray-dark);">Service:</td>
-                            <td style="padding: 12px 0; text-align: right; color: var(--text-dark);">${booking.service}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid var(--gray-light);">
-                            <td style="padding: 12px 0; font-weight: 600; color: var(--gray-dark);">Duration:</td>
-                            <td style="padding: 12px 0; text-align: right; color: var(--text-dark);">${booking.duration}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid var(--gray-light);">
-                            <td style="padding: 12px 0; font-weight: 600; color: var(--gray-dark);">Price:</td>
-                            <td style="padding: 12px 0; text-align: right; color: var(--brand-pink); font-weight: 600; font-size: 16px;">${booking.price}</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid var(--gray-light);">
-                            <td style="padding: 12px 0; font-weight: 600; color: var(--gray-dark);">Date:</td>
-                            <td style="padding: 12px 0; text-align: right; color: var(--text-dark);">${booking.date}</td>
-                        </tr>
+                <!-- Service highlight card -->
+                <div style="background: linear-gradient(135deg, #fdf2f5 0%, #fff 100%); border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid rgba(246, 117, 153, 0.15);">
+                    <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 16px;">
+                        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, var(--brand-pink) 0%, #e05a7f 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <span style="font-size: 24px;">${booking.type === 'Hair Appointment' ? '💇‍♀️' : '💅'}</span>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 17px; font-weight: 700; color: #1a1a2e; margin-bottom: 2px;">${booking.service}</div>
+                            <div style="font-size: 13px; color: #6b7280;">${booking.duration} session</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 20px; font-weight: 700; color: var(--brand-pink);">${booking.price}</div>
+                        </div>
+                    </div>
             `;
 
-            // Show time preference for pending bookings (time to be confirmed by salon)
-            if (booking.isPending || booking.timeWindow) {
+            // Show stylist if available
+            if (booking.therapist) {
                 html += `
-                        <tr style="border-bottom: 1px solid var(--gray-light);">
-                            <td style="padding: 12px 0; font-weight: 600; color: var(--gray-dark);">Time Preference:</td>
-                            <td style="padding: 12px 0; text-align: right; color: var(--text-dark);">${booking.time || booking.timeWindow}</td>
-                        </tr>
-                `;
-            } else if (booking.time && booking.time !== 'To be assigned') {
-                html += `
-                        <tr style="border-bottom: 1px solid var(--gray-light);">
-                            <td style="padding: 12px 0; font-weight: 600; color: var(--gray-dark);">Time:</td>
-                            <td style="padding: 12px 0; text-align: right; color: var(--text-dark);">${booking.time}</td>
-                        </tr>
+                    <div style="display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px dashed rgba(0,0,0,0.08);">
+                        <div style="width: 32px; height: 32px; background: #e8e8e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px;">👩‍🎨</div>
+                        <div style="font-size: 13px; color: #4b5563;">
+                            <span style="color: #9ca3af;">with</span> <span style="font-weight: 600; color: #374151;">${booking.therapist}</span>
+                        </div>
+                    </div>
                 `;
             }
 
-            if (booking.therapist) {
+            html += `</div>`;
+
+            // Date & Time card
+            html += `
+                <div style="background: #fff; border-radius: 14px; border: 1px solid #e5e7eb; overflow: hidden;">
+                    <!-- Date row -->
+                    <div style="display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid #f3f4f6;">
+                        <div style="width: 36px; height: 36px; background: #f3f4f6; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                            <span style="font-size: 18px;">📆</span>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 600; letter-spacing: 0.5px;">Date</div>
+                            <div style="font-size: 15px; font-weight: 600; color: #1f2937;">${booking.date}</div>
+                        </div>
+                    </div>
+                    <!-- Time row -->
+                    <div style="display: flex; align-items: center; padding: 14px 16px;">
+                        <div style="width: 36px; height: 36px; background: #f3f4f6; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 12px;">
+                            <span style="font-size: 18px;">🕐</span>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 11px; text-transform: uppercase; color: #9ca3af; font-weight: 600; letter-spacing: 0.5px;">${booking.isPending ? 'Preferred Time' : 'Time'}</div>
+                            <div style="font-size: 15px; font-weight: 600; color: #1f2937;">${booking.time || booking.timeWindow || 'To be confirmed'}</div>
+                        </div>
+            `;
+
+            // Add pending badge if needed
+            if (booking.isPending) {
                 html += `
-                        <tr>
-                            <td colspan="2" style="padding: 12px 0; color: var(--gray-medium); font-size: 14px; text-align: center;">
-                                ${booking.therapist}
-                            </td>
-                        </tr>
+                        <div style="background: #fef3c7; color: #92400e; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px;">
+                            Pending
+                        </div>
                 `;
             }
 
             html += `
-                    </table>
+                    </div>
                 </div>
             `;
-
-            // Add info about time assignment for bookings with time preferences
-            if (booking.isPending || booking.timeWindow) {
-                html += `
-                    <div style="background: linear-gradient(135deg, rgba(246, 117, 153, 0.1) 0%, rgba(246, 117, 153, 0.05) 100%); padding: 15px; border-radius: 12px; margin-bottom: 15px; border-left: 3px solid var(--brand-pink);">
-                        <div style="display: flex; align-items: flex-start; gap: 12px;">
-                            <span style="font-size: 24px;">📱</span>
-                            <div style="font-size: 13px; color: var(--text-dark);">
-                                <strong style="color: var(--brand-pink);">What happens next?</strong><br>
-                                We'll confirm your exact appointment time via SMS or WhatsApp within 24 hours based on availability. Keep an eye on your phone!
-                            </div>
-                        </div>
-                    </div>
-                `
-            }
 
             content.innerHTML = html;
 
