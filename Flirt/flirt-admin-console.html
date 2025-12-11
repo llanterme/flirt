@@ -13469,14 +13469,16 @@
             }
         }
 
-        document.querySelectorAll('.modal-overlay').forEach(overlay => {
-            overlay.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.remove('show');
-                    this.style.display = 'none';
-                }
-            });
-        });
+        // Click-outside-to-close disabled for admin modals to prevent accidental data loss
+        // Users should use the X button or Cancel button to close modals
+        // document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        //     overlay.addEventListener('click', function(e) {
+        //         if (e.target === this) {
+        //             this.classList.remove('show');
+        //             this.style.display = 'none';
+        //         }
+        //     });
+        // });
 
         // Reusable confirm dialog
         let confirmResolver = null;
