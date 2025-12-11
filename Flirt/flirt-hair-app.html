@@ -5338,11 +5338,6 @@
                         <span class="home-hero-stat-value" id="bannerPoints">0</span>
                         <span class="home-hero-stat-label">Points</span>
                     </div>
-                    <div class="home-hero-stat-divider"></div>
-                    <div class="home-hero-stat">
-                        <span class="home-hero-stat-value" id="bannerTier">Bronze</span>
-                        <span class="home-hero-stat-label">Member</span>
-                    </div>
                 </div>
             </div>
 
@@ -6459,31 +6454,6 @@
             </div>
 
             <div class="section-header" style="margin-top: 30px;">
-                <h3 class="section-title">Loyalty Tiers</h3>
-            </div>
-
-            <div class="card" id="loyaltyTierCard">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <div>
-                        <strong style="color: var(--brand-pink);" id="userTierName">🌟 Bronze Tier</strong>
-                        <div style="font-size: 14px; color: var(--gray-medium);" id="userTierProgress">Loading...</div>
-                    </div>
-                    <div style="font-size: 12px; color: var(--gray-medium);" id="userTierLevel">Level 1 of 4</div>
-                </div>
-                <div style="background: var(--gray-light); height: 10px; border-radius: 10px; overflow: hidden;">
-                    <div id="tierProgressBar" style="background: linear-gradient(90deg, var(--brand-pink-dark), var(--brand-pink)); height: 100%; width: 0%; transition: width 0.5s;"></div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <strong>Your Perks:</strong>
-                    <ul id="tierPerksList" style="margin-top: 10px; padding-left: 20px;">
-                        <li>Earn points on every visit</li>
-                        <li>Birthday surprise</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="section-header" style="margin-top: 30px;">
                 <h3 class="section-title">Ways to Earn Points</h3>
             </div>
 
@@ -6868,7 +6838,7 @@
             <div class="profile-header">
                 <div class="profile-avatar" id="profileAvatar">?</div>
                 <div class="profile-name" id="profileName">Guest</div>
-                <div class="profile-tier" id="profileTier" style="display: flex; align-items: center; justify-content: center; gap: 6px;"><svg viewBox="0 0 24 24" fill="#F67599" width="16" height="16"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> <span id="profileTierText">Sign in to unlock rewards</span></div>
+                <div class="profile-tier" id="profileTier" style="display: flex; align-items: center; justify-content: center; gap: 6px;"><svg viewBox="0 0 24 24" fill="#F67599" width="16" height="16"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> <span id="profileTierText">Rewards Member</span></div>
             </div>
 
             <!-- Rewards Summary Card -->
@@ -6881,7 +6851,7 @@
                         <div>
                             <div style="font-weight: 600; color: var(--text-dark); font-size: 16px;">My Rewards</div>
                             <div style="font-size: 14px; color: var(--gray-dark);">
-                                <span id="profilePointsDisplay">0</span> points | <span id="profileTierDisplay">Bronze</span>
+                                <span id="profilePointsDisplay">0</span> points
                             </div>
                         </div>
                     </div>
@@ -6893,16 +6863,6 @@
                     </div>
                 </div>
 
-                <!-- Quick tier progress bar -->
-                <div style="margin-top: 15px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-medium); margin-bottom: 5px;">
-                        <span id="profileTierProgressText">Loading tier progress...</span>
-                        <span id="profileTierLevelText"></span>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.8); height: 6px; border-radius: 6px; overflow: hidden;">
-                        <div id="profileTierProgressBar" style="background: linear-gradient(90deg, var(--brand-pink-dark), var(--brand-pink)); height: 100%; width: 0%; transition: width 0.5s;"></div>
-                    </div>
-                </div>
             </div>
 
             <ul class="menu-list">
@@ -8502,23 +8462,12 @@
             // Show points display
             if (pointsDisplayBanner) pointsDisplayBanner.style.display = 'flex';
             if (bannerPoints) bannerPoints.textContent = (currentUser.points ?? 0).toLocaleString();
-            if (bannerTier) {
-                const tier = currentUser.tier || 'bronze';
-                const niceTier = tier.charAt(0).toUpperCase() + tier.slice(1);
-                bannerTier.textContent = niceTier;
-            }
-
             // Update rewards section - use #userPoints which has class .stat-number
             const pointsDisplay = document.getElementById('userPoints');
             if (pointsDisplay) pointsDisplay.textContent = (currentUser.points ?? 0).toLocaleString();
 
             const referralCode = document.querySelector('.referral-code');
             if (referralCode) referralCode.textContent = currentUser.referralCode || '';
-
-            // Update tier display if loyalty config is loaded
-            if (loyaltyConfig) {
-                updateTierDisplay();
-            }
 
             // Update profile rewards card
             updateProfileRewardsCard();
@@ -8536,61 +8485,10 @@
 
             rewardsCard.style.display = 'block';
 
-            // Update points and tier display
+            // Update points display
             const pointsEl = document.getElementById('profilePointsDisplay');
-            const tierEl = document.getElementById('profileTierDisplay');
-            const progressTextEl = document.getElementById('profileTierProgressText');
-            const levelTextEl = document.getElementById('profileTierLevelText');
-            const progressBarEl = document.getElementById('profileTierProgressBar');
-
             const points = currentUser.points || 0;
-            const tier = currentUser.tier || 'bronze';
-            const niceTier = tier.charAt(0).toUpperCase() + tier.slice(1);
-
             if (pointsEl) pointsEl.textContent = points.toLocaleString();
-            if (tierEl) tierEl.textContent = niceTier;
-
-            // Calculate tier progress
-            if (loyaltyConfig?.tierThresholds) {
-                const thresholds = loyaltyConfig.tierThresholds;
-                let tierLevel = 1;
-                let nextTier = 'silver';
-                let nextThreshold = thresholds.silver;
-                let currentThreshold = 0;
-
-                if (points >= thresholds.platinum) {
-                    tierLevel = 4;
-                    nextTier = 'platinum';
-                    nextThreshold = thresholds.platinum;
-                    currentThreshold = thresholds.platinum;
-                } else if (points >= thresholds.gold) {
-                    tierLevel = 3;
-                    nextTier = 'platinum';
-                    nextThreshold = thresholds.platinum;
-                    currentThreshold = thresholds.gold;
-                } else if (points >= thresholds.silver) {
-                    tierLevel = 2;
-                    nextTier = 'gold';
-                    nextThreshold = thresholds.gold;
-                    currentThreshold = thresholds.silver;
-                }
-
-                const progressPercent = tierLevel === 4 ? 100 :
-                    Math.min(100, ((points - currentThreshold) / (nextThreshold - currentThreshold)) * 100);
-
-                if (progressBarEl) progressBarEl.style.width = `${progressPercent}%`;
-
-                if (progressTextEl) {
-                    if (tierLevel === 4) {
-                        progressTextEl.textContent = 'Maximum tier reached!';
-                    } else {
-                        const niceNextTier = nextTier.charAt(0).toUpperCase() + nextTier.slice(1);
-                        progressTextEl.textContent = `${nextThreshold - points} pts to ${niceNextTier}`;
-                    }
-                }
-
-                if (levelTextEl) levelTextEl.textContent = `Level ${tierLevel}/4`;
-            }
 
             // Load and display active rewards count
             loadActiveRewardsCount();
@@ -11023,85 +10921,6 @@ async function showNotifications() {
                     `;
                 }).join('');
             }
-
-            // Update tier display based on user's points
-            updateTierDisplay();
-        }
-
-        // Update tier display based on current user's points
-        function updateTierDisplay() {
-            if (!loyaltyConfig || !currentUser) return;
-
-            const { tierThresholds } = loyaltyConfig;
-            const points = currentUser.points || 0;
-
-            // Calculate current tier
-            let currentTier = 'bronze';
-            let tierLevel = 1;
-            if (points >= tierThresholds.platinum) {
-                currentTier = 'platinum';
-                tierLevel = 4;
-            } else if (points >= tierThresholds.gold) {
-                currentTier = 'gold';
-                tierLevel = 3;
-            } else if (points >= tierThresholds.silver) {
-                currentTier = 'silver';
-                tierLevel = 2;
-            }
-
-            // Calculate progress to next tier
-            const tierNames = ['bronze', 'silver', 'gold', 'platinum'];
-            const tierEmojis = { bronze: '🥉', silver: '🥈', gold: '🌟', platinum: '💎' };
-            const nextTierIndex = Math.min(tierLevel, 3);
-            const nextTier = tierNames[nextTierIndex];
-            const nextThreshold = tierThresholds[nextTier] || tierThresholds.platinum;
-            const currentThreshold = tierLevel === 1 ? 0 : tierThresholds[currentTier];
-
-            const progressPercent = tierLevel === 4 ? 100 :
-                Math.min(100, ((points - currentThreshold) / (nextThreshold - currentThreshold)) * 100);
-
-            // Update UI
-            const tierNameEl = document.getElementById('userTierName');
-            if (tierNameEl) {
-                tierNameEl.textContent = `${tierEmojis[currentTier]} ${currentTier.charAt(0).toUpperCase() + currentTier.slice(1)} Tier`;
-            }
-
-            const tierProgressEl = document.getElementById('userTierProgress');
-            if (tierProgressEl) {
-                if (tierLevel === 4) {
-                    tierProgressEl.textContent = 'Maximum tier reached!';
-                } else {
-                    tierProgressEl.textContent = `${points.toLocaleString()} / ${nextThreshold.toLocaleString()} points to ${nextTier.charAt(0).toUpperCase() + nextTier.slice(1)}`;
-                }
-            }
-
-            const tierLevelEl = document.getElementById('userTierLevel');
-            if (tierLevelEl) {
-                tierLevelEl.textContent = `Level ${tierLevel} of 4`;
-            }
-
-            const progressBar = document.getElementById('tierProgressBar');
-            if (progressBar) {
-                progressBar.style.width = `${progressPercent}%`;
-            }
-
-            // Update perks list
-            const perks = getTierPerks(currentTier);
-            const perksList = document.getElementById('tierPerksList');
-            if (perksList && perks.length > 0) {
-                perksList.innerHTML = perks.map(perk => `<li>${perk}</li>`).join('');
-            }
-        }
-
-        // Get tier perks (fallback if not from API)
-        function getTierPerks(tier) {
-            const perks = {
-                bronze: ['Earn points on every visit', 'Birthday surprise'],
-                silver: ['5% off all services', 'Priority booking', 'Birthday surprise', 'Early access to sales'],
-                gold: ['15% off all services', 'Free birthday blowout', 'Priority booking', 'Exclusive events', 'Free product samples'],
-                platinum: ['20% off all services', 'Free monthly treatment', 'VIP parking', 'Personal stylist', 'Exclusive events', 'Complimentary refreshments']
-            };
-            return perks[tier] || perks.bronze;
         }
 
         // Get referral share message from config
@@ -11203,60 +11022,65 @@ async function showNotifications() {
             const { tracks, activeRewards } = data;
             let hasAnyProgress = false;
 
-            // Render Nails Track
-            if (tracks?.nails?.enabled) {
-                const nailsCard = document.getElementById('nailsTrackCard');
-                nailsCard.style.display = 'block';
-                hasAnyProgress = true;
+            // Hide all track cards initially
+            const nailsCard = document.getElementById('nailsTrackCard');
+            const maintCard = document.getElementById('maintenanceTrackCard');
+            const spendCard = document.getElementById('spendTrackCard');
+            if (nailsCard) nailsCard.style.display = 'none';
+            if (maintCard) maintCard.style.display = 'none';
+            if (spendCard) spendCard.style.display = 'none';
 
-                const count = tracks.nails.currentCount || 0;
-                document.getElementById('nailsTrackCount').textContent = `${count} visit${count !== 1 ? 's' : ''}`;
+            // Render tracks dynamically based on what's returned
+            if (tracks) {
+                for (const [trackName, track] of Object.entries(tracks)) {
+                    if (!track?.enabled) continue;
+                    hasAnyProgress = true;
 
-                // Calculate progress - towards milestone 1 first, then milestone 2
-                const m1 = tracks.nails.milestone1;
-                const m2 = tracks.nails.milestone2;
-                let progressPercent = 0;
-                let infoText = '';
+                    // Handle visit-count tracks (nails, maintenance, etc.)
+                    if (track.type === 'visit_count') {
+                        const count = track.currentCount || 0;
+                        const next = track.nextMilestone;
+                        const progressPercent = track.progressPercent || 0;
 
-                if (count >= m2.target) {
-                    progressPercent = 100;
-                    infoText = 'All milestones reached!';
-                } else if (count >= m1.target) {
-                    progressPercent = 50 + ((count - m1.target) / (m2.target - m1.target)) * 50;
-                    infoText = `${m2.target - count} more visits for ${m2.discount}% off`;
-                } else {
-                    progressPercent = (count / m1.target) * 50;
-                    infoText = `${m1.target - count} more visits for ${m1.discount}% off`;
+                        let infoText = '';
+                        if (next) {
+                            infoText = `${next.remaining} more visit${next.remaining !== 1 ? 's' : ''} for ${next.reward}% off`;
+                        } else {
+                            infoText = 'All milestones reached!';
+                        }
+
+                        // Map to existing UI elements based on track name
+                        if (trackName === 'nails' && nailsCard) {
+                            nailsCard.style.display = 'block';
+                            document.getElementById('nailsTrackCount').textContent = `${count} visit${count !== 1 ? 's' : ''}`;
+                            document.getElementById('nailsProgressBar').style.width = `${progressPercent}%`;
+                            document.getElementById('nailsTrackInfo').textContent = infoText;
+                        } else if (trackName === 'maintenance' && maintCard) {
+                            maintCard.style.display = 'block';
+                            const target = next?.target || 6;
+                            document.getElementById('maintenanceTrackCount').textContent = `${count} of ${target}`;
+                            document.getElementById('maintenanceProgressBar').style.width = `${progressPercent}%`;
+                            document.getElementById('maintenanceTrackInfo').textContent = infoText;
+                        }
+                    }
+                    // Handle spend-amount tracks
+                    else if (track.type === 'spend_amount') {
+                        const amount = track.currentAmount || 0;
+                        const next = track.nextMilestone;
+                        const progressPercent = track.progressPercent || 0;
+
+                        if (trackName === 'spend' && spendCard) {
+                            spendCard.style.display = 'block';
+                            document.getElementById('spendTrackAmount').textContent = `R${amount.toLocaleString()}`;
+                            document.getElementById('spendProgressBar').style.width = `${progressPercent}%`;
+                            if (next) {
+                                document.getElementById('spendTrackInfo').textContent = `R${next.remaining?.toLocaleString() || 0} more to earn ${next.reward}% off`;
+                            } else {
+                                document.getElementById('spendTrackInfo').textContent = 'Keep spending to earn rewards!';
+                            }
+                        }
+                    }
                 }
-
-                document.getElementById('nailsProgressBar').style.width = `${progressPercent}%`;
-                document.getElementById('nailsTrackInfo').textContent = infoText;
-            }
-
-            // Render Maintenance Track
-            if (tracks?.maintenance?.enabled) {
-                const maintCard = document.getElementById('maintenanceTrackCard');
-                maintCard.style.display = 'block';
-                hasAnyProgress = true;
-
-                const m = tracks.maintenance.milestone;
-                const progress = m.progress || 0;
-                const target = m.target;
-
-                document.getElementById('maintenanceTrackCount').textContent = `${progress} of ${target}`;
-                document.getElementById('maintenanceProgressBar').style.width = `${(progress / target) * 100}%`;
-                document.getElementById('maintenanceTrackInfo').textContent = `${m.nextRewardAt} more visit${m.nextRewardAt !== 1 ? 's' : ''} for ${m.discount}% off`;
-            }
-
-            // Render Spend Track
-            if (tracks?.spend?.enabled) {
-                const spendCard = document.getElementById('spendTrackCard');
-                spendCard.style.display = 'block';
-                hasAnyProgress = true;
-
-                document.getElementById('spendTrackAmount').textContent = `R${(tracks.spend.currentAmount || 0).toLocaleString()}`;
-                document.getElementById('spendProgressBar').style.width = `${tracks.spend.progressPercent || 0}%`;
-                document.getElementById('spendTrackInfo').textContent = `R${tracks.spend.amountToNextReward?.toLocaleString() || 0} more to earn ${tracks.spend.discount}% off`;
             }
 
             // Show/hide no progress message

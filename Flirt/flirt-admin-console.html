@@ -3795,13 +3795,6 @@
                     <div class="filters-bar">
                         <input type="text" id="customerSearchInput" placeholder="Search customers..."
                                onkeyup="filterCustomers()" class="filter-select" style="flex: 1; max-width: 300px;">
-                        <select class="filter-select" id="customerTierFilter" onchange="filterCustomers()">
-                            <option value="">All Tiers</option>
-                            <option value="platinum">Platinum</option>
-                            <option value="gold">Gold</option>
-                            <option value="silver">Silver</option>
-                            <option value="bronze">Bronze</option>
-                        </select>
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <button class="btn btn-primary" onclick="openCustomerModal()">+ Add Customer</button>
                             <button class="btn btn-outline" onclick="exportCustomersCSV()">Export CSV</button>
@@ -3819,7 +3812,6 @@
                                     <th>Customer</th>
                                     <th>Email</th>
                                     <th>Phone</th>
-                                    <th>Tier</th>
                                     <th>Points</th>
                                     <th>Total Spent</th>
                                     <th>Last Visit</th>
@@ -3853,20 +3845,9 @@
                                 <label class="form-label">Phone</label>
                                 <input type="tel" class="form-input" id="customerPhone" placeholder="+27 82 123 4567">
                             </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Tier</label>
-                                    <select class="form-input" id="customerTier">
-                                        <option value="bronze">Bronze</option>
-                                        <option value="silver">Silver</option>
-                                        <option value="gold">Gold</option>
-                                        <option value="platinum">Platinum</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Points</label>
-                                    <input type="number" class="form-input" id="customerPoints" value="0" min="0">
-                                </div>
+                            <div class="form-group">
+                                <label class="form-label">Points</label>
+                                <input type="number" class="form-input" id="customerPoints" value="0" min="0">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Password (optional for new customers)</label>
@@ -4914,49 +4895,6 @@
                         </div>
                     </div>
 
-                    <!-- Tier Thresholds -->
-                    <div class="data-card">
-                        <div class="data-card-header">
-                            <h3 class="data-card-title">Loyalty Tier Thresholds</h3>
-                        </div>
-                        <div style="padding: 25px;">
-                            <div class="form-row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
-                                <div class="form-group" style="text-align: center;">
-                                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #CD7F32, #8B4513); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">
-                                        <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                    </div>
-                                    <label class="form-label" style="font-weight: 600; color: #CD7F32;">Bronze</label>
-                                    <input type="number" id="loyaltyTierBronze" class="form-input" value="0" disabled style="text-align: center; background: var(--surface-muted);">
-                                    <p style="font-size: 11px; color: var(--gray-medium); margin-top: 5px;">Starting tier</p>
-                                </div>
-                                <div class="form-group" style="text-align: center;">
-                                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #C0C0C0, #808080); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">
-                                        <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                    </div>
-                                    <label class="form-label" style="font-weight: 600; color: #808080;">Silver</label>
-                                    <input type="number" id="loyaltyTierSilver" class="form-input" min="1" placeholder="500" style="text-align: center;">
-                                    <p style="font-size: 11px; color: var(--gray-medium); margin-top: 5px;">5% discount</p>
-                                </div>
-                                <div class="form-group" style="text-align: center;">
-                                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #FFD700, #B8860B); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">
-                                        <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                    </div>
-                                    <label class="form-label" style="font-weight: 600; color: #B8860B;">Gold</label>
-                                    <input type="number" id="loyaltyTierGold" class="form-input" min="1" placeholder="1500" style="text-align: center;">
-                                    <p style="font-size: 11px; color: var(--gray-medium); margin-top: 5px;">15% discount</p>
-                                </div>
-                                <div class="form-group" style="text-align: center;">
-                                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #E5E4E2, #71797E); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">
-                                        <svg viewBox="0 0 24 24" fill="white" width="28" height="28"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                    </div>
-                                    <label class="form-label" style="font-weight: 600; color: #71797E;">Platinum</label>
-                                    <input type="number" id="loyaltyTierPlatinum" class="form-input" min="1" placeholder="5000" style="text-align: center;">
-                                    <p style="font-size: 11px; color: var(--gray-medium); margin-top: 5px;">20% discount</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Referral Program Settings -->
                     <div class="data-card">
                         <div class="data-card-header">
@@ -5022,33 +4960,6 @@
                         </div>
                     </div>
 
-                    <!-- Tier Preview -->
-                    <div class="data-card">
-                        <div class="data-card-header">
-                            <h3 class="data-card-title">Live Tier Preview</h3>
-                        </div>
-                        <div id="tierPreview" style="padding: 25px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                                <div style="flex: 1; min-width: 200px; padding: 15px; background: linear-gradient(135deg, rgba(205,127,50,0.1), rgba(139,69,19,0.1)); border-radius: 8px; border-left: 4px solid #CD7F32;">
-                                    <strong style="color: #CD7F32;">Bronze</strong>
-                                    <p style="margin: 5px 0 0; font-size: 13px; color: var(--gray-medium);">0 - <span id="previewBronzeMax">499</span> points</p>
-                                </div>
-                                <div style="flex: 1; min-width: 200px; padding: 15px; background: linear-gradient(135deg, rgba(192,192,192,0.1), rgba(128,128,128,0.1)); border-radius: 8px; border-left: 4px solid #808080;">
-                                    <strong style="color: #808080;">Silver</strong>
-                                    <p style="margin: 5px 0 0; font-size: 13px; color: var(--gray-medium);"><span id="previewSilverMin">500</span> - <span id="previewSilverMax">1499</span> points</p>
-                                </div>
-                                <div style="flex: 1; min-width: 200px; padding: 15px; background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(184,134,11,0.1)); border-radius: 8px; border-left: 4px solid #B8860B;">
-                                    <strong style="color: #B8860B;">Gold</strong>
-                                    <p style="margin: 5px 0 0; font-size: 13px; color: var(--gray-medium);"><span id="previewGoldMin">1500</span> - <span id="previewGoldMax">4999</span> points</p>
-                                </div>
-                                <div style="flex: 1; min-width: 200px; padding: 15px; background: linear-gradient(135deg, rgba(229,228,226,0.1), rgba(113,121,126,0.1)); border-radius: 8px; border-left: 4px solid #71797E;">
-                                    <strong style="color: #71797E;">Platinum</strong>
-                                    <p style="margin: 5px 0 0; font-size: 13px; color: var(--gray-medium);"><span id="previewPlatinumMin">5000</span>+ points</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Action Buttons -->
                     <div style="display: flex; gap: 15px; margin-top: 20px;">
                         <button class="btn btn-primary" onclick="saveLoyaltySettings()" style="flex: 1;">
@@ -5103,100 +5014,21 @@
                         </div>
                     </div>
 
-                    <!-- Nails Rewards -->
+                    <!-- Dynamic Reward Tracks -->
                     <div class="data-card">
                         <div class="data-card-header">
-                            <h3 class="data-card-title">Nails Rewards Track</h3>
-                            <label class="switch">
-                                <input type="checkbox" id="rewardsNailsEnabled" checked>
-                                <span class="slider"></span>
-                            </label>
+                            <h3 class="data-card-title">Reward Tracks</h3>
+                            <button class="btn btn-primary" onclick="showAddTrackModal()">+ Add New Track</button>
                         </div>
                         <div style="padding: 25px;">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">1st Milestone - Visit Count</label>
-                                    <input type="number" id="rewardsNailsMilestone1Count" class="form-input" min="1" value="6">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">1st Milestone - Discount %</label>
-                                    <input type="number" id="rewardsNailsMilestone1Discount" class="form-input" min="1" max="100" value="10">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">2nd Milestone - Visit Count</label>
-                                    <input type="number" id="rewardsNailsMilestone2Count" class="form-input" min="1" value="12">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">2nd Milestone - Discount %</label>
-                                    <input type="number" id="rewardsNailsMilestone2Discount" class="form-input" min="1" max="100" value="50">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Reward Expiry (days)</label>
-                                    <input type="number" id="rewardsNailsExpiryDays" class="form-input" min="1" value="90">
-                                    <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Days until reward expires after being issued</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Maintenance Rewards -->
-                    <div class="data-card">
-                        <div class="data-card-header">
-                            <h3 class="data-card-title">Hair Extensions Maintenance Track</h3>
-                            <label class="switch">
-                                <input type="checkbox" id="rewardsMaintenanceEnabled" checked>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div style="padding: 25px;">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Milestone - Every X Visits</label>
-                                    <input type="number" id="rewardsMaintenanceMilestoneCount" class="form-input" min="1" value="6">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Discount % at Milestone</label>
-                                    <input type="number" id="rewardsMaintenanceDiscount" class="form-input" min="1" max="100" value="10">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Reward Expiry (days)</label>
-                                    <input type="number" id="rewardsMaintenanceExpiryDays" class="form-input" min="1" value="90">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Spend & Save -->
-                    <div class="data-card">
-                        <div class="data-card-header">
-                            <h3 class="data-card-title">Spend & Save Track</h3>
-                            <label class="switch">
-                                <input type="checkbox" id="rewardsSpendEnabled" checked>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div style="padding: 25px;">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Spend Threshold (R)</label>
-                                    <input type="number" id="rewardsSpendThreshold" class="form-input" min="100" value="10000">
-                                    <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Cumulative spend amount to earn reward</p>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Discount % at Threshold</label>
-                                    <input type="number" id="rewardsSpendDiscount" class="form-input" min="1" max="100" value="20">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Reward Expiry (days)</label>
-                                    <input type="number" id="rewardsSpendExpiryDays" class="form-input" min="1" value="90">
+                            <p style="color: var(--gray-medium); margin-bottom: 20px;">
+                                Configure reward tracks that customers can earn. Each track has milestones that award discounts when reached.
+                                Link services or categories to tracks to automatically track customer progress.
+                            </p>
+                            <div id="dynamicRewardTracks" style="display: grid; gap: 20px;">
+                                <div style="text-align: center; padding: 40px; color: var(--gray-medium); background: var(--gray-light); border-radius: 8px;">
+                                    <span style="font-size: 48px; display: block; margin-bottom: 15px;">🎁</span>
+                                    <p>Loading reward tracks...</p>
                                 </div>
                             </div>
                         </div>
@@ -5245,6 +5077,71 @@
                                 <div class="form-group">
                                     <label class="form-label">Default Package Discount %</label>
                                     <input type="number" id="rewardsPackageDiscount" class="form-input" min="1" max="100" value="20">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Service-to-Reward Track Mappings -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Service-to-Reward Track Mappings</h3>
+                            <button class="btn btn-outline" onclick="loadServiceRewardMappings()">Refresh</button>
+                        </div>
+                        <div style="padding: 25px;">
+                            <p style="color: var(--gray-medium); margin-bottom: 20px;">
+                                Configure which services trigger which reward tracks. Services can be linked directly or by category.
+                                Rewards are processed when the associated invoice is paid.
+                            </p>
+
+                            <!-- Reward Track Definitions -->
+                            <div style="margin-bottom: 25px;">
+                                <h4 style="font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                                    <span>Active Reward Tracks</span>
+                                    <button class="btn btn-sm btn-outline" onclick="showAddTrackModal()" style="font-size: 12px; padding: 4px 12px;">+ Add Track</button>
+                                </h4>
+                                <div id="rewardTrackDefinitions" style="display: grid; gap: 10px;">
+                                    <div style="text-align: center; padding: 20px; color: var(--gray-medium);">Loading...</div>
+                                </div>
+                            </div>
+
+                            <!-- Category Mappings -->
+                            <div style="margin-bottom: 25px;">
+                                <h4 style="font-size: 16px; margin-bottom: 15px;">Category Mappings</h4>
+                                <p style="font-size: 13px; color: var(--gray-medium); margin-bottom: 15px;">
+                                    Map entire service categories to reward tracks. All services in a category will count toward the linked track.
+                                </p>
+                                <div id="categoryRewardMappings" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                    <div style="text-align: center; padding: 20px; color: var(--gray-medium); width: 100%;">Loading...</div>
+                                </div>
+                                <div style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
+                                    <select id="newCategoryMappingCategory" class="form-input" style="max-width: 200px;">
+                                        <option value="">Select Category</option>
+                                    </select>
+                                    <select id="newCategoryMappingTrack" class="form-input" style="max-width: 200px;">
+                                        <option value="">Select Track</option>
+                                    </select>
+                                    <button class="btn btn-primary btn-sm" onclick="addCategoryMapping()">Add Mapping</button>
+                                </div>
+                            </div>
+
+                            <!-- Individual Service Mappings -->
+                            <div>
+                                <h4 style="font-size: 16px; margin-bottom: 15px;">Individual Service Overrides</h4>
+                                <p style="font-size: 13px; color: var(--gray-medium); margin-bottom: 15px;">
+                                    Override category mappings for specific services or link services that don't belong to a mapped category.
+                                </p>
+                                <div id="serviceRewardMappings" style="margin-bottom: 15px;">
+                                    <div style="text-align: center; padding: 20px; color: var(--gray-medium);">Loading...</div>
+                                </div>
+                                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                    <select id="newServiceMappingService" class="form-input" style="max-width: 250px;">
+                                        <option value="">Select Service</option>
+                                    </select>
+                                    <select id="newServiceMappingTrack" class="form-input" style="max-width: 200px;">
+                                        <option value="">Select Track</option>
+                                    </select>
+                                    <button class="btn btn-primary btn-sm" onclick="addServiceMapping()">Add Mapping</button>
                                 </div>
                             </div>
                         </div>
@@ -9451,7 +9348,6 @@
 
         function filterCustomers() {
             const searchTerm = (document.getElementById('customerSearchInput')?.value || '').toLowerCase();
-            const tierFilter = document.getElementById('customerTierFilter')?.value || '';
 
             let filtered = window.lastCustomersList || [];
 
@@ -9461,10 +9357,6 @@
                     (c.email && c.email.toLowerCase().includes(searchTerm)) ||
                     (c.phone && c.phone.toLowerCase().includes(searchTerm))
                 );
-            }
-
-            if (tierFilter) {
-                filtered = filtered.filter(c => (c.tier || 'bronze').toLowerCase() === tierFilter);
             }
 
             renderCustomersTable(filtered);
@@ -9478,14 +9370,13 @@
             if (!container) return;
 
             if (customers.length === 0) {
-                container.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color: var(--text-subtle);">No customers found</td></tr>';
+                container.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color: var(--text-subtle);">No customers found</td></tr>';
                 return;
             }
 
             container.innerHTML = customers.map(c => {
                 const initials = getInitials(c.name || c.email || '');
                 const lastVisit = c.createdAt ? formatDateDisplay(c.createdAt) : '-';
-                const tierLabel = (c.tier || 'bronze').charAt(0).toUpperCase() + (c.tier || 'bronze').slice(1);
                 return `
                     <tr>
                         <td>
@@ -9498,7 +9389,6 @@
                         </td>
                         <td>${c.email || '-'}</td>
                         <td>${c.phone || '-'}</td>
-                        <td><span class="status-badge status-confirmed" style="text-transform: capitalize;">${tierLabel}</span></td>
                         <td>${(c.points || 0).toLocaleString()}</td>
                         <td>R${(c.totalSpent || 0).toLocaleString()}</td>
                         <td>${lastVisit}</td>
@@ -9517,12 +9407,11 @@
                 return;
             }
 
-            const headers = ['Name', 'Email', 'Phone', 'Tier', 'Points', 'Total Spent'];
+            const headers = ['Name', 'Email', 'Phone', 'Points', 'Total Spent'];
             const rows = customers.map(c => [
                 c.name || '',
                 c.email || '',
                 c.phone || '',
-                c.tier || 'bronze',
                 c.points || 0,
                 c.totalSpent || 0
             ]);
@@ -9557,7 +9446,6 @@
             document.getElementById('customerName').value = customer?.name || '';
             document.getElementById('customerEmail').value = customer?.email || '';
             document.getElementById('customerPhone').value = customer?.phone || '';
-            document.getElementById('customerTier').value = customer?.tier || 'bronze';
             document.getElementById('customerPoints').value = customer?.points ?? 0;
             document.getElementById('customerPassword').value = '';
 
@@ -9590,7 +9478,6 @@
             const name = document.getElementById('customerName').value.trim();
             const email = document.getElementById('customerEmail').value.trim();
             const phone = document.getElementById('customerPhone').value.trim();
-            const tier = document.getElementById('customerTier').value;
             const points = parseInt(document.getElementById('customerPoints').value, 10) || 0;
             const password = document.getElementById('customerPassword').value.trim();
 
@@ -9608,13 +9495,13 @@
                 if (editingCustomerId) {
                     await apiCall(`/admin/customers/${editingCustomerId}`, {
                         method: 'PUT',
-                        body: JSON.stringify({ name, phone, tier, points, password: password || undefined })
+                        body: JSON.stringify({ name, phone, points, password: password || undefined })
                     });
                     alert('Customer updated');
                 } else {
                     const result = await apiCall('/admin/customers', {
                         method: 'POST',
-                        body: JSON.stringify({ name, email, phone, tier, points, password: password || undefined })
+                        body: JSON.stringify({ name, email, phone, points, password: password || undefined })
                     });
                     newCustomerId = result.customerId || result.id;
 
@@ -10943,11 +10830,85 @@
                     rewardsConfig = result.config;
                     populateRewardsForm(result.config);
                 }
-                // Also load analytics
+                // Load dynamic reward tracks
+                await loadDynamicRewardTracks();
+                // Also load analytics and service-reward mappings
                 loadRewardsAnalytics();
+                loadServiceRewardMappings();
             } catch (error) {
                 console.error('Error loading rewards settings:', error);
                 showRewardsError('Failed to load rewards settings: ' + error.message);
+            }
+        }
+
+        async function loadDynamicRewardTracks() {
+            const container = document.getElementById('dynamicRewardTracks');
+            if (!container) return;
+
+            try {
+                const result = await apiCall('/admin/reward-track-definitions');
+                rewardTrackDefinitions = result.tracks || [];
+
+                if (rewardTrackDefinitions.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--gray-medium); background: var(--gray-light); border-radius: 8px;">' +
+                        '<span style="font-size: 48px; display: block; margin-bottom: 15px;">🎁</span>' +
+                        '<p style="margin-bottom: 15px;">No reward tracks configured yet.</p>' +
+                        '<button class="btn btn-primary" onclick="showAddTrackModal()">Create Your First Track</button>' +
+                    '</div>';
+                    return;
+                }
+
+                container.innerHTML = rewardTrackDefinitions.map(function(track) {
+                    var milestones = typeof track.milestones === 'string' ? JSON.parse(track.milestones) : (track.milestones || []);
+                    var trackTypeLabel = track.track_type === 'visit_count' ? 'Visit-based' : 'Spend-based';
+                    var trackTypeIcon = track.track_type === 'visit_count' ? '📊' : '💰';
+
+                    var milestonesHtml = milestones.map(function(m, idx) {
+                        if (track.track_type === 'visit_count') {
+                            return '<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-light);">' +
+                                '<span>Milestone ' + (idx + 1) + ': ' + (m.count || 0) + ' visits</span>' +
+                                '<span style="font-weight: 600; color: var(--success);">' + (m.reward_value || 0) + '% discount' + (m.repeating ? ' (repeating)' : '') + '</span>' +
+                            '</div>';
+                        } else {
+                            return '<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-light);">' +
+                                '<span>Milestone ' + (idx + 1) + ': R' + (m.amount || 0).toLocaleString() + ' spent</span>' +
+                                '<span style="font-weight: 600; color: var(--success);">' + (m.reward_value || 0) + '% discount' + (m.repeating ? ' (repeating)' : '') + '</span>' +
+                            '</div>';
+                        }
+                    }).join('');
+
+                    if (milestones.length === 0) {
+                        milestonesHtml = '<p style="color: var(--gray-medium); font-style: italic;">No milestones configured</p>';
+                    }
+
+                    return '<div style="background: white; border: 1px solid var(--gray-light); border-radius: 12px; overflow: hidden;">' +
+                        '<div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: ' + (track.active ? 'linear-gradient(135deg, #fff5f8 0%, #ffe8ee 100%)' : 'var(--gray-light)') + ';">' +
+                            '<div style="display: flex; align-items: center; gap: 15px;">' +
+                                '<span style="font-size: 32px;">' + (track.icon || '🎁') + '</span>' +
+                                '<div>' +
+                                    '<h4 style="margin: 0; font-size: 18px;">' + track.display_name + '</h4>' +
+                                    '<p style="margin: 5px 0 0; font-size: 13px; color: var(--gray-medium);">' + trackTypeIcon + ' ' + trackTypeLabel + ' • ' + (track.reward_expiry_days || 90) + ' days expiry</p>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div style="display: flex; align-items: center; gap: 10px;">' +
+                                '<span style="padding: 4px 12px; border-radius: 20px; font-size: 12px; background: ' + (track.active ? 'var(--success)' : 'var(--gray-medium)') + '; color: white;">' + (track.active ? 'Active' : 'Inactive') + '</span>' +
+                                '<button class="btn btn-outline btn-sm" onclick="editTrack(\'' + track.id + '\')">Edit</button>' +
+                                '<button class="btn btn-danger btn-sm" onclick="deleteTrack(\'' + track.id + '\')">Delete</button>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div style="padding: 20px;">' +
+                            '<p style="color: var(--gray-dark); margin-bottom: 15px;">' + (track.description || 'No description') + '</p>' +
+                            '<h5 style="font-size: 14px; margin-bottom: 10px; color: var(--gray-medium);">MILESTONES</h5>' +
+                            milestonesHtml +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            } catch (error) {
+                console.error('Error loading dynamic reward tracks:', error);
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--danger);">' +
+                    '<p>Failed to load reward tracks: ' + error.message + '</p>' +
+                    '<button class="btn btn-outline" onclick="loadDynamicRewardTracks()" style="margin-top: 10px;">Retry</button>' +
+                '</div>';
             }
         }
 
@@ -10955,26 +10916,6 @@
             // Programme status
             document.getElementById('rewardsProgrammeEnabled').checked = config.programme_enabled == 1;
             document.getElementById('rewardsProgrammeName').value = config.programme_name || 'Salon Rewards';
-
-            // Nails track
-            document.getElementById('rewardsNailsEnabled').checked = config.nails_enabled == 1;
-            document.getElementById('rewardsNailsMilestone1Count').value = config.nails_milestone_1_count || 6;
-            document.getElementById('rewardsNailsMilestone1Discount').value = config.nails_milestone_1_discount || 10;
-            document.getElementById('rewardsNailsMilestone2Count').value = config.nails_milestone_2_count || 12;
-            document.getElementById('rewardsNailsMilestone2Discount').value = config.nails_milestone_2_discount || 50;
-            document.getElementById('rewardsNailsExpiryDays').value = config.nails_reward_expiry_days || 90;
-
-            // Maintenance track
-            document.getElementById('rewardsMaintenanceEnabled').checked = config.maintenance_enabled == 1;
-            document.getElementById('rewardsMaintenanceMilestoneCount').value = config.maintenance_milestone_count || 6;
-            document.getElementById('rewardsMaintenanceDiscount').value = config.maintenance_discount || 10;
-            document.getElementById('rewardsMaintenanceExpiryDays').value = config.maintenance_reward_expiry_days || 90;
-
-            // Spend track
-            document.getElementById('rewardsSpendEnabled').checked = config.spend_enabled == 1;
-            document.getElementById('rewardsSpendThreshold').value = config.spend_threshold || 10000;
-            document.getElementById('rewardsSpendDiscount').value = config.spend_discount || 20;
-            document.getElementById('rewardsSpendExpiryDays').value = config.spend_reward_expiry_days || 90;
 
             // Referral
             document.getElementById('rewardsReferralEnabled').checked = config.referral_enabled == 1;
@@ -10987,37 +10928,26 @@
             document.getElementById('rewardsPackageDiscount').value = config.wash_blowdry_package_discount || 20;
 
             // Hide messages
-            document.getElementById('rewardsErrors').style.display = 'none';
-            document.getElementById('rewardsSuccess').style.display = 'none';
+            var errorsEl = document.getElementById('rewardsErrors');
+            var successEl = document.getElementById('rewardsSuccess');
+            if (errorsEl) errorsEl.style.display = 'none';
+            if (successEl) successEl.style.display = 'none';
         }
 
         async function saveRewardsSettings() {
             try {
+                // Build config from general programme settings only
+                // Track-specific settings are now managed dynamically through reward_track_definitions table
                 const config = {
                     programme_enabled: document.getElementById('rewardsProgrammeEnabled').checked ? 1 : 0,
                     programme_name: document.getElementById('rewardsProgrammeName').value,
 
-                    nails_enabled: document.getElementById('rewardsNailsEnabled').checked ? 1 : 0,
-                    nails_milestone_1_count: parseInt(document.getElementById('rewardsNailsMilestone1Count').value) || 6,
-                    nails_milestone_1_discount: parseFloat(document.getElementById('rewardsNailsMilestone1Discount').value) || 10,
-                    nails_milestone_2_count: parseInt(document.getElementById('rewardsNailsMilestone2Count').value) || 12,
-                    nails_milestone_2_discount: parseFloat(document.getElementById('rewardsNailsMilestone2Discount').value) || 50,
-                    nails_reward_expiry_days: parseInt(document.getElementById('rewardsNailsExpiryDays').value) || 90,
-
-                    maintenance_enabled: document.getElementById('rewardsMaintenanceEnabled').checked ? 1 : 0,
-                    maintenance_milestone_count: parseInt(document.getElementById('rewardsMaintenanceMilestoneCount').value) || 6,
-                    maintenance_discount: parseFloat(document.getElementById('rewardsMaintenanceDiscount').value) || 10,
-                    maintenance_reward_expiry_days: parseInt(document.getElementById('rewardsMaintenanceExpiryDays').value) || 90,
-
-                    spend_enabled: document.getElementById('rewardsSpendEnabled').checked ? 1 : 0,
-                    spend_threshold: parseFloat(document.getElementById('rewardsSpendThreshold').value) || 10000,
-                    spend_discount: parseFloat(document.getElementById('rewardsSpendDiscount').value) || 20,
-                    spend_reward_expiry_days: parseInt(document.getElementById('rewardsSpendExpiryDays').value) || 90,
-
+                    // Referral settings
                     referral_enabled: document.getElementById('rewardsReferralEnabled').checked ? 1 : 0,
                     referral_min_booking_value: parseFloat(document.getElementById('rewardsReferralMinValue').value) || 1000,
                     referral_reward_description: document.getElementById('rewardsReferralDescription').value,
 
+                    // Package settings
                     packages_enabled: document.getElementById('rewardsPackagesEnabled').checked ? 1 : 0,
                     wash_blowdry_package_sessions: parseInt(document.getElementById('rewardsPackageSessions').value) || 4,
                     wash_blowdry_package_discount: parseFloat(document.getElementById('rewardsPackageDiscount').value) || 20
@@ -11068,6 +10998,471 @@
             setTimeout(() => {
                 document.getElementById('rewardsSuccess').style.display = 'none';
             }, 3000);
+        }
+
+        // ============================================
+        // SERVICE-TO-REWARD TRACK MAPPINGS
+        // ============================================
+        let rewardTrackDefinitions = [];
+        let categoryMappings = [];
+        let serviceMappings = [];
+        let allServices = [];
+        let availableCategories = [];
+
+        async function loadServiceRewardMappings() {
+            try {
+                // Load all data in parallel
+                const [tracksRes, catMappingsRes, serviceMappingsRes, servicesRes] = await Promise.all([
+                    apiCall('/admin/reward-track-definitions'),
+                    apiCall('/admin/category-reward-mappings'),
+                    apiCall('/admin/service-reward-mappings'),
+                    apiCall('/admin/services')
+                ]);
+
+                if (tracksRes.success) {
+                    rewardTrackDefinitions = tracksRes.tracks || [];
+                    renderRewardTrackDefinitions();
+                    populateTrackDropdowns();
+                }
+
+                if (catMappingsRes.success) {
+                    categoryMappings = catMappingsRes.mappings || [];
+                    availableCategories = catMappingsRes.availableCategories || [];
+                    renderCategoryMappings();
+                    populateCategoryDropdown();
+                }
+
+                if (serviceMappingsRes.success) {
+                    serviceMappings = serviceMappingsRes.mappings || [];
+                    renderServiceMappings();
+                }
+
+                if (servicesRes.success) {
+                    allServices = servicesRes.services || [];
+                    populateServiceDropdown();
+                }
+            } catch (error) {
+                console.error('Error loading service-reward mappings:', error);
+                showAdminToast('Failed to load reward mappings: ' + error.message, 'error');
+            }
+        }
+
+        function renderRewardTrackDefinitions() {
+            const container = document.getElementById('rewardTrackDefinitions');
+            if (!rewardTrackDefinitions.length) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--gray-medium);">No reward tracks defined. Add one to get started.</div>';
+                return;
+            }
+
+            container.innerHTML = rewardTrackDefinitions.map(track => {
+                const milestones = typeof track.milestones === 'string' ? JSON.parse(track.milestones) : (track.milestones || []);
+                const milestonesText = milestones.map(m => {
+                    if (m.count) return m.count + ' visits = ' + m.reward_value + '%';
+                    if (m.amount) return 'R' + m.amount + ' = ' + m.reward_value + '%';
+                    return '';
+                }).filter(Boolean).join(', ');
+
+                return '<div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--gray-light); border-radius: 8px;">' +
+                    '<span style="font-size: 24px;">' + (track.icon || '🎁') + '</span>' +
+                    '<div style="flex: 1;">' +
+                        '<div style="font-weight: 600;">' + track.display_name + '</div>' +
+                        '<div style="font-size: 12px; color: var(--gray-medium);">' +
+                            (track.track_type === 'visit_count' ? 'Visit-based' : 'Spend-based') + ' • ' +
+                            (milestonesText || 'No milestones') + ' • ' +
+                            'Expires in ' + (track.reward_expiry_days || 90) + ' days' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="display: flex; gap: 5px;">' +
+                        '<button class="btn btn-sm btn-outline" onclick="editTrack(\'' + track.id + '\')" title="Edit">Edit</button>' +
+                        '<button class="btn btn-sm btn-danger" onclick="deleteTrack(\'' + track.id + '\')" title="Delete">×</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function renderCategoryMappings() {
+            const container = document.getElementById('categoryRewardMappings');
+            if (!categoryMappings.length) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--gray-medium); width: 100%;">No category mappings. Add a mapping to link service categories to reward tracks.</div>';
+                return;
+            }
+
+            container.innerHTML = categoryMappings.map(mapping =>
+                '<div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--primary-light); border-radius: 20px; font-size: 13px;">' +
+                    '<span style="font-weight: 500;">' + mapping.category_name + '</span>' +
+                    '<span style="color: var(--gray-medium);">→</span>' +
+                    '<span>' + mapping.track_name + '</span>' +
+                    '<button onclick="deleteCategoryMapping(\'' + mapping.id + '\')" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0 4px;" title="Remove">×</button>' +
+                '</div>'
+            ).join('');
+        }
+
+        function renderServiceMappings() {
+            const container = document.getElementById('serviceRewardMappings');
+            if (!serviceMappings.length) {
+                container.innerHTML = '<div style="text-align: center; padding: 15px; color: var(--gray-medium);">No individual service mappings. Services will use category mappings.</div>';
+                return;
+            }
+
+            let html = '<table style="width: 100%; font-size: 13px;">' +
+                '<thead>' +
+                    '<tr style="text-align: left; color: var(--gray-medium);">' +
+                        '<th style="padding: 8px;">Service</th>' +
+                        '<th style="padding: 8px;">Track</th>' +
+                        '<th style="padding: 8px;">Multiplier</th>' +
+                        '<th style="padding: 8px;"></th>' +
+                    '</tr>' +
+                '</thead>' +
+                '<tbody>';
+
+            serviceMappings.forEach(m => {
+                html += '<tr style="border-top: 1px solid var(--gray-light);">' +
+                    '<td style="padding: 8px;">' + (m.service_name || m.service_id) + '</td>' +
+                    '<td style="padding: 8px;">' + (m.track_name || m.track_id) + '</td>' +
+                    '<td style="padding: 8px;">' + (m.points_multiplier || 1.0) + 'x</td>' +
+                    '<td style="padding: 8px;">' +
+                        '<button onclick="deleteServiceMapping(\'' + m.id + '\')" class="btn btn-sm btn-danger">×</button>' +
+                    '</td>' +
+                '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function populateTrackDropdowns() {
+            let options = '';
+            rewardTrackDefinitions.forEach(t => {
+                options += '<option value="' + t.id + '">' + t.display_name + '</option>';
+            });
+            document.getElementById('newCategoryMappingTrack').innerHTML = '<option value="">Select Track</option>' + options;
+            document.getElementById('newServiceMappingTrack').innerHTML = '<option value="">Select Track</option>' + options;
+        }
+
+        function populateCategoryDropdown() {
+            let options = '';
+            availableCategories.forEach(c => {
+                options += '<option value="' + c + '">' + c + '</option>';
+            });
+            document.getElementById('newCategoryMappingCategory').innerHTML = '<option value="">Select Category</option>' + options;
+        }
+
+        function populateServiceDropdown() {
+            let options = '';
+            allServices.forEach(s => {
+                options += '<option value="' + s.id + '">' + s.name + ' (' + (s.category || 'No category') + ')</option>';
+            });
+            document.getElementById('newServiceMappingService').innerHTML = '<option value="">Select Service</option>' + options;
+        }
+
+        async function addCategoryMapping() {
+            const categoryName = document.getElementById('newCategoryMappingCategory').value;
+            const trackId = document.getElementById('newCategoryMappingTrack').value;
+
+            if (!categoryName || !trackId) {
+                showAdminToast('Please select both a category and a track', 'error');
+                return;
+            }
+
+            try {
+                const result = await apiCall('/admin/category-reward-mappings', {
+                    method: 'POST',
+                    body: JSON.stringify({ category_name: categoryName, track_id: trackId })
+                });
+
+                if (result.success) {
+                    showAdminToast('Category mapping added', 'success');
+                    loadServiceRewardMappings();
+                } else {
+                    showAdminToast(result.message || 'Failed to add mapping', 'error');
+                }
+            } catch (error) {
+                showAdminToast('Error adding mapping: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteCategoryMapping(id) {
+            if (!confirm('Remove this category mapping?')) return;
+
+            try {
+                const result = await apiCall('/admin/category-reward-mappings/' + id, { method: 'DELETE' });
+                if (result.success) {
+                    showAdminToast('Category mapping removed', 'success');
+                    loadServiceRewardMappings();
+                }
+            } catch (error) {
+                showAdminToast('Error removing mapping: ' + error.message, 'error');
+            }
+        }
+
+        async function addServiceMapping() {
+            const serviceId = document.getElementById('newServiceMappingService').value;
+            const trackId = document.getElementById('newServiceMappingTrack').value;
+
+            if (!serviceId || !trackId) {
+                showAdminToast('Please select both a service and a track', 'error');
+                return;
+            }
+
+            try {
+                const result = await apiCall('/admin/service-reward-mappings', {
+                    method: 'POST',
+                    body: JSON.stringify({ service_id: serviceId, track_id: trackId })
+                });
+
+                if (result.success) {
+                    showAdminToast('Service mapping added', 'success');
+                    loadServiceRewardMappings();
+                } else {
+                    showAdminToast(result.message || 'Failed to add mapping', 'error');
+                }
+            } catch (error) {
+                showAdminToast('Error adding mapping: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteServiceMapping(id) {
+            if (!confirm('Remove this service mapping?')) return;
+
+            try {
+                const result = await apiCall('/admin/service-reward-mappings/' + id, { method: 'DELETE' });
+                if (result.success) {
+                    showAdminToast('Service mapping removed', 'success');
+                    loadServiceRewardMappings();
+                }
+            } catch (error) {
+                showAdminToast('Error removing mapping: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteTrack(id) {
+            if (!confirm('Delete this reward track? This will also remove all its mappings.')) return;
+
+            try {
+                const result = await apiCall('/admin/reward-track-definitions/' + id, { method: 'DELETE' });
+                if (result.success) {
+                    showAdminToast('Track deleted', 'success');
+                    // Refresh both the main tracks display and the mappings section
+                    loadDynamicRewardTracks();
+                    loadServiceRewardMappings();
+                } else {
+                    showAdminToast(result.message || 'Failed to delete track', 'error');
+                }
+            } catch (error) {
+                showAdminToast('Error deleting track: ' + error.message, 'error');
+            }
+        }
+
+        function editTrack(id) {
+            const track = rewardTrackDefinitions.find(t => t.id === id);
+            if (!track) return;
+            showAddTrackModal(track);
+        }
+
+        // Track modal milestones temporary storage
+        let trackModalMilestones = [];
+
+        function showAddTrackModal(track) {
+            const isEdit = !!track;
+            trackModalMilestones = track && typeof track.milestones === 'string' ? JSON.parse(track.milestones) : (track ? track.milestones : []) || [];
+            if (!Array.isArray(trackModalMilestones)) trackModalMilestones = [];
+
+            var trackType = track ? track.track_type : 'visit_count';
+            var modalHtml = '<div id="trackModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">' +
+                '<div style="background: white; border-radius: 12px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;">' +
+                    '<div style="padding: 20px; border-bottom: 1px solid var(--gray-light);">' +
+                        '<h3 style="margin: 0;">' + (isEdit ? 'Edit' : 'Add') + ' Reward Track</h3>' +
+                    '</div>' +
+                    '<div style="padding: 20px;">' +
+                        '<div class="form-group" style="margin-bottom: 15px;">' +
+                            '<label class="form-label">Track Name (unique identifier)</label>' +
+                            '<input type="text" id="trackName" class="form-input" placeholder="e.g., nails, maintenance" value="' + (track ? track.name : '') + '"' + (isEdit ? ' disabled style="background: var(--gray-light);"' : '') + '>' +
+                            (isEdit ? '<p style="font-size: 11px; color: var(--gray-medium); margin-top: 5px;">Name cannot be changed after creation</p>' : '') +
+                        '</div>' +
+                        '<div class="form-group" style="margin-bottom: 15px;">' +
+                            '<label class="form-label">Display Name</label>' +
+                            '<input type="text" id="trackDisplayName" class="form-input" placeholder="e.g., Nails Rewards" value="' + (track ? track.display_name : '') + '">' +
+                        '</div>' +
+                        '<div class="form-group" style="margin-bottom: 15px;">' +
+                            '<label class="form-label">Description</label>' +
+                            '<input type="text" id="trackDescription" class="form-input" placeholder="Brief description" value="' + (track ? (track.description || '') : '') + '">' +
+                        '</div>' +
+                        '<div class="form-row" style="display: flex; gap: 15px; margin-bottom: 15px;">' +
+                            '<div class="form-group" style="flex: 1;">' +
+                                '<label class="form-label">Track Type</label>' +
+                                '<select id="trackType" class="form-input" onchange="updateMilestoneLabels()">' +
+                                    '<option value="visit_count"' + (trackType === 'visit_count' ? ' selected' : '') + '>Visit Count</option>' +
+                                    '<option value="spend_amount"' + (trackType === 'spend_amount' ? ' selected' : '') + '>Spend Amount</option>' +
+                                '</select>' +
+                            '</div>' +
+                            '<div class="form-group" style="flex: 1;">' +
+                                '<label class="form-label">Icon</label>' +
+                                '<input type="text" id="trackIcon" class="form-input" placeholder="Emoji" value="' + (track ? (track.icon || '🎁') : '🎁') + '" style="width: 80px;">' +
+                            '</div>' +
+                            '<div class="form-group" style="flex: 1;">' +
+                                '<label class="form-label">Expiry (days)</label>' +
+                                '<input type="number" id="trackExpiryDays" class="form-input" value="' + (track ? (track.reward_expiry_days || 90) : 90) + '" min="1">' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="form-group" style="margin-bottom: 15px;">' +
+                            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">' +
+                                '<label class="form-label" style="margin: 0;">Milestones</label>' +
+                                '<button type="button" class="btn btn-outline btn-sm" onclick="addMilestoneRow()">+ Add Milestone</button>' +
+                            '</div>' +
+                            '<div id="milestonesContainer" style="background: var(--gray-light); border-radius: 8px; padding: 15px;">' +
+                                renderMilestonesEditor(trackModalMilestones, trackType) +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="form-group" style="margin-bottom: 15px;">' +
+                            '<label class="form-label">Active Status</label>' +
+                            '<label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">' +
+                                '<input type="checkbox" id="trackActive"' + (track ? (track.active ? ' checked' : '') : ' checked') + '>' +
+                                '<span>Track is active and available for customer progress</span>' +
+                            '</label>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="padding: 15px 20px; border-top: 1px solid var(--gray-light); display: flex; justify-content: flex-end; gap: 10px;">' +
+                        '<button class="btn btn-outline" onclick="document.getElementById(\'trackModal\').remove()">Cancel</button>' +
+                        '<button class="btn btn-primary" onclick="saveTrack(\'' + (track ? track.id : '') + '\')">' + (isEdit ? 'Save Changes' : 'Create Track') + '</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function renderMilestonesEditor(milestones, trackType) {
+            if (!milestones || milestones.length === 0) {
+                return '<p style="text-align: center; color: var(--gray-medium); padding: 20px; margin: 0;">No milestones yet. Add one to get started.</p>';
+            }
+
+            var isVisit = trackType === 'visit_count';
+            var thresholdLabel = isVisit ? 'Visits' : 'Spend (R)';
+
+            return milestones.map(function(m, idx) {
+                var threshold = isVisit ? (m.count || 0) : (m.amount || 0);
+                return '<div class="milestone-row" style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px; background: white; padding: 12px; border-radius: 8px;" data-index="' + idx + '">' +
+                    '<div style="flex: 1;">' +
+                        '<label style="font-size: 11px; color: var(--gray-medium);">' + thresholdLabel + '</label>' +
+                        '<input type="number" class="form-input milestone-threshold" value="' + threshold + '" min="1" style="margin-top: 4px;" onchange="updateMilestoneData(' + idx + ')">' +
+                    '</div>' +
+                    '<div style="flex: 1;">' +
+                        '<label style="font-size: 11px; color: var(--gray-medium);">Discount %</label>' +
+                        '<input type="number" class="form-input milestone-discount" value="' + (m.reward_value || 0) + '" min="1" max="100" style="margin-top: 4px;" onchange="updateMilestoneData(' + idx + ')">' +
+                    '</div>' +
+                    '<div style="display: flex; align-items: center; gap: 8px; padding-top: 18px;">' +
+                        '<label style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer;" title="Milestone repeats after being earned">' +
+                            '<input type="checkbox" class="milestone-repeating"' + (m.repeating ? ' checked' : '') + ' onchange="updateMilestoneData(' + idx + ')">' +
+                            '<span>Repeat</span>' +
+                        '</label>' +
+                        '<button type="button" class="btn btn-sm" style="background: var(--danger); color: white; padding: 4px 8px;" onclick="removeMilestoneRow(' + idx + ')">×</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function updateMilestoneLabels() {
+            var trackType = document.getElementById('trackType').value;
+            var container = document.getElementById('milestonesContainer');
+            if (container) {
+                container.innerHTML = renderMilestonesEditor(trackModalMilestones, trackType);
+            }
+        }
+
+        function addMilestoneRow() {
+            var trackType = document.getElementById('trackType').value;
+            var isVisit = trackType === 'visit_count';
+            var newMilestone = isVisit
+                ? { count: 6, reward_value: 10, reward_type: 'percentage_discount', repeating: false }
+                : { amount: 5000, reward_value: 10, reward_type: 'percentage_discount', repeating: false };
+
+            trackModalMilestones.push(newMilestone);
+            updateMilestoneLabels();
+        }
+
+        function removeMilestoneRow(index) {
+            trackModalMilestones.splice(index, 1);
+            updateMilestoneLabels();
+        }
+
+        function updateMilestoneData(index) {
+            var rows = document.querySelectorAll('.milestone-row');
+            if (rows[index]) {
+                var row = rows[index];
+                var threshold = parseInt(row.querySelector('.milestone-threshold').value) || 0;
+                var discount = parseInt(row.querySelector('.milestone-discount').value) || 0;
+                var repeating = row.querySelector('.milestone-repeating').checked;
+                var trackType = document.getElementById('trackType').value;
+
+                if (trackType === 'visit_count') {
+                    trackModalMilestones[index] = {
+                        count: threshold,
+                        reward_value: discount,
+                        reward_type: 'percentage_discount',
+                        repeating: repeating
+                    };
+                } else {
+                    trackModalMilestones[index] = {
+                        amount: threshold,
+                        reward_value: discount,
+                        reward_type: 'percentage_discount',
+                        repeating: repeating
+                    };
+                }
+            }
+        }
+
+        async function saveTrack(existingId) {
+            const name = document.getElementById('trackName').value.trim();
+            const displayName = document.getElementById('trackDisplayName').value.trim();
+            const description = document.getElementById('trackDescription').value.trim();
+            const trackType = document.getElementById('trackType').value;
+            const icon = document.getElementById('trackIcon').value.trim();
+            const expiryDays = parseInt(document.getElementById('trackExpiryDays').value) || 90;
+            const active = document.getElementById('trackActive').checked ? 1 : 0;
+
+            // Use the milestone editor data instead of JSON textarea
+            const milestones = trackModalMilestones;
+
+            if (!name || !displayName || !trackType) {
+                showAdminToast('Please fill in name, display name, and track type', 'error');
+                return;
+            }
+
+            if (milestones.length === 0) {
+                showAdminToast('Please add at least one milestone', 'error');
+                return;
+            }
+
+            const data = {
+                name: name,
+                display_name: displayName,
+                description: description,
+                track_type: trackType,
+                icon: icon || '🎁',
+                reward_expiry_days: expiryDays,
+                milestones: milestones,
+                active: active
+            };
+
+            try {
+                const url = existingId ? '/admin/reward-track-definitions/' + existingId : '/admin/reward-track-definitions';
+                const method = existingId ? 'PUT' : 'POST';
+
+                const result = await apiCall(url, { method: method, body: JSON.stringify(data) });
+
+                if (result.success) {
+                    document.getElementById('trackModal').remove();
+                    showAdminToast(existingId ? 'Track updated' : 'Track created', 'success');
+                    // Refresh both the main tracks display and the mappings section
+                    loadDynamicRewardTracks();
+                    loadServiceRewardMappings();
+                } else {
+                    showAdminToast(result.message || 'Failed to save track', 'error');
+                }
+            } catch (error) {
+                showAdminToast('Error saving track: ' + error.message, 'error');
+            }
         }
 
         // ============================================
@@ -11691,7 +12086,7 @@
         }
 
         // ===== SERVICE MANAGEMENT FUNCTIONS =====
-        let allServices = [];
+        // allServices is already declared in the reward mappings section
         let editingServiceId = null;
 
         async function loadServices() {

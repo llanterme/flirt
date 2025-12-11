@@ -3211,6 +3211,298 @@ const UserPackageRepository = {
     }
 };
 
+// ============================================
+// REWARD TRACK DEFINITIONS REPOSITORY
+// Admin-configurable reward tracks
+// ============================================
+const RewardTrackDefinitionRepository = {
+    async findAll(includeInactive = false) {
+        const sql = includeInactive
+            ? 'SELECT * FROM reward_track_definitions ORDER BY display_order, name'
+            : 'SELECT * FROM reward_track_definitions WHERE active = 1 ORDER BY display_order, name';
+        const tracks = await dbAll(sql);
+        return tracks.map(t => ({
+            ...t,
+            milestones: JSON.parse(t.milestones || '[]')
+        }));
+    },
+
+    async findById(id) {
+        const track = await dbGet('SELECT * FROM reward_track_definitions WHERE id = ?', [id]);
+        if (track) {
+            track.milestones = JSON.parse(track.milestones || '[]');
+        }
+        return track;
+    },
+
+    async findByName(name) {
+        const track = await dbGet('SELECT * FROM reward_track_definitions WHERE name = ?', [name]);
+        if (track) {
+            track.milestones = JSON.parse(track.milestones || '[]');
+        }
+        return track;
+    },
+
+    async create(track) {
+        const id = track.id || require('uuid').v4();
+        await dbRun(`
+            INSERT INTO reward_track_definitions
+            (id, name, display_name, description, track_type, icon, milestones, reward_expiry_days, reward_applicable_to, active, display_order)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            id,
+            track.name,
+            track.display_name,
+            track.description || null,
+            track.track_type,
+            track.icon || '🎁',
+            JSON.stringify(track.milestones || []),
+            track.reward_expiry_days || 90,
+            track.reward_applicable_to || null,
+            track.active !== false ? 1 : 0,
+            track.display_order || 0
+        ]);
+        return this.findById(id);
+    },
+
+    async update(id, updates) {
+        const allowed = ['display_name', 'description', 'icon', 'milestones', 'reward_expiry_days', 'reward_applicable_to', 'active', 'display_order'];
+        const sets = [];
+        const params = [];
+
+        for (const key of allowed) {
+            if (updates[key] !== undefined) {
+                sets.push(`${key} = ?`);
+                params.push(key === 'milestones' ? JSON.stringify(updates[key]) : updates[key]);
+            }
+        }
+
+        if (sets.length === 0) return this.findById(id);
+
+        sets.push('updated_at = datetime("now")');
+        params.push(id);
+
+        await dbRun(`UPDATE reward_track_definitions SET ${sets.join(', ')} WHERE id = ?`, params);
+        return this.findById(id);
+    },
+
+    async delete(id) {
+        await dbRun('DELETE FROM reward_track_definitions WHERE id = ?', [id]);
+    }
+};
+
+// ============================================
+// SERVICE REWARD MAPPINGS REPOSITORY
+// Links services to reward tracks
+// ============================================
+const ServiceRewardMappingRepository = {
+    async findAll(filters = {}) {
+        let sql = `
+            SELECT m.*, s.name as service_name, s.category as service_category, t.display_name as track_name
+            FROM service_reward_mappings m
+            JOIN services s ON m.service_id = s.id
+            JOIN reward_track_definitions t ON m.track_id = t.id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (filters.serviceId) {
+            sql += ' AND m.service_id = ?';
+            params.push(filters.serviceId);
+        }
+        if (filters.trackId) {
+            sql += ' AND m.track_id = ?';
+            params.push(filters.trackId);
+        }
+        if (filters.active !== undefined) {
+            sql += ' AND m.active = ?';
+            params.push(filters.active ? 1 : 0);
+        }
+
+        sql += ' ORDER BY s.name, t.display_name';
+        return dbAll(sql, params);
+    },
+
+    async findByServiceId(serviceId) {
+        return dbAll(`
+            SELECT m.*, t.name as track_name, t.display_name, t.track_type, t.milestones
+            FROM service_reward_mappings m
+            JOIN reward_track_definitions t ON m.track_id = t.id
+            WHERE m.service_id = ? AND m.active = 1 AND t.active = 1
+        `, [serviceId]);
+    },
+
+    async findByTrackId(trackId) {
+        return dbAll(`
+            SELECT m.*, s.name as service_name, s.category, s.price
+            FROM service_reward_mappings m
+            JOIN services s ON m.service_id = s.id
+            WHERE m.track_id = ? AND m.active = 1
+        `, [trackId]);
+    },
+
+    async create(mapping) {
+        const id = require('uuid').v4();
+        await dbRun(`
+            INSERT INTO service_reward_mappings (id, service_id, track_id, points_multiplier, require_payment, active)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `, [
+            id,
+            mapping.service_id,
+            mapping.track_id,
+            mapping.points_multiplier || 1.0,
+            mapping.require_payment !== false ? 1 : 0,
+            mapping.active !== false ? 1 : 0
+        ]);
+        return this.findById(id);
+    },
+
+    async findById(id) {
+        return dbGet('SELECT * FROM service_reward_mappings WHERE id = ?', [id]);
+    },
+
+    async update(id, updates) {
+        const allowed = ['points_multiplier', 'require_payment', 'active'];
+        const sets = [];
+        const params = [];
+
+        for (const key of allowed) {
+            if (updates[key] !== undefined) {
+                sets.push(`${key} = ?`);
+                params.push(updates[key]);
+            }
+        }
+
+        if (sets.length === 0) return this.findById(id);
+
+        params.push(id);
+        await dbRun(`UPDATE service_reward_mappings SET ${sets.join(', ')} WHERE id = ?`, params);
+        return this.findById(id);
+    },
+
+    async delete(id) {
+        await dbRun('DELETE FROM service_reward_mappings WHERE id = ?', [id]);
+    },
+
+    async deleteByServiceAndTrack(serviceId, trackId) {
+        await dbRun('DELETE FROM service_reward_mappings WHERE service_id = ? AND track_id = ?', [serviceId, trackId]);
+    },
+
+    async bulkAssign(serviceIds, trackId) {
+        const results = [];
+        for (const serviceId of serviceIds) {
+            try {
+                const existing = await dbGet(
+                    'SELECT id FROM service_reward_mappings WHERE service_id = ? AND track_id = ?',
+                    [serviceId, trackId]
+                );
+                if (!existing) {
+                    const mapping = await this.create({ service_id: serviceId, track_id: trackId });
+                    results.push(mapping);
+                }
+            } catch (e) {
+                // Ignore duplicate errors
+            }
+        }
+        return results;
+    }
+};
+
+// ============================================
+// CATEGORY REWARD MAPPINGS REPOSITORY
+// Bulk assignment by category
+// ============================================
+const CategoryRewardMappingRepository = {
+    async findAll() {
+        return dbAll(`
+            SELECT m.*, t.display_name as track_name
+            FROM category_reward_mappings m
+            JOIN reward_track_definitions t ON m.track_id = t.id
+            WHERE m.active = 1
+            ORDER BY m.category_name, t.display_name
+        `);
+    },
+
+    async findByCategory(categoryName) {
+        return dbAll(`
+            SELECT m.*, t.name as track_name, t.display_name, t.track_type, t.milestones
+            FROM category_reward_mappings m
+            JOIN reward_track_definitions t ON m.track_id = t.id
+            WHERE m.category_name = ? AND m.active = 1 AND t.active = 1
+        `, [categoryName]);
+    },
+
+    async findByTrackId(trackId) {
+        return dbAll(`
+            SELECT * FROM category_reward_mappings
+            WHERE track_id = ? AND active = 1
+        `, [trackId]);
+    },
+
+    async create(mapping) {
+        const id = require('uuid').v4();
+        await dbRun(`
+            INSERT OR IGNORE INTO category_reward_mappings (id, category_name, track_id, active)
+            VALUES (?, ?, ?, ?)
+        `, [id, mapping.category_name, mapping.track_id, 1]);
+        return this.findById(id);
+    },
+
+    async findById(id) {
+        return dbGet('SELECT * FROM category_reward_mappings WHERE id = ?', [id]);
+    },
+
+    async delete(id) {
+        await dbRun('DELETE FROM category_reward_mappings WHERE id = ?', [id]);
+    },
+
+    async deleteByCategoryAndTrack(categoryName, trackId) {
+        await dbRun('DELETE FROM category_reward_mappings WHERE category_name = ? AND track_id = ?', [categoryName, trackId]);
+    },
+
+    // Get all tracks applicable to a service (via service mapping or category mapping)
+    async getTracksForService(serviceId, serviceCategory) {
+        // First check direct service mappings
+        const serviceMappings = await ServiceRewardMappingRepository.findByServiceId(serviceId);
+
+        // Then check category mappings
+        const categoryMappings = serviceCategory
+            ? await this.findByCategory(serviceCategory)
+            : [];
+
+        // Combine and deduplicate by track_id
+        const trackMap = new Map();
+
+        for (const m of serviceMappings) {
+            trackMap.set(m.track_id, {
+                track_id: m.track_id,
+                track_name: m.track_name,
+                track_type: m.track_type,
+                milestones: typeof m.milestones === 'string' ? JSON.parse(m.milestones) : m.milestones,
+                points_multiplier: m.points_multiplier,
+                require_payment: m.require_payment,
+                source: 'service'
+            });
+        }
+
+        for (const m of categoryMappings) {
+            if (!trackMap.has(m.track_id)) {
+                trackMap.set(m.track_id, {
+                    track_id: m.track_id,
+                    track_name: m.track_name,
+                    track_type: m.track_type,
+                    milestones: typeof m.milestones === 'string' ? JSON.parse(m.milestones) : m.milestones,
+                    points_multiplier: 1.0,
+                    require_payment: 1,
+                    source: 'category'
+                });
+            }
+        }
+
+        return Array.from(trackMap.values());
+    }
+};
+
 // Initialize Invoice Repository
 const InvoiceRepository = new InvoiceRepositoryClass(getDb());
 
@@ -3244,6 +3536,10 @@ module.exports = {
     UserRewardRepository,
     ServicePackageRepository,
     UserPackageRepository,
+    // Service-to-Reward Track Mappings
+    RewardTrackDefinitionRepository,
+    ServiceRewardMappingRepository,
+    CategoryRewardMappingRepository,
     // Invoicing System
     InvoiceRepository
 };

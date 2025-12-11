@@ -50,7 +50,7 @@ const uploadServiceImage = multer({
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
-let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository, PayrollRepository, PasswordResetRepository, RewardsConfigRepository, RewardTrackRepository, UserRewardRepository, ServicePackageRepository, UserPackageRepository, InvoiceRepository;
+let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository, PayrollRepository, PasswordResetRepository, RewardsConfigRepository, RewardTrackRepository, UserRewardRepository, ServicePackageRepository, UserPackageRepository, InvoiceRepository, RewardTrackDefinitionRepository, ServiceRewardMappingRepository, CategoryRewardMappingRepository;
 
 try {
     const dbModule = require('./db/database');
@@ -79,6 +79,10 @@ try {
     UserRewardRepository = dbModule.UserRewardRepository;
     ServicePackageRepository = dbModule.ServicePackageRepository;
     UserPackageRepository = dbModule.UserPackageRepository;
+    // Service-to-Reward Track Mappings
+    RewardTrackDefinitionRepository = dbModule.RewardTrackDefinitionRepository;
+    ServiceRewardMappingRepository = dbModule.ServiceRewardMappingRepository;
+    CategoryRewardMappingRepository = dbModule.CategoryRewardMappingRepository;
     // Invoicing System
     InvoiceRepository = dbModule.InvoiceRepository;
 
@@ -314,8 +318,9 @@ function authenticateAdmin(req, res, next) {
 // ============================================
 
 const RewardsService = {
-    // Main entry point - called when booking is completed
-    async processCompletedBooking(booking, user) {
+    // Main entry point - called when booking is completed OR invoice is finalized
+    // requirePayment: true = only process if invoice is paid, false = process immediately
+    async processCompletedBooking(booking, user, requirePayment = false) {
         try {
             const config = await RewardsConfigRepository.get();
             if (!config || !config.programme_enabled) {
@@ -336,24 +341,36 @@ const RewardsService = {
                 return results;
             }
 
-            const serviceCategory = service.category || service.type || '';
             const bookingAmount = booking.final_amount || booking.finalAmount || booking.total_amount || booking.amount || 0;
 
-            // Process tracks based on service category
-            if (config.nails_enabled && this.isNailsService(serviceCategory)) {
-                const nailsResult = await this.processNailsTrack(user.id, config, booking);
-                if (nailsResult) results.tracks.push(nailsResult);
+            // Get applicable reward tracks from database mappings
+            const applicableTracks = await CategoryRewardMappingRepository.getTracksForService(service.id, service.category);
+
+            // Process each applicable track
+            for (const trackMapping of applicableTracks) {
+                // Skip tracks that require payment if payment not confirmed
+                if (requirePayment && trackMapping.require_payment && !booking.paid) {
+                    console.log(`Skipping track ${trackMapping.track_id} - payment required but not confirmed`);
+                    continue;
+                }
+
+                const trackResult = await this.processTrackFromDefinition(
+                    user.id,
+                    trackMapping,
+                    bookingAmount,
+                    booking
+                );
+                if (trackResult) results.tracks.push(trackResult);
             }
 
-            if (config.maintenance_enabled && this.isMaintenanceService(serviceCategory)) {
-                const maintenanceResult = await this.processMaintenanceTrack(user.id, config, booking);
-                if (maintenanceResult) results.tracks.push(maintenanceResult);
-            }
-
-            // Process spend track (applies to all services)
+            // Also check for spend track if enabled (applies to all paid services)
             if (config.spend_enabled && bookingAmount > 0) {
-                const spendResult = await this.processSpendTrack(user.id, config, bookingAmount, booking);
-                if (spendResult) results.tracks.push(spendResult);
+                // Check if spend track wasn't already processed via mappings
+                const hasSpendTrack = applicableTracks.some(t => t.track_id === 'track_spend');
+                if (!hasSpendTrack) {
+                    const spendResult = await this.processSpendTrack(user.id, config, bookingAmount, booking);
+                    if (spendResult) results.tracks.push(spendResult);
+                }
             }
 
             // Check referral rewards (for referrer when referee completes qualifying booking)
@@ -369,83 +386,126 @@ const RewardsService = {
         }
     },
 
-    // Check if service is a nails service
+    // Process a reward track using database-defined milestones
+    async processTrackFromDefinition(userId, trackMapping, bookingAmount, booking) {
+        try {
+            const trackDef = await RewardTrackDefinitionRepository.findById(trackMapping.track_id);
+            if (!trackDef || !trackDef.active) {
+                return null;
+            }
+
+            // Get or create user's progress on this track
+            const userTrack = await RewardTrackRepository.getOrCreate(userId, trackDef.name);
+
+            // Parse milestones from JSON if needed
+            const milestones = typeof trackDef.milestones === 'string'
+                ? JSON.parse(trackDef.milestones)
+                : (trackDef.milestones || []);
+
+            let newCount = userTrack.current_count || 0;
+            let newAmount = userTrack.current_amount || 0;
+            let rewardIssued = null;
+
+            // Apply points multiplier from mapping
+            const multiplier = trackMapping.points_multiplier || 1.0;
+
+            if (trackDef.track_type === 'visit_count') {
+                // Increment visit count
+                newCount = Math.round((userTrack.current_count || 0) + (1 * multiplier));
+                await RewardTrackRepository.increment(userId, trackDef.name, Math.round(1 * multiplier), 0);
+
+                // Check milestones
+                for (const milestone of milestones) {
+                    const targetCount = milestone.count;
+                    const isRepeating = milestone.repeating === true;
+
+                    if (isRepeating) {
+                        // Repeating milestone - check if we crossed a threshold
+                        const previousCycles = Math.floor((userTrack.current_count || 0) / targetCount);
+                        const newCycles = Math.floor(newCount / targetCount);
+                        if (newCycles > previousCycles) {
+                            rewardIssued = await this.issueRewardFromMilestone(userId, trackDef, milestone);
+                            await RewardTrackRepository.updateMilestone(userId, trackDef.name, newCount);
+                        }
+                    } else {
+                        // One-time milestone
+                        if (newCount === targetCount && (userTrack.last_milestone_reached || 0) < targetCount) {
+                            rewardIssued = await this.issueRewardFromMilestone(userId, trackDef, milestone);
+                            await RewardTrackRepository.updateMilestone(userId, trackDef.name, newCount);
+                        }
+                    }
+                }
+            } else if (trackDef.track_type === 'spend_amount') {
+                // Increment spend amount
+                const amountToAdd = Math.round(bookingAmount * multiplier);
+                newAmount = (userTrack.current_amount || 0) + amountToAdd;
+                await RewardTrackRepository.increment(userId, trackDef.name, 0, amountToAdd);
+
+                // Check amount-based milestones
+                for (const milestone of milestones) {
+                    const targetAmount = milestone.amount;
+                    const isRepeating = milestone.repeating === true;
+
+                    if (isRepeating) {
+                        const previousCycles = Math.floor((userTrack.current_amount || 0) / targetAmount);
+                        const newCycles = Math.floor(newAmount / targetAmount);
+                        if (newCycles > previousCycles) {
+                            rewardIssued = await this.issueRewardFromMilestone(userId, trackDef, milestone);
+                            await RewardTrackRepository.updateMilestone(userId, trackDef.name, newCycles);
+                        }
+                    } else {
+                        if (newAmount >= targetAmount && (userTrack.current_amount || 0) < targetAmount) {
+                            rewardIssued = await this.issueRewardFromMilestone(userId, trackDef, milestone);
+                            await RewardTrackRepository.updateMilestone(userId, trackDef.name, targetAmount);
+                        }
+                    }
+                }
+            }
+
+            return {
+                track: trackDef.name,
+                trackDisplayName: trackDef.display_name,
+                trackType: trackDef.track_type,
+                newCount,
+                newAmount,
+                milestones,
+                rewardIssued
+            };
+        } catch (error) {
+            console.error(`Error processing track ${trackMapping.track_id}:`, error);
+            return null;
+        }
+    },
+
+    // Issue reward based on milestone definition
+    async issueRewardFromMilestone(userId, trackDef, milestone) {
+        const expiryDays = trackDef.reward_expiry_days || 90;
+        const rewardType = milestone.reward_type === 'percentage_discount' ? 'discount_percent' : milestone.reward_type;
+        const description = milestone.description || `${trackDef.display_name} reward - ${milestone.reward_value}% off`;
+
+        return await this.issueReward(
+            userId,
+            trackDef.name,
+            rewardType,
+            milestone.reward_value,
+            expiryDays,
+            description
+        );
+    },
+
+    // Legacy: Check if service is a nails service (fallback for backwards compatibility)
     isNailsService(category) {
         const nailsKeywords = ['nail', 'nails', 'manicure', 'pedicure', 'gel', 'acrylic'];
         return nailsKeywords.some(kw => category.toLowerCase().includes(kw));
     },
 
-    // Check if service is a maintenance service
+    // Legacy: Check if service is a maintenance service (fallback for backwards compatibility)
     isMaintenanceService(category) {
         const maintenanceKeywords = ['maintenance', 'extension', 'weave', 'tape', 'keratin', 'weft'];
         return maintenanceKeywords.some(kw => category.toLowerCase().includes(kw));
     },
 
-    // Process nails reward track
-    async processNailsTrack(userId, config, booking) {
-        try {
-            // Get or create track
-            const track = await RewardTrackRepository.getOrCreate(userId, 'nails');
-
-            // Increment visit count (countIncrement=1, amountIncrement=0)
-            const newCount = (track.current_count || 0) + 1;
-            await RewardTrackRepository.increment(userId, 'nails', 1, 0);
-
-            let rewardIssued = null;
-
-            // Check milestones
-            if (newCount === config.nails_milestone_2_count) {
-                // 12th visit - 50% off
-                rewardIssued = await this.issueReward(userId, 'nails', 'discount_percent', config.nails_milestone_2_discount, config.nails_reward_expiry_days, 'Nails reward - ' + config.nails_milestone_2_discount + '% off');
-                await RewardTrackRepository.updateMilestone(userId, 'nails', newCount);
-            } else if (newCount === config.nails_milestone_1_count) {
-                // 6th visit - 10% off
-                rewardIssued = await this.issueReward(userId, 'nails', 'discount_percent', config.nails_milestone_1_discount, config.nails_reward_expiry_days, 'Nails reward - ' + config.nails_milestone_1_discount + '% off');
-                await RewardTrackRepository.updateMilestone(userId, 'nails', newCount);
-            }
-
-            return {
-                track: 'nails',
-                newCount,
-                milestone1Target: config.nails_milestone_1_count,
-                milestone2Target: config.nails_milestone_2_count,
-                rewardIssued
-            };
-        } catch (error) {
-            console.error('Error processing nails track:', error);
-            return null;
-        }
-    },
-
-    // Process maintenance reward track
-    async processMaintenanceTrack(userId, config, booking) {
-        try {
-            const track = await RewardTrackRepository.getOrCreate(userId, 'maintenance');
-
-            const newCount = (track.current_count || 0) + 1;
-            await RewardTrackRepository.increment(userId, 'maintenance', 1, 0);
-
-            let rewardIssued = null;
-
-            // Check milestone (every 6th visit)
-            if (newCount % config.maintenance_milestone_count === 0) {
-                rewardIssued = await this.issueReward(userId, 'maintenance', 'discount_percent', config.maintenance_discount, config.maintenance_reward_expiry_days, 'Maintenance reward - ' + config.maintenance_discount + '% off');
-                await RewardTrackRepository.updateMilestone(userId, 'maintenance', newCount);
-            }
-
-            return {
-                track: 'maintenance',
-                newCount,
-                milestoneTarget: config.maintenance_milestone_count,
-                rewardIssued
-            };
-        } catch (error) {
-            console.error('Error processing maintenance track:', error);
-            return null;
-        }
-    },
-
-    // Process spend track
+    // Process spend track (legacy method, kept for backwards compatibility with config)
     async processSpendTrack(userId, config, amount, booking) {
         try {
             const track = await RewardTrackRepository.getOrCreate(userId, 'spend');
@@ -622,55 +682,110 @@ const RewardsService = {
 
             const tracks = {};
 
-            // Nails track
-            if (config.nails_enabled) {
-                const nailsTrack = await RewardTrackRepository.getOrCreate(userId, 'nails');
-                tracks.nails = {
-                    enabled: true,
-                    currentCount: nailsTrack.current_count || 0,
-                    milestone1: {
-                        target: config.nails_milestone_1_count,
-                        discount: config.nails_milestone_1_discount,
-                        reached: (nailsTrack.current_count || 0) >= config.nails_milestone_1_count
-                    },
-                    milestone2: {
-                        target: config.nails_milestone_2_count,
-                        discount: config.nails_milestone_2_discount,
-                        reached: (nailsTrack.current_count || 0) >= config.nails_milestone_2_count
-                    }
-                };
-            }
+            // Get all active track definitions from database
+            const trackDefinitions = await RewardTrackDefinitionRepository.findAll();
 
-            // Maintenance track
-            if (config.maintenance_enabled) {
-                const maintenanceTrack = await RewardTrackRepository.getOrCreate(userId, 'maintenance');
-                const count = maintenanceTrack.current_count || 0;
-                tracks.maintenance = {
-                    enabled: true,
-                    currentCount: count,
-                    milestone: {
-                        target: config.maintenance_milestone_count,
-                        discount: config.maintenance_discount,
-                        progress: count % config.maintenance_milestone_count,
-                        nextRewardAt: config.maintenance_milestone_count - (count % config.maintenance_milestone_count)
-                    }
-                };
-            }
+            for (const trackDef of trackDefinitions) {
+                const userTrack = await RewardTrackRepository.getOrCreate(userId, trackDef.name);
+                const milestones = typeof trackDef.milestones === 'string'
+                    ? JSON.parse(trackDef.milestones)
+                    : (trackDef.milestones || []);
 
-            // Spend track
-            if (config.spend_enabled) {
-                const spendTrack = await RewardTrackRepository.getOrCreate(userId, 'spend');
-                const currentAmount = spendTrack.current_amount || 0;
-                const progressInThreshold = currentAmount % config.spend_threshold;
-                tracks.spend = {
-                    enabled: true,
-                    currentAmount,
-                    threshold: config.spend_threshold,
-                    discount: config.spend_discount,
-                    progressAmount: progressInThreshold,
-                    progressPercent: Math.round((progressInThreshold / config.spend_threshold) * 100),
-                    amountToNextReward: config.spend_threshold - progressInThreshold
-                };
+                if (trackDef.track_type === 'visit_count') {
+                    const currentCount = userTrack.current_count || 0;
+
+                    // Find next milestone
+                    let nextMilestone = null;
+                    let progressToNext = 0;
+
+                    for (const milestone of milestones) {
+                        const target = milestone.count;
+                        const isRepeating = milestone.repeating === true;
+
+                        if (isRepeating) {
+                            const cycleProgress = currentCount % target;
+                            progressToNext = Math.round((cycleProgress / target) * 100);
+                            nextMilestone = {
+                                target,
+                                reward: milestone.reward_value,
+                                description: milestone.description,
+                                remaining: target - cycleProgress,
+                                repeating: true
+                            };
+                            break;
+                        } else if (currentCount < target) {
+                            progressToNext = Math.round((currentCount / target) * 100);
+                            nextMilestone = {
+                                target,
+                                reward: milestone.reward_value,
+                                description: milestone.description,
+                                remaining: target - currentCount,
+                                repeating: false
+                            };
+                            break;
+                        }
+                    }
+
+                    tracks[trackDef.name] = {
+                        id: trackDef.id,
+                        enabled: true,
+                        displayName: trackDef.display_name,
+                        description: trackDef.description,
+                        icon: trackDef.icon,
+                        type: 'visit_count',
+                        currentCount,
+                        milestones,
+                        nextMilestone,
+                        progressPercent: progressToNext
+                    };
+                } else if (trackDef.track_type === 'spend_amount') {
+                    const currentAmount = userTrack.current_amount || 0;
+
+                    // Find next milestone
+                    let nextMilestone = null;
+                    let progressToNext = 0;
+
+                    for (const milestone of milestones) {
+                        const target = milestone.amount;
+                        const isRepeating = milestone.repeating === true;
+
+                        if (isRepeating) {
+                            const cycleProgress = currentAmount % target;
+                            progressToNext = Math.round((cycleProgress / target) * 100);
+                            nextMilestone = {
+                                target,
+                                reward: milestone.reward_value,
+                                description: milestone.description,
+                                remaining: target - cycleProgress,
+                                repeating: true
+                            };
+                            break;
+                        } else if (currentAmount < target) {
+                            progressToNext = Math.round((currentAmount / target) * 100);
+                            nextMilestone = {
+                                target,
+                                reward: milestone.reward_value,
+                                description: milestone.description,
+                                remaining: target - currentAmount,
+                                repeating: false
+                            };
+                            break;
+                        }
+                    }
+
+                    tracks[trackDef.name] = {
+                        id: trackDef.id,
+                        enabled: true,
+                        displayName: trackDef.display_name,
+                        description: trackDef.description,
+                        icon: trackDef.icon,
+                        type: 'spend_amount',
+                        currentAmount,
+                        milestones,
+                        nextMilestone,
+                        progressPercent: progressToNext
+                    };
+                }
             }
 
             // Active rewards
@@ -2148,6 +2263,23 @@ app.post('/api/payments/webhook/payfast', async (req, res) => {
                     reference: result.pfPaymentId,
                     date: new Date().toISOString()
                 });
+
+                // Process rewards for paid bookings
+                if (result.completed) {
+                    try {
+                        const booking = await BookingRepository.findById(payment.booking_id);
+                        if (booking && booking.user_id) {
+                            const user = await UserRepository.findById(booking.user_id);
+                            if (user) {
+                                const bookingWithPayment = { ...booking, paid: true, final_amount: payment.amount };
+                                const rewardsResult = await RewardsService.processCompletedBooking(bookingWithPayment, user, true);
+                                console.log('💎 Rewards processed for PayFast payment:', rewardsResult);
+                            }
+                        }
+                    } catch (rewardError) {
+                        console.error('Error processing rewards for PayFast payment:', rewardError);
+                    }
+                }
             }
         }
         if (result.orderId) {
@@ -2178,6 +2310,26 @@ app.post('/api/payments/webhook/yoco', async (req, res) => {
 
         if (result.paymentId) {
             await PaymentRepository.updateStatus(result.paymentId, providerStatus, result.yocoPaymentId, { event: result });
+
+            // Process rewards for paid bookings via Yoco
+            if (result.completed) {
+                try {
+                    const payment = await PaymentRepository.findById(result.paymentId);
+                    if (payment && payment.booking_id) {
+                        const booking = await BookingRepository.findById(payment.booking_id);
+                        if (booking && booking.user_id) {
+                            const user = await UserRepository.findById(booking.user_id);
+                            if (user) {
+                                const bookingWithPayment = { ...booking, paid: true, final_amount: payment.amount };
+                                const rewardsResult = await RewardsService.processCompletedBooking(bookingWithPayment, user, true);
+                                console.log('💎 Rewards processed for Yoco payment:', rewardsResult);
+                            }
+                        }
+                    }
+                } catch (rewardError) {
+                    console.error('Error processing rewards for Yoco payment:', rewardError);
+                }
+            }
         }
         if (result.orderId) {
             await OrderRepository.updatePaymentStatus(result.orderId, paymentStatus);
@@ -6486,6 +6638,343 @@ app.get('/api/admin/rewards/user/:userId', authenticateAdmin, async (req, res) =
 });
 
 // ============================================
+// ADMIN REWARD TRACK DEFINITIONS
+// Manage configurable reward tracks
+// ============================================
+
+// Get all reward track definitions (admin gets all including inactive)
+app.get('/api/admin/reward-track-definitions', authenticateAdmin, async (req, res) => {
+    try {
+        // Admin gets all tracks including inactive ones
+        const tracks = await RewardTrackDefinitionRepository.findAll(true);
+        res.json({ success: true, tracks });
+    } catch (error) {
+        console.error('Error fetching reward track definitions:', error);
+        res.status(500).json({ success: false, message: 'Failed to load reward track definitions' });
+    }
+});
+
+// Get a single reward track definition
+app.get('/api/admin/reward-track-definitions/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const track = await RewardTrackDefinitionRepository.findById(req.params.id);
+        if (!track) {
+            return res.status(404).json({ success: false, message: 'Track not found' });
+        }
+        res.json({ success: true, track });
+    } catch (error) {
+        console.error('Error fetching reward track definition:', error);
+        res.status(500).json({ success: false, message: 'Failed to load track' });
+    }
+});
+
+// Create a new reward track definition
+app.post('/api/admin/reward-track-definitions', authenticateAdmin, async (req, res) => {
+    try {
+        const { name, display_name, description, track_type, icon, milestones, reward_expiry_days, reward_applicable_to } = req.body;
+
+        if (!name || !display_name || !track_type) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: name, display_name, track_type'
+            });
+        }
+
+        if (!['visit_count', 'spend_amount'].includes(track_type)) {
+            return res.status(400).json({
+                success: false,
+                message: 'track_type must be "visit_count" or "spend_amount"'
+            });
+        }
+
+        const track = await RewardTrackDefinitionRepository.create({
+            name,
+            display_name,
+            description,
+            track_type,
+            icon: icon || '🎁',
+            milestones: milestones || [],
+            reward_expiry_days: reward_expiry_days || 90,
+            reward_applicable_to
+        });
+
+        res.json({ success: true, message: 'Track created successfully', track });
+    } catch (error) {
+        console.error('Error creating reward track definition:', error);
+        if (error.message?.includes('UNIQUE constraint')) {
+            return res.status(400).json({ success: false, message: 'A track with this name already exists' });
+        }
+        res.status(500).json({ success: false, message: 'Failed to create track' });
+    }
+});
+
+// Update a reward track definition
+app.put('/api/admin/reward-track-definitions/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+
+        const existing = await RewardTrackDefinitionRepository.findById(id);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: 'Track not found' });
+        }
+
+        if (updates.track_type && !['visit_count', 'spend_amount'].includes(updates.track_type)) {
+            return res.status(400).json({
+                success: false,
+                message: 'track_type must be "visit_count" or "spend_amount"'
+            });
+        }
+
+        await RewardTrackDefinitionRepository.update(id, updates);
+        const track = await RewardTrackDefinitionRepository.findById(id);
+
+        res.json({ success: true, message: 'Track updated successfully', track });
+    } catch (error) {
+        console.error('Error updating reward track definition:', error);
+        res.status(500).json({ success: false, message: 'Failed to update track' });
+    }
+});
+
+// Delete a reward track definition
+app.delete('/api/admin/reward-track-definitions/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const existing = await RewardTrackDefinitionRepository.findById(id);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: 'Track not found' });
+        }
+
+        // Check if track has any active mappings
+        const serviceMappings = await ServiceRewardMappingRepository.findByTrackId(id);
+        const categoryMappings = await CategoryRewardMappingRepository.findByTrackId(id);
+
+        if (serviceMappings.length > 0 || categoryMappings.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot delete track: it has ${serviceMappings.length} service mappings and ${categoryMappings.length} category mappings. Remove these first.`
+            });
+        }
+
+        await RewardTrackDefinitionRepository.delete(id);
+        res.json({ success: true, message: 'Track deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting reward track definition:', error);
+        res.status(500).json({ success: false, message: 'Failed to delete track' });
+    }
+});
+
+// ============================================
+// ADMIN SERVICE-TO-REWARD MAPPINGS
+// Link individual services to reward tracks
+// ============================================
+
+// Get all service-reward mappings
+app.get('/api/admin/service-reward-mappings', authenticateAdmin, async (req, res) => {
+    try {
+        const mappings = await ServiceRewardMappingRepository.findAll();
+        res.json({ success: true, mappings });
+    } catch (error) {
+        console.error('Error fetching service-reward mappings:', error);
+        res.status(500).json({ success: false, message: 'Failed to load mappings' });
+    }
+});
+
+// Get mappings for a specific service
+app.get('/api/admin/service-reward-mappings/service/:serviceId', authenticateAdmin, async (req, res) => {
+    try {
+        const mappings = await ServiceRewardMappingRepository.findByServiceId(req.params.serviceId);
+        res.json({ success: true, mappings });
+    } catch (error) {
+        console.error('Error fetching service mappings:', error);
+        res.status(500).json({ success: false, message: 'Failed to load mappings' });
+    }
+});
+
+// Create a service-reward mapping
+app.post('/api/admin/service-reward-mappings', authenticateAdmin, async (req, res) => {
+    try {
+        const { service_id, track_id, points_multiplier, require_payment } = req.body;
+
+        if (!service_id || !track_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: service_id, track_id'
+            });
+        }
+
+        // Verify service exists
+        const service = await ServiceRepository.findById(service_id);
+        if (!service) {
+            return res.status(404).json({ success: false, message: 'Service not found' });
+        }
+
+        // Verify track exists
+        const track = await RewardTrackDefinitionRepository.findById(track_id);
+        if (!track) {
+            return res.status(404).json({ success: false, message: 'Reward track not found' });
+        }
+
+        const mapping = await ServiceRewardMappingRepository.create({
+            service_id,
+            track_id,
+            points_multiplier: points_multiplier || 1.0,
+            require_payment: require_payment !== undefined ? require_payment : 1
+        });
+
+        res.json({ success: true, message: 'Mapping created successfully', mapping });
+    } catch (error) {
+        console.error('Error creating service-reward mapping:', error);
+        if (error.message?.includes('UNIQUE constraint')) {
+            return res.status(400).json({ success: false, message: 'This service is already mapped to this track' });
+        }
+        res.status(500).json({ success: false, message: 'Failed to create mapping' });
+    }
+});
+
+// Bulk assign services to a track
+app.post('/api/admin/service-reward-mappings/bulk', authenticateAdmin, async (req, res) => {
+    try {
+        const { service_ids, track_id } = req.body;
+
+        if (!service_ids || !Array.isArray(service_ids) || !track_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: service_ids (array), track_id'
+            });
+        }
+
+        // Verify track exists
+        const track = await RewardTrackDefinitionRepository.findById(track_id);
+        if (!track) {
+            return res.status(404).json({ success: false, message: 'Reward track not found' });
+        }
+
+        const results = await ServiceRewardMappingRepository.bulkAssign(service_ids, track_id);
+
+        res.json({
+            success: true,
+            message: `Successfully mapped ${results.length} services to track "${track.display_name}"`,
+            mappings: results
+        });
+    } catch (error) {
+        console.error('Error bulk assigning service-reward mappings:', error);
+        res.status(500).json({ success: false, message: 'Failed to create mappings' });
+    }
+});
+
+// Delete a service-reward mapping
+app.delete('/api/admin/service-reward-mappings/:id', authenticateAdmin, async (req, res) => {
+    try {
+        await ServiceRewardMappingRepository.delete(req.params.id);
+        res.json({ success: true, message: 'Mapping removed successfully' });
+    } catch (error) {
+        console.error('Error deleting service-reward mapping:', error);
+        res.status(500).json({ success: false, message: 'Failed to remove mapping' });
+    }
+});
+
+// Delete mapping by service and track
+app.delete('/api/admin/service-reward-mappings/service/:serviceId/track/:trackId', authenticateAdmin, async (req, res) => {
+    try {
+        await ServiceRewardMappingRepository.deleteByServiceAndTrack(req.params.serviceId, req.params.trackId);
+        res.json({ success: true, message: 'Mapping removed successfully' });
+    } catch (error) {
+        console.error('Error deleting service-reward mapping:', error);
+        res.status(500).json({ success: false, message: 'Failed to remove mapping' });
+    }
+});
+
+// ============================================
+// ADMIN CATEGORY-TO-REWARD MAPPINGS
+// Link service categories to reward tracks
+// ============================================
+
+// Get all category-reward mappings
+app.get('/api/admin/category-reward-mappings', authenticateAdmin, async (req, res) => {
+    try {
+        const mappings = await CategoryRewardMappingRepository.findAll();
+
+        // Also get unique categories from services for UI dropdown
+        const categories = await db.dbAll(`
+            SELECT DISTINCT category FROM services
+            WHERE active = 1 AND category IS NOT NULL
+            ORDER BY category
+        `);
+
+        res.json({
+            success: true,
+            mappings,
+            availableCategories: categories.map(c => c.category)
+        });
+    } catch (error) {
+        console.error('Error fetching category-reward mappings:', error);
+        res.status(500).json({ success: false, message: 'Failed to load mappings' });
+    }
+});
+
+// Create a category-reward mapping
+app.post('/api/admin/category-reward-mappings', authenticateAdmin, async (req, res) => {
+    try {
+        const { category_name, track_id } = req.body;
+
+        if (!category_name || !track_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: category_name, track_id'
+            });
+        }
+
+        // Verify track exists
+        const track = await RewardTrackDefinitionRepository.findById(track_id);
+        if (!track) {
+            return res.status(404).json({ success: false, message: 'Reward track not found' });
+        }
+
+        const mapping = await CategoryRewardMappingRepository.create({
+            category_name,
+            track_id
+        });
+
+        res.json({ success: true, message: 'Category mapping created successfully', mapping });
+    } catch (error) {
+        console.error('Error creating category-reward mapping:', error);
+        if (error.message?.includes('UNIQUE constraint')) {
+            return res.status(400).json({ success: false, message: 'This category is already mapped to this track' });
+        }
+        res.status(500).json({ success: false, message: 'Failed to create mapping' });
+    }
+});
+
+// Delete a category-reward mapping
+app.delete('/api/admin/category-reward-mappings/:id', authenticateAdmin, async (req, res) => {
+    try {
+        await CategoryRewardMappingRepository.delete(req.params.id);
+        res.json({ success: true, message: 'Category mapping removed successfully' });
+    } catch (error) {
+        console.error('Error deleting category-reward mapping:', error);
+        res.status(500).json({ success: false, message: 'Failed to remove mapping' });
+    }
+});
+
+// Get reward tracks applicable to a specific service (for booking flow)
+app.get('/api/services/:serviceId/reward-tracks', optionalAuth, async (req, res) => {
+    try {
+        const service = await ServiceRepository.findById(req.params.serviceId);
+        if (!service) {
+            return res.status(404).json({ success: false, message: 'Service not found' });
+        }
+
+        const tracks = await CategoryRewardMappingRepository.getTracksForService(service.id, service.category);
+        res.json({ success: true, tracks });
+    } catch (error) {
+        console.error('Error fetching service reward tracks:', error);
+        res.status(500).json({ success: false, message: 'Failed to load reward tracks' });
+    }
+});
+
+// ============================================
 // ADMIN SERVICE PACKAGES
 // ============================================
 
@@ -8567,7 +9056,33 @@ app.post('/api/admin/invoices/:id/payments', authenticateToken, adminOrStaff, as
             processed_by: req.user.id
         };
 
+        // Get invoice before payment to check if it was already paid
+        const invoiceBefore = await InvoiceRepository.getById(req.params.id);
+        const wasAlreadyPaid = invoiceBefore && invoiceBefore.payment_status === 'paid';
+
         const invoice = await InvoiceRepository.recordPayment(req.params.id, paymentData);
+
+        // If invoice just became fully paid, process rewards
+        if (!wasAlreadyPaid && invoice.payment_status === 'paid') {
+            console.log(`Invoice ${invoice.id} fully paid - processing rewards`);
+            try {
+                // Get the user and booking associated with this invoice
+                const user = await UserRepository.findById(invoice.user_id);
+                if (user && invoice.booking_id) {
+                    const booking = await BookingRepository.findById(invoice.booking_id);
+                    if (booking) {
+                        // Mark booking as paid for reward processing
+                        const bookingWithPayment = { ...booking, paid: true, final_amount: invoice.total };
+                        const rewardsResult = await RewardsService.processCompletedBooking(bookingWithPayment, user, true);
+                        console.log('Rewards processed for paid invoice:', rewardsResult);
+                    }
+                }
+            } catch (rewardError) {
+                // Don't fail the payment recording if reward processing fails
+                console.error('Error processing rewards for paid invoice:', rewardError);
+            }
+        }
+
         res.json({ success: true, invoice });
     } catch (error) {
         console.error('Record payment error:', error);
