@@ -5686,7 +5686,7 @@
                     <div class="service-type-grid">
                         <div class="service-type-card" onclick="selectServiceType('hair', this)">
                             <div class="selected-check">✓</div>
-                            <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Hair Extensions" class="card-image" onerror="this.style.display='none'">
+                            <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=400&fit=crop" alt="Hair Extensions" class="card-image" onerror="this.style.display='none'">
                             <div class="card-content">
                                 <div class="card-icon">💇‍♀️</div>
                                 <div class="card-title">Hair Extensions</div>
@@ -5695,11 +5695,11 @@
                         </div>
                         <div class="service-type-card" onclick="selectServiceType('beauty', this)">
                             <div class="selected-check">✓</div>
-                            <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg" alt="Beauty Services" class="card-image" onerror="this.style.display='none'">
+                            <img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&h=400&fit=crop" alt="Nail Services" class="card-image" onerror="this.style.display='none'">
                             <div class="card-content">
                                 <div class="card-icon">💅</div>
-                                <div class="card-title">Nails & Beauty</div>
-                                <div class="card-subtitle">Nails, Brows, Lashes & more</div>
+                                <div class="card-title">Nails</div>
+                                <div class="card-subtitle">Manicures, Pedicures & more</div>
                             </div>
                         </div>
                     </div>
@@ -8888,10 +8888,10 @@
             const isHair = type === 'hair';
 
             // Update step 2 UI based on type
-            document.getElementById('step2Title').textContent = isHair ? 'Select Your Hair Service' : 'Select Your Beauty Service';
+            document.getElementById('step2Title').textContent = isHair ? 'Select Your Hair Service' : 'Select Your Nail Service';
             document.getElementById('step2Subtitle').textContent = isHair
                 ? 'Choose from our hair extension and styling services'
-                : 'Choose from our nails, brows, and lashes services';
+                : 'Choose from our nail and pedicure services';
 
             // Update step 2 continue button text
             document.getElementById('step2ContinueBtn').textContent = isHair

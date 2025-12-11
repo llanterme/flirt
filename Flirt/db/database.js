@@ -1374,6 +1374,11 @@ const ServiceRepository = {
 
     // Find bookable services by type
     async findBookableByType(type) {
+        if (type === 'beauty') {
+            // Beauty bookings currently limited to nail services only
+            return dbAll(`SELECT * FROM services WHERE service_type = 'beauty' AND active = 1 AND bookable = 1
+                AND category IN ('Nails', 'Pedicure') ORDER BY category, name`);
+        }
         return dbAll('SELECT * FROM services WHERE service_type = ? AND active = 1 AND bookable = 1 ORDER BY category, name', [type]);
     },
 
