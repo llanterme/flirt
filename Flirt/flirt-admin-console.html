@@ -5982,40 +5982,208 @@
 
     <!-- Staff Services Management Modal -->
     <div class="modal-overlay" id="staffServicesModal" style="display: none;">
-        <div class="modal" style="max-width: 900px;">
+        <div class="modal" style="max-width: 1000px;">
             <div class="modal-header">
                 <h3 class="modal-title" id="staffServicesModalTitle">Manage Staff Services</h3>
                 <button class="modal-close" onclick="closeStaffServicesModal()">&times;</button>
             </div>
-            <div class="modal-body">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    <!-- Available Services -->
-                    <div>
-                        <h4>Available Services</h4>
+            <div class="modal-body" style="padding: 0;">
+                <!-- Tab Navigation -->
+                <div style="display: flex; border-bottom: 2px solid var(--border-soft); background: var(--surface-muted);">
+                    <button class="staff-services-tab active" id="tabCategories" onclick="switchServicesTab('categories')">
+                        <span style="font-size: 18px;">📁</span> Add by Category
+                    </button>
+                    <button class="staff-services-tab" id="tabIndividual" onclick="switchServicesTab('individual')">
+                        <span style="font-size: 18px;">📋</span> Add Individual
+                    </button>
+                    <button class="staff-services-tab" id="tabAssigned" onclick="switchServicesTab('assigned')">
+                        <span style="font-size: 18px;">✓</span> Assigned <span id="assignedCountBadge" class="tab-badge">0</span>
+                    </button>
+                </div>
+
+                <!-- Categories Tab -->
+                <div id="panelCategories" class="staff-services-panel" style="padding: 20px;">
+                    <p style="color: var(--text-subtle); margin-bottom: 15px;">Select categories to quickly add all services within them:</p>
+                    <div id="categoriesList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Individual Services Tab -->
+                <div id="panelIndividual" class="staff-services-panel" style="display: none; padding: 20px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                         <input type="text" id="serviceSearchFilter" placeholder="Search services..."
-                               class="form-input" style="margin-bottom: 10px;" onkeyup="filterAvailableServices()">
-                        <select id="serviceCategoryFilter" class="form-input" style="margin-bottom: 10px;" onchange="filterAvailableServices()">
+                               class="form-input" style="flex: 1;" onkeyup="filterAvailableServices()">
+                        <select id="serviceCategoryFilter" class="form-input" style="width: 200px;" onchange="filterAvailableServices(true)">
                             <option value="">All Categories</option>
                         </select>
-                        <div id="availableServicesList" style="max-height: 500px; overflow-y: auto; border: 1px solid var(--border-soft); border-radius: 4px; padding: 10px;">
-                            <!-- Populated dynamically -->
-                        </div>
                     </div>
+                    <div id="availableServicesList" style="max-height: 450px; overflow-y: auto; border: 1px solid var(--border-soft); border-radius: 8px;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
 
-                    <!-- Staff's Services -->
-                    <div>
-                        <h4>Staff's Services</h4>
-                        <div id="staffServicesList" style="max-height: 580px; overflow-y: auto;">
-                            <!-- Populated dynamically -->
-                        </div>
+                <!-- Assigned Services Tab -->
+                <div id="panelAssigned" class="staff-services-panel" style="display: none; padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <p style="color: var(--text-subtle); margin: 0;">Services this staff member can perform:</p>
+                        <button class="btn btn-outline btn-sm" onclick="removeAllStaffServices()" style="color: var(--danger);">
+                            Remove All
+                        </button>
+                    </div>
+                    <div id="staffServicesList" style="max-height: 450px; overflow-y: auto;">
+                        <!-- Populated dynamically -->
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="border-top: 1px solid var(--border-soft);">
                 <button class="btn btn-outline" onclick="closeStaffServicesModal()">Done</button>
             </div>
         </div>
     </div>
+
+    <style>
+        .staff-services-tab {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-subtle);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .staff-services-tab:hover {
+            background: rgba(0,0,0,0.03);
+            color: var(--text-primary);
+        }
+        .staff-services-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: white;
+        }
+        .tab-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+        }
+        .category-card {
+            background: white;
+            border: 2px solid var(--border-soft);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .category-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .category-card.partial {
+            border-color: #f0ad4e;
+            background: linear-gradient(135deg, white 0%, #fff9f0 100%);
+        }
+        .category-card.full {
+            border-color: var(--success);
+            background: linear-gradient(135deg, white 0%, #f0fff4 100%);
+        }
+        .category-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .category-card-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+        .category-card-count {
+            font-size: 12px;
+            color: var(--text-subtle);
+            background: var(--surface-muted);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .category-card-progress {
+            height: 4px;
+            background: var(--border-soft);
+            border-radius: 2px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .category-card-progress-fill {
+            height: 100%;
+            background: var(--success);
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+        .category-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .category-card-actions .btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+        .service-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-soft);
+        }
+        .service-item:last-child {
+            border-bottom: none;
+        }
+        .service-item:hover {
+            background: var(--surface-muted);
+        }
+        .service-item-info {
+            flex: 1;
+        }
+        .service-item-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .service-item-meta {
+            font-size: 12px;
+            color: var(--text-subtle);
+            margin-top: 2px;
+        }
+        .assigned-category-group {
+            margin-bottom: 20px;
+        }
+        .assigned-category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: var(--surface-muted);
+            border-radius: 8px 8px 0 0;
+            border: 1px solid var(--border-soft);
+            border-bottom: none;
+        }
+        .assigned-category-title {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .assigned-services-list {
+            border: 1px solid var(--border-soft);
+            border-radius: 0 0 8px 8px;
+        }
+    </style>
 
     <!-- Add Product Modal -->
     <div class="modal-overlay" id="addProductModal">
@@ -12116,6 +12284,18 @@
         let currentStaffIdForServices = null;
         let allAvailableServices = [];
         let staffCurrentServices = [];
+        let currentServicesTab = 'categories';
+
+        // Tab switching
+        function switchServicesTab(tabName) {
+            currentServicesTab = tabName;
+            // Update tab buttons
+            document.querySelectorAll('.staff-services-tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+            // Update panels
+            document.querySelectorAll('.staff-services-panel').forEach(panel => panel.style.display = 'none');
+            document.getElementById('panel' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).style.display = 'block';
+        }
 
         // Open staff services management modal
         async function openStaffServicesModal(staffId) {
@@ -12127,19 +12307,34 @@
             currentStaffIdForServices = staffId;
             document.getElementById('staffServicesModal').style.display = 'flex';
 
+            // Reset to categories tab
+            switchServicesTab('categories');
+
             // Load all available services and staff's current services
             await Promise.all([
                 loadAllAvailableServices(),
                 loadStaffServices(staffId)
             ]);
 
-            renderAvailableServices();
-            renderStaffServices();
+            renderAllServiceViews();
         }
 
         function closeStaffServicesModal() {
             document.getElementById('staffServicesModal').style.display = 'none';
             currentStaffIdForServices = null;
+        }
+
+        // Render all views
+        function renderAllServiceViews() {
+            renderCategoriesView();
+            renderAvailableServices();
+            renderStaffServices();
+            updateAssignedBadge();
+        }
+
+        // Update badge count
+        function updateAssignedBadge() {
+            document.getElementById('assignedCountBadge').textContent = staffCurrentServices.length;
         }
 
         // Load all available services
@@ -12149,12 +12344,19 @@
                 allAvailableServices = data.services || [];
 
                 // Populate category filter
-                const categories = [...new Set(allAvailableServices.map(s => s.category))].sort();
+                const categoryCount = {};
+                allAvailableServices.forEach(s => {
+                    categoryCount[s.category] = (categoryCount[s.category] || 0) + 1;
+                });
+                const categories = Object.keys(categoryCount).sort();
                 const filterSelect = document.getElementById('serviceCategoryFilter');
-                filterSelect.innerHTML = '<option value="">All Categories</option>' +
-                    categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+                filterSelect.innerHTML = '<option value="">All Categories (' + allAvailableServices.length + ')</option>' +
+                    categories.map(cat => `<option value="${cat}">${cat} (${categoryCount[cat]})</option>`).join('');
+
+                document.getElementById('serviceSearchFilter').value = '';
             } catch (error) {
                 console.error('Error loading services:', error);
+                allAvailableServices = [];
             }
         }
 
@@ -12165,22 +12367,198 @@
                 staffCurrentServices = data.services || [];
             } catch (error) {
                 console.error('Error loading staff services:', error);
+                staffCurrentServices = [];
+            }
+        }
+
+        // Render categories view with cards
+        function renderCategoriesView() {
+            const container = document.getElementById('categoriesList');
+            const staffServiceIds = new Set(staffCurrentServices.map(s => s.service_id));
+
+            // Group services by category
+            const categoryMap = {};
+            allAvailableServices.forEach(s => {
+                if (!categoryMap[s.category]) {
+                    categoryMap[s.category] = { total: 0, assigned: 0, services: [] };
+                }
+                categoryMap[s.category].total++;
+                categoryMap[s.category].services.push(s);
+                if (staffServiceIds.has(s.id)) {
+                    categoryMap[s.category].assigned++;
+                }
+            });
+
+            const categories = Object.keys(categoryMap).sort();
+
+            if (categories.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-subtle);">No services available</div>';
+                return;
+            }
+
+            container.innerHTML = categories.map(cat => {
+                const data = categoryMap[cat];
+                const percentage = Math.round((data.assigned / data.total) * 100);
+                const cardClass = data.assigned === data.total ? 'full' : data.assigned > 0 ? 'partial' : '';
+                const statusText = data.assigned === data.total ? '✓ All assigned' :
+                                   data.assigned > 0 ? `${data.assigned} of ${data.total} assigned` :
+                                   `${data.total} services`;
+
+                return `
+                    <div class="category-card ${cardClass}">
+                        <div class="category-card-header">
+                            <div class="category-card-title">${cat}</div>
+                            <div class="category-card-count">${statusText}</div>
+                        </div>
+                        <div class="category-card-progress">
+                            <div class="category-card-progress-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="category-card-actions">
+                            ${data.assigned < data.total ?
+                                `<button class="btn btn-primary" onclick="addCategoryToStaff('${cat.replace(/'/g, "\\'")}')">
+                                    Add All (${data.total - data.assigned})
+                                </button>` :
+                                `<button class="btn btn-outline" disabled style="flex: 1;">All Added</button>`
+                            }
+                            ${data.assigned > 0 ?
+                                `<button class="btn btn-outline" onclick="removeCategoryFromStaff('${cat.replace(/'/g, "\\'")}')" style="color: var(--danger);">
+                                    Remove
+                                </button>` : ''
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Add entire category to staff
+        async function addCategoryToStaff(category) {
+            const staffServiceIds = new Set(staffCurrentServices.map(s => s.service_id));
+            const servicesToAdd = allAvailableServices.filter(s =>
+                s.category === category && !staffServiceIds.has(s.id)
+            );
+
+            if (servicesToAdd.length === 0) {
+                showAdminToast('All services in this category already added', 'info');
+                return;
+            }
+
+            try {
+                // Add all services in category
+                let added = 0;
+                for (const service of servicesToAdd) {
+                    try {
+                        await apiCall(`/admin/team/${currentStaffIdForServices}/services`, {
+                            method: 'POST',
+                            body: JSON.stringify({ serviceId: service.id })
+                        });
+                        added++;
+                    } catch (e) {
+                        console.error('Failed to add service:', service.name, e);
+                    }
+                }
+
+                showAdminToast(`Added ${added} services from ${category}`, 'success');
+                await loadStaffServices(currentStaffIdForServices);
+                renderAllServiceViews();
+            } catch (error) {
+                console.error('Error adding category:', error);
+                showAdminToast('Failed to add category services', 'error');
+            }
+        }
+
+        // Remove entire category from staff
+        async function removeCategoryFromStaff(category) {
+            const servicesToRemove = staffCurrentServices.filter(s => s.category === category);
+
+            if (servicesToRemove.length === 0) {
+                return;
+            }
+
+            const proceed = await openConfirmDialog({
+                title: `Remove ${category}?`,
+                message: `This will remove all ${servicesToRemove.length} services in this category from this staff member.`,
+                confirmText: 'Remove All',
+                tone: 'danger'
+            });
+
+            if (!proceed) return;
+
+            try {
+                let removed = 0;
+                for (const service of servicesToRemove) {
+                    try {
+                        await apiCall(`/admin/team/${currentStaffIdForServices}/services/${service.service_id}`, {
+                            method: 'DELETE'
+                        });
+                        removed++;
+                    } catch (e) {
+                        console.error('Failed to remove service:', service.service_name, e);
+                    }
+                }
+
+                showAdminToast(`Removed ${removed} services from ${category}`, 'success');
+                await loadStaffServices(currentStaffIdForServices);
+                renderAllServiceViews();
+            } catch (error) {
+                console.error('Error removing category:', error);
+                showAdminToast('Failed to remove category services', 'error');
+            }
+        }
+
+        // Remove all services from staff
+        async function removeAllStaffServices() {
+            if (staffCurrentServices.length === 0) {
+                showAdminToast('No services to remove', 'info');
+                return;
+            }
+
+            const proceed = await openConfirmDialog({
+                title: 'Remove All Services?',
+                message: `This will remove all ${staffCurrentServices.length} services from this staff member. This cannot be undone.`,
+                confirmText: 'Remove All',
+                tone: 'danger'
+            });
+
+            if (!proceed) return;
+
+            try {
+                let removed = 0;
+                for (const service of staffCurrentServices) {
+                    try {
+                        await apiCall(`/admin/team/${currentStaffIdForServices}/services/${service.service_id}`, {
+                            method: 'DELETE'
+                        });
+                        removed++;
+                    } catch (e) {
+                        console.error('Failed to remove service:', e);
+                    }
+                }
+
+                showAdminToast(`Removed ${removed} services`, 'success');
+                await loadStaffServices(currentStaffIdForServices);
+                renderAllServiceViews();
+            } catch (error) {
+                console.error('Error removing all services:', error);
+                showAdminToast('Failed to remove services', 'error');
             }
         }
 
         // Filter available services
-        function filterAvailableServices() {
+        function filterAvailableServices(clearSearch = false) {
+            if (clearSearch) {
+                document.getElementById('serviceSearchFilter').value = '';
+            }
             renderAvailableServices();
         }
 
-        // Render available services list
+        // Render available services list (individual tab)
         function renderAvailableServices() {
             const searchTerm = document.getElementById('serviceSearchFilter').value.toLowerCase();
             const categoryFilter = document.getElementById('serviceCategoryFilter').value;
 
-            // Filter out services already added to staff
-            const staffServiceIds = staffCurrentServices.map(s => s.service_id);
-            let filtered = allAvailableServices.filter(s => !staffServiceIds.includes(s.id));
+            const staffServiceIds = new Set(staffCurrentServices.map(s => s.service_id));
+            let filtered = allAvailableServices.filter(s => !staffServiceIds.has(s.id));
 
             if (searchTerm) {
                 filtered = filtered.filter(s =>
@@ -12196,61 +12574,70 @@
             const container = document.getElementById('availableServicesList');
 
             if (filtered.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-subtle);">No services available</div>';
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-subtle);">No services available</div>';
                 return;
             }
 
             container.innerHTML = filtered.map(service => `
-                <div style="padding: 10px; border-bottom: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong>${service.name}</strong><br>
-                        <small style="color: var(--text-subtle);">${service.category} - R${service.price} - ${service.duration}min</small>
+                <div class="service-item">
+                    <div class="service-item-info">
+                        <div class="service-item-name">${service.name}</div>
+                        <div class="service-item-meta">${service.category} • R${service.price} • ${service.duration || '–'}min</div>
                     </div>
                     <button class="btn btn-sm btn-primary" onclick="addServiceToStaff('${service.id}')">Add</button>
                 </div>
             `).join('');
         }
 
-        // Render staff's services
+        // Render staff's services (assigned tab) - grouped by category
         function renderStaffServices() {
             const container = document.getElementById('staffServicesList');
 
             if (staffCurrentServices.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-subtle);">No services added yet</div>';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; color: var(--text-subtle);">
+                        <div style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;">📋</div>
+                        <p style="margin: 0;">No services assigned yet</p>
+                        <p style="margin: 10px 0 0 0; font-size: 13px;">Use the "Add by Category" tab to quickly assign services</p>
+                    </div>
+                `;
                 return;
             }
 
-            container.innerHTML = staffCurrentServices.map(ss => `
-                <div class="card" style="margin-bottom: 10px; padding: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                        <div>
-                            <strong>${ss.service_name}</strong><br>
-                            <small style="color: var(--text-subtle);">${ss.category}</small>
-                        </div>
-                        <button class="btn btn-sm btn-outline" onclick="removeServiceFromStaff('${ss.service_id}')"
-                                style="color: var(--danger);">Remove</button>
+            // Group by category
+            const categoryMap = {};
+            staffCurrentServices.forEach(ss => {
+                if (!categoryMap[ss.category]) {
+                    categoryMap[ss.category] = [];
+                }
+                categoryMap[ss.category].push(ss);
+            });
+
+            const categories = Object.keys(categoryMap).sort();
+
+            container.innerHTML = categories.map(cat => `
+                <div class="assigned-category-group">
+                    <div class="assigned-category-header">
+                        <span class="assigned-category-title">${cat} (${categoryMap[cat].length})</span>
+                        <button class="btn btn-sm btn-outline" onclick="removeCategoryFromStaff('${cat.replace(/'/g, "\\'")}')"
+                                style="color: var(--danger); padding: 4px 10px; font-size: 12px;">
+                            Remove All
+                        </button>
                     </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group" style="margin: 0;">
-                            <label class="form-label" style="font-size: 12px;">Custom Price (R)</label>
-                            <input type="number" class="form-input"
-                                   value="${ss.custom_price || ss.default_price}"
-                                   placeholder="${ss.default_price}"
-                                   onchange="updateStaffServicePrice('${ss.service_id}', this.value)"
-                                   step="0.01" min="0">
-                            <small style="color: var(--text-subtle);">Default: R${ss.default_price}</small>
-                        </div>
-
-                        <div class="form-group" style="margin: 0;">
-                            <label class="form-label" style="font-size: 12px;">Custom Duration (min)</label>
-                            <input type="number" class="form-input"
-                                   value="${ss.custom_duration || ss.default_duration}"
-                                   placeholder="${ss.default_duration}"
-                                   onchange="updateStaffServiceDuration('${ss.service_id}', this.value)"
-                                   step="15" min="0">
-                            <small style="color: var(--text-subtle);">Default: ${ss.default_duration}min</small>
-                        </div>
+                    <div class="assigned-services-list">
+                        ${categoryMap[cat].map(ss => `
+                            <div class="service-item">
+                                <div class="service-item-info">
+                                    <div class="service-item-name">${ss.service_name}</div>
+                                    <div class="service-item-meta">
+                                        R${ss.custom_price || ss.default_price} • ${ss.custom_duration || ss.default_duration || '–'}min
+                                        ${ss.custom_price || ss.custom_duration ? ' <span style="color: var(--primary);">(custom)</span>' : ''}
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline" onclick="removeServiceFromStaff('${ss.service_id}')"
+                                        style="color: var(--danger);">Remove</button>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             `).join('');
@@ -12264,10 +12651,9 @@
                     body: JSON.stringify({ serviceId })
                 });
 
-                showAdminToast('Service added successfully', 'success');
+                showAdminToast('Service added', 'success');
                 await loadStaffServices(currentStaffIdForServices);
-                renderAvailableServices();
-                renderStaffServices();
+                renderAllServiceViews();
             } catch (error) {
                 console.error('Error adding service:', error);
                 showAdminToast(error.message || 'Failed to add service', 'error');
@@ -12276,24 +12662,14 @@
 
         // Remove service from staff
         async function removeServiceFromStaff(serviceId) {
-            const proceed = await openConfirmDialog({
-                title: 'Remove Service?',
-                message: 'This will remove this service from the staff member\'s offerings.',
-                confirmText: 'Remove',
-                tone: 'danger'
-            });
-
-            if (!proceed) return;
-
             try {
                 await apiCall(`/admin/team/${currentStaffIdForServices}/services/${serviceId}`, {
                     method: 'DELETE'
                 });
 
-                showAdminToast('Service removed successfully', 'success');
+                showAdminToast('Service removed', 'success');
                 await loadStaffServices(currentStaffIdForServices);
-                renderAvailableServices();
-                renderStaffServices();
+                renderAllServiceViews();
             } catch (error) {
                 console.error('Error removing service:', error);
                 showAdminToast(error.message || 'Failed to remove service', 'error');

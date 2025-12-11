@@ -14469,19 +14469,18 @@ async function showNotifications() {
                     }
                 }
 
-                gallery.innerHTML = galleryHTML;
+                // Only show section if we actually have valid gallery content
+                if (galleryHTML.trim() === '') {
+                    if (sectionEl) sectionEl.style.display = 'none';
+                    if (countEl) countEl.textContent = '';
+                } else {
+                    gallery.innerHTML = galleryHTML;
+                }
             } catch (error) {
                 console.error('Error loading inspo gallery:', error);
-                gallery.innerHTML = `
-                    <div class="card" style="text-align: center; padding: 40px; background: var(--gray-light); border: 2px dashed var(--gray-medium);">
-                        <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
-                        <h3 style="margin-bottom: 10px; color: var(--gray-dark);">Couldn't Load Photos</h3>
-                        <p style="color: var(--gray-medium); margin-bottom: 15px;">
-                            There was an error loading your inspiration photos.
-                        </p>
-                        <button class="btn btn-secondary btn-small" onclick="loadInspoGallery()">Try Again</button>
-                    </div>
-                `;
+                // Hide section on error - don't show broken state
+                const sectionEl = document.getElementById('inspoGallerySection');
+                if (sectionEl) sectionEl.style.display = 'none';
             }
         }
 
