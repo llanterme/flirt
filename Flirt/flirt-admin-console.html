@@ -6067,7 +6067,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Services Offered</label>
-                    <button type="button" class="btn btn-outline" onclick="openStaffServicesModal(editingStaffId)" style="width: 100%;">
+                    <button type="button" class="btn btn-outline" onclick="openStaffServicesModal(editingTeamMemberId)" style="width: 100%;">
                         Manage Services & Pricing
                     </button>
                 </div>
@@ -9332,12 +9332,12 @@
         }
 
         // ============================================
-        // STAFF
+        // TEAM (Stylists)
         // ============================================
-        async function loadStaff() {
+        async function loadTeam() {
             try {
                 const data = await apiCall('/admin/staff');
-                const container = document.querySelector('#staff .data-table tbody');
+                const container = document.querySelector('#team .data-table tbody');
                 if (container && data.staff.length > 0) {
                     container.innerHTML = data.staff.map(s => `
                         <tr>
@@ -9352,14 +9352,14 @@
                             <td>${s.clientsCount || 'undefined'} clients</td>
                             <td><span class="status-badge status-${s.available ? 'confirmed' : 'cancelled'}">${s.available ? 'Active' : 'Inactive'}</span></td>
                             <td>
-                                <button class="btn btn-sm" onclick="editStaff('${s.id}')">Edit</button>
-                                <button class="btn btn-sm btn-outline" onclick="archiveStaff('${s.id}')" style="margin-left:6px;">Archive</button>
-                                <button class="btn btn-sm btn-outline" onclick="deleteStaff('${s.id}')" style="margin-left:6px; color: var(--danger);">Delete</button>
+                                <button class="btn btn-sm" onclick="editTeamMember('${s.id}')">Edit</button>
+                                <button class="btn btn-sm btn-outline" onclick="archiveTeamMember('${s.id}')" style="margin-left:6px;">Archive</button>
+                                <button class="btn btn-sm btn-outline" onclick="deleteTeamMember('${s.id}')" style="margin-left:6px; color: var(--danger);">Delete</button>
                             </td>
                         </tr>
                     `).join('');
                 } else if (container) {
-                    container.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color: var(--text-subtle);">No staff members yet</td></tr>';
+                    container.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color: var(--text-subtle);">No team members yet</td></tr>';
                 }
             } catch (error) {
                 console.log('Staff load error:', error);
@@ -9417,27 +9417,27 @@
             const staffData = { name, specialty, tagline, yearsExperience, instagram, imageUrl };
 
             try {
-                if (editingStaffId) {
-                    // Update existing staff
-                    await apiCall(`/admin/staff/${editingStaffId}`, {
+                if (editingTeamMemberId) {
+                    // Update existing team member
+                    await apiCall(`/admin/staff/${editingTeamMemberId}`, {
                         method: 'PATCH',
                         body: JSON.stringify(staffData)
                     });
-                    showAdminToast('Staff member updated!', 'success');
+                    showAdminToast('Team member updated!', 'success');
                 } else {
-                    // Create new staff
+                    // Create new team member
                     await apiCall('/admin/staff', {
                         method: 'POST',
                         body: JSON.stringify(staffData)
                     });
-                    showAdminToast('Staff member added!', 'success');
+                    showAdminToast('Team member added!', 'success');
                 }
-                editingStaffId = null;
-                staffListCache = []; // Clear cache
+                editingTeamMemberId = null;
+                teamListCache = []; // Clear cache
                 closeModal('addStaffModal');
-                loadStaff();
+                loadTeam();
             } catch (error) {
-                showAdminToast('Error saving staff: ' + (error.message || ''), 'error');
+                showAdminToast('Error saving team member: ' + (error.message || ''), 'error');
             }
         }
 
@@ -12115,38 +12115,38 @@
         }
 
         // State for editing staff/products
-        let editingStaffId = null;
+        let editingTeamMemberId = null;
         let editingProductId = null;
-        let staffListCache = [];
+        let teamListCache = [];
         let productListCache = [];
 
-        async function editStaff(id) {
-            editingStaffId = id;
-            // Find staff in cached list or fetch
-            let staff = staffListCache.find(s => s.id === id);
-            if (!staff) {
+        async function editTeamMember(id) {
+            editingTeamMemberId = id;
+            // Find team member in cached list or fetch
+            let member = teamListCache.find(s => s.id === id);
+            if (!member) {
                 try {
                     const data = await apiCall('/admin/staff');
-                    staffListCache = data.staff || [];
-                    staff = staffListCache.find(s => s.id === id);
+                    teamListCache = data.staff || [];
+                    member = teamListCache.find(s => s.id === id);
                 } catch (error) {
-                    alert('Error loading staff: ' + error.message);
+                    alert('Error loading team member: ' + error.message);
                     return;
                 }
             }
 
-            if (!staff) {
-                alert('Staff member not found');
+            if (!member) {
+                alert('Team member not found');
                 return;
             }
 
             // Prefill form fields
-            document.getElementById('staffName').value = staff.name || '';
-            document.getElementById('staffRole').value = staff.specialty || 'Stylist';
-            document.getElementById('staffTagline').value = staff.tagline || '';
-            document.getElementById('staffExperience').value = staff.yearsExperience || '';
-            document.getElementById('staffInstagram').value = staff.instagram || '';
-            const imageUrl = staff.imageUrl || staff.image_url;
+            document.getElementById('staffName').value = member.name || '';
+            document.getElementById('staffRole').value = member.specialty || 'Stylist';
+            document.getElementById('staffTagline').value = member.tagline || '';
+            document.getElementById('staffExperience').value = member.yearsExperience || '';
+            document.getElementById('staffInstagram').value = member.instagram || '';
+            const imageUrl = member.imageUrl || member.image_url;
             if (imageUrl) {
                 const preview = document.getElementById('staffPhotoPreview');
                 preview.src = imageUrl;
@@ -12155,32 +12155,32 @@
             }
 
             // Update modal title and button
-            document.querySelector('#addStaffModal .modal-title').textContent = 'Edit Staff Member';
+            document.querySelector('#addStaffModal .modal-title').textContent = 'Edit Team Member';
             document.getElementById('staffSaveBtn').textContent = 'Save Changes';
 
             openModal('addStaffModal');
         }
 
-        async function archiveStaff(id) {
+        async function archiveTeamMember(id) {
             const proceed = await openConfirmDialog({
-                title: 'Archive staff member?',
+                title: 'Archive team member?',
                 message: 'They will be marked inactive.',
                 confirmText: 'Archive'
             });
             if (!proceed) return;
             try {
                 await apiCall(`/admin/staff/${id}/archive`, { method: 'PATCH' });
-                staffListCache = [];
-                loadStaff();
-                showAdminToast('Staff archived', 'success');
+                teamListCache = [];
+                loadTeam();
+                showAdminToast('Team member archived', 'success');
             } catch (error) {
-                showAdminToast('Error archiving staff: ' + (error.message || ''), 'error');
+                showAdminToast('Error archiving team member: ' + (error.message || ''), 'error');
             }
         }
 
-        async function deleteStaff(id) {
+        async function deleteTeamMember(id) {
             const proceed = await openConfirmDialog({
-                title: 'Delete staff member?',
+                title: 'Delete team member?',
                 message: 'This cannot be undone.',
                 confirmText: 'Delete',
                 tone: 'danger'
@@ -12188,11 +12188,11 @@
             if (!proceed) return;
             try {
                 await apiCall(`/admin/staff/${id}`, { method: 'DELETE' });
-                staffListCache = [];
-                loadStaff();
-                showAdminToast('Staff deleted', 'success');
+                teamListCache = [];
+                loadTeam();
+                showAdminToast('Team member deleted', 'success');
             } catch (error) {
-                showAdminToast('Error deleting staff: ' + (error.message || ''), 'error');
+                showAdminToast('Error deleting team member: ' + (error.message || ''), 'error');
             }
         }
 
@@ -13123,9 +13123,9 @@
             }
         }
 
-        // Reset staff modal for adding new
+        // Reset team member modal for adding new
         function openAddStaffModal() {
-            editingStaffId = null;
+            editingTeamMemberId = null;
             document.getElementById('staffName').value = '';
             document.getElementById('staffRole').value = 'Stylist';
             document.getElementById('staffTagline').value = '';
