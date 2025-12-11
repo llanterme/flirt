@@ -5441,6 +5441,11 @@ app.patch('/api/admin/bookings/:id', authenticateAdmin, async (req, res) => {
             updates.notes = notes;
         }
 
+        // Duration
+        if (duration !== undefined) {
+            updates.duration = duration;
+        }
+
         // Commission rate override (null to use service/stylist default, or decimal like 0.30 for 30%)
         if (commissionRate !== undefined) {
             updates.commission_rate = commissionRate;
