@@ -20,8 +20,9 @@
     <link rel="manifest" href="manifest.json">
 
     <!-- Flirt Brand Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23F67599'/><text y='68' x='50' text-anchor='middle' font-size='36' font-family='Arial' font-weight='300' letter-spacing='2' fill='white'>FL<tspan fill='%23414042'>.</tspan>RT</text></svg>">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.svg">
+    <link rel="icon" type="image/svg+xml" href="/icons/icon-72x72.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
 
     <!-- Google Fonts - Closest to Lulo Clean One & Humanist -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6495,32 +6496,52 @@
                 <!-- Team members loaded dynamically from database -->
             </div>
 
-            <!-- Photo Upload Section for Inspo -->
-            <div class="section-header" style="margin-top: 30px;">
-                <h3 class="section-title">Share Your Hair Inspiration</h3>
-            </div>
-
-            <div class="photo-upload-section" onclick="openPhotoUpload()">
-                <div class="upload-icon">📸</div>
-                <div class="upload-title">Upload Your Inspo Photos</div>
-                <div class="upload-subtitle">Share photos of your current hair or dream hairstyles with your stylist</div>
-                <button class="btn btn-secondary btn-small" style="width: auto;">Choose Photos</button>
-            </div>
-
-            <div class="section-header">
-                <h3 class="section-title">Your Uploaded Inspo</h3>
-            </div>
-
-            <div class="inspo-gallery" id="inspoGallery">
-                <!-- Photos loaded dynamically from database -->
-                <p style="text-align:center;padding:40px;color:var(--gray-medium);">Loading your inspiration photos...</p>
-            </div>
         </div>
 
         <!-- Hair Tracker Content -->
         <div id="tracker" class="content-area">
             <h2 id="trackerTitle" class="section-title" style="margin-bottom: 8px;">Hair Care Journey</h2>
             <p id="trackerSubtitle" style="text-align: center; color: var(--gray-medium); margin-bottom: 20px;">Keep your extensions healthy and on track</p>
+
+            <!-- Prominent Hair Inspiration Section -->
+            <div class="inspo-hero-section" style="background: linear-gradient(135deg, #FFF5F7 0%, #FFF0F3 50%, #FFE4EC 100%); border-radius: 20px; padding: 30px 25px; margin-bottom: 30px; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(246, 117, 153, 0.1); border-radius: 50%;"></div>
+                <div style="position: absolute; bottom: -30px; left: -30px; width: 120px; height: 120px; background: rgba(246, 117, 153, 0.08); border-radius: 50%;"></div>
+
+                <div style="position: relative; z-index: 1;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--brand-pink), #FF8FAB); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 15px rgba(246, 117, 153, 0.3);">✨</div>
+                        <div>
+                            <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: #1a1a2e;">Share Your Hair Inspo</h3>
+                            <p style="margin: 2px 0 0; font-size: 13px; color: var(--gray-medium);">Help your stylist understand your dream look</p>
+                        </div>
+                    </div>
+
+                    <p style="color: #555; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+                        Upload photos of hairstyles you love or your current hair. Your stylist will use these to create your perfect look!
+                    </p>
+
+                    <div class="photo-upload-section" onclick="openPhotoUpload()" style="background: white; border: 2px dashed var(--brand-pink); border-radius: 16px; padding: 25px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                        <div style="font-size: 40px; margin-bottom: 10px;">📸</div>
+                        <div style="font-weight: 600; font-size: 16px; color: #1a1a2e; margin-bottom: 5px;">Tap to Upload Photos</div>
+                        <div style="font-size: 13px; color: var(--gray-medium);">JPG, PNG up to 10MB</div>
+                        <button class="btn btn-primary" style="margin-top: 15px; padding: 12px 30px; font-size: 14px; border-radius: 25px;">Choose Photos</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Uploaded Inspo Gallery -->
+            <div id="inspoGallerySection" style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 class="section-title" style="margin: 0;">Your Inspiration Board</h3>
+                    <span id="inspoCount" style="font-size: 13px; color: var(--gray-medium);"></span>
+                </div>
+                <div class="inspo-gallery" id="inspoGallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px;"></div>
+                <div id="inspoEmptyState" style="display: none; text-align: center; padding: 40px 20px; background: #f8f9fa; border-radius: 16px; margin-top: 15px;">
+                    <div style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;">🖼️</div>
+                    <p style="color: var(--gray-medium); margin: 0;">No inspiration photos yet.<br>Upload some to get started!</p>
+                </div>
+            </div>
 
             <!-- Enhanced Setup prompt (shown when no tracker data) -->
             <div id="trackerSetupPrompt" style="display: none;">
