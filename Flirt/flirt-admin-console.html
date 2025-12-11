@@ -7016,16 +7016,36 @@
             document.getElementById('searchResults').classList.remove('show');
             document.getElementById('globalSearch').value = '';
             showSection(section);
+
+            // If an ID is provided, try to open the specific item
+            if (id) {
+                setTimeout(() => {
+                    if (section === 'customers') {
+                        // Open customer details modal
+                        if (typeof viewCustomer === 'function') {
+                            viewCustomer(id);
+                        }
+                    } else if (section === 'bookings') {
+                        // Highlight or open booking
+                        if (typeof viewBookingDetails === 'function') {
+                            viewBookingDetails(id);
+                        }
+                    }
+                }, 200);
+            }
         }
 
         function filterCustomersByQuery(query) {
             setTimeout(() => {
-                const searchInput = document.querySelector('#customers input[type="text"], #customers input[type="search"]');
+                const searchInput = document.getElementById('customerSearchInput');
                 if (searchInput) {
                     searchInput.value = query;
-                    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    // Trigger the filterCustomers function directly
+                    if (typeof filterCustomers === 'function') {
+                        filterCustomers();
+                    }
                 }
-            }, 100);
+            }, 200);
         }
 
         // Close search results when clicking outside
@@ -12433,6 +12453,9 @@
 
         // Add entire category to staff
         async function addCategoryToStaff(category) {
+            // Refresh staff services first to ensure we have current data
+            await loadStaffServices(currentStaffIdForServices);
+
             const staffServiceIds = new Set(staffCurrentServices.map(s => s.service_id));
             const servicesToAdd = allAvailableServices.filter(s =>
                 s.category === category && !staffServiceIds.has(s.id)
@@ -12440,25 +12463,48 @@
 
             if (servicesToAdd.length === 0) {
                 showAdminToast('All services in this category already added', 'info');
+                renderAllServiceViews();
                 return;
             }
 
+            showAdminToast(`Adding ${servicesToAdd.length} services...`, 'info');
+
             try {
-                // Add all services in category
-                let added = 0;
-                for (const service of servicesToAdd) {
-                    try {
-                        await apiCall(`/admin/team/${currentStaffIdForServices}/services`, {
-                            method: 'POST',
-                            body: JSON.stringify({ serviceId: service.id })
-                        });
-                        added++;
-                    } catch (e) {
-                        console.error('Failed to add service:', service.name, e);
+                // Try batch add first (more efficient)
+                try {
+                    const serviceIds = servicesToAdd.map(s => s.id);
+                    await apiCall(`/admin/team/${currentStaffIdForServices}/services/batch`, {
+                        method: 'POST',
+                        body: JSON.stringify({ serviceIds })
+                    });
+                    showAdminToast(`Added ${servicesToAdd.length} services from ${category}`, 'success');
+                } catch (batchError) {
+                    // Batch endpoint doesn't exist, fall back to individual adds
+                    let added = 0;
+                    let skipped = 0;
+                    for (const service of servicesToAdd) {
+                        try {
+                            await apiCall(`/admin/team/${currentStaffIdForServices}/services`, {
+                                method: 'POST',
+                                body: JSON.stringify({ serviceId: service.id })
+                            });
+                            added++;
+                        } catch (e) {
+                            // Silently skip already-added services
+                            if (e.message && e.message.includes('already added')) {
+                                skipped++;
+                            } else {
+                                console.error('Failed to add service:', service.name, e);
+                            }
+                        }
+                    }
+                    if (added > 0) {
+                        showAdminToast(`Added ${added} services from ${category}`, 'success');
+                    } else if (skipped > 0) {
+                        showAdminToast('All services were already added', 'info');
                     }
                 }
 
-                showAdminToast(`Added ${added} services from ${category}`, 'success');
                 await loadStaffServices(currentStaffIdForServices);
                 renderAllServiceViews();
             } catch (error) {
@@ -12485,19 +12531,31 @@
             if (!proceed) return;
 
             try {
-                let removed = 0;
-                for (const service of servicesToRemove) {
-                    try {
-                        await apiCall(`/admin/team/${currentStaffIdForServices}/services/${service.service_id}`, {
-                            method: 'DELETE'
-                        });
-                        removed++;
-                    } catch (e) {
-                        console.error('Failed to remove service:', service.service_name, e);
+                const serviceIds = servicesToRemove.map(s => s.service_id);
+
+                // Try batch remove first
+                try {
+                    await apiCall(`/admin/team/${currentStaffIdForServices}/services/batch`, {
+                        method: 'DELETE',
+                        body: JSON.stringify({ serviceIds })
+                    });
+                    showAdminToast(`Removed ${servicesToRemove.length} services from ${category}`, 'success');
+                } catch (batchError) {
+                    // Fall back to individual removes
+                    let removed = 0;
+                    for (const service of servicesToRemove) {
+                        try {
+                            await apiCall(`/admin/team/${currentStaffIdForServices}/services/${service.service_id}`, {
+                                method: 'DELETE'
+                            });
+                            removed++;
+                        } catch (e) {
+                            console.error('Failed to remove service:', service.service_name, e);
+                        }
                     }
+                    showAdminToast(`Removed ${removed} services from ${category}`, 'success');
                 }
 
-                showAdminToast(`Removed ${removed} services from ${category}`, 'success');
                 await loadStaffServices(currentStaffIdForServices);
                 renderAllServiceViews();
             } catch (error) {
@@ -12523,19 +12581,31 @@
             if (!proceed) return;
 
             try {
-                let removed = 0;
-                for (const service of staffCurrentServices) {
-                    try {
-                        await apiCall(`/admin/team/${currentStaffIdForServices}/services/${service.service_id}`, {
-                            method: 'DELETE'
-                        });
-                        removed++;
-                    } catch (e) {
-                        console.error('Failed to remove service:', e);
+                const serviceIds = staffCurrentServices.map(s => s.service_id);
+
+                // Use batch endpoint
+                try {
+                    await apiCall(`/admin/team/${currentStaffIdForServices}/services/batch`, {
+                        method: 'DELETE',
+                        body: JSON.stringify({ serviceIds })
+                    });
+                    showAdminToast(`Removed ${staffCurrentServices.length} services`, 'success');
+                } catch (batchError) {
+                    // Fall back to individual removes
+                    let removed = 0;
+                    for (const service of staffCurrentServices) {
+                        try {
+                            await apiCall(`/admin/team/${currentStaffIdForServices}/services/${service.service_id}`, {
+                                method: 'DELETE'
+                            });
+                            removed++;
+                        } catch (e) {
+                            console.error('Failed to remove service:', e);
+                        }
                     }
+                    showAdminToast(`Removed ${removed} services`, 'success');
                 }
 
-                showAdminToast(`Removed ${removed} services`, 'success');
                 await loadStaffServices(currentStaffIdForServices);
                 renderAllServiceViews();
             } catch (error) {
