@@ -8,19 +8,32 @@ const loyaltyHelper = require('../helpers/loyalty');
 const InvoiceRepositoryClass = require('./repositories/InvoiceRepository');
 
 // Database path configuration:
-// 1. DATABASE_PATH env var (for Railway Volume: /data/flirt.db)
+// 1. DATABASE_PATH env var (for Railway Volume: /app/data/flirt.db)
 // 2. RAILWAY_VOLUME_MOUNT_PATH env var + /flirt.db (auto-detect Railway Volume)
-// 3. Default: ./db/flirt.db (local development)
+// 3. Auto-detect Railway volume at /app/data
+// 4. Default: ./db/flirt.db (local development)
 function getDatabasePath() {
+    // 1. Explicit DATABASE_PATH env var
     if (process.env.DATABASE_PATH) {
         console.log('[DB] Using DATABASE_PATH:', process.env.DATABASE_PATH);
         return process.env.DATABASE_PATH;
     }
+
+    // 2. RAILWAY_VOLUME_MOUNT_PATH env var
     if (process.env.RAILWAY_VOLUME_MOUNT_PATH) {
         const dbPath = path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'flirt.db');
         console.log('[DB] Using RAILWAY_VOLUME_MOUNT_PATH:', dbPath);
         return dbPath;
     }
+
+    // 3. Check if Railway volume exists at /app/data (common mount path)
+    const railwayVolumePath = '/app/data/flirt.db';
+    if (fs.existsSync('/app/data')) {
+        console.log('[DB] Found Railway volume at /app/data, using:', railwayVolumePath);
+        return railwayVolumePath;
+    }
+
+    // 4. Default local development path
     const defaultPath = path.join(__dirname, 'flirt.db');
     console.log('[DB] Using default path:', defaultPath);
     return defaultPath;
