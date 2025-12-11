@@ -11429,10 +11429,10 @@
             openCustomerModal(currentProfileData);
         }
 
-        function createInvoiceForCustomer() {
+        async function createInvoiceForCustomer() {
             if (!currentProfileCustomerId || !currentProfileData) return;
             // Open invoice modal directly without closing profile or navigating
-            openInvoiceModal();
+            await showCreateInvoice();
             // Pre-select the customer after modal opens
             setTimeout(() => {
                 const customerSelect = document.getElementById('invoiceCustomerSelect');
@@ -17108,11 +17108,12 @@
 
         async function loadStylistsForInvoice() {
             try {
-                const response = await fetch('/api/admin/staff', {
+                // Fetch from /api/stylists (Team section) instead of /api/admin/staff
+                const response = await fetch('/api/stylists', {
                     headers: { 'Authorization': `Bearer ${getToken()}` }
                 });
                 const data = await response.json();
-                invoiceStylists = data.staff || [];
+                invoiceStylists = data.stylists || [];
 
                 const stylistSelects = document.querySelectorAll('#invoice-stylist, #invoice-stylist-filter, #commission-stylist');
                 stylistSelects.forEach(select => {
