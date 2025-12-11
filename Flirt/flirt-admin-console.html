@@ -9242,8 +9242,8 @@
             if (!container) return;
 
             try {
-                const data = await apiCall('/admin/staff');
-                teamListCache = data.staff || [];
+                const data = await apiCall('/admin/team');
+                teamListCache = data.team || [];
 
                 // Update active count
                 const activeCount = teamListCache.filter(s => s.available !== false).length;
@@ -9335,14 +9335,14 @@
             try {
                 if (editingTeamMemberId) {
                     // Update existing team member
-                    await apiCall(`/admin/staff/${editingTeamMemberId}`, {
+                    await apiCall(`/admin/team/${editingTeamMemberId}`, {
                         method: 'PATCH',
                         body: JSON.stringify(staffData)
                     });
                     showAdminToast('Team member updated!', 'success');
                 } else {
                     // Create new team member
-                    await apiCall('/admin/staff', {
+                    await apiCall('/admin/team', {
                         method: 'POST',
                         body: JSON.stringify(staffData)
                     });
@@ -12042,8 +12042,8 @@
             let member = teamListCache.find(s => s.id === id);
             if (!member) {
                 try {
-                    const data = await apiCall('/admin/staff');
-                    teamListCache = data.staff || [];
+                    const data = await apiCall('/admin/team');
+                    teamListCache = data.team || [];
                     member = teamListCache.find(s => s.id === id);
                 } catch (error) {
                     alert('Error loading team member: ' + error.message);
@@ -12085,7 +12085,7 @@
             });
             if (!proceed) return;
             try {
-                await apiCall(`/admin/staff/${id}/archive`, { method: 'PATCH' });
+                await apiCall(`/admin/team/${id}/archive`, { method: 'PATCH' });
                 teamListCache = [];
                 loadTeam();
                 showAdminToast('Team member archived', 'success');
@@ -12103,7 +12103,7 @@
             });
             if (!proceed) return;
             try {
-                await apiCall(`/admin/staff/${id}`, { method: 'DELETE' });
+                await apiCall(`/admin/team/${id}`, { method: 'DELETE' });
                 teamListCache = [];
                 loadTeam();
                 showAdminToast('Team member deleted', 'success');
@@ -12161,7 +12161,7 @@
         // Load staff's current services
         async function loadStaffServices(staffId) {
             try {
-                const data = await apiCall(`/admin/staff/${staffId}/services`);
+                const data = await apiCall(`/admin/team/${staffId}/services`);
                 staffCurrentServices = data.services || [];
             } catch (error) {
                 console.error('Error loading staff services:', error);
@@ -12259,7 +12259,7 @@
         // Add service to staff
         async function addServiceToStaff(serviceId) {
             try {
-                await apiCall(`/admin/staff/${currentStaffIdForServices}/services`, {
+                await apiCall(`/admin/team/${currentStaffIdForServices}/services`, {
                     method: 'POST',
                     body: JSON.stringify({ serviceId })
                 });
@@ -12286,7 +12286,7 @@
             if (!proceed) return;
 
             try {
-                await apiCall(`/admin/staff/${currentStaffIdForServices}/services/${serviceId}`, {
+                await apiCall(`/admin/team/${currentStaffIdForServices}/services/${serviceId}`, {
                     method: 'DELETE'
                 });
 
@@ -12304,7 +12304,7 @@
         async function updateStaffServicePrice(serviceId, price) {
             try {
                 const customPrice = price ? parseFloat(price) : null;
-                await apiCall(`/admin/staff/${currentStaffIdForServices}/services/${serviceId}`, {
+                await apiCall(`/admin/team/${currentStaffIdForServices}/services/${serviceId}`, {
                     method: 'PUT',
                     body: JSON.stringify({ customPrice })
                 });
@@ -12321,7 +12321,7 @@
         async function updateStaffServiceDuration(serviceId, duration) {
             try {
                 const customDuration = duration ? parseInt(duration) : null;
-                await apiCall(`/admin/staff/${currentStaffIdForServices}/services/${serviceId}`, {
+                await apiCall(`/admin/team/${currentStaffIdForServices}/services/${serviceId}`, {
                     method: 'PUT',
                     body: JSON.stringify({ customDuration })
                 });
@@ -13091,13 +13091,13 @@
 
             try {
                 showAdminToast('Saving team member...', 'info');
-                const result = await apiCall('/admin/staff', {
+                const result = await apiCall('/admin/team', {
                     method: 'POST',
                     body: JSON.stringify(staffData)
                 });
 
                 // Get the new team member ID
-                editingTeamMemberId = result.staff?.id || result.id;
+                editingTeamMemberId = result.team?.id || result.id;
                 teamListCache = []; // Clear cache
 
                 // Update the modal to show we're now editing

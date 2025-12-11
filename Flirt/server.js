@@ -4381,10 +4381,10 @@ app.use((err, req, res, next) => {
     next(err);
 });
 
-// ========== STAFF SERVICES MANAGEMENT ==========
+// ========== TEAM SERVICES MANAGEMENT ==========
 
-// Get all services offered by a specific staff member
-app.get('/api/admin/staff/:staffId/services', authenticateAdmin, async (req, res) => {
+// Get all services offered by a specific team member
+app.get('/api/admin/team/:staffId/services', authenticateAdmin, async (req, res) => {
     try {
         const { staffId } = req.params;
 
@@ -4409,8 +4409,8 @@ app.get('/api/admin/staff/:staffId/services', authenticateAdmin, async (req, res
     }
 });
 
-// Add a service to a staff member's offerings
-app.post('/api/admin/staff/:staffId/services', authenticateAdmin, async (req, res) => {
+// Add a service to a team member's offerings
+app.post('/api/admin/team/:staffId/services', authenticateAdmin, async (req, res) => {
     try {
         const { staffId } = req.params;
         const { serviceId, customPrice, customDuration } = req.body;
@@ -4442,8 +4442,8 @@ app.post('/api/admin/staff/:staffId/services', authenticateAdmin, async (req, re
     }
 });
 
-// Update a staff member's service (custom pricing/duration)
-app.put('/api/admin/staff/:staffId/services/:serviceId', authenticateAdmin, async (req, res) => {
+// Update a team member's service (custom pricing/duration)
+app.put('/api/admin/team/:staffId/services/:serviceId', authenticateAdmin, async (req, res) => {
     try {
         const { staffId, serviceId } = req.params;
         const { customPrice, customDuration, active } = req.body;
@@ -4464,8 +4464,8 @@ app.put('/api/admin/staff/:staffId/services/:serviceId', authenticateAdmin, asyn
     }
 });
 
-// Remove a service from a staff member
-app.delete('/api/admin/staff/:staffId/services/:serviceId', authenticateAdmin, async (req, res) => {
+// Remove a service from a team member
+app.delete('/api/admin/team/:staffId/services/:serviceId', authenticateAdmin, async (req, res) => {
     try {
         const { staffId, serviceId } = req.params;
 
@@ -6278,56 +6278,56 @@ app.post('/api/admin/customers/:id/reset-password', authenticateAdmin, async (re
     }
 });
 
-// Staff management (admin)
-app.get('/api/admin/staff', authenticateAdmin, async (req, res) => {
+// Team management (stylists) - separate from staff accounts
+app.get('/api/admin/team', authenticateAdmin, async (req, res) => {
     try {
         await seedStylistsDefaults();
         const stylists = await StylistRepository.findAll();
-        res.json({ success: true, staff: stylists });
+        res.json({ success: true, team: stylists });
     } catch (error) {
-        console.error('Database error in admin staff:', error.message);
+        console.error('Database error in admin team:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
 
-app.post('/api/admin/staff', authenticateAdmin, async (req, res) => {
+app.post('/api/admin/team', authenticateAdmin, async (req, res) => {
     try {
-        const { name, specialty, tagline, instagram, color } = req.body;
+        const { name, specialty, tagline, instagram, color, yearsExperience, imageUrl } = req.body;
 
-        if (!name || !specialty) {
-            return res.status(400).json({ success: false, message: 'Name and specialty are required' });
+        if (!name) {
+            return res.status(400).json({ success: false, message: 'Name is required' });
         }
 
         const newStylist = {
-            id: name.toLowerCase().replace(/\s+/g, '_'),
+            id: name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now(),
             name,
-            specialty,
+            specialty: specialty || 'Stylist',
             tagline: tagline || '',
             clientsCount: 0,
-            yearsExperience: 0,
+            yearsExperience: yearsExperience || 0,
             instagram: instagram || '',
             color: color || '#FF6B9D',
             available: true,
-            imageUrl: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400'
+            imageUrl: imageUrl || 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400'
         };
 
         const createdStylist = await StylistRepository.create(newStylist);
 
-        res.status(201).json({ success: true, stylist: createdStylist });
+        res.status(201).json({ success: true, team: createdStylist, id: createdStylist.id });
     } catch (error) {
-        console.error('Database error creating stylist:', error.message);
+        console.error('Database error creating team member:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
 
-app.patch('/api/admin/staff/:id', authenticateAdmin, async (req, res) => {
+app.patch('/api/admin/team/:id', authenticateAdmin, async (req, res) => {
     try {
         const stylist = await StylistRepository.findById(req.params.id);
         if (!stylist) {
-            return res.status(404).json({ success: false, message: 'Stylist not found' });
+            return res.status(404).json({ success: false, message: 'Team member not found' });
         }
 
-        const allowedUpdates = ['name', 'specialty', 'tagline', 'instagram', 'color', 'available', 'imageUrl'];
+        const allowedUpdates = ['name', 'specialty', 'tagline', 'instagram', 'color', 'available', 'imageUrl', 'yearsExperience'];
         const updateData = {};
         for (const key of allowedUpdates) {
             if (req.body[key] !== undefined) {
@@ -6337,43 +6337,43 @@ app.patch('/api/admin/staff/:id', authenticateAdmin, async (req, res) => {
 
         const updatedStylist = await StylistRepository.update(req.params.id, updateData);
 
-        res.json({ success: true, stylist: updatedStylist });
+        res.json({ success: true, team: updatedStylist });
     } catch (error) {
-        console.error('Database error updating stylist:', error.message);
+        console.error('Database error updating team member:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
 
-app.delete('/api/admin/staff/:id', authenticateAdmin, async (req, res) => {
+app.delete('/api/admin/team/:id', authenticateAdmin, async (req, res) => {
     try {
         const stylist = await StylistRepository.findById(req.params.id);
         if (!stylist) {
-            return res.status(404).json({ success: false, message: 'Stylist not found' });
+            return res.status(404).json({ success: false, message: 'Team member not found' });
         }
 
         await StylistRepository.delete(req.params.id);
 
-        res.json({ success: true, message: 'Stylist deleted' });
+        res.json({ success: true, message: 'Team member deleted' });
     } catch (error) {
-        console.error('Database error deleting stylist:', error.message);
+        console.error('Database error deleting team member:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
 
-// Archive staff (soft delete)
-app.patch('/api/admin/staff/:id/archive', authenticateAdmin, async (req, res) => {
+// Archive team member (soft delete)
+app.patch('/api/admin/team/:id/archive', authenticateAdmin, async (req, res) => {
     try {
         const stylist = await StylistRepository.findById(req.params.id);
         if (!stylist) {
-            return res.status(404).json({ success: false, message: 'Stylist not found' });
+            return res.status(404).json({ success: false, message: 'Team member not found' });
         }
 
         await StylistRepository.archive(req.params.id);
         const updated = await StylistRepository.findById(req.params.id);
 
-        res.json({ success: true, stylist: updated, message: 'Stylist archived' });
+        res.json({ success: true, team: updated, message: 'Team member archived' });
     } catch (error) {
-        console.error('Database error archiving stylist:', error.message);
+        console.error('Database error archiving team member:', error.message);
         return res.status(500).json({ success: false, message: 'Database error - please try again later' });
     }
 });
