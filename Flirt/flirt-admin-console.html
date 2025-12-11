@@ -3226,6 +3226,19 @@
                                     <button class="btn btn-sm btn-outline" onclick="goToCalendarToday()">Today</button>
                                 </div>
                             </div>
+                            <!-- Status Color Legend -->
+                            <div style="padding: 10px 20px; background: var(--gray-light); border-top: 1px solid var(--border-soft); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; font-size: 11px;">
+                                <span style="color: var(--gray-medium); font-weight: 600;">Status:</span>
+                                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #9e9e9e;"></span> No Status</span>
+                                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #f9a825;"></span> To Be Confirmed</span>
+                                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #1565c0;"></span> Online Booking</span>
+                                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #4caf50;"></span> Confirmed</span>
+                                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #2e7d32;"></span> Paid</span>
+                                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #9c27b0;"></span> New Extensions</span>
+                                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #ff9800;"></span> Late</span>
+                                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #c62828;"></span> No Show</span>
+                                <span style="display: flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; border-radius: 50%; background: #f44336;"></span> Cancelled</span>
+                            </div>
                             <div style="padding: 20px;">
                                 <!-- Day View - Salon Schedule with Stylist Columns -->
                                 <div id="calendarDayView" style="display: none;">
@@ -5560,7 +5573,7 @@
                         </div>
                         <div class="modal-footer">
                             <button class="btn btn-secondary" onclick="closeStaffModal()">Cancel</button>
-                            <button class="btn btn-primary" onclick="saveStaff()">Save</button>
+                            <button class="btn btn-primary" onclick="saveAdminStaff()">Save</button>
                         </div>
                     </div>
                 </div>
@@ -9099,8 +9112,23 @@
                 const dayBookings = bookingsByDate[dateKey] || [];
                 const hasBookings = dayBookings.length > 0;
 
-                const requestedCount = dayBookings.filter(b => b.status === 'REQUESTED').length;
-                const confirmedCount = dayBookings.filter(b => b.status === 'CONFIRMED').length;
+                // Status color mapping for month view dots
+                const statusColorMap = {
+                    'pending': '#ffc107', 'REQUESTED': '#ffc107', 'To Be Confirmed': '#f9a825',
+                    'confirmed': '#4caf50', 'CONFIRMED': '#4caf50', 'Paid': '#2e7d32',
+                    'completed': '#2196f3', 'Online Booking': '#1565c0',
+                    'cancelled': '#f44336', 'Cancelled': '#f44336',
+                    'No Status': '#9e9e9e', 'Late': '#ff9800',
+                    'New Extentions': '#9c27b0', 'New Extensions': '#9c27b0',
+                    'No Show': '#c62828'
+                };
+
+                // Generate status dots for the day's bookings
+                const statusDots = dayBookings.slice(0, 6).map(b => {
+                    const color = statusColorMap[b.status] || '#9e9e9e';
+                    return `<span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};" title="${b.status || 'No Status'}"></span>`;
+                }).join('');
+                const moreCount = dayBookings.length > 6 ? dayBookings.length - 6 : 0;
 
                 html += `
                     <div onclick="${hasBookings ? `showBookingsForDay('${dateKey}')` : ''}"
@@ -9111,9 +9139,9 @@
                                 <div style="font-size: 20px; font-weight: 700; color: var(--primary);">${dayBookings.length}</div>
                                 <div style="font-size: 10px; color: var(--gray-medium);">booking${dayBookings.length > 1 ? 's' : ''}</div>
                             </div>
-                            <div style="display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap;">
-                                ${requestedCount > 0 ? `<span style="font-size: 9px; padding: 2px 6px; background: #fff3cd; color: #856404; border-radius: 10px;">${requestedCount} requested</span>` : ''}
-                                ${confirmedCount > 0 ? `<span style="font-size: 9px; padding: 2px 6px; background: #d4edda; color: #155724; border-radius: 10px;">${confirmedCount} confirmed</span>` : ''}
+                            <div style="display: flex; gap: 3px; margin-top: 8px; flex-wrap: wrap; align-items: center;">
+                                ${statusDots}
+                                ${moreCount > 0 ? `<span style="font-size: 9px; color: var(--gray-medium);">+${moreCount}</span>` : ''}
                             </div>
                         ` : ''}
                     </div>
@@ -9442,14 +9470,30 @@
                 html += `<div style="position: relative; border-right: ${colIdx < numColumns - 1 ? '1px solid transparent' : 'none'};">`;
 
                 columnBookings.forEach(b => {
+                    // Status styles matching MySalonOnline appointment statuses
                     const statusStyles = {
+                        // Legacy/internal statuses
                         'REQUESTED': { bg: '#fff3cd', border: '#f0ad4e', text: '#856404' },
                         'CONFIRMED': { bg: '#d4edda', border: '#28a745', text: '#155724' },
                         'COMPLETED': { bg: '#d1ecf1', border: '#17a2b8', text: '#0c5460' },
                         'CANCELLED': { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
-                        'NO_SHOW': { bg: '#e2e3e5', border: '#6c757d', text: '#383d41' }
+                        'NO_SHOW': { bg: '#e2e3e5', border: '#6c757d', text: '#383d41' },
+                        'pending': { bg: '#fff3cd', border: '#f0ad4e', text: '#856404' },
+                        'confirmed': { bg: '#d4edda', border: '#28a745', text: '#155724' },
+                        'completed': { bg: '#d1ecf1', border: '#17a2b8', text: '#0c5460' },
+                        'cancelled': { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
+                        // MySalonOnline statuses
+                        'No Status': { bg: '#e9ecef', border: '#9e9e9e', text: '#495057' },
+                        'Cancelled': { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
+                        'Late': { bg: '#ffe0b2', border: '#ff9800', text: '#e65100' },
+                        'New Extentions': { bg: '#e1bee7', border: '#9c27b0', text: '#7b1fa2' },
+                        'New Extensions': { bg: '#e1bee7', border: '#9c27b0', text: '#7b1fa2' },
+                        'No Show': { bg: '#ffcdd2', border: '#c62828', text: '#c62828' },
+                        'Online Booking': { bg: '#bbdefb', border: '#1565c0', text: '#1565c0' },
+                        'Paid': { bg: '#c8e6c9', border: '#2e7d32', text: '#2e7d32' },
+                        'To Be Confirmed': { bg: '#fff9c4', border: '#f9a825', text: '#f9a825' }
                     };
-                    const style = statusStyles[b.status] || statusStyles['CONFIRMED'];
+                    const style = statusStyles[b.status] || { bg: '#e9ecef', border: '#9e9e9e', text: '#495057' };
 
                     // For unscheduled bookings, stack them at the top
                     let topPos, height;
@@ -9663,11 +9707,25 @@
                     html += `<div style="${borderRight} border-bottom: 1px solid var(--gray-light); padding: 2px; min-height: 50px; font-size: 10px;">`;
 
                     hourBookings.forEach(b => {
+                        // Status colors matching MySalonOnline appointment statuses
                         const statusColors = {
-                            'pending': 'background: #fff3cd;',
-                            'confirmed': 'background: #d4edda;',
-                            'completed': 'background: #d1ecf1;',
-                            'cancelled': 'background: #f8d7da;'
+                            // Legacy/internal statuses
+                            'pending': 'background: #fff3cd; color: #856404;',
+                            'confirmed': 'background: #d4edda; color: #155724;',
+                            'completed': 'background: #d1ecf1; color: #0c5460;',
+                            'cancelled': 'background: #f8d7da; color: #721c24;',
+                            'REQUESTED': 'background: #fff3cd; color: #856404;',
+                            'CONFIRMED': 'background: #d4edda; color: #155724;',
+                            // MySalonOnline statuses
+                            'No Status': 'background: #e9ecef; color: #495057;',
+                            'Cancelled': 'background: #f8d7da; color: #721c24;',
+                            'Late': 'background: #ffe0b2; color: #e65100;',
+                            'New Extentions': 'background: #e1bee7; color: #7b1fa2;',
+                            'New Extensions': 'background: #e1bee7; color: #7b1fa2;',
+                            'No Show': 'background: #ffcdd2; color: #c62828;',
+                            'Online Booking': 'background: #bbdefb; color: #1565c0;',
+                            'Paid': 'background: #c8e6c9; color: #2e7d32;',
+                            'To Be Confirmed': 'background: #fff9c4; color: #f9a825;'
                         };
 
                         html += `
@@ -10485,7 +10543,7 @@
             document.getElementById('staff-modal').style.display = 'none';
         }
 
-        async function saveStaff() {
+        async function saveAdminStaff() {
             const editId = document.getElementById('staff-edit-id').value;
             const name = document.getElementById('staff-name').value.trim();
             const email = document.getElementById('staff-email').value.trim();
