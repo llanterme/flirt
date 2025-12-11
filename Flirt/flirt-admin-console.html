@@ -11356,15 +11356,15 @@
 
         function createInvoiceForCustomer() {
             if (!currentProfileCustomerId || !currentProfileData) return;
-            closeCustomerProfile();
-            // Navigate to invoices and create new invoice for this customer
-            showSection('invoices');
+            // Open invoice modal directly without closing profile or navigating
+            openInvoiceModal();
+            // Pre-select the customer after modal opens
             setTimeout(() => {
-                openInvoiceModal();
-                // Pre-select the customer
                 const customerSelect = document.getElementById('invoiceCustomerSelect');
                 if (customerSelect) {
                     customerSelect.value = currentProfileCustomerId;
+                    // Trigger change event to update any dependent fields
+                    customerSelect.dispatchEvent(new Event('change'));
                 }
             }, 100);
         }
