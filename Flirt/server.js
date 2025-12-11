@@ -1972,7 +1972,8 @@ app.delete('/api/inspo-photos/:id', authenticateToken, async (req, res) => {
 app.get('/api/products', async (req, res) => {
     try {
         const { category, onSale } = req.query;
-        const filters = {};
+        // Only show products marked for online sale on public storefront
+        const filters = { availableOnline: true };
 
         if (category) {
             filters.category = category;
