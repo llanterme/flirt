@@ -3469,7 +3469,7 @@
                         <div class="stat-card">
                             <div class="stat-card-header">
                                 <div>
-                                    <div class="stat-value">4</div>
+                                    <div class="stat-value" id="teamActiveCount">0</div>
                                     <div class="stat-label">Active Stylists</div>
                                 </div>
                                 <div class="stat-icon pink">👩‍🎨</div>
@@ -3481,114 +3481,14 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Staff Member</th>
+                                    <th>Team Member</th>
                                     <th>Role</th>
-                                    <th>Bookings</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <img src="https://images.unsplash.com/photo-1595959183082-7b570b7e1dfa?w=80&h=80&fit=crop" class="avatar" alt="Lisa">
-                                            <div>
-                                                <div style="font-weight: 500;">Lisa Thompson</div>
-                                                <div style="font-size: 12px; color: var(--gray-medium);">8 years experience</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>Senior Stylist</td>
-                                    <td>Tape Extensions, Weft</td>
-                                    <td>⭐ 4.9 (127)</td>
-                                    <td>42 this month</td>
-                                    <td>
-                                        <label class="toggle-switch">
-                                            <input type="checkbox" checked>
-                                            <span class="toggle-slider"></span>
-                                        </label>
-                                    </td>
-                                    <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline" onclick="editStaff(1)">✏️</button>
-                                        <button class="btn btn-icon btn-outline">📊</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <img src="https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=80&h=80&fit=crop" class="avatar" alt="Emma">
-                                            <div>
-                                                <div style="font-weight: 500;">Emma Williams</div>
-                                                <div style="font-size: 12px; color: var(--gray-medium);">6 years experience</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>Extension Specialist</td>
-                                    <td>Keratin Bonds, Volume</td>
-                                    <td>⭐ 4.8 (94)</td>
-                                    <td>38 this month</td>
-                                    <td>
-                                        <label class="toggle-switch">
-                                            <input type="checkbox" checked>
-                                            <span class="toggle-slider"></span>
-                                        </label>
-                                    </td>
-                                    <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️</button>
-                                        <button class="btn btn-icon btn-outline">📊</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=80&h=80&fit=crop" class="avatar" alt="Sarah">
-                                            <div>
-                                                <div style="font-weight: 500;">Sarah Martinez</div>
-                                                <div style="font-size: 12px; color: var(--gray-medium);">10 years experience</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>Color Expert</td>
-                                    <td>Color Match, Balayage</td>
-                                    <td>⭐ 5.0 (203)</td>
-                                    <td>51 this month</td>
-                                    <td>
-                                        <label class="toggle-switch">
-                                            <input type="checkbox" checked>
-                                            <span class="toggle-slider"></span>
-                                        </label>
-                                    </td>
-                                    <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️</button>
-                                        <button class="btn btn-icon btn-outline">📊</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div style="display: flex; align-items: center; gap: 10px;">
-                                            <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=80&h=80&fit=crop" class="avatar" alt="Maya">
-                                            <div>
-                                                <div style="font-weight: 500;">Maya Johnson</div>
-                                                <div style="font-size: 12px; color: var(--gray-medium);">5 years experience</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>Maintenance Expert</td>
-                                    <td>Maintenance, Repairs</td>
-                                    <td>⭐ 4.9 (156)</td>
-                                    <td>35 this month</td>
-                                    <td>
-                                        <label class="toggle-switch">
-                                            <input type="checkbox" checked>
-                                            <span class="toggle-slider"></span>
-                                        </label>
-                                    </td>
-                                    <td class="action-btns">
-                                        <button class="btn btn-icon btn-outline">✏️</button>
-                                        <button class="btn btn-icon btn-outline">📊</button>
-                                    </td>
-                                </tr>
+                            <tbody id="team-table-body">
+                                <tr><td colspan="4" style="text-align: center; padding: 40px;">Loading team members...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -6759,6 +6659,7 @@
             const titles = {
                 'dashboard': 'Dashboard',
                 'bookings': 'Bookings',
+                'team': 'Team Members',
                 'staff': 'Staff Management',
                 'payroll': 'Payroll Management',
                 'services': 'Service Management',
@@ -6786,6 +6687,7 @@
                         loadBookings();
                     }
                     break;
+                case 'team': loadTeam(); break;
                 case 'staff': loadStaff(); break;
                 case 'payroll':
                     initPayrollYearSelector();
@@ -9335,34 +9237,47 @@
         // TEAM (Stylists)
         // ============================================
         async function loadTeam() {
+            const container = document.getElementById('team-table-body');
+            if (!container) return;
+
             try {
                 const data = await apiCall('/admin/staff');
-                const container = document.querySelector('#team .data-table tbody');
-                if (container && data.staff.length > 0) {
-                    container.innerHTML = data.staff.map(s => `
+                teamListCache = data.staff || [];
+
+                // Update active count
+                const activeCount = teamListCache.filter(s => s.available !== false).length;
+                const countEl = document.getElementById('teamActiveCount');
+                if (countEl) countEl.textContent = activeCount;
+
+                if (teamListCache.length > 0) {
+                    container.innerHTML = teamListCache.map(s => `
                         <tr>
-                            <td><div style="display:flex;align-items:center;gap:10px;">
-                                ${(s.imageUrl || s.image_url) ?
-                                    `<img src="${s.imageUrl || s.image_url}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" alt="${s.name}">` :
-                                    `<div style="width:40px;height:40px;border-radius:50%;background:${s.color};display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">${s.name.charAt(0)}</div>`
-                                }
-                                <div><strong>${s.name}</strong><br><small>${s.specialty}</small></div>
-                            </div></td>
-                            <td>${s.specialty}</td>
-                            <td>${s.clientsCount || 'undefined'} clients</td>
-                            <td><span class="status-badge status-${s.available ? 'confirmed' : 'cancelled'}">${s.available ? 'Active' : 'Inactive'}</span></td>
                             <td>
-                                <button class="btn btn-sm" onclick="editTeamMember('${s.id}')">Edit</button>
-                                <button class="btn btn-sm btn-outline" onclick="archiveTeamMember('${s.id}')" style="margin-left:6px;">Archive</button>
-                                <button class="btn btn-sm btn-outline" onclick="deleteTeamMember('${s.id}')" style="margin-left:6px; color: var(--danger);">Delete</button>
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    ${(s.imageUrl || s.image_url) ?
+                                        `<img src="${s.imageUrl || s.image_url}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" alt="${s.name}">` :
+                                        `<div style="width:40px;height:40px;border-radius:50%;background:${s.color || '#F67599'};display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">${s.name ? s.name.charAt(0) : '?'}</div>`
+                                    }
+                                    <div>
+                                        <strong>${s.name}</strong>
+                                        ${s.yearsExperience ? `<br><small style="color:#666;">${s.yearsExperience} years experience</small>` : ''}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${s.specialty || 'Stylist'}</td>
+                            <td><span class="status-badge status-${s.available !== false ? 'confirmed' : 'cancelled'}">${s.available !== false ? 'Active' : 'Inactive'}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline" onclick="editTeamMember('${s.id}')" title="Edit">✏️</button>
+                                <button class="btn btn-sm btn-outline" onclick="deleteTeamMember('${s.id}')" style="margin-left:6px; color: var(--danger);" title="Delete">🗑️</button>
                             </td>
                         </tr>
                     `).join('');
-                } else if (container) {
-                    container.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color: var(--text-subtle);">No team members yet</td></tr>';
+                } else {
+                    container.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px; color: #666;">No team members yet. Click "+ Add Team Member" to add your first stylist.</td></tr>';
                 }
             } catch (error) {
-                console.log('Staff load error:', error);
+                console.error('Team load error:', error);
+                container.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px; color: #dc3545;">Error loading team members</td></tr>';
             }
         }
 
