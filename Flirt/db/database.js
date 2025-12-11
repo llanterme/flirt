@@ -13,15 +13,21 @@ const InvoiceRepositoryClass = require('./repositories/InvoiceRepository');
 // 3. Default: ./db/flirt.db (local development)
 function getDatabasePath() {
     if (process.env.DATABASE_PATH) {
+        console.log('[DB] Using DATABASE_PATH:', process.env.DATABASE_PATH);
         return process.env.DATABASE_PATH;
     }
     if (process.env.RAILWAY_VOLUME_MOUNT_PATH) {
-        return path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'flirt.db');
+        const dbPath = path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'flirt.db');
+        console.log('[DB] Using RAILWAY_VOLUME_MOUNT_PATH:', dbPath);
+        return dbPath;
     }
-    return path.join(__dirname, 'flirt.db');
+    const defaultPath = path.join(__dirname, 'flirt.db');
+    console.log('[DB] Using default path:', defaultPath);
+    return defaultPath;
 }
 
 const DB_PATH = getDatabasePath();
+console.log('[DB] Final database path:', DB_PATH);
 
 let db = null;
 

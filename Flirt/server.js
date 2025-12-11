@@ -8361,8 +8361,13 @@ async function seedServicesDefaults() {
 async function seedStylistsDefaults() {
     try {
         const existing = await StylistRepository.findAll();
-        if (existing && existing.length > 0) return;
+        console.log(`[Stylists] Found ${existing ? existing.length : 0} existing stylists in database`);
+        if (existing && existing.length > 0) {
+            console.log('[Stylists] Skipping seed - stylists already exist:', existing.map(s => s.name).join(', '));
+            return;
+        }
 
+        console.log('[Stylists] No stylists found - seeding defaults...');
         const defaults = [
             {
                 id: 'stylist_lisa',
