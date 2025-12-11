@@ -1809,6 +1809,7 @@ const BookingRepository = {
             preferredTimeOfDay: 'preferred_time_of_day',
             time: 'time',
             confirmedTime: 'confirmed_time',
+            duration: 'duration',
             // Payment tracking fields
             paymentStatus: 'payment_status',
             paymentMethod: 'payment_method',
