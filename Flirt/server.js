@@ -4442,6 +4442,88 @@ app.post('/api/admin/team/:staffId/services', authenticateAdmin, async (req, res
     }
 });
 
+// Batch add services to a team member (for adding entire categories at once)
+app.post('/api/admin/team/:staffId/services/batch', authenticateAdmin, async (req, res) => {
+    try {
+        const { staffId } = req.params;
+        const { serviceIds } = req.body;
+
+        if (!serviceIds || !Array.isArray(serviceIds) || serviceIds.length === 0) {
+            return res.status(400).json({ success: false, message: 'Service IDs array is required' });
+        }
+
+        // Get existing services for this staff member
+        const existingServices = await db.dbAll(
+            'SELECT service_id FROM staff_services WHERE staff_id = ?',
+            [staffId]
+        );
+        const existingIds = new Set(existingServices.map(s => s.service_id));
+
+        // Filter to only add services not already assigned
+        const newServiceIds = serviceIds.filter(id => !existingIds.has(id));
+
+        if (newServiceIds.length === 0) {
+            return res.json({ success: true, message: 'All services already added', added: 0, skipped: serviceIds.length });
+        }
+
+        // Add all new services in a transaction
+        let added = 0;
+        for (const serviceId of newServiceIds) {
+            try {
+                const id = uuidv4();
+                await db.dbRun(`
+                    INSERT INTO staff_services (id, staff_id, service_id, custom_price, custom_duration, active)
+                    VALUES (?, ?, ?, NULL, NULL, 1)
+                `, [id, staffId, serviceId]);
+                added++;
+            } catch (e) {
+                // Skip duplicates silently
+                if (!e.message.includes('UNIQUE constraint')) {
+                    console.error('Error adding service:', serviceId, e);
+                }
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Added ${added} services`,
+            added,
+            skipped: serviceIds.length - added
+        });
+    } catch (error) {
+        console.error('Error batch adding staff services:', error);
+        res.status(500).json({ success: false, message: 'Failed to add services' });
+    }
+});
+
+// Batch remove services from a team member (for removing entire categories at once)
+app.delete('/api/admin/team/:staffId/services/batch', authenticateAdmin, async (req, res) => {
+    try {
+        const { staffId } = req.params;
+        const { serviceIds } = req.body;
+
+        if (!serviceIds || !Array.isArray(serviceIds) || serviceIds.length === 0) {
+            return res.status(400).json({ success: false, message: 'Service IDs array is required' });
+        }
+
+        // Remove all specified services
+        const placeholders = serviceIds.map(() => '?').join(',');
+        const result = await db.dbRun(
+            `DELETE FROM staff_services WHERE staff_id = ? AND service_id IN (${placeholders})`,
+            [staffId, ...serviceIds]
+        );
+
+        res.json({
+            success: true,
+            message: `Removed ${result.changes || serviceIds.length} services`,
+            removed: result.changes || serviceIds.length
+        });
+    } catch (error) {
+        console.error('Error batch removing staff services:', error);
+        res.status(500).json({ success: false, message: 'Failed to remove services' });
+    }
+});
+
 // Update a team member's service (custom pricing/duration)
 app.put('/api/admin/team/:staffId/services/:serviceId', authenticateAdmin, async (req, res) => {
     try {
@@ -6175,11 +6257,12 @@ app.patch('/api/admin/stylists/:id/pay', authenticateAdmin, async (req, res) => 
 // Get all customers (admin)
 app.get('/api/admin/customers', authenticateAdmin, async (req, res) => {
     try {
+        const { search, limit } = req.query;
         const allUsers = await UserRepository.findAll();
         const allBookings = (await BookingRepository.findAll()).map(mapBookingResponse);
         const allOrders = await OrderRepository.findAll();
 
-        const customers = allUsers
+        let customers = allUsers
             .filter(u => u.role === 'customer')
             .map(u => {
                 const userBookings = allBookings.filter(b => (b.userId || b.user_id) === u.id);
@@ -6199,6 +6282,21 @@ app.get('/api/admin/customers', authenticateAdmin, async (req, res) => {
                     createdAt: u.createdAt
                 };
             });
+
+        // Apply search filter if provided
+        if (search) {
+            const searchLower = search.toLowerCase();
+            customers = customers.filter(c =>
+                (c.name && c.name.toLowerCase().includes(searchLower)) ||
+                (c.email && c.email.toLowerCase().includes(searchLower)) ||
+                (c.phone && c.phone.includes(search))
+            );
+        }
+
+        // Apply limit if provided
+        if (limit) {
+            customers = customers.slice(0, parseInt(limit));
+        }
 
         res.json({ success: true, customers });
     } catch (error) {
@@ -6335,6 +6433,148 @@ app.post('/api/admin/customers/:id/reset-password', authenticateAdmin, async (re
     } catch (error) {
         console.error('Error resetting customer password:', error.message);
         res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// Get comprehensive customer profile with all related data
+app.get('/api/admin/customers/:id/profile', authenticateAdmin, async (req, res) => {
+    try {
+        const customerId = req.params.id;
+
+        // Get customer basic info
+        const customer = await UserRepository.findById(customerId);
+        if (!customer) {
+            return res.status(404).json({ success: false, message: 'Customer not found' });
+        }
+
+        // Get all bookings for this customer
+        const allBookings = await BookingRepository.findAll();
+        const bookings = allBookings
+            .filter(b => (b.userId || b.user_id) === customerId)
+            .map(mapBookingResponse)
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Get all orders for this customer
+        const allOrders = await OrderRepository.findAll();
+        const orders = allOrders
+            .filter(o => (o.userId || o.user_id) === customerId)
+            .sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
+
+        // Get order items for each order
+        const ordersWithItems = await Promise.all(orders.map(async (order) => {
+            const items = await db.dbAll(
+                'SELECT oi.*, p.name as product_name, p.image_url FROM order_items oi LEFT JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ?',
+                [order.id]
+            );
+            return { ...order, items };
+        }));
+
+        // Get all invoices for this customer
+        const invoices = await db.dbAll(`
+            SELECT i.*,
+                   (SELECT SUM(total_price) FROM invoice_items WHERE invoice_id = i.id) as calculated_total
+            FROM invoices i
+            WHERE i.customer_id = ?
+            ORDER BY i.created_at DESC
+        `, [customerId]);
+
+        // Get invoice items for each invoice
+        const invoicesWithItems = await Promise.all(invoices.map(async (invoice) => {
+            const items = await db.dbAll(
+                'SELECT * FROM invoice_items WHERE invoice_id = ?',
+                [invoice.id]
+            );
+            return { ...invoice, items };
+        }));
+
+        // Get loyalty transactions
+        const loyaltyTransactions = await LoyaltyRepository.getTransactionsByUser(customerId);
+
+        // Get referrals made by this customer
+        const referralsMade = await db.dbAll(`
+            SELECT r.*, u.name as referee_name, u.email as referee_email
+            FROM referrals r
+            LEFT JOIN users u ON r.referee_id = u.id
+            WHERE r.referrer_id = ?
+            ORDER BY r.created_at DESC
+        `, [customerId]);
+
+        // Get if this customer was referred by someone
+        const referredBy = await db.dbGet(`
+            SELECT r.*, u.name as referrer_name, u.email as referrer_email
+            FROM referrals r
+            LEFT JOIN users u ON r.referrer_id = u.id
+            WHERE r.referee_id = ?
+        `, [customerId]);
+
+        // Get inspo photos
+        const inspoPhotos = await db.dbAll(
+            'SELECT id, label, notes, created_at FROM inspo_photos WHERE user_id = ? ORDER BY created_at DESC',
+            [customerId]
+        );
+
+        // Get rewards/redemptions
+        const redemptions = await db.dbAll(`
+            SELECT * FROM reward_redemptions WHERE user_id = ? ORDER BY redeemed_at DESC
+        `, [customerId]);
+
+        // Calculate summary stats
+        const totalSpent = ordersWithItems.reduce((sum, o) => sum + (o.total || 0), 0) +
+                          invoicesWithItems.filter(i => i.status === 'paid').reduce((sum, i) => sum + (i.total || i.calculated_total || 0), 0);
+
+        const totalBookings = bookings.length;
+        const completedBookings = bookings.filter(b => b.status === 'completed').length;
+        const upcomingBookings = bookings.filter(b => ['confirmed', 'pending'].includes(b.status) && new Date(b.date) >= new Date()).length;
+
+        const lastVisit = bookings.find(b => b.status === 'completed')?.date || null;
+
+        // Get loyalty settings for tier calculation
+        const loyaltySettings = await LoyaltyRepository.getSettings();
+
+        res.json({
+            success: true,
+            profile: {
+                // Basic info
+                id: customer.id,
+                name: customer.name,
+                email: customer.email,
+                phone: customer.phone,
+                tier: customer.tier,
+                points: customer.points,
+                createdAt: customer.createdAt,
+
+                // Summary stats
+                stats: {
+                    totalSpent,
+                    totalBookings,
+                    completedBookings,
+                    upcomingBookings,
+                    totalOrders: orders.length,
+                    totalInvoices: invoices.length,
+                    lastVisit,
+                    memberSince: customer.createdAt,
+                    inspoPhotosCount: inspoPhotos.length,
+                    referralsMadeCount: referralsMade.length,
+                    pointsEarned: loyaltyTransactions.filter(t => t.points > 0).reduce((sum, t) => sum + t.points, 0),
+                    pointsRedeemed: Math.abs(loyaltyTransactions.filter(t => t.points < 0).reduce((sum, t) => sum + t.points, 0))
+                },
+
+                // Detailed data
+                bookings,
+                orders: ordersWithItems,
+                invoices: invoicesWithItems,
+                loyaltyTransactions,
+                referralsMade,
+                referredBy,
+                inspoPhotos,
+                redemptions,
+                loyaltySettings
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching customer profile:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch customer profile' });
     }
 });
 

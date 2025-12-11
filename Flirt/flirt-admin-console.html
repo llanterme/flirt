@@ -501,6 +501,51 @@
             background: rgba(246, 117, 153, 0.02);
         }
 
+        .data-table tr.customer-row:hover {
+            background: rgba(246, 117, 153, 0.08);
+            transition: background 0.2s ease;
+        }
+
+        .data-table tr.customer-row td:first-child {
+            border-left: 3px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .data-table tr.customer-row:hover td:first-child {
+            border-left-color: var(--brand-pink);
+        }
+
+        .data-table .tier-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+
+        .data-table .tier-badge.tier-bronze {
+            background: linear-gradient(135deg, #CD7F32, #A0522D);
+            color: white;
+        }
+
+        .data-table .tier-badge.tier-silver {
+            background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
+            color: #333;
+        }
+
+        .data-table .tier-badge.tier-gold {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #333;
+        }
+
+        .data-table .tier-badge.tier-platinum {
+            background: linear-gradient(135deg, #E5E4E2, #B4B4B4);
+            color: #333;
+            box-shadow: 0 0 8px rgba(229, 228, 226, 0.5);
+        }
+
         .data-table .avatar {
             width: 40px;
             height: 40px;
@@ -3786,6 +3831,757 @@
                     </div>
                 </div>
 
+                <!-- Customer Profile Modal (Full-screen style) -->
+                <div id="customerProfileModal" class="modal-overlay" style="display: none;">
+                    <div class="modal customer-profile-modal">
+                        <div class="modal-header customer-profile-header">
+                            <div class="customer-profile-header-content">
+                                <div class="customer-avatar-large" id="profileAvatar">IO</div>
+                                <div class="customer-profile-info">
+                                    <h2 id="profileName">Customer Name</h2>
+                                    <div class="customer-profile-meta">
+                                        <span id="profileEmail">email@example.com</span>
+                                        <span class="meta-divider">•</span>
+                                        <span id="profilePhone">+27 00 000 0000</span>
+                                        <span class="meta-divider">•</span>
+                                        <span id="profileMemberSince">Member since Jan 2024</span>
+                                    </div>
+                                    <div class="customer-tier-badge" id="profileTierBadge">
+                                        <span class="tier-icon">👑</span>
+                                        <span class="tier-name">Gold Member</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="customer-profile-actions">
+                                <button class="btn btn-outline btn-sm" onclick="editCustomerFromProfile()">
+                                    ✏️ Edit
+                                </button>
+                                <button class="btn btn-primary btn-sm" onclick="createInvoiceForCustomer()">
+                                    📄 New Invoice
+                                </button>
+                                <button class="modal-close" onclick="closeCustomerProfile()">&times;</button>
+                            </div>
+                        </div>
+
+                        <!-- Stats Cards -->
+                        <div class="customer-stats-bar">
+                            <div class="customer-stat">
+                                <div class="customer-stat-value" id="statTotalSpent">R0</div>
+                                <div class="customer-stat-label">Total Spent</div>
+                            </div>
+                            <div class="customer-stat">
+                                <div class="customer-stat-value" id="statPoints">0</div>
+                                <div class="customer-stat-label">Points Balance</div>
+                            </div>
+                            <div class="customer-stat">
+                                <div class="customer-stat-value" id="statBookings">0</div>
+                                <div class="customer-stat-label">Total Bookings</div>
+                            </div>
+                            <div class="customer-stat">
+                                <div class="customer-stat-value" id="statOrders">0</div>
+                                <div class="customer-stat-label">Shop Orders</div>
+                            </div>
+                            <div class="customer-stat">
+                                <div class="customer-stat-value" id="statInvoices">0</div>
+                                <div class="customer-stat-label">Invoices</div>
+                            </div>
+                            <div class="customer-stat">
+                                <div class="customer-stat-value" id="statLastVisit">-</div>
+                                <div class="customer-stat-label">Last Visit</div>
+                            </div>
+                        </div>
+
+                        <!-- Tab Navigation -->
+                        <div class="customer-profile-tabs">
+                            <button class="profile-tab active" data-tab="overview" onclick="switchProfileTab('overview')">
+                                📊 Overview
+                            </button>
+                            <button class="profile-tab" data-tab="bookings" onclick="switchProfileTab('bookings')">
+                                📅 Bookings <span class="tab-count" id="tabBookingsCount">0</span>
+                            </button>
+                            <button class="profile-tab" data-tab="orders" onclick="switchProfileTab('orders')">
+                                🛒 Orders <span class="tab-count" id="tabOrdersCount">0</span>
+                            </button>
+                            <button class="profile-tab" data-tab="invoices" onclick="switchProfileTab('invoices')">
+                                📄 Invoices <span class="tab-count" id="tabInvoicesCount">0</span>
+                            </button>
+                            <button class="profile-tab" data-tab="loyalty" onclick="switchProfileTab('loyalty')">
+                                ⭐ Loyalty
+                            </button>
+                            <button class="profile-tab" data-tab="inspo" onclick="switchProfileTab('inspo')">
+                                📸 Inspiration <span class="tab-count" id="tabInspoCount">0</span>
+                            </button>
+                        </div>
+
+                        <!-- Tab Content -->
+                        <div class="customer-profile-content">
+                            <!-- Overview Tab -->
+                            <div id="profileTabOverview" class="profile-tab-content active">
+                                <div class="profile-overview-grid">
+                                    <!-- Recent Activity -->
+                                    <div class="profile-card">
+                                        <h4>Recent Activity</h4>
+                                        <div id="recentActivityList" class="activity-list">
+                                            <!-- Populated dynamically -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Points Summary -->
+                                    <div class="profile-card">
+                                        <h4>Points Summary</h4>
+                                        <div class="points-summary">
+                                            <div class="points-row">
+                                                <span>Total Earned</span>
+                                                <span class="points-value positive" id="pointsEarned">+0</span>
+                                            </div>
+                                            <div class="points-row">
+                                                <span>Total Redeemed</span>
+                                                <span class="points-value negative" id="pointsRedeemed">-0</span>
+                                            </div>
+                                            <div class="points-row total">
+                                                <span>Current Balance</span>
+                                                <span class="points-value" id="pointsBalance">0</span>
+                                            </div>
+                                        </div>
+                                        <div class="tier-progress" id="tierProgress">
+                                            <!-- Tier progress bar -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Referrals -->
+                                    <div class="profile-card">
+                                        <h4>Referrals</h4>
+                                        <div id="referralsSummary">
+                                            <!-- Referrals info -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Quick Stats -->
+                                    <div class="profile-card">
+                                        <h4>Quick Stats</h4>
+                                        <div class="quick-stats-grid">
+                                            <div class="quick-stat">
+                                                <div class="quick-stat-icon">✅</div>
+                                                <div class="quick-stat-info">
+                                                    <span class="quick-stat-value" id="completedBookings">0</span>
+                                                    <span class="quick-stat-label">Completed Visits</span>
+                                                </div>
+                                            </div>
+                                            <div class="quick-stat">
+                                                <div class="quick-stat-icon">📆</div>
+                                                <div class="quick-stat-info">
+                                                    <span class="quick-stat-value" id="upcomingBookings">0</span>
+                                                    <span class="quick-stat-label">Upcoming</span>
+                                                </div>
+                                            </div>
+                                            <div class="quick-stat">
+                                                <div class="quick-stat-icon">🎁</div>
+                                                <div class="quick-stat-info">
+                                                    <span class="quick-stat-value" id="referralsMade">0</span>
+                                                    <span class="quick-stat-label">Referrals Made</span>
+                                                </div>
+                                            </div>
+                                            <div class="quick-stat">
+                                                <div class="quick-stat-icon">📸</div>
+                                                <div class="quick-stat-info">
+                                                    <span class="quick-stat-value" id="inspoPhotos">0</span>
+                                                    <span class="quick-stat-label">Inspo Photos</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bookings Tab -->
+                            <div id="profileTabBookings" class="profile-tab-content">
+                                <div class="profile-table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date & Time</th>
+                                                <th>Service</th>
+                                                <th>Stylist</th>
+                                                <th>Status</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="profileBookingsTable">
+                                            <!-- Populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                    <div id="noBookingsMessage" class="empty-state" style="display: none;">
+                                        <div class="empty-icon">📅</div>
+                                        <p>No bookings yet</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Orders Tab -->
+                            <div id="profileTabOrders" class="profile-tab-content">
+                                <div class="profile-table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Order #</th>
+                                                <th>Date</th>
+                                                <th>Items</th>
+                                                <th>Status</th>
+                                                <th>Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="profileOrdersTable">
+                                            <!-- Populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                    <div id="noOrdersMessage" class="empty-state" style="display: none;">
+                                        <div class="empty-icon">🛒</div>
+                                        <p>No shop orders yet</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Invoices Tab -->
+                            <div id="profileTabInvoices" class="profile-tab-content">
+                                <div class="profile-table-container">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Invoice #</th>
+                                                <th>Date</th>
+                                                <th>Items</th>
+                                                <th>Status</th>
+                                                <th>Total</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="profileInvoicesTable">
+                                            <!-- Populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                    <div id="noInvoicesMessage" class="empty-state" style="display: none;">
+                                        <div class="empty-icon">📄</div>
+                                        <p>No invoices yet</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Loyalty Tab -->
+                            <div id="profileTabLoyalty" class="profile-tab-content">
+                                <div class="loyalty-content-grid">
+                                    <div class="profile-card full-width">
+                                        <h4>Points History</h4>
+                                        <div class="profile-table-container">
+                                            <table class="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Description</th>
+                                                        <th>Type</th>
+                                                        <th>Points</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="profileLoyaltyTable">
+                                                    <!-- Populated dynamically -->
+                                                </tbody>
+                                            </table>
+                                            <div id="noLoyaltyMessage" class="empty-state" style="display: none;">
+                                                <div class="empty-icon">⭐</div>
+                                                <p>No points history yet</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Inspiration Tab -->
+                            <div id="profileTabInspo" class="profile-tab-content">
+                                <div id="inspoGalleryGrid" class="inspo-gallery-grid">
+                                    <!-- Populated dynamically -->
+                                </div>
+                                <div id="noInspoMessage" class="empty-state" style="display: none;">
+                                    <div class="empty-icon">📸</div>
+                                    <p>No inspiration photos uploaded</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Profile Styles -->
+                <style>
+                    .customer-profile-modal {
+                        max-width: 1200px;
+                        width: 95%;
+                        max-height: 90vh;
+                        display: flex;
+                        flex-direction: column;
+                    }
+
+                    .customer-profile-header {
+                        background: linear-gradient(135deg, var(--primary) 0%, #e85a7f 100%);
+                        padding: 24px 30px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: flex-start;
+                        border-radius: 16px 16px 0 0;
+                    }
+
+                    .customer-profile-header-content {
+                        display: flex;
+                        align-items: center;
+                        gap: 20px;
+                    }
+
+                    .customer-avatar-large {
+                        width: 80px;
+                        height: 80px;
+                        border-radius: 50%;
+                        background: white;
+                        color: var(--primary);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 28px;
+                        font-weight: 700;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    }
+
+                    .customer-profile-info h2 {
+                        color: white;
+                        margin: 0 0 8px 0;
+                        font-size: 24px;
+                    }
+
+                    .customer-profile-meta {
+                        color: rgba(255,255,255,0.9);
+                        font-size: 14px;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        flex-wrap: wrap;
+                    }
+
+                    .meta-divider {
+                        opacity: 0.5;
+                    }
+
+                    .customer-tier-badge {
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
+                        background: rgba(255,255,255,0.2);
+                        padding: 6px 14px;
+                        border-radius: 20px;
+                        margin-top: 10px;
+                        font-size: 13px;
+                        color: white;
+                        font-weight: 500;
+                    }
+
+                    .customer-profile-actions {
+                        display: flex;
+                        gap: 10px;
+                        align-items: flex-start;
+                    }
+
+                    .customer-profile-actions .modal-close {
+                        color: white;
+                        font-size: 28px;
+                        opacity: 0.8;
+                    }
+
+                    .customer-profile-actions .modal-close:hover {
+                        opacity: 1;
+                    }
+
+                    .customer-profile-actions .btn {
+                        background: rgba(255,255,255,0.2);
+                        border-color: rgba(255,255,255,0.3);
+                        color: white;
+                    }
+
+                    .customer-profile-actions .btn:hover {
+                        background: rgba(255,255,255,0.3);
+                    }
+
+                    .customer-stats-bar {
+                        display: flex;
+                        background: white;
+                        border-bottom: 1px solid var(--border-soft);
+                        padding: 0;
+                    }
+
+                    .customer-stat {
+                        flex: 1;
+                        padding: 20px;
+                        text-align: center;
+                        border-right: 1px solid var(--border-soft);
+                    }
+
+                    .customer-stat:last-child {
+                        border-right: none;
+                    }
+
+                    .customer-stat-value {
+                        font-size: 24px;
+                        font-weight: 700;
+                        color: var(--text-primary);
+                    }
+
+                    .customer-stat-label {
+                        font-size: 12px;
+                        color: var(--text-subtle);
+                        margin-top: 4px;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }
+
+                    .customer-profile-tabs {
+                        display: flex;
+                        background: var(--surface-muted);
+                        border-bottom: 2px solid var(--border-soft);
+                        overflow-x: auto;
+                    }
+
+                    .profile-tab {
+                        padding: 14px 24px;
+                        border: none;
+                        background: transparent;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 500;
+                        color: var(--text-subtle);
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        border-bottom: 3px solid transparent;
+                        margin-bottom: -2px;
+                        transition: all 0.2s;
+                        white-space: nowrap;
+                    }
+
+                    .profile-tab:hover {
+                        background: rgba(0,0,0,0.03);
+                        color: var(--text-primary);
+                    }
+
+                    .profile-tab.active {
+                        color: var(--primary);
+                        border-bottom-color: var(--primary);
+                        background: white;
+                    }
+
+                    .tab-count {
+                        background: var(--surface-muted);
+                        padding: 2px 8px;
+                        border-radius: 10px;
+                        font-size: 11px;
+                    }
+
+                    .profile-tab.active .tab-count {
+                        background: rgba(246, 117, 153, 0.15);
+                        color: var(--primary);
+                    }
+
+                    .customer-profile-content {
+                        flex: 1;
+                        overflow-y: auto;
+                        background: var(--surface-muted);
+                        padding: 24px;
+                    }
+
+                    .profile-tab-content {
+                        display: none;
+                    }
+
+                    .profile-tab-content.active {
+                        display: block;
+                    }
+
+                    .profile-overview-grid {
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 20px;
+                    }
+
+                    .profile-card {
+                        background: white;
+                        border-radius: 12px;
+                        padding: 20px;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                    }
+
+                    .profile-card.full-width {
+                        grid-column: 1 / -1;
+                    }
+
+                    .profile-card h4 {
+                        margin: 0 0 16px 0;
+                        font-size: 16px;
+                        color: var(--text-primary);
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    }
+
+                    .activity-list {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                        max-height: 300px;
+                        overflow-y: auto;
+                    }
+
+                    .activity-item {
+                        display: flex;
+                        align-items: flex-start;
+                        gap: 12px;
+                        padding: 12px;
+                        background: var(--surface-muted);
+                        border-radius: 8px;
+                    }
+
+                    .activity-icon {
+                        width: 36px;
+                        height: 36px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 16px;
+                        flex-shrink: 0;
+                    }
+
+                    .activity-icon.booking { background: rgba(76, 175, 80, 0.1); }
+                    .activity-icon.order { background: rgba(33, 150, 243, 0.1); }
+                    .activity-icon.invoice { background: rgba(156, 39, 176, 0.1); }
+                    .activity-icon.points { background: rgba(255, 193, 7, 0.1); }
+
+                    .activity-info {
+                        flex: 1;
+                    }
+
+                    .activity-title {
+                        font-weight: 500;
+                        color: var(--text-primary);
+                        font-size: 14px;
+                    }
+
+                    .activity-date {
+                        font-size: 12px;
+                        color: var(--text-subtle);
+                        margin-top: 2px;
+                    }
+
+                    .activity-amount {
+                        font-weight: 600;
+                        color: var(--text-primary);
+                    }
+
+                    .points-summary {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                    }
+
+                    .points-row {
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 10px 0;
+                        border-bottom: 1px solid var(--border-soft);
+                    }
+
+                    .points-row.total {
+                        border-bottom: none;
+                        font-weight: 600;
+                        font-size: 16px;
+                        padding-top: 16px;
+                        border-top: 2px solid var(--border-soft);
+                    }
+
+                    .points-value.positive { color: var(--success); }
+                    .points-value.negative { color: var(--danger); }
+
+                    .tier-progress {
+                        margin-top: 20px;
+                        padding-top: 16px;
+                        border-top: 1px solid var(--border-soft);
+                    }
+
+                    .tier-progress-bar {
+                        height: 8px;
+                        background: var(--surface-muted);
+                        border-radius: 4px;
+                        overflow: hidden;
+                        margin: 10px 0;
+                    }
+
+                    .tier-progress-fill {
+                        height: 100%;
+                        border-radius: 4px;
+                        transition: width 0.3s;
+                    }
+
+                    .tier-progress-fill.bronze { background: #cd7f32; }
+                    .tier-progress-fill.silver { background: #c0c0c0; }
+                    .tier-progress-fill.gold { background: #ffd700; }
+                    .tier-progress-fill.platinum { background: linear-gradient(90deg, #e5e4e2, #a8a8a8); }
+
+                    .tier-progress-text {
+                        font-size: 12px;
+                        color: var(--text-subtle);
+                        text-align: center;
+                    }
+
+                    .quick-stats-grid {
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 12px;
+                    }
+
+                    .quick-stat {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 12px;
+                        background: var(--surface-muted);
+                        border-radius: 8px;
+                    }
+
+                    .quick-stat-icon {
+                        font-size: 24px;
+                    }
+
+                    .quick-stat-value {
+                        font-size: 20px;
+                        font-weight: 700;
+                        color: var(--text-primary);
+                        display: block;
+                    }
+
+                    .quick-stat-label {
+                        font-size: 12px;
+                        color: var(--text-subtle);
+                    }
+
+                    .profile-table-container {
+                        background: white;
+                        border-radius: 12px;
+                        overflow: hidden;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                    }
+
+                    .profile-table-container .data-table {
+                        margin: 0;
+                    }
+
+                    .empty-state {
+                        text-align: center;
+                        padding: 60px 20px;
+                        color: var(--text-subtle);
+                    }
+
+                    .empty-icon {
+                        font-size: 48px;
+                        margin-bottom: 16px;
+                        opacity: 0.5;
+                    }
+
+                    .inspo-gallery-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                        gap: 16px;
+                    }
+
+                    .inspo-photo-card {
+                        aspect-ratio: 1;
+                        border-radius: 12px;
+                        overflow: hidden;
+                        position: relative;
+                        cursor: pointer;
+                        background: var(--surface-muted);
+                    }
+
+                    .inspo-photo-card img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+
+                    .inspo-photo-overlay {
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        padding: 12px;
+                        background: linear-gradient(transparent, rgba(0,0,0,0.7));
+                        color: white;
+                        font-size: 12px;
+                    }
+
+                    .status-badge {
+                        display: inline-flex;
+                        align-items: center;
+                        padding: 4px 10px;
+                        border-radius: 12px;
+                        font-size: 12px;
+                        font-weight: 500;
+                    }
+
+                    .status-badge.pending { background: rgba(255, 193, 7, 0.15); color: #f59e0b; }
+                    .status-badge.confirmed { background: rgba(33, 150, 243, 0.15); color: #2196f3; }
+                    .status-badge.completed { background: rgba(76, 175, 80, 0.15); color: #4caf50; }
+                    .status-badge.cancelled { background: rgba(244, 67, 54, 0.15); color: #f44336; }
+                    .status-badge.paid { background: rgba(76, 175, 80, 0.15); color: #4caf50; }
+                    .status-badge.unpaid { background: rgba(255, 193, 7, 0.15); color: #f59e0b; }
+                    .status-badge.processing { background: rgba(33, 150, 243, 0.15); color: #2196f3; }
+                    .status-badge.shipped { background: rgba(156, 39, 176, 0.15); color: #9c27b0; }
+                    .status-badge.delivered { background: rgba(76, 175, 80, 0.15); color: #4caf50; }
+
+                    .loyalty-content-grid {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 20px;
+                    }
+
+                    @media (max-width: 768px) {
+                        .customer-profile-modal {
+                            width: 100%;
+                            max-height: 100vh;
+                            border-radius: 0;
+                        }
+
+                        .customer-profile-header {
+                            flex-direction: column;
+                            gap: 16px;
+                            border-radius: 0;
+                        }
+
+                        .customer-profile-header-content {
+                            flex-direction: column;
+                            text-align: center;
+                        }
+
+                        .customer-stats-bar {
+                            flex-wrap: wrap;
+                        }
+
+                        .customer-stat {
+                            flex: 1 1 33%;
+                            min-width: 100px;
+                        }
+
+                        .profile-overview-grid {
+                            grid-template-columns: 1fr;
+                        }
+
+                        .customer-profile-tabs {
+                            overflow-x: auto;
+                        }
+                    }
+                </style>
+
                 <!-- Products Section -->
                 <section id="products" class="page-section">
                     <div class="filters-bar">
@@ -6949,12 +7745,12 @@
 
             try {
                 // Search customers
-                const customersRes = await fetch(`${API_BASE}/admin/users?search=${encodeURIComponent(query)}&limit=5`, {
+                const customersRes = await fetch(`${API_BASE}/admin/customers?search=${encodeURIComponent(query)}&limit=5`, {
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('flirt_admin_token')}` }
                 });
                 if (customersRes.ok) {
                     const customersData = await customersRes.json();
-                    const customers = customersData.users || customersData || [];
+                    const customers = customersData.customers || customersData.users || customersData || [];
                     if (customers.length > 0) {
                         html += `<div class="search-result-group">
                             <div class="search-result-group-title">Customers</div>
@@ -9698,7 +10494,7 @@
             const password = document.getElementById('staff-password').value;
 
             if (!name || !email) {
-                showToast('Name and email are required', 'error');
+                showAdminToast('Name and email are required', 'error');
                 return;
             }
 
@@ -9718,24 +10514,24 @@
                     result = await apiCall(`/admin/staff/${editId}`, 'PUT', {
                         name, phone, permissions, stylistId
                     });
-                    showToast('Staff member updated successfully', 'success');
+                    showAdminToast('Staff member updated successfully', 'success');
                 } else {
                     // Create new
                     result = await apiCall('/admin/staff', 'POST', {
                         email, name, phone, permissions, stylistId, password: password || undefined
                     });
                     if (result.temporaryPassword) {
-                        showToast(`Staff created! Temporary password: ${result.temporaryPassword}`, 'success');
+                        showAdminToast(`Staff created! Temporary password: ${result.temporaryPassword}`, 'success');
                         alert(`Staff member created!\\n\\nTemporary password: ${result.temporaryPassword}\\n\\nPlease share this with the staff member. They will be required to change it on first login.`);
                     } else {
-                        showToast('Staff member created successfully', 'success');
+                        showAdminToast('Staff member created successfully', 'success');
                     }
                 }
 
                 closeStaffModal();
                 loadStaff();
             } catch (error) {
-                showToast(error.message || 'Failed to save staff member', 'error');
+                showAdminToast(error.message || 'Failed to save staff member', 'error');
             }
         }
 
@@ -9744,10 +10540,10 @@
 
             try {
                 const result = await apiCall(`/admin/staff/${staffId}/reset-password`, 'POST');
-                showToast('Password reset successfully', 'success');
+                showAdminToast('Password reset successfully', 'success');
                 alert(`Password reset for ${staffName}!\\n\\nNew temporary password: ${result.temporaryPassword}\\n\\nPlease share this with the staff member.`);
             } catch (error) {
-                showToast(error.message || 'Failed to reset password', 'error');
+                showAdminToast(error.message || 'Failed to reset password', 'error');
             }
         }
 
@@ -9756,10 +10552,10 @@
 
             try {
                 await apiCall(`/admin/staff/${staffId}`, 'DELETE');
-                showToast('Staff member removed', 'success');
+                showAdminToast('Staff member removed', 'success');
                 loadStaff();
             } catch (error) {
-                showToast(error.message || 'Failed to remove staff member', 'error');
+                showAdminToast(error.message || 'Failed to remove staff member', 'error');
             }
         }
 
@@ -9814,13 +10610,15 @@
             container.innerHTML = customers.map(c => {
                 const initials = getInitials(c.name || c.email || '');
                 const lastVisit = c.createdAt ? formatDateDisplay(c.createdAt) : '-';
+                const tierBadge = c.tier ? `<span class="tier-badge tier-${c.tier.toLowerCase()}">${c.tier}</span>` : '';
                 return `
-                    <tr>
+                    <tr class="customer-row" onclick="openCustomerProfile('${c.id}')" style="cursor: pointer;">
                         <td>
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <div class="avatar-placeholder" style="background: var(--brand-gradient); color: white;">${initials}</div>
                                 <div>
                                     <div style="font-weight: 600;">${c.name || '-'}</div>
+                                    ${tierBadge}
                                 </div>
                             </div>
                         </td>
@@ -9829,8 +10627,9 @@
                         <td>${(c.points || 0).toLocaleString()}</td>
                         <td>R${(c.totalSpent || 0).toLocaleString()}</td>
                         <td>${lastVisit}</td>
-                        <td class="action-btns">
-                            <button class="btn btn-icon btn-outline" title="Edit" onclick="editCustomer('${c.id}')">✏️</button>
+                        <td class="action-btns" onclick="event.stopPropagation();">
+                            <button class="btn btn-icon btn-outline" title="View Profile" onclick="openCustomerProfile('${c.id}')">👤</button>
+                            <button class="btn btn-icon btn-outline" title="Quick Edit" onclick="editCustomer('${c.id}')">✏️</button>
                         </td>
                     </tr>
                 `;
@@ -10033,6 +10832,400 @@
 
         function getInitials(text) {
             return text.split(' ').filter(Boolean).map(t => t[0]).join('').slice(0, 2).toUpperCase() || '?';
+        }
+
+        // ============================================
+        // CUSTOMER PROFILE
+        // ============================================
+        let currentProfileCustomerId = null;
+        let currentProfileData = null;
+
+        async function openCustomerProfile(customerId) {
+            currentProfileCustomerId = customerId;
+            document.getElementById('customerProfileModal').style.display = 'flex';
+
+            // Show loading state
+            document.getElementById('profileName').textContent = 'Loading...';
+
+            try {
+                const data = await apiCall(`/admin/customers/${customerId}/profile`);
+                currentProfileData = data.profile;
+                renderCustomerProfile(data.profile);
+            } catch (error) {
+                console.error('Error loading customer profile:', error);
+                showAdminToast('Failed to load customer profile', 'error');
+                closeCustomerProfile();
+            }
+        }
+
+        function closeCustomerProfile() {
+            document.getElementById('customerProfileModal').style.display = 'none';
+            currentProfileCustomerId = null;
+            currentProfileData = null;
+        }
+
+        function renderCustomerProfile(profile) {
+            // Header info
+            document.getElementById('profileAvatar').textContent = getInitials(profile.name || '');
+            document.getElementById('profileName').textContent = profile.name || 'Unknown';
+            document.getElementById('profileEmail').textContent = profile.email || '-';
+            document.getElementById('profilePhone').textContent = profile.phone || 'No phone';
+            document.getElementById('profileMemberSince').textContent = profile.createdAt
+                ? 'Member since ' + formatDate(profile.createdAt)
+                : '';
+
+            // Tier badge
+            const tierIcons = { bronze: '🥉', silver: '🥈', gold: '🥇', platinum: '👑' };
+            const tier = profile.tier || 'bronze';
+            document.getElementById('profileTierBadge').innerHTML = `
+                <span class="tier-icon">${tierIcons[tier] || '🏅'}</span>
+                <span class="tier-name">${tier.charAt(0).toUpperCase() + tier.slice(1)} Member</span>
+            `;
+
+            // Stats bar
+            document.getElementById('statTotalSpent').textContent = 'R' + (profile.stats.totalSpent || 0).toLocaleString();
+            document.getElementById('statPoints').textContent = (profile.points || 0).toLocaleString();
+            document.getElementById('statBookings').textContent = profile.stats.totalBookings || 0;
+            document.getElementById('statOrders').textContent = profile.stats.totalOrders || 0;
+            document.getElementById('statInvoices').textContent = profile.stats.totalInvoices || 0;
+            document.getElementById('statLastVisit').textContent = profile.stats.lastVisit
+                ? formatDate(profile.stats.lastVisit)
+                : '-';
+
+            // Tab counts
+            document.getElementById('tabBookingsCount').textContent = profile.bookings?.length || 0;
+            document.getElementById('tabOrdersCount').textContent = profile.orders?.length || 0;
+            document.getElementById('tabInvoicesCount').textContent = profile.invoices?.length || 0;
+            document.getElementById('tabInspoCount').textContent = profile.inspoPhotos?.length || 0;
+
+            // Render all tabs
+            renderProfileOverview(profile);
+            renderProfileBookings(profile.bookings || []);
+            renderProfileOrders(profile.orders || []);
+            renderProfileInvoices(profile.invoices || []);
+            renderProfileLoyalty(profile);
+            renderProfileInspo(profile.inspoPhotos || []);
+
+            // Reset to overview tab
+            switchProfileTab('overview');
+        }
+
+        function switchProfileTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.profile-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.tab === tabName);
+            });
+
+            // Update tab content
+            document.querySelectorAll('.profile-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            const tabContent = document.getElementById('profileTab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+            if (tabContent) tabContent.classList.add('active');
+        }
+
+        function renderProfileOverview(profile) {
+            // Recent Activity
+            const activities = [];
+
+            // Add recent bookings
+            (profile.bookings || []).slice(0, 3).forEach(b => {
+                activities.push({
+                    type: 'booking',
+                    icon: '📅',
+                    title: b.serviceName || b.service_name || 'Booking',
+                    date: b.date,
+                    amount: b.price || b.total
+                });
+            });
+
+            // Add recent orders
+            (profile.orders || []).slice(0, 3).forEach(o => {
+                activities.push({
+                    type: 'order',
+                    icon: '🛒',
+                    title: `Order #${(o.id || '').slice(-6).toUpperCase()}`,
+                    date: o.createdAt || o.created_at,
+                    amount: o.total
+                });
+            });
+
+            // Add recent invoices
+            (profile.invoices || []).slice(0, 3).forEach(i => {
+                activities.push({
+                    type: 'invoice',
+                    icon: '📄',
+                    title: `Invoice ${i.invoice_number || i.id?.slice(-6).toUpperCase()}`,
+                    date: i.created_at,
+                    amount: i.total || i.calculated_total
+                });
+            });
+
+            // Sort by date
+            activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const activityList = document.getElementById('recentActivityList');
+            if (activities.length === 0) {
+                activityList.innerHTML = '<div class="empty-state" style="padding: 20px;"><p>No recent activity</p></div>';
+            } else {
+                activityList.innerHTML = activities.slice(0, 6).map(a => `
+                    <div class="activity-item">
+                        <div class="activity-icon ${a.type}">${a.icon}</div>
+                        <div class="activity-info">
+                            <div class="activity-title">${a.title}</div>
+                            <div class="activity-date">${formatDate(a.date)}</div>
+                        </div>
+                        ${a.amount ? `<div class="activity-amount">R${a.amount.toLocaleString()}</div>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            // Points summary
+            document.getElementById('pointsEarned').textContent = '+' + (profile.stats.pointsEarned || 0).toLocaleString();
+            document.getElementById('pointsRedeemed').textContent = '-' + (profile.stats.pointsRedeemed || 0).toLocaleString();
+            document.getElementById('pointsBalance').textContent = (profile.points || 0).toLocaleString();
+
+            // Tier progress
+            const tierProgress = document.getElementById('tierProgress');
+            const settings = profile.loyaltySettings || { tierThresholds: { bronze: 0, silver: 500, gold: 1500, platinum: 5000 } };
+            const thresholds = settings.tierThresholds;
+            const points = profile.points || 0;
+            const tier = profile.tier || 'bronze';
+
+            let nextTier, nextThreshold, currentThreshold;
+            if (tier === 'bronze') {
+                nextTier = 'Silver';
+                nextThreshold = thresholds.silver;
+                currentThreshold = thresholds.bronze;
+            } else if (tier === 'silver') {
+                nextTier = 'Gold';
+                nextThreshold = thresholds.gold;
+                currentThreshold = thresholds.silver;
+            } else if (tier === 'gold') {
+                nextTier = 'Platinum';
+                nextThreshold = thresholds.platinum;
+                currentThreshold = thresholds.gold;
+            } else {
+                nextTier = null;
+                nextThreshold = thresholds.platinum;
+                currentThreshold = thresholds.platinum;
+            }
+
+            const progress = nextTier
+                ? Math.min(100, ((points - currentThreshold) / (nextThreshold - currentThreshold)) * 100)
+                : 100;
+
+            tierProgress.innerHTML = nextTier ? `
+                <div class="tier-progress-text">
+                    ${nextThreshold - points} points to ${nextTier}
+                </div>
+                <div class="tier-progress-bar">
+                    <div class="tier-progress-fill ${tier}" style="width: ${progress}%"></div>
+                </div>
+            ` : `
+                <div class="tier-progress-text" style="color: var(--success);">
+                    ✨ Highest tier achieved!
+                </div>
+            `;
+
+            // Referrals summary
+            const referralsSummary = document.getElementById('referralsSummary');
+            const referrals = profile.referralsMade || [];
+            if (referrals.length === 0 && !profile.referredBy) {
+                referralsSummary.innerHTML = '<p style="color: var(--text-subtle);">No referrals yet</p>';
+            } else {
+                let html = '';
+                if (profile.referredBy) {
+                    html += `<div style="padding: 10px; background: var(--surface-muted); border-radius: 8px; margin-bottom: 10px;">
+                        <small style="color: var(--text-subtle);">Referred by</small><br>
+                        <strong>${profile.referredBy.referrer_name || 'Unknown'}</strong>
+                    </div>`;
+                }
+                if (referrals.length > 0) {
+                    html += `<div style="font-weight: 600; margin-bottom: 8px;">${referrals.length} referral${referrals.length !== 1 ? 's' : ''} made</div>`;
+                    html += referrals.slice(0, 3).map(r => `
+                        <div style="padding: 8px; background: var(--surface-muted); border-radius: 6px; margin-bottom: 6px; font-size: 13px;">
+                            ${r.referee_name || r.referee_email || 'Unknown'}
+                        </div>
+                    `).join('');
+                }
+                referralsSummary.innerHTML = html;
+            }
+
+            // Quick stats
+            document.getElementById('completedBookings').textContent = profile.stats.completedBookings || 0;
+            document.getElementById('upcomingBookings').textContent = profile.stats.upcomingBookings || 0;
+            document.getElementById('referralsMade').textContent = profile.stats.referralsMadeCount || 0;
+            document.getElementById('inspoPhotos').textContent = profile.stats.inspoPhotosCount || 0;
+        }
+
+        function renderProfileBookings(bookings) {
+            const tbody = document.getElementById('profileBookingsTable');
+            const emptyMsg = document.getElementById('noBookingsMessage');
+
+            if (bookings.length === 0) {
+                tbody.innerHTML = '';
+                emptyMsg.style.display = 'block';
+                return;
+            }
+
+            emptyMsg.style.display = 'none';
+            tbody.innerHTML = bookings.map(b => `
+                <tr>
+                    <td>
+                        <strong>${formatDate(b.date)}</strong><br>
+                        <small style="color: var(--text-subtle);">${b.time || '-'}</small>
+                    </td>
+                    <td>${b.serviceName || b.service_name || '-'}</td>
+                    <td>${b.stylistName || b.stylist_name || '-'}</td>
+                    <td><span class="status-badge ${b.status}">${b.status}</span></td>
+                    <td>${b.price || b.total ? 'R' + (b.price || b.total) : '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderProfileOrders(orders) {
+            const tbody = document.getElementById('profileOrdersTable');
+            const emptyMsg = document.getElementById('noOrdersMessage');
+
+            if (orders.length === 0) {
+                tbody.innerHTML = '';
+                emptyMsg.style.display = 'block';
+                return;
+            }
+
+            emptyMsg.style.display = 'none';
+            tbody.innerHTML = orders.map(o => {
+                const itemsStr = (o.items || []).slice(0, 2).map(i => i.product_name || 'Item').join(', ')
+                    + (o.items?.length > 2 ? ` +${o.items.length - 2} more` : '');
+                return `
+                    <tr>
+                        <td><strong>#${(o.id || '').slice(-6).toUpperCase()}</strong></td>
+                        <td>${formatDate(o.createdAt || o.created_at)}</td>
+                        <td><small>${itemsStr || 'No items'}</small></td>
+                        <td><span class="status-badge ${o.status}">${o.status}</span></td>
+                        <td>R${(o.total || 0).toLocaleString()}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderProfileInvoices(invoices) {
+            const tbody = document.getElementById('profileInvoicesTable');
+            const emptyMsg = document.getElementById('noInvoicesMessage');
+
+            if (invoices.length === 0) {
+                tbody.innerHTML = '';
+                emptyMsg.style.display = 'block';
+                return;
+            }
+
+            emptyMsg.style.display = 'none';
+            tbody.innerHTML = invoices.map(i => {
+                const itemsStr = (i.items || []).slice(0, 2).map(item => item.description || 'Item').join(', ')
+                    + (i.items?.length > 2 ? ` +${i.items.length - 2} more` : '');
+                const total = i.total || i.calculated_total || 0;
+                return `
+                    <tr>
+                        <td><strong>${i.invoice_number || '#' + (i.id || '').slice(-6).toUpperCase()}</strong></td>
+                        <td>${formatDate(i.created_at)}</td>
+                        <td><small>${itemsStr || 'No items'}</small></td>
+                        <td><span class="status-badge ${i.status}">${i.status}</span></td>
+                        <td>R${total.toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline" onclick="viewInvoice('${i.id}')">View</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderProfileLoyalty(profile) {
+            const tbody = document.getElementById('profileLoyaltyTable');
+            const emptyMsg = document.getElementById('noLoyaltyMessage');
+            const transactions = profile.loyaltyTransactions || [];
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = '';
+                emptyMsg.style.display = 'block';
+                return;
+            }
+
+            emptyMsg.style.display = 'none';
+            tbody.innerHTML = transactions.map(t => `
+                <tr>
+                    <td>${formatDate(t.created_at)}</td>
+                    <td>${t.description || '-'}</td>
+                    <td><span class="status-badge ${t.transaction_type}">${t.transaction_type || '-'}</span></td>
+                    <td style="font-weight: 600; color: ${t.points >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                        ${t.points >= 0 ? '+' : ''}${t.points}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderProfileInspo(photos) {
+            const grid = document.getElementById('inspoGalleryGrid');
+            const emptyMsg = document.getElementById('noInspoMessage');
+
+            if (photos.length === 0) {
+                grid.innerHTML = '';
+                emptyMsg.style.display = 'block';
+                return;
+            }
+
+            emptyMsg.style.display = 'none';
+            grid.innerHTML = photos.map(p => `
+                <div class="inspo-photo-card" onclick="viewInspoPhoto('${p.id}')">
+                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--surface-muted);">
+                        <span style="font-size: 40px; opacity: 0.5;">📸</span>
+                    </div>
+                    <div class="inspo-photo-overlay">
+                        ${p.label || p.notes || formatDate(p.created_at)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function viewInspoPhoto(photoId) {
+            try {
+                const data = await apiCall(`/inspo-photos/${photoId}`);
+                if (data.photo?.image_data) {
+                    // Open in new tab or modal
+                    const win = window.open('', '_blank');
+                    win.document.write(`<img src="${data.photo.image_data}" style="max-width: 100%; max-height: 100vh;">`);
+                }
+            } catch (error) {
+                console.error('Error loading photo:', error);
+            }
+        }
+
+        function editCustomerFromProfile() {
+            if (!currentProfileCustomerId || !currentProfileData) return;
+            closeCustomerProfile();
+            openCustomerModal(currentProfileData);
+        }
+
+        function createInvoiceForCustomer() {
+            if (!currentProfileCustomerId || !currentProfileData) return;
+            closeCustomerProfile();
+            // Navigate to invoices and create new invoice for this customer
+            showSection('invoices');
+            setTimeout(() => {
+                openInvoiceModal();
+                // Pre-select the customer
+                const customerSelect = document.getElementById('invoiceCustomerSelect');
+                if (customerSelect) {
+                    customerSelect.value = currentProfileCustomerId;
+                }
+            }, 100);
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+            return date.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
         }
 
         // ============================================
@@ -10502,10 +11695,10 @@
 
                 closeModal('stylistPayModal');
                 await loadStylistPaySettings();
-                showToast('Salary updated successfully', 'success');
+                showAdminToast('Salary updated successfully', 'success');
             } catch (error) {
                 console.error('Error saving stylist pay:', error);
-                showToast('Failed to save salary', 'error');
+                showAdminToast('Failed to save salary', 'error');
             }
         }
 
@@ -10514,7 +11707,7 @@
             const month = parseInt(document.getElementById('payrollMonth')?.value);
 
             if (!year || !month) {
-                showToast('Please select year and month', 'error');
+                showAdminToast('Please select year and month', 'error');
                 return;
             }
 
@@ -10535,22 +11728,22 @@
                 });
 
                 const successCount = data.results?.filter(r => r.success).length || 0;
-                showToast(`Generated payroll for ${successCount} stylists`, 'success');
+                showAdminToast(`Generated payroll for ${successCount} stylists`, 'success');
                 await loadPayroll();
             } catch (error) {
                 console.error('Error generating payroll:', error);
-                showToast('Failed to generate payroll', 'error');
+                showAdminToast('Failed to generate payroll', 'error');
             }
         }
 
         async function recalculatePayroll(recordId) {
             try {
                 await apiCall(`/admin/payroll/${recordId}/recalculate`, { method: 'POST' });
-                showToast('Payroll recalculated', 'success');
+                showAdminToast('Payroll recalculated', 'success');
                 await loadPayroll();
             } catch (error) {
                 console.error('Error recalculating payroll:', error);
-                showToast(error.message || 'Failed to recalculate', 'error');
+                showAdminToast(error.message || 'Failed to recalculate', 'error');
             }
         }
 
@@ -10566,11 +11759,11 @@
 
             try {
                 await apiCall(`/admin/payroll/${recordId}/finalize`, { method: 'POST' });
-                showToast('Payroll finalized', 'success');
+                showAdminToast('Payroll finalized', 'success');
                 await loadPayroll();
             } catch (error) {
                 console.error('Error finalizing payroll:', error);
-                showToast(error.message || 'Failed to finalize', 'error');
+                showAdminToast(error.message || 'Failed to finalize', 'error');
             }
         }
 
@@ -10586,11 +11779,11 @@
 
             try {
                 await apiCall(`/admin/payroll/${recordId}/pay`, { method: 'POST' });
-                showToast('Payroll marked as paid', 'success');
+                showAdminToast('Payroll marked as paid', 'success');
                 await loadPayroll();
             } catch (error) {
                 console.error('Error marking payroll as paid:', error);
-                showToast(error.message || 'Failed to mark as paid', 'error');
+                showAdminToast(error.message || 'Failed to mark as paid', 'error');
             }
         }
 
@@ -10606,11 +11799,11 @@
 
             try {
                 await apiCall(`/admin/payroll/${recordId}`, { method: 'DELETE' });
-                showToast('Payroll record deleted', 'success');
+                showAdminToast('Payroll record deleted', 'success');
                 await loadPayroll();
             } catch (error) {
                 console.error('Error deleting payroll:', error);
-                showToast(error.message || 'Failed to delete', 'error');
+                showAdminToast(error.message || 'Failed to delete', 'error');
             }
         }
 
@@ -13617,7 +14810,7 @@
                 });
                 closeModal('addBookingModal');
                 await loadBookings();
-                showToast({ type: 'success', title: 'Booking created', message: 'Booking saved and synced.' });
+                showAdminToast({ type: 'success', title: 'Booking created', message: 'Booking saved and synced.' });
             } catch (error) {
                 if (errorEl) errorEl.textContent = error.message || 'Failed to create booking.';
             }
