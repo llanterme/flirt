@@ -9119,6 +9119,95 @@ app.patch('/api/admin/chat/conversations/:id/status', authenticateAdmin, async (
     }
 });
 
+// Get chat history for a specific user (admin - for customer profile)
+app.get('/api/admin/customers/:userId/chat', authenticateAdmin, async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Get all conversations for this user
+        const conversations = await ChatRepository.findConversationsByUserId(userId);
+
+        // Get messages for each conversation
+        const conversationsWithMessages = await Promise.all(
+            conversations.map(async (conv) => {
+                const messages = await ChatRepository.findMessagesByConversation(conv.id, 100);
+                return {
+                    id: conv.id,
+                    status: conv.status,
+                    source: conv.source,
+                    createdAt: conv.created_at,
+                    lastMessageAt: conv.last_message_at,
+                    unreadByUser: conv.unread_by_user,
+                    messages: messages.map(m => ({
+                        id: m.id,
+                        text: m.text,
+                        fromType: m.from_type,
+                        createdAt: m.created_at,
+                        agentId: m.agent_id
+                    }))
+                };
+            })
+        );
+
+        res.json({ success: true, conversations: conversationsWithMessages });
+    } catch (error) {
+        console.error('Error fetching user chat history:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch chat history' });
+    }
+});
+
+// Send message to a specific user (admin - for customer profile)
+app.post('/api/admin/customers/:userId/chat', authenticateAdmin, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { text } = req.body;
+
+        if (!text || typeof text !== 'string' || text.trim().length === 0) {
+            return res.status(400).json({ success: false, message: 'Message text is required' });
+        }
+
+        // Get user info
+        const user = await UserRepository.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Find or create an open conversation for this user
+        const conversation = await ChatRepository.findOrCreateConversationForUser(
+            userId,
+            user.name || user.email,
+            user.email
+        );
+
+        // Create the message
+        const now = new Date().toISOString();
+        const messageId = 'msg_' + uuidv4().substring(0, 8);
+
+        const newMessage = await ChatRepository.createMessage({
+            id: messageId,
+            conversationId: conversation.id,
+            fromType: 'agent',
+            text: text.trim(),
+            agentId: req.user.id,
+            readByAgent: 1,
+            readByUser: 0,
+            createdAt: now
+        });
+
+        // Increment unread count for user
+        await ChatRepository.incrementUnread(conversation.id, true);
+
+        res.json({
+            success: true,
+            message: newMessage,
+            conversationId: conversation.id
+        });
+    } catch (error) {
+        console.error('Error sending message to user:', error);
+        res.status(500).json({ success: false, message: 'Failed to send message' });
+    }
+});
+
 // ============================================
 // GALLERY ENDPOINTS
 // ============================================

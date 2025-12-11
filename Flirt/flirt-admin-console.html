@@ -3928,6 +3928,9 @@
                             <button class="profile-tab" data-tab="inspo" onclick="switchProfileTab('inspo')">
                                 📸 Inspiration <span class="tab-count" id="tabInspoCount">0</span>
                             </button>
+                            <button class="profile-tab" data-tab="chat" onclick="switchProfileTab('chat')">
+                                💬 Chat <span class="tab-count" id="tabChatCount">0</span>
+                            </button>
                         </div>
 
                         <!-- Tab Content -->
@@ -4119,6 +4122,33 @@
                                 <div id="noInspoMessage" class="empty-state" style="display: none;">
                                     <div class="empty-icon">📸</div>
                                     <p>No inspiration photos uploaded</p>
+                                </div>
+                            </div>
+
+                            <!-- Chat Tab -->
+                            <div id="profileTabChat" class="profile-tab-content">
+                                <div class="profile-chat-container">
+                                    <!-- Chat input at top -->
+                                    <div class="profile-chat-input-container">
+                                        <textarea id="profileChatInput" class="profile-chat-textarea" placeholder="Type a message to this customer..." rows="2"></textarea>
+                                        <button class="btn btn-primary profile-chat-send" onclick="sendProfileChatMessage()">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                            </svg>
+                                            Send
+                                        </button>
+                                    </div>
+
+                                    <!-- Chat history -->
+                                    <div id="profileChatHistory" class="profile-chat-history">
+                                        <!-- Populated dynamically -->
+                                    </div>
+                                    <div id="noChatMessage" class="empty-state" style="display: none;">
+                                        <div class="empty-icon">💬</div>
+                                        <p>No chat history with this customer</p>
+                                        <p style="font-size: 13px; color: var(--text-subtle);">Send a message to start a conversation</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -4535,6 +4565,134 @@
                         background: linear-gradient(transparent, rgba(0,0,0,0.7));
                         color: white;
                         font-size: 12px;
+                    }
+
+                    /* Profile Chat Styles */
+                    .profile-chat-container {
+                        display: flex;
+                        flex-direction: column;
+                        height: 400px;
+                        max-height: 400px;
+                    }
+
+                    .profile-chat-input-container {
+                        display: flex;
+                        gap: 12px;
+                        padding: 16px;
+                        background: var(--surface-muted);
+                        border-radius: 12px;
+                        margin-bottom: 16px;
+                    }
+
+                    .profile-chat-textarea {
+                        flex: 1;
+                        padding: 12px;
+                        border: 1px solid var(--border-color);
+                        border-radius: 8px;
+                        resize: none;
+                        font-family: inherit;
+                        font-size: 14px;
+                    }
+
+                    .profile-chat-textarea:focus {
+                        outline: none;
+                        border-color: var(--primary);
+                    }
+
+                    .profile-chat-send {
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        padding: 10px 20px;
+                        white-space: nowrap;
+                    }
+
+                    .profile-chat-history {
+                        flex: 1;
+                        overflow-y: auto;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                        padding: 4px;
+                    }
+
+                    .chat-conversation-group {
+                        background: var(--surface);
+                        border: 1px solid var(--border-color);
+                        border-radius: 12px;
+                        padding: 16px;
+                    }
+
+                    .chat-conversation-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 12px;
+                        padding-bottom: 12px;
+                        border-bottom: 1px solid var(--border-color);
+                    }
+
+                    .chat-conversation-date {
+                        font-size: 12px;
+                        color: var(--text-subtle);
+                    }
+
+                    .chat-conversation-status {
+                        font-size: 11px;
+                        padding: 3px 8px;
+                        border-radius: 10px;
+                        background: rgba(76, 175, 80, 0.15);
+                        color: #4caf50;
+                    }
+
+                    .chat-conversation-status.closed {
+                        background: rgba(158, 158, 158, 0.15);
+                        color: #9e9e9e;
+                    }
+
+                    .chat-message {
+                        display: flex;
+                        flex-direction: column;
+                        max-width: 80%;
+                        margin-bottom: 8px;
+                    }
+
+                    .chat-message.from-user {
+                        align-self: flex-start;
+                    }
+
+                    .chat-message.from-agent {
+                        align-self: flex-end;
+                    }
+
+                    .chat-message-bubble {
+                        padding: 10px 14px;
+                        border-radius: 16px;
+                        font-size: 14px;
+                        line-height: 1.4;
+                    }
+
+                    .chat-message.from-user .chat-message-bubble {
+                        background: var(--surface-muted);
+                        color: var(--text-primary);
+                        border-bottom-left-radius: 4px;
+                    }
+
+                    .chat-message.from-agent .chat-message-bubble {
+                        background: var(--primary);
+                        color: white;
+                        border-bottom-right-radius: 4px;
+                    }
+
+                    .chat-message-time {
+                        font-size: 11px;
+                        color: var(--text-subtle);
+                        margin-top: 4px;
+                        padding: 0 4px;
+                    }
+
+                    .chat-message.from-agent .chat-message-time {
+                        text-align: right;
                     }
 
                     .status-badge {
@@ -11129,6 +11287,9 @@
             renderProfileLoyalty(profile);
             renderProfileInspo(profile.inspoPhotos || []);
 
+            // Load chat history (async, doesn't block profile display)
+            loadProfileChat();
+
             // Reset to overview tab
             switchProfileTab('overview');
         }
@@ -11421,6 +11582,133 @@
             } catch (error) {
                 console.error('Error loading photo:', error);
             }
+        }
+
+        // ========== PROFILE CHAT FUNCTIONS ==========
+        let profileChatData = [];
+
+        async function loadProfileChat() {
+            if (!currentProfileCustomerId) return;
+
+            const historyContainer = document.getElementById('profileChatHistory');
+            const emptyMsg = document.getElementById('noChatMessage');
+            const countBadge = document.getElementById('tabChatCount');
+
+            try {
+                const data = await apiCall(`/admin/customers/${currentProfileCustomerId}/chat`);
+                profileChatData = data.conversations || [];
+
+                // Count total messages
+                let totalMessages = 0;
+                profileChatData.forEach(conv => {
+                    totalMessages += conv.messages?.length || 0;
+                });
+
+                if (countBadge) {
+                    countBadge.textContent = totalMessages;
+                }
+
+                if (profileChatData.length === 0 || totalMessages === 0) {
+                    historyContainer.innerHTML = '';
+                    emptyMsg.style.display = 'block';
+                    return;
+                }
+
+                emptyMsg.style.display = 'none';
+                renderProfileChatHistory(profileChatData);
+            } catch (error) {
+                console.error('Error loading profile chat:', error);
+                historyContainer.innerHTML = '<p style="text-align: center; color: var(--danger);">Error loading chat history</p>';
+            }
+        }
+
+        function renderProfileChatHistory(conversations) {
+            const historyContainer = document.getElementById('profileChatHistory');
+
+            historyContainer.innerHTML = conversations.map(conv => {
+                const statusClass = conv.status === 'closed' ? 'closed' : '';
+                const statusLabel = conv.status === 'closed' ? 'Closed' : 'Open';
+
+                const messagesHtml = conv.messages.map(msg => {
+                    const isAgent = msg.fromType === 'agent';
+                    const messageClass = isAgent ? 'from-agent' : 'from-user';
+                    const timeStr = formatDateTime(msg.createdAt);
+
+                    return `
+                        <div class="chat-message ${messageClass}">
+                            <div class="chat-message-bubble">${escapeHtml(msg.text)}</div>
+                            <div class="chat-message-time">${timeStr}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="chat-conversation-group">
+                        <div class="chat-conversation-header">
+                            <span class="chat-conversation-date">
+                                ${conv.source === 'admin_initiated' ? '📤 Started by admin' : '📥 Started by customer'}
+                                · ${formatDate(conv.createdAt)}
+                            </span>
+                            <span class="chat-conversation-status ${statusClass}">${statusLabel}</span>
+                        </div>
+                        <div class="chat-messages-list">
+                            ${messagesHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function sendProfileChatMessage() {
+            if (!currentProfileCustomerId) return;
+
+            const input = document.getElementById('profileChatInput');
+            const text = input.value.trim();
+
+            if (!text) {
+                showAdminToast('Please enter a message', 'warning');
+                return;
+            }
+
+            try {
+                const response = await apiCall(`/admin/customers/${currentProfileCustomerId}/chat`, {
+                    method: 'POST',
+                    body: JSON.stringify({ text })
+                });
+
+                if (response.success) {
+                    input.value = '';
+                    showAdminToast('Message sent!', 'success');
+                    // Reload chat to show new message
+                    await loadProfileChat();
+                    // Scroll to bottom of chat history
+                    const historyContainer = document.getElementById('profileChatHistory');
+                    if (historyContainer) {
+                        historyContainer.scrollTop = historyContainer.scrollHeight;
+                    }
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showAdminToast('Failed to send message', 'error');
+            }
+        }
+
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+            return date.toLocaleString('en-ZA', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         function editCustomerFromProfile() {

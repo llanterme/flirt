@@ -2878,6 +2878,40 @@ const ChatRepository = {
         const sql = 'SELECT SUM(unread_by_agent) as total FROM chat_conversations WHERE status = ?';
         const result = await dbGet(sql, ['open']);
         return result?.total || 0;
+    },
+
+    // Find all conversations for a specific user
+    async findConversationsByUserId(userId) {
+        const sql = `
+            SELECT * FROM chat_conversations
+            WHERE user_id = ?
+            ORDER BY last_message_at DESC
+        `;
+        return await dbAll(sql, [userId]);
+    },
+
+    // Create or get existing open conversation for user (for admin-initiated messages)
+    async findOrCreateConversationForUser(userId, userName, userEmail) {
+        // First try to find an existing open conversation
+        let conversation = await dbGet(
+            'SELECT * FROM chat_conversations WHERE user_id = ? AND status = ? ORDER BY last_message_at DESC LIMIT 1',
+            [userId, 'open']
+        );
+
+        if (!conversation) {
+            // Create a new conversation
+            const id = 'conv_' + require('uuid').v4().substring(0, 8);
+            const now = new Date().toISOString();
+            await dbRun(`
+                INSERT INTO chat_conversations (
+                    id, user_id, user_name, user_email, source, status,
+                    unread_by_agent, unread_by_user, created_at, updated_at, last_message_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [id, userId, userName, userEmail, 'admin_initiated', 'open', 0, 0, now, now, now]);
+            conversation = await this.findConversationById(id);
+        }
+
+        return conversation;
     }
 };
 
