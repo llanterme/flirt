@@ -4733,19 +4733,18 @@ app.get('/api/admin/popular-services', authenticateAdmin, async (req, res) => {
         const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         const endDate = now.toISOString().split('T')[0];
 
-        // Get service counts from invoice line items (most accurate revenue source)
+        // Get service counts from invoice_services table (most accurate revenue source)
         const invoiceServiceCounts = await db.dbAll(`
             SELECT
-                ili.description as service_name,
+                isv.service_name,
                 COUNT(*) as count,
-                SUM(ili.total) as revenue
-            FROM invoice_line_items ili
-            JOIN invoices i ON ili.invoice_id = i.id
-            WHERE ili.item_type = 'service'
-              AND i.service_date >= ?
+                SUM(isv.total) as revenue
+            FROM invoice_services isv
+            JOIN invoices i ON isv.invoice_id = i.id
+            WHERE i.service_date >= ?
               AND i.service_date <= ?
               AND i.status != 'void'
-            GROUP BY ili.description
+            GROUP BY isv.service_name
             ORDER BY count DESC
             LIMIT 5
         `, [startDate, endDate]);
