@@ -6442,72 +6442,114 @@ app.post('/api/admin/customers/:id/reset-password', authenticateAdmin, async (re
 app.get('/api/admin/customers/:id/profile', authenticateAdmin, async (req, res) => {
     try {
         const customerId = req.params.id;
+        console.log('Fetching profile for customer:', customerId);
 
         // Get customer basic info
         const customer = await UserRepository.findById(customerId);
         if (!customer) {
             return res.status(404).json({ success: false, message: 'Customer not found' });
         }
+        console.log('Found customer:', customer.name);
 
         // Get all bookings for this customer
-        const allBookings = await BookingRepository.findAll();
-        const bookings = allBookings
-            .filter(b => (b.userId || b.user_id) === customerId)
-            .map(mapBookingResponse)
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
+        let bookings = [];
+        try {
+            const allBookings = await BookingRepository.findAll();
+            bookings = allBookings
+                .filter(b => (b.userId || b.user_id) === customerId)
+                .map(mapBookingResponse)
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+        } catch (e) {
+            console.log('Error fetching bookings:', e.message);
+        }
 
         // Get all orders for this customer
-        const allOrders = await OrderRepository.findAll();
-        const orders = allOrders
-            .filter(o => (o.userId || o.user_id) === customerId)
-            .sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
+        let orders = [];
+        let ordersWithItems = [];
+        try {
+            const allOrders = await OrderRepository.findAll();
+            orders = allOrders
+                .filter(o => (o.userId || o.user_id) === customerId)
+                .sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
 
-        // Get order items for each order
-        const ordersWithItems = await Promise.all(orders.map(async (order) => {
-            const items = await db.dbAll(
-                'SELECT oi.*, p.name as product_name, p.image_url FROM order_items oi LEFT JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ?',
-                [order.id]
-            );
-            return { ...order, items };
-        }));
+            // Get order items for each order
+            ordersWithItems = await Promise.all(orders.map(async (order) => {
+                try {
+                    const items = await db.dbAll(
+                        'SELECT oi.*, p.name as product_name, p.image_url FROM order_items oi LEFT JOIN products p ON oi.product_id = p.id WHERE oi.order_id = ?',
+                        [order.id]
+                    );
+                    return { ...order, items: items || [] };
+                } catch (e) {
+                    return { ...order, items: [] };
+                }
+            }));
+        } catch (e) {
+            console.log('Error fetching orders:', e.message);
+        }
 
         // Get all invoices for this customer
-        const invoices = await db.dbAll(`
-            SELECT i.*,
-                   (SELECT SUM(total_price) FROM invoice_items WHERE invoice_id = i.id) as calculated_total
-            FROM invoices i
-            WHERE i.customer_id = ?
-            ORDER BY i.created_at DESC
-        `, [customerId]);
+        let invoices = [];
+        let invoicesWithItems = [];
+        try {
+            invoices = await db.dbAll(`
+                SELECT i.*,
+                       (SELECT SUM(total_price) FROM invoice_items WHERE invoice_id = i.id) as calculated_total
+                FROM invoices i
+                WHERE i.customer_id = ?
+                ORDER BY i.created_at DESC
+            `, [customerId]) || [];
 
-        // Get invoice items for each invoice
-        const invoicesWithItems = await Promise.all(invoices.map(async (invoice) => {
-            const items = await db.dbAll(
-                'SELECT * FROM invoice_items WHERE invoice_id = ?',
-                [invoice.id]
-            );
-            return { ...invoice, items };
-        }));
+            // Get invoice items for each invoice
+            invoicesWithItems = await Promise.all(invoices.map(async (invoice) => {
+                try {
+                    const items = await db.dbAll(
+                        'SELECT * FROM invoice_items WHERE invoice_id = ?',
+                        [invoice.id]
+                    );
+                    return { ...invoice, items: items || [] };
+                } catch (e) {
+                    return { ...invoice, items: [] };
+                }
+            }));
+        } catch (e) {
+            console.log('Error fetching invoices:', e.message);
+        }
 
         // Get loyalty transactions
-        const loyaltyTransactions = await LoyaltyRepository.getTransactionsByUser(customerId);
+        let loyaltyTransactions = [];
+        try {
+            loyaltyTransactions = await LoyaltyRepository.getTransactionsByUser(customerId) || [];
+        } catch (e) {
+            console.log('Error fetching loyalty transactions:', e.message);
+        }
 
         // Get referrals made by this customer
-        const referralsMade = await db.dbAll(`
-            SELECT r.*, u.name as referee_name, u.email as referee_email
-            FROM referrals r
-            LEFT JOIN users u ON r.referee_id = u.id
-            WHERE r.referrer_id = ?
-            ORDER BY r.created_at DESC
-        `, [customerId]);
+        let referralsMade = [];
+        try {
+            referralsMade = await db.dbAll(`
+                SELECT r.*, u.name as referee_name, u.email as referee_email
+                FROM referrals r
+                LEFT JOIN users u ON r.referee_id = u.id
+                WHERE r.referrer_id = ?
+                ORDER BY r.created_at DESC
+            `, [customerId]) || [];
+        } catch (e) {
+            console.log('Error fetching referrals made:', e.message);
+        }
 
         // Get if this customer was referred by someone
-        const referredBy = await db.dbGet(`
-            SELECT r.*, u.name as referrer_name, u.email as referrer_email
-            FROM referrals r
-            LEFT JOIN users u ON r.referrer_id = u.id
-            WHERE r.referee_id = ?
-        `, [customerId]);
+        let referredBy = null;
+        try {
+            referredBy = await db.dbGet(`
+                SELECT r.*, u.name as referrer_name, u.email as referrer_email
+                FROM referrals r
+                LEFT JOIN users u ON r.referrer_id = u.id
+                WHERE r.referee_id = ?
+            `, [customerId]);
+        } catch (e) {
+            console.log('Error fetching referred by:', e.message);
+        }
 
         // Get inspo photos (table is named user_inspo_photos)
         let inspoPhotos = [];
@@ -6515,7 +6557,7 @@ app.get('/api/admin/customers/:id/profile', authenticateAdmin, async (req, res) 
             inspoPhotos = await db.dbAll(
                 'SELECT id, label, notes, created_at FROM user_inspo_photos WHERE user_id = ? ORDER BY created_at DESC',
                 [customerId]
-            );
+            ) || [];
         } catch (e) {
             console.log('No inspo photos table or error:', e.message);
         }
@@ -6526,7 +6568,7 @@ app.get('/api/admin/customers/:id/profile', authenticateAdmin, async (req, res) 
             redemptions = await db.dbAll(
                 'SELECT * FROM reward_redemptions WHERE user_id = ? ORDER BY redeemed_at DESC',
                 [customerId]
-            );
+            ) || [];
         } catch (e) {
             console.log('No redemptions table or error:', e.message);
         }
@@ -6542,7 +6584,14 @@ app.get('/api/admin/customers/:id/profile', authenticateAdmin, async (req, res) 
         const lastVisit = bookings.find(b => b.status === 'completed')?.date || null;
 
         // Get loyalty settings for tier calculation
-        const loyaltySettings = await LoyaltyRepository.getSettings();
+        let loyaltySettings = {};
+        try {
+            loyaltySettings = await LoyaltyRepository.getSettings() || {};
+        } catch (e) {
+            console.log('Error fetching loyalty settings:', e.message);
+        }
+
+        console.log('Profile data collected, sending response');
 
         res.json({
             success: true,
