@@ -5578,6 +5578,13 @@
                                     <option value="0">Inactive</option>
                                 </select>
                             </div>
+                            <div>
+                                <select id="serviceBookableFilter" onchange="filterServices()" class="form-control">
+                                    <option value="">All Bookable</option>
+                                    <option value="1">Bookable Only</option>
+                                    <option value="0">Invoice Only</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -5593,12 +5600,13 @@
                                     <th>Price</th>
                                     <th>Duration</th>
                                     <th>Status</th>
+                                    <th>Bookable</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="servicesTableBody">
                                 <tr>
-                                    <td colspan="8" style="text-align: center; padding: 40px;">
+                                    <td colspan="9" style="text-align: center; padding: 40px;">
                                         Loading services...
                                     </td>
                                 </tr>
@@ -5765,6 +5773,14 @@
                             <input type="checkbox" id="serviceActive" checked style="cursor: pointer;">
                             <span>Active (visible to customers)</span>
                         </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="serviceBookable" checked style="cursor: pointer;">
+                            <span>Bookable (available for client appointment booking)</span>
+                        </label>
+                        <small style="color: var(--text-subtle); margin-top: 4px; display: block;">Uncheck for invoice-only services like retail, redemptions, or training</small>
                     </div>
                 </form>
             </div>
@@ -12111,6 +12127,7 @@
             const searchTerm = document.getElementById('serviceSearchInput').value.toLowerCase();
             const typeFilter = document.getElementById('serviceTypeFilter').value;
             const activeFilter = document.getElementById('serviceActiveFilter').value;
+            const bookableFilter = document.getElementById('serviceBookableFilter').value;
 
             let filtered = allServices;
 
@@ -12130,6 +12147,11 @@
                 filtered = filtered.filter(s => s.active === parseInt(activeFilter));
             }
 
+            if (bookableFilter !== '') {
+                const bookableValue = parseInt(bookableFilter);
+                filtered = filtered.filter(s => (s.bookable === bookableValue) || (bookableValue === 1 && s.bookable === undefined));
+            }
+
             renderServicesTable(filtered);
         }
 
@@ -12137,7 +12159,7 @@
             const tbody = document.getElementById('servicesTableBody');
 
             if (services.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-subtle);">No services found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--text-subtle);">No services found</td></tr>';
                 return;
             }
 
@@ -12157,6 +12179,11 @@
                     <td>
                         <span class="status-badge status-${service.active ? 'confirmed' : 'cancelled'}">
                             ${service.active ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge status-${service.bookable === 1 || service.bookable === undefined ? 'confirmed' : 'pending'}" style="font-size: 11px;">
+                            ${service.bookable === 1 || service.bookable === undefined ? 'Yes' : 'Invoice Only'}
                         </span>
                     </td>
                     <td>
@@ -12237,6 +12264,7 @@
             document.getElementById('serviceDisplayOrder').value = '0';
             document.getElementById('serviceCommissionRate').value = '';
             document.getElementById('serviceActive').checked = true;
+            document.getElementById('serviceBookable').checked = true;
             document.getElementById('serviceImagePreview').style.display = 'none';
             document.getElementById('serviceImageBtnText').textContent = 'Choose Image';
             document.getElementById('serviceImageFile').value = '';
@@ -12358,6 +12386,7 @@
                 ? (service.commission_rate * 100).toFixed(0)
                 : '';
             document.getElementById('serviceActive').checked = service.active === 1;
+            document.getElementById('serviceBookable').checked = service.bookable === 1 || service.bookable === undefined;
             document.getElementById('serviceImageBtnText').textContent = 'Choose Image';
             document.getElementById('serviceImageFile').value = '';
 
@@ -12383,7 +12412,8 @@
                 image_url: pendingImageFile ? null : (document.getElementById('serviceImageUrl').value.trim() || null),
                 display_order: parseInt(document.getElementById('serviceDisplayOrder').value) || 0,
                 commission_rate: commissionRate,
-                active: document.getElementById('serviceActive').checked ? 1 : 0
+                active: document.getElementById('serviceActive').checked ? 1 : 0,
+                bookable: document.getElementById('serviceBookable').checked ? 1 : 0
             };
 
             try {

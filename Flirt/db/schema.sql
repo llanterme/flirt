@@ -84,10 +84,12 @@ CREATE TABLE IF NOT EXISTS services (
     display_order INTEGER DEFAULT 0,
     commission_rate REAL, -- per-service commission rate (e.g., 0.30 for 30%), NULL = use stylist default
     active INTEGER DEFAULT 1,
+    bookable INTEGER DEFAULT 1, -- 1 = available for client booking, 0 = invoice/admin only (retail, redemptions, training)
     created_at TEXT DEFAULT (datetime('now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_services_type ON services(service_type);
+-- NOTE: idx_services_bookable is created via ensureIndex in database.js after migration
 
 -- ============================================
 -- SERVICE TYPES (Admin-configurable service types)

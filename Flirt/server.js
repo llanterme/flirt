@@ -1294,9 +1294,10 @@ app.get('/api/stylists/:id', async (req, res) => {
 // SERVICES ROUTES
 // ============================================
 
+// Client booking endpoints - only return bookable services (excludes retail, redemptions, training)
 app.get('/api/services/hair', async (req, res) => {
     try {
-        const services = await ServiceRepository.findByType('hair');
+        const services = await ServiceRepository.findBookableByType('hair');
         res.json({ success: true, services });
     } catch (error) {
         console.error('Database error fetching hair services:', error.message);
@@ -1306,7 +1307,7 @@ app.get('/api/services/hair', async (req, res) => {
 
 app.get('/api/services/beauty', async (req, res) => {
     try {
-        const services = await ServiceRepository.findByType('beauty');
+        const services = await ServiceRepository.findBookableByType('beauty');
         res.json({ success: true, services });
     } catch (error) {
         console.error('Database error fetching beauty services:', error.message);
@@ -1315,9 +1316,10 @@ app.get('/api/services/beauty', async (req, res) => {
 });
 
 // Get all service types with metadata (for dynamic booking type cards)
+// Only includes bookable services for client appointment booking
 app.get('/api/service-types', async (req, res) => {
     try {
-        const services = await ServiceRepository.findAll();
+        const services = await ServiceRepository.findBookable();
 
         // Group services by type and get counts
         const typeMap = {};
@@ -1329,10 +1331,8 @@ app.get('/api/service-types', async (req, res) => {
                     services: []
                 };
             }
-            if (service.active) {
-                typeMap[service.service_type].count++;
-                typeMap[service.service_type].services.push(service);
-            }
+            typeMap[service.service_type].count++;
+            typeMap[service.service_type].services.push(service);
         });
 
         const types = Object.values(typeMap).filter(t => t.count > 0);
@@ -3185,9 +3185,10 @@ app.delete('/api/hair-tracker/remove-product/:productId', authenticateToken, asy
 // ============================================
 
 // Get all services (with optional filtering)
+// Admin can see ALL services (bookable + non-bookable) for invoicing
 app.get('/api/admin/services', authenticateAdmin, async (req, res) => {
     try {
-        const { service_type, active } = req.query;
+        const { service_type, active, bookable } = req.query;
         let services = await ServiceRepository.findAll();
 
         // Filter by service_type if provided
@@ -3199,6 +3200,12 @@ app.get('/api/admin/services', authenticateAdmin, async (req, res) => {
         if (active !== undefined) {
             const activeFilter = active === 'true' || active === '1' ? 1 : 0;
             services = services.filter(s => s.active === activeFilter);
+        }
+
+        // Filter by bookable status if provided
+        if (bookable !== undefined) {
+            const bookableFilter = bookable === 'true' || bookable === '1' ? 1 : 0;
+            services = services.filter(s => s.bookable === bookableFilter);
         }
 
         res.json({ success: true, services });
@@ -3227,7 +3234,7 @@ app.get('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
 // Create new service
 app.post('/api/admin/services', authenticateAdmin, async (req, res) => {
     try {
-        const { name, description, price, duration, service_type, category, image_url } = req.body;
+        const { name, description, price, duration, service_type, category, image_url, bookable } = req.body;
 
         // Validation
         if (!name || !price || !service_type) {
@@ -3256,6 +3263,7 @@ app.post('/api/admin/services', authenticateAdmin, async (req, res) => {
             display_order: req.body.display_order || 0,
             commission_rate: req.body.commission_rate !== undefined ? req.body.commission_rate : null,
             active: 1,
+            bookable: bookable !== undefined ? (bookable ? 1 : 0) : 1, // Default to bookable
             created_at: new Date().toISOString()
         };
 
@@ -3272,7 +3280,7 @@ app.post('/api/admin/services', authenticateAdmin, async (req, res) => {
 app.put('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, price, duration, service_type, category, image_url, display_order, active } = req.body;
+        const { name, description, price, duration, service_type, category, image_url, display_order, active, bookable } = req.body;
 
         // Check if service exists
         const existing = await ServiceRepository.findById(id);
@@ -3298,7 +3306,8 @@ app.put('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
             image_url: image_url !== undefined ? (image_url ? image_url.trim() : null) : existing.image_url,
             display_order: display_order !== undefined ? display_order : (existing.display_order || 0),
             commission_rate: req.body.commission_rate !== undefined ? req.body.commission_rate : existing.commission_rate,
-            active: active !== undefined ? (active ? 1 : 0) : existing.active
+            active: active !== undefined ? (active ? 1 : 0) : existing.active,
+            bookable: bookable !== undefined ? (bookable ? 1 : 0) : existing.bookable
         };
 
         await ServiceRepository.update(id, updates);

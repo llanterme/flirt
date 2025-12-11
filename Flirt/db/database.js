@@ -116,6 +116,12 @@ async function initializeDatabase() {
     await ensureColumn('promos', 'subtitle', 'TEXT');
     await ensureColumn('promos', 'priority', 'INTEGER DEFAULT 0');
 
+    // Services bookable flag migration (distinguishes bookable services from invoice-only)
+    await ensureColumn('services', 'bookable', 'INTEGER DEFAULT 1');
+    await ensureIndex('idx_services_bookable', 'services', 'bookable');
+    // Mark non-bookable categories as invoice-only after adding column
+    await migrateServiceBookableFlag();
+
     // User profile migrations (hair_profile and notification_prefs)
     await ensureColumn('users', 'hair_profile', 'TEXT');
     await ensureColumn('users', 'notification_prefs', 'TEXT');
@@ -586,6 +592,61 @@ async function initializeDatabase() {
     await ensureColumn('bookings', 'invoiced', 'INTEGER DEFAULT 0');
     await ensureIndex('idx_bookings_invoice', 'bookings', 'invoice_id');
     await ensureIndex('idx_bookings_invoiced', 'bookings', 'invoiced');
+}
+
+// Migration to set bookable=0 for non-bookable service categories
+async function migrateServiceBookableFlag() {
+    try {
+        // Check if migration is already done (any service has bookable=0)
+        const hasNonBookable = await dbGet('SELECT 1 FROM services WHERE bookable = 0 LIMIT 1');
+        if (hasNonBookable) {
+            return; // Migration already done
+        }
+
+        console.log('Migrating services to set bookable flag for non-bookable categories...');
+
+        // Categories that are NOT bookable (invoice/admin only)
+        const nonBookableCategories = [
+            'MK Retail',           // Retail products
+            'Wella Professional',  // Retail products
+            'Session Redemptions', // Internal tracking
+            'TRAINING',            // Staff training
+            'Professional Basin'   // Internal resource
+        ];
+
+        let totalUpdated = 0;
+        for (const category of nonBookableCategories) {
+            const result = await dbRun(
+                'UPDATE services SET bookable = 0 WHERE category = ? AND bookable = 1',
+                [category]
+            );
+            if (result.changes > 0) {
+                console.log(`  Set ${result.changes} services in "${category}" as non-bookable`);
+                totalUpdated += result.changes;
+            }
+        }
+
+        // Also mark General category items that are likely internal
+        const generalResult = await dbRun(`
+            UPDATE services SET bookable = 0
+            WHERE category = 'General' AND bookable = 1 AND (
+                name LIKE '%Tip%' OR
+                name LIKE '%Gift%' OR
+                name LIKE '%Voucher%' OR
+                name LIKE '%Credit%' OR
+                name LIKE '%Discount%' OR
+                name LIKE '%Adjustment%'
+            )
+        `);
+        if (generalResult.changes > 0) {
+            console.log(`  Set ${generalResult.changes} internal services in "General" as non-bookable`);
+            totalUpdated += generalResult.changes;
+        }
+
+        console.log(`Bookable flag migration complete. ${totalUpdated} services marked as non-bookable.`);
+    } catch (error) {
+        console.error('Error migrating service bookable flag:', error.message);
+    }
 }
 
 // Migration to add 'eft' to payment_provider CHECK constraint
@@ -1115,12 +1176,28 @@ const ServiceRepository = {
             sql += ' AND active = 1';
         }
 
+        // Filter by bookable status (for client booking vs invoice-only services)
+        if (filters.bookable !== undefined) {
+            sql += ' AND bookable = ?';
+            params.push(filters.bookable ? 1 : 0);
+        }
+
         sql += ' ORDER BY category, name';
         return dbAll(sql, params);
     },
 
     async findByType(type) {
         return dbAll('SELECT * FROM services WHERE service_type = ? AND active = 1', [type]);
+    },
+
+    // Find only bookable services (for client appointment booking)
+    async findBookable(filters = {}) {
+        return this.findAll({ ...filters, bookable: true });
+    },
+
+    // Find bookable services by type
+    async findBookableByType(type) {
+        return dbAll('SELECT * FROM services WHERE service_type = ? AND active = 1 AND bookable = 1 ORDER BY category, name', [type]);
     },
 
     async findById(id) {
@@ -1137,8 +1214,8 @@ const ServiceRepository = {
 
     async create(service) {
         const sql = `
-            INSERT INTO services (id, name, description, price, duration, service_type, category, image_url, display_order, commission_rate, active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO services (id, name, description, price, duration, service_type, category, image_url, display_order, commission_rate, active, bookable)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
         await dbRun(sql, [
             service.id,
@@ -1151,7 +1228,8 @@ const ServiceRepository = {
             service.image_url || service.imageUrl || null,  // Support both snake_case and camelCase
             service.display_order || 0,
             service.commission_rate !== undefined ? service.commission_rate : null,
-            service.active !== undefined ? service.active : 1
+            service.active !== undefined ? service.active : 1,
+            service.bookable !== undefined ? service.bookable : 1  // Default to bookable
         ]);
         return this.findById(service.id);
     },
@@ -1161,7 +1239,7 @@ const ServiceRepository = {
             UPDATE services
             SET name = ?, description = ?, price = ?, duration = ?,
                 service_type = ?, category = ?, image_url = ?, display_order = ?,
-                commission_rate = ?, active = ?, updated_at = datetime('now')
+                commission_rate = ?, active = ?, bookable = ?
             WHERE id = ?
         `;
         await dbRun(sql, [
@@ -1175,6 +1253,7 @@ const ServiceRepository = {
             service.display_order || 0,
             service.commission_rate !== undefined ? service.commission_rate : null,
             service.active !== undefined ? service.active : 1,
+            service.bookable !== undefined ? service.bookable : 1,  // Default to bookable
             id
         ]);
         return this.findById(id);
