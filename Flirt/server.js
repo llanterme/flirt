@@ -4577,14 +4577,29 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
         const allOrders = await OrderRepository.findAll();
         const allUsers = await UserRepository.findAll();
 
-        // Revenue this month (from orders with createdAt in current month, excluding cancelled)
-        const monthRevenue = allOrders
+        // Get invoices for the month
+        const monthInvoices = await InvoiceRepository.list({
+            start_date: monthStart,
+            end_date: today,
+            limit: 1000
+        });
+
+        // Revenue this month from PAID INVOICES (primary source of service revenue)
+        const invoiceRevenue = (monthInvoices.invoices || [])
+            .filter(inv => inv.payment_status === 'paid')
+            .reduce((sum, inv) => sum + (parseFloat(inv.total) || 0), 0);
+
+        // Revenue from product orders (secondary source)
+        const orderRevenue = allOrders
             .filter(o => {
                 if (o.status === 'cancelled') return false;
                 const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
                 return orderDate && orderDate >= monthStart && orderDate <= today;
             })
             .reduce((sum, o) => sum + (o.total || 0), 0);
+
+        // Total monthly revenue = invoices + product orders
+        const monthRevenue = invoiceRevenue + orderRevenue;
 
         // Bookings this month (all bookings in current month, including future dates)
         const monthBookings = allBookings.filter(b => {
@@ -4655,6 +4670,19 @@ app.get('/api/admin/revenue-trend', authenticateAdmin, async (req, res) => {
         if (range === '7d') days = 7;
         else if (range === '90d') days = 90;
 
+        // Get date range for invoices
+        const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const endDate = now.toISOString().split('T')[0];
+
+        // Get all paid invoices in the range
+        const invoiceData = await InvoiceRepository.list({
+            start_date: startDate,
+            end_date: endDate,
+            payment_status: 'paid',
+            limit: 1000
+        });
+        const paidInvoices = invoiceData.invoices || [];
+
         // Build array of dates for the last N days
         const labels = [];
         const values = [];
@@ -4664,8 +4692,17 @@ app.get('/api/admin/revenue-trend', authenticateAdmin, async (req, res) => {
             const dateStr = date.toISOString().split('T')[0];
             labels.push(dateStr);
 
-            // Sum revenue for this day from orders (paid, not cancelled)
-            const dayRevenue = allOrders
+            // Sum revenue for this day from INVOICES (service revenue)
+            const dayInvoiceRevenue = paidInvoices
+                .filter(inv => {
+                    // Use service_date or created_at for matching
+                    const invDate = inv.service_date || (inv.created_at ? inv.created_at.split('T')[0] : null);
+                    return invDate === dateStr;
+                })
+                .reduce((sum, inv) => sum + (parseFloat(inv.total) || 0), 0);
+
+            // Sum revenue for this day from orders (product revenue)
+            const dayOrderRevenue = allOrders
                 .filter(o => {
                     if (o.status === 'cancelled' || o.paymentStatus !== 'paid') return false;
                     const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
@@ -4673,7 +4710,7 @@ app.get('/api/admin/revenue-trend', authenticateAdmin, async (req, res) => {
                 })
                 .reduce((sum, o) => sum + (o.total || 0), 0);
 
-            values.push(dayRevenue);
+            values.push(dayInvoiceRevenue + dayOrderRevenue);
         }
 
         res.json({ success: true, labels, values });
@@ -4687,7 +4724,6 @@ app.get('/api/admin/revenue-trend', authenticateAdmin, async (req, res) => {
 app.get('/api/admin/popular-services', authenticateAdmin, async (req, res) => {
     try {
         const { range = '30d' } = req.query;
-        const allBookings = await BookingRepository.findAll();
 
         const now = new Date();
         let days = 30;
@@ -4695,24 +4731,50 @@ app.get('/api/admin/popular-services', authenticateAdmin, async (req, res) => {
         else if (range === '90d') days = 90;
 
         const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const endDate = now.toISOString().split('T')[0];
 
-        // Count bookings per service in the time range
-        const serviceCounts = {};
-        allBookings.forEach(b => {
-            const bookingDate = b.requestedDate || b.date;
-            if (bookingDate >= startDate) {
-                const serviceName = b.serviceName || 'Unknown';
-                serviceCounts[serviceName] = (serviceCounts[serviceName] || 0) + 1;
-            }
-        });
+        // Get service counts from invoice line items (most accurate revenue source)
+        const invoiceServiceCounts = await db.dbAll(`
+            SELECT
+                ili.description as service_name,
+                COUNT(*) as count,
+                SUM(ili.total) as revenue
+            FROM invoice_line_items ili
+            JOIN invoices i ON ili.invoice_id = i.id
+            WHERE ili.item_type = 'service'
+              AND i.service_date >= ?
+              AND i.service_date <= ?
+              AND i.status != 'void'
+            GROUP BY ili.description
+            ORDER BY count DESC
+            LIMIT 5
+        `, [startDate, endDate]);
 
-        // Sort by count and take top 5
-        const sorted = Object.entries(serviceCounts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5);
+        // Fallback to bookings if no invoice data
+        if (!invoiceServiceCounts || invoiceServiceCounts.length === 0) {
+            const allBookings = await BookingRepository.findAll();
 
-        const labels = sorted.map(s => s[0]);
-        const values = sorted.map(s => s[1]);
+            const serviceCounts = {};
+            allBookings.forEach(b => {
+                const bookingDate = b.requestedDate || b.date;
+                if (bookingDate >= startDate) {
+                    const serviceName = b.serviceName || 'Unknown';
+                    serviceCounts[serviceName] = (serviceCounts[serviceName] || 0) + 1;
+                }
+            });
+
+            const sorted = Object.entries(serviceCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            const labels = sorted.map(s => s[0]);
+            const values = sorted.map(s => s[1]);
+
+            return res.json({ success: true, labels, values });
+        }
+
+        const labels = invoiceServiceCounts.map(s => s.service_name || 'Unknown');
+        const values = invoiceServiceCounts.map(s => s.count);
 
         res.json({ success: true, labels, values });
     } catch (error) {
