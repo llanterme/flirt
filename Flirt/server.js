@@ -1848,15 +1848,22 @@ app.patch('/api/bookings/:id', authenticateToken, async (req, res) => {
 
         // Handle new two-step booking fields
         if (status) {
-            // Validate status
-            const validStatuses = ['REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED'];
-            if (!validStatuses.includes(status)) {
+            // Validate status - support both system and MySalonOnline statuses
+            const validStatuses = [
+                'REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED',
+                'No Status', 'To Be Confirmed', 'Online Booking', 'Paid',
+                'New Extentions', 'New Extensions', 'Late', 'No Show'
+            ];
+            const matchedStatus = validStatuses.find(s =>
+                s.toUpperCase() === status.toUpperCase() || s === status
+            );
+            if (!matchedStatus) {
                 return res.status(400).json({
                     success: false,
                     message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
                 });
             }
-            updates.status = status;
+            updates.status = matchedStatus;
         }
 
         // Support both new and legacy field names for date
@@ -5258,10 +5265,17 @@ app.patch('/api/admin/bookings/:id/status', authenticateAdmin, async (req, res) 
     try {
         const { status } = req.body;
         // Accept both lowercase and uppercase, but convert to uppercase for database
-        const statusUpper = status ? status.toUpperCase() : null;
-        const validStatuses = ['REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED'];
+        // Support both system and MySalonOnline statuses
+        const validStatuses = [
+            'REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED',
+            'No Status', 'To Be Confirmed', 'Online Booking', 'Paid',
+            'New Extentions', 'New Extensions', 'Late', 'No Show'
+        ];
+        const matchedStatus = status ? validStatuses.find(s =>
+            s.toUpperCase() === status.toUpperCase() || s === status
+        ) : null;
 
-        if (!statusUpper || !validStatuses.includes(statusUpper)) {
+        if (!matchedStatus) {
             return res.status(400).json({
                 success: false,
                 message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
@@ -5274,12 +5288,12 @@ app.patch('/api/admin/bookings/:id/status', authenticateAdmin, async (req, res) 
         }
 
         const updateData = {
-            status: statusUpper,  // Use uppercase for database
+            status: matchedStatus,  // Use matched status to preserve proper casing
             updatedAt: new Date().toISOString()
         };
 
         // Add completion timestamp and snapshot commission if marking as completed
-        if (statusUpper === 'COMPLETED') {
+        if (matchedStatus === 'COMPLETED') {
             updateData.completedAt = new Date().toISOString();
 
             // Snapshot the commission amount at completion time
@@ -5399,15 +5413,24 @@ app.patch('/api/admin/bookings/:id', authenticateAdmin, async (req, res) => {
 
         // Status
         if (status) {
-            const statusUpper = status.toUpperCase();
-            const validStatuses = ['REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED'];
-            if (!validStatuses.includes(statusUpper)) {
+            // Support both system statuses (uppercase) and MySalonOnline statuses (mixed case)
+            const validStatuses = [
+                'REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED',
+                'No Status', 'To Be Confirmed', 'Online Booking', 'Paid',
+                'New Extentions', 'New Extensions', 'Late', 'No Show'
+            ];
+            // Check if status matches any valid status (case-insensitive for system statuses)
+            const matchedStatus = validStatuses.find(s =>
+                s.toUpperCase() === status.toUpperCase() || s === status
+            );
+            if (!matchedStatus) {
                 return res.status(400).json({
                     success: false,
                     message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
                 });
             }
-            updates.status = statusUpper;
+            // Use the matched status to preserve proper casing for MySalonOnline statuses
+            updates.status = matchedStatus;
         }
 
         // Date handling - support both new and legacy fields
