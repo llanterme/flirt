@@ -6509,16 +6509,27 @@ app.get('/api/admin/customers/:id/profile', authenticateAdmin, async (req, res) 
             WHERE r.referee_id = ?
         `, [customerId]);
 
-        // Get inspo photos
-        const inspoPhotos = await db.dbAll(
-            'SELECT id, label, notes, created_at FROM inspo_photos WHERE user_id = ? ORDER BY created_at DESC',
-            [customerId]
-        );
+        // Get inspo photos (table is named user_inspo_photos)
+        let inspoPhotos = [];
+        try {
+            inspoPhotos = await db.dbAll(
+                'SELECT id, label, notes, created_at FROM user_inspo_photos WHERE user_id = ? ORDER BY created_at DESC',
+                [customerId]
+            );
+        } catch (e) {
+            console.log('No inspo photos table or error:', e.message);
+        }
 
-        // Get rewards/redemptions
-        const redemptions = await db.dbAll(`
-            SELECT * FROM reward_redemptions WHERE user_id = ? ORDER BY redeemed_at DESC
-        `, [customerId]);
+        // Get rewards/redemptions (may not exist)
+        let redemptions = [];
+        try {
+            redemptions = await db.dbAll(
+                'SELECT * FROM reward_redemptions WHERE user_id = ? ORDER BY redeemed_at DESC',
+                [customerId]
+            );
+        } catch (e) {
+            console.log('No redemptions table or error:', e.message);
+        }
 
         // Calculate summary stats
         const totalSpent = ordersWithItems.reduce((sum, o) => sum + (o.total || 0), 0) +
