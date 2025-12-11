@@ -313,6 +313,42 @@ function authenticateAdmin(req, res, next) {
     });
 }
 
+// Permission-based access control for staff
+// Usage: requirePermission('bookings') or requirePermission(['bookings', 'customers'])
+function requirePermission(permissionOrPermissions) {
+    const permissions = Array.isArray(permissionOrPermissions) ? permissionOrPermissions : [permissionOrPermissions];
+
+    return async (req, res, next) => {
+        try {
+            // Admin always has access
+            if (req.user.role === 'admin') {
+                return next();
+            }
+
+            // Staff need specific permissions
+            if (req.user.role === 'staff') {
+                const userPermissions = req.user.permissions ?
+                    (typeof req.user.permissions === 'string' ? JSON.parse(req.user.permissions) : req.user.permissions) : {};
+
+                // Check if user has any of the required permissions
+                const hasPermission = permissions.some(p => userPermissions[p] === true);
+
+                if (hasPermission) {
+                    return next();
+                }
+            }
+
+            return res.status(403).json({
+                success: false,
+                message: 'You do not have permission to access this resource'
+            });
+        } catch (error) {
+            console.error('Permission check error:', error);
+            return res.status(500).json({ success: false, message: 'Permission check failed' });
+        }
+    };
+}
+
 // ============================================
 // REWARDS PROCESSING SERVICE
 // ============================================
@@ -3180,6 +3216,258 @@ app.delete('/api/hair-tracker/remove-product/:productId', authenticateToken, asy
 // ============================================
 // ADMIN ROUTES
 // ============================================
+
+// ============================================
+// ADMIN - STAFF MANAGEMENT (Admin only)
+// ============================================
+
+// Available permissions for staff members
+const STAFF_PERMISSIONS = {
+    bookings: { label: 'Bookings', description: 'View and manage bookings' },
+    customers: { label: 'Customers', description: 'View and manage customers' },
+    services: { label: 'Services', description: 'View and manage services' },
+    products: { label: 'Products', description: 'View and manage products' },
+    orders: { label: 'Orders', description: 'View and manage orders' },
+    invoices: { label: 'Invoices', description: 'Create and manage invoices' },
+    reports: { label: 'Reports', description: 'View reports and analytics' },
+    promotions: { label: 'Promotions', description: 'Manage promotions and promos' },
+    gallery: { label: 'Gallery', description: 'Manage gallery images' },
+    chat: { label: 'Chat', description: 'Access customer chat' },
+    stylists: { label: 'Stylists', description: 'Manage stylist profiles' },
+    rewards: { label: 'Rewards', description: 'Manage rewards programme' }
+};
+
+// Get list of available permissions
+app.get('/api/admin/staff/permissions-list', authenticateAdmin, async (req, res) => {
+    // Only admin can view this
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+    res.json({ success: true, permissions: STAFF_PERMISSIONS });
+});
+
+// Get all staff members
+app.get('/api/admin/staff', authenticateAdmin, async (req, res) => {
+    try {
+        // Only admin can view staff list
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Admin access required' });
+        }
+
+        const staff = await UserRepository.findAllStaff();
+
+        // Parse permissions and remove sensitive data
+        const safeStaff = staff.map(s => ({
+            id: s.id,
+            email: s.email,
+            name: s.name,
+            phone: s.phone,
+            role: s.role,
+            permissions: s.permissions ? JSON.parse(s.permissions) : {},
+            stylistId: s.stylist_id,
+            stylistName: s.stylist_name,
+            createdAt: s.created_at,
+            updatedAt: s.updated_at
+        }));
+
+        res.json({ success: true, staff: safeStaff });
+    } catch (error) {
+        console.error('Error fetching staff:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch staff members' });
+    }
+});
+
+// Create new staff member
+app.post('/api/admin/staff', authenticateAdmin, async (req, res) => {
+    try {
+        // Only admin can create staff
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Admin access required' });
+        }
+
+        const { email, name, phone, permissions, stylistId, password } = req.body;
+
+        if (!email || !name) {
+            return res.status(400).json({ success: false, message: 'Email and name are required' });
+        }
+
+        // Check if email already exists
+        const existing = await UserRepository.findByEmail(email);
+        if (existing) {
+            return res.status(400).json({ success: false, message: 'Email already in use' });
+        }
+
+        // Generate temporary password if not provided
+        const tempPassword = password || Math.random().toString(36).slice(-8) + 'A1!';
+        const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+        const staff = await UserRepository.createStaff({
+            email,
+            name,
+            phone,
+            passwordHash,
+            permissions: permissions || {},
+            stylistId
+        });
+
+        res.json({
+            success: true,
+            staff: {
+                id: staff.id,
+                email: staff.email,
+                name: staff.name,
+                phone: staff.phone,
+                role: staff.role,
+                permissions: staff.permissions ? JSON.parse(staff.permissions) : {},
+                stylistId: staff.stylist_id
+            },
+            temporaryPassword: tempPassword,
+            message: 'Staff member created. They will need to change their password on first login.'
+        });
+    } catch (error) {
+        console.error('Error creating staff:', error);
+        res.status(500).json({ success: false, message: 'Failed to create staff member' });
+    }
+});
+
+// Update staff member
+app.put('/api/admin/staff/:id', authenticateAdmin, async (req, res) => {
+    try {
+        // Only admin can update staff
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Admin access required' });
+        }
+
+        const { id } = req.params;
+        const { name, phone, permissions, stylistId } = req.body;
+
+        // Get existing user
+        const user = await UserRepository.findById(id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Staff member not found' });
+        }
+
+        // Can't modify admin accounts
+        if (user.role === 'admin' && req.user.id !== user.id) {
+            return res.status(403).json({ success: false, message: 'Cannot modify other admin accounts' });
+        }
+
+        const updates = {};
+        if (name !== undefined) updates.name = name;
+        if (phone !== undefined) updates.phone = phone;
+        if (permissions !== undefined) updates.permissions = permissions;
+        if (stylistId !== undefined) updates.stylistId = stylistId;
+
+        const updated = await UserRepository.update(id, updates);
+
+        res.json({
+            success: true,
+            staff: {
+                id: updated.id,
+                email: updated.email,
+                name: updated.name,
+                phone: updated.phone,
+                role: updated.role,
+                permissions: updated.permissions ? JSON.parse(updated.permissions) : {},
+                stylistId: updated.stylist_id
+            }
+        });
+    } catch (error) {
+        console.error('Error updating staff:', error);
+        res.status(500).json({ success: false, message: 'Failed to update staff member' });
+    }
+});
+
+// Reset staff password
+app.post('/api/admin/staff/:id/reset-password', authenticateAdmin, async (req, res) => {
+    try {
+        // Only admin can reset passwords
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Admin access required' });
+        }
+
+        const { id } = req.params;
+
+        const user = await UserRepository.findById(id);
+        if (!user || (user.role !== 'staff' && user.role !== 'admin')) {
+            return res.status(404).json({ success: false, message: 'Staff member not found' });
+        }
+
+        // Generate new temporary password
+        const tempPassword = Math.random().toString(36).slice(-8) + 'A1!';
+        const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+        await UserRepository.update(id, {
+            passwordHash,
+            mustChangePassword: true
+        });
+
+        res.json({
+            success: true,
+            temporaryPassword: tempPassword,
+            message: 'Password reset. Staff member will need to change password on next login.'
+        });
+    } catch (error) {
+        console.error('Error resetting staff password:', error);
+        res.status(500).json({ success: false, message: 'Failed to reset password' });
+    }
+});
+
+// Remove staff member (converts back to customer)
+app.delete('/api/admin/staff/:id', authenticateAdmin, async (req, res) => {
+    try {
+        // Only admin can remove staff
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: 'Admin access required' });
+        }
+
+        const { id } = req.params;
+
+        const user = await UserRepository.findById(id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Staff member not found' });
+        }
+
+        // Can't remove admin accounts
+        if (user.role === 'admin') {
+            return res.status(403).json({ success: false, message: 'Cannot remove admin accounts' });
+        }
+
+        await UserRepository.removeStaff(id);
+
+        res.json({ success: true, message: 'Staff member removed' });
+    } catch (error) {
+        console.error('Error removing staff:', error);
+        res.status(500).json({ success: false, message: 'Failed to remove staff member' });
+    }
+});
+
+// Get current user's permissions
+app.get('/api/admin/my-permissions', authenticateAdmin, async (req, res) => {
+    try {
+        if (req.user.role === 'admin') {
+            res.json({
+                success: true,
+                role: 'admin',
+                permissions: { all: true },
+                permissionsList: STAFF_PERMISSIONS
+            });
+        } else {
+            const permissions = req.user.permissions ?
+                (typeof req.user.permissions === 'string' ? JSON.parse(req.user.permissions) : req.user.permissions) : {};
+
+            res.json({
+                success: true,
+                role: 'staff',
+                permissions,
+                permissionsList: STAFF_PERMISSIONS
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching permissions:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch permissions' });
+    }
+});
 
 // ============================================
 // ADMIN - SERVICE MANAGEMENT

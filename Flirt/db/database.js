@@ -128,6 +128,11 @@ async function initializeDatabase() {
     await ensureColumn('users', 'hair_profile', 'TEXT');
     await ensureColumn('users', 'notification_prefs', 'TEXT');
 
+    // Staff permissions (JSON object storing permission flags)
+    await ensureColumn('users', 'permissions', 'TEXT');
+    // Link staff user to stylist profile (optional)
+    await ensureColumn('users', 'stylist_id', 'TEXT REFERENCES stylists(id)');
+
     // Hair tracker extended columns
     await ensureColumn('hair_tracker', 'maintenance_interval_days', 'INTEGER DEFAULT 42');
     await ensureColumn('hair_tracker', 'next_maintenance_date', 'TEXT');
@@ -979,11 +984,14 @@ const UserRepository = {
             mustChangePassword: 'must_change_password',
             passwordHash: 'password_hash',
             hairProfile: 'hair_profile',
-            notificationPrefs: 'notification_prefs'
+            notificationPrefs: 'notification_prefs',
+            role: 'role',
+            permissions: 'permissions',
+            stylistId: 'stylist_id'
         };
 
         // Fields that need JSON serialization
-        const jsonFields = ['hairProfile', 'notificationPrefs'];
+        const jsonFields = ['hairProfile', 'notificationPrefs', 'permissions'];
 
         for (const [key, dbField] of Object.entries(fieldMap)) {
             if (updates[key] !== undefined) {
@@ -1177,6 +1185,77 @@ const UserRepository = {
             `SELECT id, name, email, created_at FROM users WHERE referred_by = ? ORDER BY created_at DESC`,
             [referrerId]
         );
+    },
+
+    // ============================================
+    // STAFF MANAGEMENT METHODS
+    // ============================================
+
+    // Find all staff members (role = 'staff' or 'admin')
+    async findAllStaff() {
+        return dbAll(`
+            SELECT u.*, s.name as stylist_name
+            FROM users u
+            LEFT JOIN stylists s ON u.stylist_id = s.id
+            WHERE u.role IN ('staff', 'admin')
+            ORDER BY u.role DESC, u.name
+        `);
+    },
+
+    // Create a new staff member
+    async createStaff(staffData) {
+        const id = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const sql = `
+            INSERT INTO users (id, email, password_hash, name, phone, role, permissions, stylist_id, must_change_password, created_at)
+            VALUES (?, ?, ?, ?, ?, 'staff', ?, ?, 1, datetime('now'))
+        `;
+        await dbRun(sql, [
+            id,
+            staffData.email,
+            staffData.passwordHash,
+            staffData.name,
+            staffData.phone || null,
+            JSON.stringify(staffData.permissions || {}),
+            staffData.stylistId || null
+        ]);
+        return this.findById(id);
+    },
+
+    // Get staff permissions (parses JSON)
+    async getPermissions(userId) {
+        const user = await this.findById(userId);
+        if (!user) return null;
+        if (user.role === 'admin') {
+            // Admins have all permissions
+            return { all: true };
+        }
+        return user.permissions ? JSON.parse(user.permissions) : {};
+    },
+
+    // Update staff permissions
+    async updatePermissions(userId, permissions) {
+        await dbRun(
+            `UPDATE users SET permissions = ?, updated_at = datetime('now') WHERE id = ?`,
+            [JSON.stringify(permissions), userId]
+        );
+        return this.findById(userId);
+    },
+
+    // Check if user has a specific permission
+    async hasPermission(userId, permissionKey) {
+        const permissions = await this.getPermissions(userId);
+        if (!permissions) return false;
+        if (permissions.all) return true; // Admin has all permissions
+        return permissions[permissionKey] === true;
+    },
+
+    // Delete a staff member (set role to customer, clear permissions)
+    async removeStaff(userId) {
+        await dbRun(
+            `UPDATE users SET role = 'customer', permissions = NULL, stylist_id = NULL, updated_at = datetime('now') WHERE id = ?`,
+            [userId]
+        );
+        return this.findById(userId);
     }
 };
 
