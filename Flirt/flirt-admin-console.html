@@ -2650,14 +2650,14 @@
                     Bookings
                     <span class="nav-badge" id="bookingsNavBadge">0</span>
                 </a>
-                <a class="nav-item" onclick="showSection('staff', event)">
+                <a class="nav-item" onclick="showSection('team', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                         <circle cx="9" cy="7" r="4"></circle>
                         <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
-                    Staff
+                    Team
                 </a>
                 <a class="nav-item" onclick="showSection('payroll', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3456,11 +3456,11 @@
                     </div>
                 </section>
 
-                <!-- Staff Section -->
-                <section id="staff" class="page-section">
+                <!-- Team Section (Stylists) -->
+                <section id="team" class="page-section">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h3>Staff Members</h3>
-                        <button class="btn btn-primary" onclick="openAddStaffModal()">+ Add Staff Member</button>
+                        <h3>Team Members</h3>
+                        <button class="btn btn-primary" onclick="openAddStaffModal()">+ Add Team Member</button>
                     </div>
 
                     <div class="stats-grid">
@@ -9447,7 +9447,7 @@
         let stylistsForStaff = [];
 
         async function loadStaff() {
-            if (currentUser?.role !== 'admin') {
+            if (adminUser?.role !== 'admin') {
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
                 return;
             }
