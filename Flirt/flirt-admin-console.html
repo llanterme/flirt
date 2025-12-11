@@ -9662,6 +9662,7 @@
                             <div style="font-size: 10px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: ${style.text}; opacity: 0.85;">${b.serviceName}</div>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
                                 <div style="font-size: 10px; color: ${style.text}; opacity: 0.7;">${timeDisplay}${durationDisplay ? ` (${durationDisplay})` : ''}</div>
+                                <div style="font-size: 8px; padding: 1px 5px; border-radius: 3px; background: ${style.border}; color: white; font-weight: 500; white-space: nowrap;">${b.status || 'No Status'}</div>
                             </div>
                             ${b.customerPhone ? `<div style="font-size: 9px; color: ${style.text}; margin-top: 2px; opacity: 0.6;"><a href="tel:${b.customerPhone}" style="color: inherit; text-decoration: none;" onclick="event.stopPropagation();">📞 ${b.customerPhone}</a></div>` : ''}
                             ${quickActions}
