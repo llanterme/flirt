@@ -34,9 +34,7 @@ const DEFAULT_CONFIG = {
     earnRulesDisplay: [
         { id: 'booking', label: 'Book an appointment', pointsKey: 'bookingPoints' },
         { id: 'spend', label: 'Every R{spendRand} spent', pointsKey: 'spendRand', isSpendRule: true },
-        { id: 'review', label: 'Write a review', pointsKey: 'reviewPoints' },
-        { id: 'referral', label: 'Successful referral', pointsKey: 'referralPoints' },
-        { id: 'socialShare', label: 'Share on social media', pointsKey: 'socialSharePoints' }
+        { id: 'referral', label: 'Successful referral', pointsKey: 'referralPoints' }
     ]
 };
 
