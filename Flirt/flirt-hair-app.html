@@ -12743,14 +12743,15 @@ async function showNotifications() {
                 const bookings = data.bookings || [];
                 userBookingsData = bookings;
 
-                // Filter for future confirmed/requested/pending bookings (exclude cancelled and completed)
+                // Filter for future bookings (exclude cancelled, completed, and no-show)
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 const futureBookings = bookings.filter(b => {
                     const bookingDate = new Date(b.requestedDate || b.date);
                     const statusUpper = (b.status || '').toUpperCase();
-                    const activeStatuses = ['REQUESTED', 'CONFIRMED', 'PENDING'];
-                    return bookingDate >= today && activeStatuses.includes(statusUpper);
+                    // Exclude cancelled, completed, and no-show statuses
+                    const excludedStatuses = ['CANCELLED', 'COMPLETED', 'NO SHOW', 'NO_SHOW'];
+                    return bookingDate >= today && !excludedStatuses.includes(statusUpper);
                 });
 
                 // Sort by date (soonest first)
@@ -12779,11 +12780,15 @@ async function showNotifications() {
                     // Format time display with new two-step booking logic
                     let timeDisplay = 'TBC';
                     const statusUpper = (booking.status || '').toUpperCase();
-                    if (statusUpper === 'CONFIRMED') {
+                    // MySalonOnline confirmed statuses that have assigned times
+                    const confirmedStatuses = ['CONFIRMED', 'PAID', 'NEW EXTENTIONS', 'NEW EXTENSIONS', 'ONLINE BOOKING', 'LATE'];
+                    const pendingStatuses = ['REQUESTED', 'TO BE CONFIRMED', 'NO STATUS'];
+
+                    if (confirmedStatuses.includes(statusUpper)) {
                         // Confirmed bookings have exact time
                         timeDisplay = booking.assignedStartTime || booking.confirmedTime || booking.time || 'TBC';
-                    } else if (statusUpper === 'REQUESTED') {
-                        // Requested bookings show time window
+                    } else if (pendingStatuses.includes(statusUpper)) {
+                        // Requested/pending bookings show time window
                         const timeWindow = window.BookingConstants?.getTimeWindow(booking.requestedTimeWindow || booking.preferredTimeOfDay);
                         if (timeWindow) {
                             timeDisplay = `${timeWindow.icon} ${timeWindow.label}`;
@@ -12793,26 +12798,39 @@ async function showNotifications() {
                             else if (booking.preferredTimeOfDay === 'afternoon') timeDisplay = 'Afternoon (12PM-4PM)';
                             else if (booking.preferredTimeOfDay === 'evening') timeDisplay = 'Evening (4PM-7PM)';
                         }
+                    } else {
+                        // Fallback - try to show assigned time if available
+                        timeDisplay = booking.assignedStartTime || booking.confirmedTime || booking.time || 'TBC';
                     }
 
                     // Get stylist name if available
                     const stylistName = booking.stylistName || 'Our team';
 
-                    // Status badge with new statuses
+                    // Status badge with MySalonOnline statuses support
                     let statusBadge = '';
-                    if (statusUpper === 'CONFIRMED') {
-                        statusBadge = '<span style="background: var(--success); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">✓ Confirmed</span>';
-                    } else if (statusUpper === 'REQUESTED') {
-                        statusBadge = '<span style="background: #FFC107; color: var(--brand-charcoal); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">⏳ Pending Time</span>';
+                    if (confirmedStatuses.includes(statusUpper)) {
+                        // Show specific status label for MySalonOnline statuses
+                        let statusLabel = '✓ Confirmed';
+                        if (statusUpper === 'PAID') statusLabel = '✓ Paid';
+                        else if (statusUpper === 'NEW EXTENTIONS' || statusUpper === 'NEW EXTENSIONS') statusLabel = '✨ New Extensions';
+                        else if (statusUpper === 'ONLINE BOOKING') statusLabel = '🌐 Online Booking';
+                        else if (statusUpper === 'LATE') statusLabel = '⏰ Running Late';
+                        statusBadge = `<span style="background: var(--success); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">${statusLabel}</span>`;
+                    } else if (pendingStatuses.includes(statusUpper)) {
+                        let statusLabel = '⏳ Pending Time';
+                        if (statusUpper === 'TO BE CONFIRMED') statusLabel = '⏳ To Be Confirmed';
+                        else if (statusUpper === 'NO STATUS') statusLabel = '📋 Processing';
+                        statusBadge = `<span style="background: #FFC107; color: var(--brand-charcoal); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">${statusLabel}</span>`;
                     } else {
                         statusBadge = '<span style="background: var(--warning); color: var(--brand-charcoal); padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">Pending</span>';
                     }
 
-                    // Payment status for confirmed bookings
+                    // Payment status for confirmed bookings (including MySalonOnline confirmed statuses)
                     const paymentStatus = booking.paymentStatus || booking.payment_status || 'unpaid';
                     let paymentBadge = '';
                     let payButton = '';
-                    if (statusUpper === 'CONFIRMED') {
+                    // Show payment options for all confirmed-type statuses (except 'PAID' which is already paid)
+                    if (confirmedStatuses.includes(statusUpper) && statusUpper !== 'PAID') {
                         if (paymentStatus === 'paid') {
                             paymentBadge = '<span style="background: #e8f5e9; color: #388e3c; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px;">✓ Paid</span>';
                         } else if (paymentStatus === 'pending') {

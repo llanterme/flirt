@@ -9887,6 +9887,63 @@
         let currentEditingBookingId = null;
         let editBookingSourcePopupOpen = false; // Track if day popup was open when edit was triggered
 
+        // Fetch stylists who offer a specific service
+        async function fetchStylistsForService(serviceId) {
+            try {
+                const response = await apiCall(`/services/${serviceId}/stylists`);
+                return response.stylists || [];
+            } catch (error) {
+                console.error('Error fetching stylists for service:', error);
+                return [];
+            }
+        }
+
+        // Update the stylist dropdown based on selected service
+        async function updateEditBookingStylistDropdown(serviceId, currentStylistId = null) {
+            const stylistSelect = document.getElementById('editBookingStylist');
+            if (!stylistSelect) return;
+
+            // Show loading state
+            stylistSelect.innerHTML = '<option value="">Loading...</option>';
+            stylistSelect.disabled = true;
+
+            if (!serviceId) {
+                // No service selected - show all stylists
+                stylistSelect.innerHTML = '<option value="">Any Available</option>' +
+                    adminBookingStylists.map(s =>
+                        `<option value="${s.id}" ${s.id === currentStylistId ? 'selected' : ''}>${s.name}</option>`
+                    ).join('');
+                stylistSelect.disabled = false;
+                return;
+            }
+
+            // Fetch stylists who offer this service
+            const eligibleStylists = await fetchStylistsForService(serviceId);
+
+            if (eligibleStylists.length === 0) {
+                stylistSelect.innerHTML = '<option value="">No stylists offer this service</option>';
+                stylistSelect.disabled = false;
+                return;
+            }
+
+            stylistSelect.innerHTML = '<option value="">Any Available</option>' +
+                eligibleStylists.map(s =>
+                    `<option value="${s.id}" ${s.id === currentStylistId ? 'selected' : ''}>${s.name}</option>`
+                ).join('');
+            stylistSelect.disabled = false;
+
+            // Check if current stylist is still valid for this service
+            if (currentStylistId && !eligibleStylists.find(s => s.id === currentStylistId)) {
+                // Current stylist doesn't offer this service - show warning
+                const errorEl = document.getElementById('editBookingError');
+                if (errorEl) {
+                    errorEl.style.display = 'block';
+                    errorEl.textContent = 'Warning: The current stylist does not offer this service. Please select a different stylist.';
+                }
+                stylistSelect.value = ''; // Reset to "Any Available"
+            }
+        }
+
         async function openEditBookingModal(bookingId) {
             currentEditingBookingId = bookingId;
             const booking = adminBookings.find(b => b.id === bookingId);
@@ -9911,12 +9968,17 @@
                 </option>`
             ).join('');
 
-            // Populate stylists dropdown
-            const stylistSelect = document.getElementById('editBookingStylist');
-            stylistSelect.innerHTML = '<option value="">Any Available</option>' +
-                adminBookingStylists.map(s =>
-                    `<option value="${s.id}" ${s.id === booking.stylistId ? 'selected' : ''}>${s.name}</option>`
-                ).join('');
+            // Add event listener for service change to update stylists dropdown
+            // Remove old listener first to prevent duplicates
+            const newServiceSelect = serviceSelect.cloneNode(true);
+            serviceSelect.parentNode.replaceChild(newServiceSelect, serviceSelect);
+            newServiceSelect.addEventListener('change', async (e) => {
+                const selectedServiceId = e.target.value;
+                await updateEditBookingStylistDropdown(selectedServiceId, null);
+            });
+
+            // Populate stylists dropdown - filtered by selected service
+            await updateEditBookingStylistDropdown(booking.serviceId, booking.stylistId);
 
             // Fill form with current booking data
             document.getElementById('editBookingCustomer').value = booking.customerName || 'Guest';
