@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     requested_time_window TEXT CHECK(requested_time_window IN ('MORNING', 'MIDDAY', 'AFTERNOON', 'LATE_AFTERNOON', 'EVENING')),
     assigned_start_time TEXT,
     assigned_end_time TEXT,
-    status TEXT DEFAULT 'REQUESTED' CHECK(status IN ('REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED')),
+    status TEXT DEFAULT 'REQUESTED' CHECK(status IN ('REQUESTED', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'No Status', 'To Be Confirmed', 'Online Booking', 'Paid', 'New Extentions', 'Late', 'No Show', 'Cancelled')),
 
     -- Legacy fields (kept for backward compatibility during migration)
     date TEXT,
