@@ -1430,6 +1430,7 @@ function mapBookingResponse(row) {
         preferredTimeOfDay: row.preferred_time_of_day ?? row.preferredTimeOfDay ?? null,
         time: row.time ?? null,
         confirmedTime: row.confirmed_time ?? row.confirmedTime ?? null,
+        duration: row.duration ?? null,
         status: row.status,
         notes: row.notes ?? null,
         // Commission fields
