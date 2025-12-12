@@ -17243,8 +17243,104 @@
         }
 
         // Edit invoice
-        function editInvoice(id) {
-            showAdminToast('Edit invoice coming soon', 'info');
+        async function editInvoice(id) {
+            try {
+                // Fetch the invoice details
+                const response = await fetch(`/api/admin/invoices/${id}`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                const data = await response.json();
+
+                if (!data.success || !data.invoice) {
+                    showAdminToast('Invoice not found', 'error');
+                    return;
+                }
+
+                const invoice = data.invoice;
+
+                // Check if invoice is editable (only drafts can be edited)
+                if (invoice.status !== 'draft') {
+                    showAdminToast('Only draft invoices can be edited', 'warning');
+                    return;
+                }
+
+                // Load picker data
+                await Promise.all([
+                    loadServicesForPicker(),
+                    loadProductsForPicker(),
+                    loadStylistsForInvoice(),
+                    loadCustomersForInvoice()
+                ]);
+
+                // Set the current invoice for editing
+                currentInvoice = {
+                    id: invoice.id,
+                    services: (invoice.services || []).map(s => ({
+                        id: s.service_id || s.id,
+                        name: s.service_name || s.name,
+                        price: parseFloat(s.price) || 0,
+                        quantity: s.quantity || 1,
+                        stylistId: s.stylist_id,
+                        stylistName: s.stylist_name
+                    })),
+                    products: (invoice.products || []).map(p => ({
+                        id: p.product_id || p.id,
+                        name: p.product_name || p.name,
+                        price: parseFloat(p.price) || 0,
+                        quantity: p.quantity || 1
+                    })),
+                    totals: {
+                        services_subtotal: parseFloat(invoice.services_subtotal) || 0,
+                        products_subtotal: parseFloat(invoice.products_subtotal) || 0,
+                        subtotal: parseFloat(invoice.subtotal) || 0,
+                        discount_amount: parseFloat(invoice.discount_amount) || 0,
+                        tax_amount: parseFloat(invoice.tax_amount) || 0,
+                        total: parseFloat(invoice.total) || 0,
+                        commission: parseFloat(invoice.commission) || 0
+                    }
+                };
+
+                // Populate form fields
+                const customerSelect = document.getElementById('invoiceCustomerSelect');
+                if (customerSelect && invoice.user_id) {
+                    customerSelect.value = invoice.user_id;
+                }
+
+                const stylistSelect = document.getElementById('invoice-stylist');
+                if (stylistSelect && invoice.stylist_id) {
+                    stylistSelect.value = invoice.stylist_id;
+                }
+
+                const dateInput = document.getElementById('invoice-service-date');
+                if (dateInput && invoice.service_date) {
+                    dateInput.value = invoice.service_date.split('T')[0];
+                }
+
+                const notesInput = document.getElementById('invoice-notes');
+                if (notesInput) {
+                    notesInput.value = invoice.notes || '';
+                }
+
+                const discountInput = document.getElementById('invoice-discount');
+                if (discountInput) {
+                    discountInput.value = invoice.discount_amount || 0;
+                }
+
+                // Render services and products lists
+                renderInvoiceServices();
+                renderInvoiceProducts();
+                calculateInvoiceTotals();
+
+                // Update modal title and open
+                document.getElementById('invoice-modal-title').textContent = 'Edit Invoice';
+                const modal = document.getElementById('invoice-modal');
+                modal.style.display = 'flex';
+                modal.classList.add('show');
+
+            } catch (error) {
+                console.error('Error loading invoice for edit:', error);
+                showAdminToast('Failed to load invoice', 'error');
+            }
         }
 
         // Delete invoice
@@ -17805,8 +17901,13 @@
                     internal_notes: internalNotes
                 };
 
-                const response = await fetch('/api/admin/invoices', {
-                    method: 'POST',
+                // Check if we're editing an existing invoice
+                const isEditing = currentInvoice.id;
+                const url = isEditing ? `/api/admin/invoices/${currentInvoice.id}` : '/api/admin/invoices';
+                const method = isEditing ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${getToken()}`
@@ -17817,7 +17918,7 @@
                 const data = await response.json();
 
                 if (!data.success) {
-                    throw new Error(data.error || 'Failed to create invoice');
+                    throw new Error(data.error || (isEditing ? 'Failed to update invoice' : 'Failed to create invoice'));
                 }
 
                 if (finalize) {
@@ -17840,10 +17941,11 @@
                         alert(`Invoice ${finalizeData.invoice.invoice_number} created and finalized!`);
                     }
                 } else {
+                    const message = isEditing ? 'Invoice updated' : 'Invoice saved as draft';
                     if (typeof showNotification === 'function') {
-                        showNotification('Invoice saved as draft', 'success');
+                        showNotification(message, 'success');
                     } else {
-                        alert('Invoice saved as draft');
+                        alert(message);
                     }
                 }
 
