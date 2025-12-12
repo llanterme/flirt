@@ -24,10 +24,10 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
 
-    <!-- Google Fonts - Playfair Display + Mulish (from flirthair.co.za) -->
+    <!-- Google Fonts - Cormorant Garamond + Montserrat (matching landing page) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Mulish:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600&family=Mulish:wght@200;300;400;500&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -51,47 +51,58 @@
         }
 
         :root {
-            /* Flirt Brand Colors - from flirthair.co.za WordPress Theme */
-            --brand-pink: #F67599;          /* Primary/Accent - Elementor global */
-            --brand-pink-dark: #e05a7f;     /* Darker pink for hover states */
-            --brand-charcoal: #414042;      /* Primary text - Elementor global */
+            /* Flirt Brand Colors - matching flirt.hair landing page */
+            --brand-pink: #F67599;          /* Primary/Accent */
+            --brand-pink-dark: #e85a82;     /* Darker pink for hover states */
+            --brand-charcoal: #333333;      /* Primary text - elegant dark */
             --brand-white: #ffffff;         /* Base color */
             --brand-beige: #E1D9CD;         /* Warm beige accent */
             --brand-light-pink: #EFDBE4;    /* Light pink accent */
-            --brand-text: #6C6D70;          /* Body text color */
+            --brand-text: #666666;          /* Body text color */
+            --brand-black: #000000;         /* Pure black for contrast */
 
             /* Legacy variable mapping for compatibility */
-            --primary-black: #414042;
+            --primary-black: #333333;
             --primary-white: #ffffff;
             --accent-pink: #F67599;
             --accent-gold: #F67599;         /* Using pink instead of gold for brand consistency */
-            --gray-dark: #414042;
-            --gray-medium: #6C6D70;
-            --gray-light: #f8f8f8;
+            --gray-dark: #333333;
+            --gray-medium: #666666;
+            --gray-light: #f5f5f5;
             --success: #4CAF50;
             --warning: #FF9800;
             --danger: #e74c3c;
-            --shadow: rgba(65, 64, 66, 0.1);
-            --text-muted: rgba(65, 64, 66, 0.75);
-            --text-subtle: rgba(65, 64, 66, 0.6);
-            --border-soft: rgba(65, 64, 66, 0.16);
-            --border-strong: rgba(65, 64, 66, 0.24);
-            --surface-muted: #f4f4f4;
+            --shadow: rgba(0, 0, 0, 0.08);
+            --text-muted: rgba(51, 51, 51, 0.75);
+            --text-subtle: rgba(51, 51, 51, 0.6);
+            --border-soft: rgba(0, 0, 0, 0.08);
+            --border-strong: rgba(0, 0, 0, 0.12);
+            --surface-muted: #f5f5f5;
             --brand-gradient: linear-gradient(135deg, var(--brand-pink) 0%, var(--brand-pink-dark) 100%);
         }
 
         body {
-            font-family: 'Mulish', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            font-weight: 300;
-            background: var(--gray-light);
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-weight: 400;
+            background: var(--brand-white);
             color: var(--brand-charcoal);
-            line-height: 1.6;
+            line-height: 1.7;
         }
 
-        /* Brand Typography - Playfair Display for headings, Mulish for body */
-        .logo, h1, h2, h3, .section-title {
-            font-family: 'Playfair Display', Georgia, serif;
-            letter-spacing: 0.05em;
+        /* Brand Typography - Cormorant Garamond for headings (elegant serif), Montserrat for body */
+        .logo, h1, h2, h3, .section-title, .hero-title {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            letter-spacing: 0.1em;
+            font-weight: 400;
+        }
+
+        /* Elegant uppercase styling for labels and small headings */
+        .label, .category-label, .section-subtitle {
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: 11px;
+            font-weight: 500;
         }
 
         /* App Container */
@@ -106,43 +117,49 @@
             overflow-x: hidden;
         }
 
-        /* Header */
+        /* Header - Clean minimal style matching landing page */
         .app-header {
-            background: linear-gradient(135deg, var(--brand-charcoal) 0%, #2d2d2e 100%);
-            color: white;
-            padding: 0;
+            background: var(--brand-white);
+            color: var(--brand-charcoal);
+            padding: 0 20px;
             display: flex;
             justify-content: space-between;
-            align-items: stretch;
+            align-items: center;
             position: sticky;
             top: 0;
             z-index: 100;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            min-height: 80px;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+            min-height: 70px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .logo {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0 25px;
-            background: var(--brand-pink);
+            padding: 0;
+            background: transparent;
             position: relative;
         }
 
         .logo::after {
-            content: '';
-            position: absolute;
-            right: -30px;
-            top: 0;
-            bottom: 0;
-            width: 60px;
-            background: var(--brand-pink);
-            clip-path: polygon(0 0, 50% 0, 100% 100%, 0 100%);
+            display: none;
+        }
+
+        .logo-text {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 28px;
+            font-weight: 400;
+            letter-spacing: 0.15em;
+            color: var(--brand-charcoal);
+        }
+
+        .logo-text span {
+            color: var(--brand-pink);
         }
 
         .logo img {
-            height: 60px;
+            height: 45px;
             width: auto;
             position: relative;
             z-index: 1;
@@ -153,49 +170,49 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0 40px;
+            padding: 0 20px;
         }
 
         .header-tagline {
-            font-family: 'Josefin Sans', Arial, sans-serif;
-            font-size: 11px;
-            letter-spacing: 0.3em;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.2em;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.6);
-            font-weight: 300;
+            color: var(--gray-medium);
+            font-weight: 400;
         }
 
         .header-icons {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
-            padding: 0 20px;
+            padding: 0;
         }
 
         .icon-btn {
-            background: rgba(255, 255, 255, 0.08);
+            background: transparent;
             border: none;
-            color: white;
+            color: var(--brand-charcoal);
             font-size: 20px;
             cursor: pointer;
             position: relative;
             transition: all 0.3s ease;
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .icon-btn:hover {
-            background: var(--brand-pink);
-            transform: translateY(-2px);
+            background: var(--gray-light);
+            color: var(--brand-pink);
         }
 
         .icon-btn svg {
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
         }
 
         .badge {
@@ -216,53 +233,62 @@
         }
 
         .profile-btn {
-            background: linear-gradient(135deg, var(--brand-pink) 0%, var(--brand-pink-dark) 100%);
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: var(--brand-pink);
+            border: none;
         }
 
         .profile-btn:hover {
-            background: linear-gradient(135deg, var(--brand-pink-dark) 0%, var(--brand-pink) 100%);
-            border-color: rgba(255, 255, 255, 0.4);
+            background: var(--brand-pink-dark);
         }
 
-        /* Navigation Tabs */
+        /* Navigation Tabs - Elegant minimal style */
         .nav-tabs {
             display: flex;
-            background: white;
-            border-bottom: 1px solid var(--gray-light);
+            background: var(--brand-white);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
             overflow-x: auto;
             position: sticky;
-            top: 80px;
+            top: 70px;
             z-index: 90;
+            padding: 0 10px;
         }
 
         .nav-tab {
             flex: 1;
-            min-width: 80px;
-            padding: 12px 10px;
+            min-width: 70px;
+            padding: 14px 8px;
             text-align: center;
             border: none;
             background: none;
             cursor: pointer;
-            font-size: 12px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
             color: var(--gray-medium);
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
             white-space: nowrap;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
 
         .nav-icon {
-            width: 22px;
-            height: 22px;
+            width: 20px;
+            height: 20px;
             transition: all 0.3s;
+            stroke-width: 1.5;
+        }
+
+        .nav-tab:hover {
+            color: var(--brand-pink);
         }
 
         .nav-tab:hover .nav-icon {
-            transform: translateY(-2px);
+            color: var(--brand-pink);
         }
 
         .nav-tab.active {
@@ -272,7 +298,8 @@
         }
 
         .nav-tab.active .nav-icon {
-            stroke-width: 2.5;
+            stroke-width: 2;
+            color: var(--brand-pink);
         }
 
         /* Content Area with Smooth Animations */
@@ -319,70 +346,65 @@
             }
         }
 
-        /* Home Dashboard - Redesigned */
+        /* Home Dashboard - Clean elegant style matching landing page */
         .home-hero {
-            background: linear-gradient(135deg, var(--brand-charcoal) 0%, #2d2d2e 50%, var(--brand-pink) 150%);
-            color: white;
-            padding: 28px 24px;
-            border-radius: 20px;
-            margin-bottom: 20px;
+            background: var(--brand-white);
+            color: var(--brand-charcoal);
+            padding: 30px 24px;
+            border-radius: 0;
+            margin-bottom: 0;
             position: relative;
             overflow: hidden;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .home-hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(246, 117, 153, 0.3) 0%, transparent 70%);
-            border-radius: 50%;
+            display: none;
         }
 
         .home-hero::after {
-            content: '';
-            position: absolute;
-            bottom: -30%;
-            left: -10%;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-            border-radius: 50%;
+            display: none;
         }
 
         .home-hero-content {
             position: relative;
             z-index: 1;
+            text-align: center;
         }
 
         .home-hero-greeting {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--gray-medium);
+            margin-bottom: 10px;
         }
 
         .home-hero-headline {
-            font-family: 'Josefin Sans', sans-serif;
-            font-size: 26px;
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 32px;
             font-weight: 400;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.05em;
             line-height: 1.2;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            color: var(--brand-charcoal);
         }
 
         .home-hero-headline .highlight {
             color: var(--brand-pink);
-            font-weight: 600;
+            font-weight: 400;
         }
 
         .home-hero-subtitle {
-            font-size: 14px;
-            opacity: 0.85;
-            line-height: 1.5;
-            margin-bottom: 20px;
-            max-width: 320px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 13px;
+            color: var(--gray-medium);
+            line-height: 1.7;
+            margin-bottom: 24px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .home-hero-cta {
@@ -392,23 +414,23 @@
             background: var(--brand-pink);
             color: white;
             border: none;
-            padding: 14px 24px;
-            border-radius: 30px;
-            font-size: 15px;
-            font-weight: 600;
+            padding: 14px 32px;
+            border-radius: 0;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(246, 117, 153, 0.4);
         }
 
         .home-hero-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(246, 117, 153, 0.5);
+            background: var(--brand-pink-dark);
         }
 
         .home-hero-cta:active {
-            transform: translateY(0) scale(0.98);
-            box-shadow: 0 2px 10px rgba(246, 117, 153, 0.4);
+            transform: scale(0.98);
         }
 
         .home-hero-cta svg {
@@ -14630,7 +14652,22 @@ async function showNotifications() {
         }
 
         function addToCartFromProduct(id, name, price, originalPrice, imageUrl) {
+            // Check stock before adding to cart
+            const product = allProducts.find(p => p.id === id);
+            const currentStock = product?.stock ?? 999; // Default high if not found
             const existingItem = cart.find(item => item.id === id);
+            const currentCartQty = existingItem?.qty || 0;
+
+            if (currentStock <= 0) {
+                showToast({ type: 'error', title: 'Out of Stock', message: `Sorry, ${name} is currently out of stock`, duration: 3000 });
+                return;
+            }
+
+            if (currentCartQty >= currentStock) {
+                showToast({ type: 'warning', title: 'Stock Limit', message: `Only ${currentStock} available. You already have ${currentCartQty} in your cart.`, duration: 3000 });
+                return;
+            }
+
             if (existingItem) {
                 existingItem.qty++;
             } else {
@@ -14649,7 +14686,22 @@ async function showNotifications() {
         }
 
         function addToCart(id, name, price, originalPrice) {
+            // Check stock before adding to cart
+            const product = allProducts.find(p => p.id === id);
+            const currentStock = product?.stock ?? 999; // Default high if not found
             const existingItem = cart.find(item => item.id === id);
+            const currentCartQty = existingItem?.qty || 0;
+
+            if (currentStock <= 0) {
+                showToast({ type: 'error', title: 'Out of Stock', message: `Sorry, this product is currently out of stock`, duration: 3000 });
+                return;
+            }
+
+            if (currentCartQty >= currentStock) {
+                showToast({ type: 'warning', title: 'Stock Limit', message: `Only ${currentStock} available. You already have ${currentCartQty} in your cart.`, duration: 3000 });
+                return;
+            }
+
             if (existingItem) {
                 existingItem.qty++;
             } else {
@@ -14829,7 +14881,15 @@ async function showNotifications() {
             return errors;
         }
 
+        // Track if payment is being processed (prevent double-click)
+        let isProcessingPayment = false;
+
         async function processPayment() {
+            // Prevent double-click
+            if (isProcessingPayment) {
+                return;
+            }
+
             // Check if user is logged in
             if (!currentUser) {
                 showAuthModal();
@@ -14861,6 +14921,15 @@ async function showNotifications() {
                 return;
             }
 
+            // Set processing state and update button
+            isProcessingPayment = true;
+            const payBtn = document.querySelector('#checkoutModal .btn-primary');
+            const originalBtnText = payBtn ? payBtn.innerHTML : '';
+            if (payBtn) {
+                payBtn.innerHTML = 'Processing...';
+                payBtn.disabled = true;
+            }
+
             try {
                 const orderData = {
                     items: cart.map(item => ({
@@ -14876,6 +14945,9 @@ async function showNotifications() {
                     method: 'POST',
                     body: JSON.stringify(orderData)
                 });
+
+                // Store pending order ID so we can clear cart only on successful payment
+                localStorage.setItem('flirt_pending_order_id', data.order.id);
 
                 // Choose provider: prefer PayFast if configured, else Yoco
                 const preferredProvider = window.paymentConfig?.payfast?.configured ? 'payfast' : 'yoco';
@@ -14907,18 +14979,68 @@ async function showNotifications() {
                 } else if (paymentInit.payment?.provider === 'yoco' && paymentInit.payment.redirectUrl) {
                     window.location.href = paymentInit.payment.redirectUrl;
                 } else {
+                    // Reset button state if no redirect
+                    if (payBtn) {
+                        payBtn.innerHTML = originalBtnText;
+                        payBtn.disabled = false;
+                    }
+                    isProcessingPayment = false;
                     alert('Payment created, but no redirect URL returned. Please contact support.');
+                    return;
                 }
 
-                // Clear cart after redirect is triggered
+                // Close modal but DON'T clear cart yet - wait for payment success
                 closeModal('checkoutModal');
+                // Cart will be cleared when user returns with payment=success parameter
+            } catch (error) {
+                // Reset button state on error
+                if (payBtn) {
+                    payBtn.innerHTML = originalBtnText;
+                    payBtn.disabled = false;
+                }
+                isProcessingPayment = false;
+                alert('Error processing order: ' + error.message);
+            }
+        }
+
+        // Check for payment success on page load and clear cart
+        function checkPaymentSuccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const paymentStatus = urlParams.get('payment');
+            const pendingOrderId = localStorage.getItem('flirt_pending_order_id');
+
+            if (paymentStatus === 'success' && pendingOrderId) {
+                // Payment was successful - clear cart
                 cart = [];
-                clearCartStorage(); // Clear persisted cart
+                clearCartStorage();
                 discount = 0;
                 appliedPromoCode = null;
                 updateCartCount();
-            } catch (error) {
-                alert('Error processing order: ' + error.message);
+                localStorage.removeItem('flirt_pending_order_id');
+
+                // Show success message
+                showToast({
+                    type: 'success',
+                    title: 'Payment Successful!',
+                    message: 'Your order has been placed. Check your email for confirmation.',
+                    duration: 5000
+                });
+
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (paymentStatus === 'cancelled' || paymentStatus === 'failed') {
+                // Payment failed/cancelled - keep cart, show message
+                localStorage.removeItem('flirt_pending_order_id');
+
+                showToast({
+                    type: 'warning',
+                    title: paymentStatus === 'cancelled' ? 'Payment Cancelled' : 'Payment Failed',
+                    message: 'Your cart has been preserved. Please try again.',
+                    duration: 5000
+                });
+
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
         }
         // ========== CHAT FUNCTIONALITY ==========
@@ -15676,6 +15798,9 @@ async function showNotifications() {
         async function initApp() {
             console.log('🚀 Initializing Flirt Hair & Beauty App...');
             console.log('API_BASE:', API_BASE);
+
+            // Check for payment success/failure (cart clearing logic)
+            checkPaymentSuccess();
 
             // Check for password reset token in URL first
             checkForResetToken();

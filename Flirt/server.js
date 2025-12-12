@@ -2156,33 +2156,11 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
         // Create order with items
         const newOrder = await OrderRepository.create(orderData);
 
-        // Update product stock
-        for (const item of items) {
-            await ProductRepository.updateStock(item.productId, -item.quantity);
-        }
+        // NOTE: Stock deduction and loyalty points are now processed in payment webhooks
+        // This ensures inventory isn't decremented for failed/cancelled payments
+        // See: /api/payments/webhook/payfast and /api/payments/webhook/yoco
 
-        // Award loyalty points
-        const loyaltySettings = await LoyaltyRepository.getSettings();
-        const spendRand = loyaltySettings.pointsRules?.spendRand || 0;
-        let pointsToAdd = 0;
-
-        // Calculate points if spendRand is valid (positive)
-        if (spendRand > 0) {
-            pointsToAdd = Math.floor(total / spendRand);
-        }
-
-        if (pointsToAdd > 0) {
-            await UserRepository.addPoints(req.user.id, pointsToAdd);
-            await LoyaltyRepository.addTransaction({
-                id: uuidv4(),
-                userId: req.user.id,
-                points: pointsToAdd,
-                type: 'earned',
-                description: `Order #${newOrder.id.substring(0, 8)}`
-            });
-        }
-
-        // Send order confirmation email
+        // Send order confirmation email (order placed, awaiting payment)
         try {
             const user = await UserRepository.findById(req.user.id);
             if (user && user.email) {
@@ -2355,6 +2333,38 @@ app.post('/api/payments/webhook/payfast', async (req, res) => {
             await OrderRepository.updatePaymentStatus(result.orderId, paymentStatus);
             if (paymentStatus === 'paid') {
                 await OrderRepository.updateStatus(result.orderId, 'paid');
+
+                // Process stock deduction and loyalty points on successful payment
+                try {
+                    const order = await OrderRepository.findById(result.orderId);
+                    if (order && order.items) {
+                        // Deduct stock for each item
+                        for (const item of order.items) {
+                            await ProductRepository.updateStock(item.product_id || item.productId, -(item.quantity || 1));
+                        }
+                        console.log(`✅ Stock deducted for PayFast order ${result.orderId}`);
+
+                        // Award loyalty points
+                        const loyaltySettings = await LoyaltyRepository.getSettings();
+                        const spendRand = loyaltySettings.pointsRules?.spendRand || 0;
+                        if (spendRand > 0 && order.total && order.user_id) {
+                            const pointsToAdd = Math.floor(order.total / spendRand);
+                            if (pointsToAdd > 0) {
+                                await UserRepository.addPoints(order.user_id, pointsToAdd);
+                                await LoyaltyRepository.addTransaction({
+                                    id: uuidv4(),
+                                    userId: order.user_id,
+                                    points: pointsToAdd,
+                                    type: 'earned',
+                                    description: `Order #${order.id.substring(0, 8)}`
+                                });
+                                console.log(`✅ ${pointsToAdd} loyalty points awarded for PayFast order ${result.orderId}`);
+                            }
+                        }
+                    }
+                } catch (stockError) {
+                    console.error('Error processing stock/loyalty for PayFast order:', stockError);
+                }
             }
         }
 
@@ -2404,6 +2414,38 @@ app.post('/api/payments/webhook/yoco', async (req, res) => {
             await OrderRepository.updatePaymentStatus(result.orderId, paymentStatus);
             if (paymentStatus === 'paid') {
                 await OrderRepository.updateStatus(result.orderId, 'paid');
+
+                // Process stock deduction and loyalty points on successful payment
+                try {
+                    const order = await OrderRepository.findById(result.orderId);
+                    if (order && order.items) {
+                        // Deduct stock for each item
+                        for (const item of order.items) {
+                            await ProductRepository.updateStock(item.product_id || item.productId, -(item.quantity || 1));
+                        }
+                        console.log(`✅ Stock deducted for Yoco order ${result.orderId}`);
+
+                        // Award loyalty points
+                        const loyaltySettings = await LoyaltyRepository.getSettings();
+                        const spendRand = loyaltySettings.pointsRules?.spendRand || 0;
+                        if (spendRand > 0 && order.total && order.user_id) {
+                            const pointsToAdd = Math.floor(order.total / spendRand);
+                            if (pointsToAdd > 0) {
+                                await UserRepository.addPoints(order.user_id, pointsToAdd);
+                                await LoyaltyRepository.addTransaction({
+                                    id: uuidv4(),
+                                    userId: order.user_id,
+                                    points: pointsToAdd,
+                                    type: 'earned',
+                                    description: `Order #${order.id.substring(0, 8)}`
+                                });
+                                console.log(`✅ ${pointsToAdd} loyalty points awarded for Yoco order ${result.orderId}`);
+                            }
+                        }
+                    }
+                } catch (stockError) {
+                    console.error('Error processing stock/loyalty for Yoco order:', stockError);
+                }
             }
         }
 
@@ -2460,23 +2502,26 @@ app.get('/pay/:paymentId', async (req, res) => {
 // Payment success page
 app.get('/payment/success', async (req, res) => {
     const ref = req.query.ref;
-    res.send(generatePaymentResultPage('success', 'Payment Successful!', 'Thank you for your payment. Your booking has been confirmed.', ref));
+    // Redirect to app with payment=success so cart can be cleared
+    res.send(generatePaymentResultPage('success', 'Payment Successful!', 'Thank you for your payment. Your order has been confirmed.', ref, '/app?payment=success'));
 });
 
 // Payment cancelled page
 app.get('/payment/cancel', async (req, res) => {
     const ref = req.query.ref;
-    res.send(generatePaymentResultPage('cancel', 'Payment Cancelled', 'Your payment was cancelled. You can try again from your appointments page.', ref));
+    // Redirect to app with payment=cancelled so cart is preserved
+    res.send(generatePaymentResultPage('cancel', 'Payment Cancelled', 'Your payment was cancelled. Your cart has been preserved - you can try again.', ref, '/app?payment=cancelled'));
 });
 
 // Payment failed page
 app.get('/payment/failed', async (req, res) => {
     const ref = req.query.ref;
-    res.send(generatePaymentResultPage('failed', 'Payment Failed', 'Your payment could not be processed. Please try again or contact us for assistance.', ref));
+    // Redirect to app with payment=failed so cart is preserved
+    res.send(generatePaymentResultPage('failed', 'Payment Failed', 'Your payment could not be processed. Your cart has been preserved - please try again.', ref, '/app?payment=failed'));
 });
 
 // Helper function to generate payment result pages
-function generatePaymentResultPage(type, title, message, ref) {
+function generatePaymentResultPage(type, title, message, ref, redirectUrl = '/app') {
     const colors = {
         success: { bg: '#d4edda', border: '#c3e6cb', text: '#155724', icon: '✓' },
         cancel: { bg: '#fff3cd', border: '#ffeeba', text: '#856404', icon: '⚠' },
@@ -2539,6 +2584,7 @@ function generatePaymentResultPage(type, title, message, ref) {
         .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(246,117,153,0.4); }
         .logo { margin-bottom: 20px; }
         .logo span { color: #F67599; font-size: 28px; font-weight: bold; }
+        .redirect-msg { font-size: 13px; color: #999; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -2547,9 +2593,16 @@ function generatePaymentResultPage(type, title, message, ref) {
         <div class="icon">${c.icon}</div>
         <h1>${title}</h1>
         <p>${message}</p>
-        <a href="/" class="btn">Go to App</a>
+        <a href="${redirectUrl}" class="btn">Continue to Shop</a>
         ${ref ? `<p class="ref">Reference: ${ref}</p>` : ''}
+        <p class="redirect-msg">Redirecting automatically in 5 seconds...</p>
     </div>
+    <script>
+        // Auto-redirect after 5 seconds
+        setTimeout(function() {
+            window.location.href = '${redirectUrl}';
+        }, 5000);
+    </script>
 </body>
 </html>`;
 }
