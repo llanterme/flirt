@@ -171,7 +171,8 @@
         .hero-left {
             position: relative;
             min-height: 100vh;
-            overflow: visible;
+            overflow: hidden;
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 50%, #f48fb1 100%);
         }
 
         .hero-model {
@@ -179,10 +180,26 @@
             bottom: 0;
             left: 50%;
             transform: translateX(-50%);
-            height: 90%;
-            max-height: 900px;
+            height: 95%;
+            max-height: 950px;
             width: auto;
             z-index: 2;
+            object-fit: contain;
+            object-position: bottom center;
+        }
+
+        /* Pink circle behind model */
+        .hero-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 450px;
+            height: 450px;
+            background: var(--pink);
+            border-radius: 50%;
+            z-index: 1;
+            opacity: 0.9;
         }
 
         .hero-paint {
@@ -191,7 +208,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1;
+            z-index: 3;
             pointer-events: none;
         }
 
@@ -201,32 +218,38 @@
             background-repeat: no-repeat;
         }
 
+        /* CSS Paint strokes using gradients */
         .paint-1 {
-            top: 5%;
-            right: -20%;
-            width: 300px;
-            height: 400px;
-            background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/paint-splash.png');
-            background-position: center;
+            top: 10%;
+            right: -10%;
+            width: 250px;
+            height: 120px;
+            background: linear-gradient(45deg, #c2185b 0%, #e91e63 30%, #f48fb1 60%, transparent 100%);
+            transform: rotate(-15deg) skewX(-20deg);
+            border-radius: 0 60% 60% 0;
+            opacity: 0.85;
         }
 
         .paint-2 {
-            top: 20%;
-            left: 10%;
-            width: 200px;
-            height: 300px;
-            background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/paint-splash.png');
-            transform: rotate(-30deg);
-            opacity: 0.8;
+            top: 25%;
+            left: 5%;
+            width: 180px;
+            height: 100px;
+            background: linear-gradient(135deg, #ad1457 0%, #d81b60 40%, #f06292 80%, transparent 100%);
+            transform: rotate(20deg) skewX(15deg);
+            border-radius: 60% 0 0 60%;
+            opacity: 0.75;
         }
 
         .paint-3 {
-            bottom: 30%;
-            right: 0;
-            width: 250px;
-            height: 350px;
-            background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/paint-splash.png');
-            transform: rotate(15deg);
+            bottom: 25%;
+            right: -5%;
+            width: 200px;
+            height: 90px;
+            background: linear-gradient(-45deg, #880e4f 0%, #c2185b 35%, #ec407a 70%, transparent 100%);
+            transform: rotate(10deg) skewX(-25deg);
+            border-radius: 0 50% 50% 0;
+            opacity: 0.8;
         }
 
         .hero-right {
@@ -236,8 +259,8 @@
             align-items: flex-end;
             padding: 80px;
             padding-right: 100px;
-            background: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/marble-bg.jpg') center center / cover no-repeat;
-            background-color: #f8f8f8;
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 50%, #eeeeee 100%);
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23e0e0e0' fill-opacity='0.3' fill-rule='evenodd'/%3E%3C/svg%3E");
             text-align: right;
         }
 
@@ -735,6 +758,10 @@
             .hero-model {
                 height: 80%;
             }
+            .hero-circle {
+                width: 350px;
+                height: 350px;
+            }
         }
 
         @media (max-width: 1024px) {
@@ -750,6 +777,11 @@
             .hero-model {
                 height: 100%;
                 max-height: 500px;
+            }
+
+            .hero-circle {
+                width: 300px;
+                height: 300px;
             }
 
             .hero-paint-stroke {
@@ -814,6 +846,11 @@
 
             .hero-model {
                 max-height: 350px;
+            }
+
+            .hero-circle {
+                width: 220px;
+                height: 220px;
             }
 
             .hero-right h1 {
@@ -926,12 +963,13 @@
     <!-- Hero Section - Split Layout -->
     <section class="hero">
         <div class="hero-left">
+            <div class="hero-circle"></div>
             <div class="hero-paint">
                 <div class="hero-paint-stroke paint-1"></div>
                 <div class="hero-paint-stroke paint-2"></div>
                 <div class="hero-paint-stroke paint-3"></div>
             </div>
-            <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-image-1.png" alt="Flirt Hair Model" class="hero-model">
+            <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&q=80&auto=format&fit=crop" alt="Flirt Hair Model" class="hero-model">
         </div>
         <div class="hero-right">
             <h1>
