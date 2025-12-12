@@ -13367,17 +13367,14 @@ async function showNotifications() {
                     // Payment status for confirmed bookings (including MySalonOnline confirmed statuses)
                     const paymentStatus = booking.paymentStatus || booking.payment_status || 'unpaid';
                     let paymentBadge = '';
-                    let payButton = '';
                     // Show payment options for all confirmed-type statuses (except 'PAID' which is already paid)
                     if (confirmedStatuses.includes(statusUpper) && statusUpper !== 'PAID') {
                         if (paymentStatus === 'paid') {
                             paymentBadge = '<span style="background: #e8f5e9; color: #388e3c; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px;">✓ Paid</span>';
                         } else if (paymentStatus === 'pending') {
                             paymentBadge = '<span style="background: #fff3e0; color: #f57c00; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px;">⏳ Payment Pending</span>';
-                        } else {
-                            // Show Pay Now button for unpaid confirmed bookings
-                            payButton = `<button class="btn btn-small btn-primary" onclick="initiateBookingPayment('${booking.id}')" style="background: var(--brand-pink);">💳 Pay R${booking.servicePrice || booking.service_price}</button>`;
                         }
+                        // Payment is handled through invoices - no pay button here
                     }
 
                     return `
@@ -13389,7 +13386,6 @@ async function showNotifications() {
                                     <div class="appointment-time">⏰ ${timeDisplay} with ${stylistName}</div>
                                 </div>
                                 <div class="appointment-actions">
-                                    ${payButton}
                                     <button class="btn btn-small btn-outline" onclick="openRescheduleModal('${booking.id}')">Reschedule</button>
                                     <button class="btn btn-small" onclick="cancelBooking('${booking.id}')" style="background: none; color: var(--danger); border: 1px solid #e74c3c;">Cancel</button>
                                 </div>
