@@ -1747,7 +1747,7 @@ const BookingRepository = {
     },
 
     async findByDate(date) {
-        return dbAll('SELECT * FROM bookings WHERE requested_date = ?', [date]);
+        return dbAll('SELECT * FROM bookings WHERE date(requested_date) = date(?)', [date]);
     },
 
     async findConflict(stylistId, assignedStartTime, assignedEndTime, excludeId = null) {
@@ -1802,19 +1802,19 @@ const BookingRepository = {
             params.push(filters.status);
         }
 
-        // Date filter (exact match)
+        // Date filter (use date() function to handle various datetime formats)
         if (filters.date) {
-            sql += ' AND b.requested_date = ?';
+            sql += ' AND date(b.requested_date) = date(?)';
             params.push(filters.date);
         }
 
-        // Date range filter
+        // Date range filter (use date() function to handle various datetime formats)
         if (filters.dateFrom) {
-            sql += ' AND b.requested_date >= ?';
+            sql += ' AND date(b.requested_date) >= date(?)';
             params.push(filters.dateFrom);
         }
         if (filters.dateTo) {
-            sql += ' AND b.requested_date <= ?';
+            sql += ' AND date(b.requested_date) <= date(?)';
             params.push(filters.dateTo);
         }
 
