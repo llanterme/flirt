@@ -4796,8 +4796,11 @@ app.get('/api/admin/revenue-trend', authenticateAdmin, async (req, res) => {
         else if (range === '90d') days = 90;
 
         // Get date range for invoices
+        // For chart, start from N days ago but extend end date to end of current month
+        // This ensures we capture appointments scheduled for the future within the month
         const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        const endDate = now.toISOString().split('T')[0];
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
 
         // Helper to extract date from various datetime formats
         const extractDate = (dateStr) => {
@@ -4817,13 +4820,16 @@ app.get('/api/admin/revenue-trend', authenticateAdmin, async (req, res) => {
             return invDate && invDate >= startDate && invDate <= endDate;
         });
 
-        // Build array of dates for the last N days
+        // Build array of dates from startDate to endDate
         const labels = [];
         const values = [];
 
-        for (let i = days - 1; i >= 0; i--) {
-            const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-            const dateStr = date.toISOString().split('T')[0];
+        // Generate all dates from start to end
+        const startDateObj = new Date(startDate + 'T00:00:00');
+        const endDateObj = new Date(endDate + 'T00:00:00');
+
+        for (let d = new Date(startDateObj); d <= endDateObj; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
             labels.push(dateStr);
 
             // Sum revenue for this day from INVOICES (service revenue)
@@ -4863,8 +4869,10 @@ app.get('/api/admin/popular-services', authenticateAdmin, async (req, res) => {
         if (range === '7d') days = 7;
         else if (range === '90d') days = 90;
 
+        // Start from N days ago but extend to end of current month to capture scheduled appointments
         const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        const endDate = now.toISOString().split('T')[0];
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const endDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
 
         // Helper to extract date from various datetime formats
         const extractDate = (dateStr) => {
