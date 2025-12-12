@@ -163,48 +163,31 @@
 
         /* Hero Animation Keyframes */
         @keyframes kenBurns {
-            0% {
-                transform: scale(1);
-            }
-            100% {
-                transform: scale(1.08);
-            }
+            0% { transform: scale(1); }
+            100% { transform: scale(1.08); }
         }
 
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInRight {
-            from {
-                opacity: 0;
-                transform: translateX(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes expandLine {
-            from {
-                width: 0;
-                opacity: 0;
-            }
-            to {
-                width: 120px;
-                opacity: 1;
-            }
+            from { width: 0; opacity: 0; }
+            to { width: 120px; opacity: 1; }
         }
 
-        /* Hero Section - Full Width Banner Style (matching flirthair.co.za) */
+        @keyframes slideInFromRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        @keyframes slideOutToLeft {
+            from { transform: translateX(0); }
+            to { transform: translateX(-100%); }
+        }
+
+        /* Hero Section - Slider */
         .hero {
             position: relative;
             width: 100%;
@@ -215,15 +198,79 @@
             overflow: hidden;
         }
 
+        .hero-slider {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hero-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.6s ease-in-out, visibility 0.6s;
+        }
+
+        .hero-slide.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 1;
+        }
+
+        .hero-slide.sliding-in {
+            animation: slideInFromRight 0.8s ease-out forwards;
+            opacity: 1;
+            visibility: visible;
+            z-index: 2;
+        }
+
+        .hero-slide.sliding-out {
+            animation: slideOutToLeft 0.8s ease-out forwards;
+            opacity: 1;
+            visibility: visible;
+            z-index: 1;
+        }
+
         .hero-bg {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('/images/hero-banner.jpg') left center / cover no-repeat;
-            animation: kenBurns 20s ease-out forwards;
+            background-size: cover;
+            background-position: left center;
+            background-repeat: no-repeat;
+        }
+
+        .hero-slide.active .hero-bg {
+            animation: kenBurns 8s ease-out forwards;
             transform-origin: left center;
+        }
+
+        .hero-bg-1 { background-image: url('/images/hero-banner.jpg'); }
+        .hero-bg-2 { background-image: url('/images/marble-bg.jpg'); }
+
+        .hero-slide-2 .hero-model {
+            position: absolute;
+            left: 5%;
+            bottom: 0;
+            height: 95%;
+            max-height: 550px;
+            z-index: 2;
+        }
+
+        .hero-slide-2 .hero-circle {
+            position: absolute;
+            left: 8%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 380px;
+            height: 380px;
+            z-index: 1;
         }
 
         .hero-content {
@@ -233,7 +280,32 @@
             transform: translateY(-50%);
             text-align: right;
             max-width: 500px;
-            z-index: 2;
+            z-index: 3;
+        }
+
+        .hero-slide.active .hero-content h1,
+        .hero-slide.sliding-in .hero-content h1 {
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.3s forwards;
+        }
+
+        .hero-slide.active .hero-content h1 span,
+        .hero-slide.sliding-in .hero-content h1 span {
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.6s forwards;
+        }
+
+        .hero-slide.active .hero-line,
+        .hero-slide.sliding-in .hero-line {
+            width: 0;
+            opacity: 0;
+            animation: expandLine 0.8s ease-out 0.9s forwards;
+        }
+
+        .hero-slide.active .hero-btn,
+        .hero-slide.sliding-in .hero-btn {
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 1.1s forwards;
         }
 
         .hero-content h1 {
@@ -245,8 +317,6 @@
             margin-bottom: 0;
             letter-spacing: 0.02em;
             text-transform: uppercase;
-            opacity: 0;
-            animation: fadeInUp 1s ease-out 0.3s forwards;
         }
 
         .hero-content h1 span {
@@ -256,17 +326,12 @@
             color: #6C6D70;
             margin-top: 5px;
             font-weight: 400;
-            opacity: 0;
-            animation: fadeInUp 1s ease-out 0.6s forwards;
         }
 
         .hero-line {
-            width: 0;
             height: 3px;
             background: var(--pink);
             margin: 30px 0 30px auto;
-            opacity: 0;
-            animation: expandLine 0.8s ease-out 0.9s forwards;
         }
 
         .hero-btn {
@@ -282,12 +347,36 @@
             text-decoration: none;
             transition: all 0.3s ease;
             border-radius: 0;
-            opacity: 0;
-            animation: fadeInUp 1s ease-out 1.1s forwards;
         }
 
         .hero-btn:hover {
             background: var(--pink-dark);
+        }
+
+        /* Hero Navigation Dots */
+        .hero-dots {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 10;
+        }
+
+        .hero-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px solid var(--pink);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .hero-dot.active,
+        .hero-dot:hover {
+            background: var(--pink);
         }
 
         /* About Section - Two Columns */
@@ -925,7 +1014,8 @@
                 <a href="/app?tab=shop" class="nav-link">Shop</a>
                 <a href="#about" class="nav-link">About</a>
                 <a href="#contact" class="nav-link">Contact</a>
-                <a href="/app?tab=booking" class="nav-btn">Book Now</a>
+                <a href="javascript:void(0)" class="nav-link" id="authNavLink" onclick="handleAuthClick(event)">Sign In</a>
+                <a href="javascript:void(0)" class="nav-btn" onclick="handleBookNowClick()">Book Now</a>
             </nav>
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
                 <span></span>
@@ -942,20 +1032,44 @@
         <a href="/app?tab=shop">Shop</a>
         <a href="#about" onclick="toggleMobileMenu()">About</a>
         <a href="#contact" onclick="toggleMobileMenu()">Contact</a>
-        <a href="/app?tab=booking">Book Now</a>
-        <a href="/app?tab=profile">My Account</a>
+        <a href="javascript:void(0)" id="mobileAuthLink" onclick="handleAuthClick(event); toggleMobileMenu();">Sign In</a>
+        <a href="javascript:void(0)" onclick="handleBookNowClick(); toggleMobileMenu();">Book Now</a>
     </nav>
 
-    <!-- Hero Section - Full Width Banner -->
+    <!-- Hero Section - Slider -->
     <section class="hero">
-        <div class="hero-bg"></div>
-        <div class="hero-content">
-            <h1>
-                PREMIUM
-                <span>HAIR EXTENSIONS</span>
-            </h1>
-            <div class="hero-line"></div>
-            <a href="/app?tab=shop" class="hero-btn">VIEW PRODUCTS</a>
+        <div class="hero-slider">
+            <!-- Slide 1 -->
+            <div class="hero-slide hero-slide-1 active">
+                <div class="hero-bg hero-bg-1"></div>
+                <div class="hero-content">
+                    <h1>
+                        PREMIUM
+                        <span>HAIR EXTENSIONS</span>
+                    </h1>
+                    <div class="hero-line"></div>
+                    <a href="/app?tab=shop" class="hero-btn">VIEW PRODUCTS</a>
+                </div>
+            </div>
+            <!-- Slide 2 -->
+            <div class="hero-slide hero-slide-2">
+                <div class="hero-bg hero-bg-2"></div>
+                <img src="/images/pink-world.png" alt="" class="hero-circle">
+                <img src="/images/banner-1.png" alt="Hair Extensions Model" class="hero-model">
+                <div class="hero-content">
+                    <h1>
+                        BOOK YOUR
+                        <span>APPOINTMENT</span>
+                    </h1>
+                    <div class="hero-line"></div>
+                    <a href="/app?tab=booking" class="hero-btn">BOOK NOW</a>
+                </div>
+            </div>
+        </div>
+        <!-- Navigation Dots -->
+        <div class="hero-dots">
+            <div class="hero-dot active" onclick="goToSlide(0)"></div>
+            <div class="hero-dot" onclick="goToSlide(1)"></div>
         </div>
     </section>
 
@@ -1214,10 +1328,99 @@
             }
         });
 
+        // Hero Slider
+        let currentSlide = 0;
+        let slideInterval;
+        const slides = document.querySelectorAll('.hero-slide');
+        const dots = document.querySelectorAll('.hero-dot');
+        const totalSlides = slides.length;
+
+        function goToSlide(index) {
+            if (index === currentSlide) return;
+
+            const currentSlideEl = slides[currentSlide];
+            const nextSlideEl = slides[index];
+
+            // Add sliding classes
+            currentSlideEl.classList.add('sliding-out');
+            currentSlideEl.classList.remove('active');
+
+            nextSlideEl.classList.add('sliding-in');
+
+            // Update dots
+            dots[currentSlide].classList.remove('active');
+            dots[index].classList.add('active');
+
+            // After animation, clean up classes
+            setTimeout(() => {
+                currentSlideEl.classList.remove('sliding-out');
+                nextSlideEl.classList.remove('sliding-in');
+                nextSlideEl.classList.add('active');
+                currentSlide = index;
+            }, 800);
+
+            // Reset auto-advance timer
+            resetSlideInterval();
+        }
+
+        function nextSlide() {
+            const next = (currentSlide + 1) % totalSlides;
+            goToSlide(next);
+        }
+
+        function resetSlideInterval() {
+            clearInterval(slideInterval);
+            slideInterval = setInterval(nextSlide, 6000);
+        }
+
+        // Start auto-advance
+        if (totalSlides > 1) {
+            slideInterval = setInterval(nextSlide, 6000);
+        }
+
+        // Check if user is logged in
+        function isLoggedIn() {
+            return !!localStorage.getItem('flirt_token');
+        }
+
+        // Update auth links based on login status
+        function updateAuthLinks() {
+            const isAuth = isLoggedIn();
+            const authLink = document.getElementById('authNavLink');
+            const mobileAuthLink = document.getElementById('mobileAuthLink');
+
+            if (authLink) {
+                authLink.textContent = isAuth ? 'My Account' : 'Sign In';
+            }
+            if (mobileAuthLink) {
+                mobileAuthLink.textContent = isAuth ? 'My Account' : 'Sign In';
+            }
+        }
+
+        // Handle auth link click
+        function handleAuthClick(event) {
+            event.preventDefault();
+            if (isLoggedIn()) {
+                window.location.href = '/app?tab=profile';
+            } else {
+                window.location.href = '/app?showLogin=true';
+            }
+        }
+
+        // Handle Book Now click - require login
+        function handleBookNowClick() {
+            if (isLoggedIn()) {
+                window.location.href = '/app?tab=booking';
+            } else {
+                window.location.href = '/app?showLogin=true&redirect=booking';
+            }
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadLatestProducts();
             loadBusinessInfo();
+            updateAuthLinks();
         });
     </script>
 </body>
