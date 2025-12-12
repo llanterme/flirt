@@ -25,7 +25,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@400;500;600&family=Mulish:wght@200;300;400;500&display=swap" rel="stylesheet">
 
     <style>
         * {
@@ -160,146 +160,66 @@
             transition: all 0.3s ease;
         }
 
-        /* Hero Section - Full Width with Split Content */
+        /* Hero Section - Full Width Banner Style (matching flirthair.co.za) */
         .hero {
-            min-height: 100vh;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
             position: relative;
-        }
-
-        .hero-left {
-            position: relative;
-            min-height: 100vh;
-            overflow: hidden;
-            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 50%, #f48fb1 100%);
-        }
-
-        .hero-model {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            height: 95%;
-            max-height: 950px;
-            width: auto;
-            z-index: 2;
-            object-fit: contain;
-            object-position: bottom center;
-        }
-
-        /* Pink circle behind model */
-        .hero-circle {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 450px;
-            height: 450px;
-            background: var(--pink);
-            border-radius: 50%;
-            z-index: 1;
-            opacity: 0.9;
-        }
-
-        .hero-paint {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
-            height: 100%;
-            z-index: 3;
-            pointer-events: none;
+            min-height: 500px;
+            height: 55vh;
+            max-height: 600px;
+            margin-top: 80px;
+            background: url('/images/hero-banner.jpg') left center / cover no-repeat;
         }
 
-        .hero-paint-stroke {
+        .hero-content {
             position: absolute;
-            background-size: contain;
-            background-repeat: no-repeat;
-        }
-
-        /* CSS Paint strokes using gradients */
-        .paint-1 {
-            top: 10%;
-            right: -10%;
-            width: 250px;
-            height: 120px;
-            background: linear-gradient(45deg, #c2185b 0%, #e91e63 30%, #f48fb1 60%, transparent 100%);
-            transform: rotate(-15deg) skewX(-20deg);
-            border-radius: 0 60% 60% 0;
-            opacity: 0.85;
-        }
-
-        .paint-2 {
-            top: 25%;
-            left: 5%;
-            width: 180px;
-            height: 100px;
-            background: linear-gradient(135deg, #ad1457 0%, #d81b60 40%, #f06292 80%, transparent 100%);
-            transform: rotate(20deg) skewX(15deg);
-            border-radius: 60% 0 0 60%;
-            opacity: 0.75;
-        }
-
-        .paint-3 {
-            bottom: 25%;
-            right: -5%;
-            width: 200px;
-            height: 90px;
-            background: linear-gradient(-45deg, #880e4f 0%, #c2185b 35%, #ec407a 70%, transparent 100%);
-            transform: rotate(10deg) skewX(-25deg);
-            border-radius: 0 50% 50% 0;
-            opacity: 0.8;
-        }
-
-        .hero-right {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: flex-end;
-            padding: 80px;
-            padding-right: 100px;
-            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 50%, #eeeeee 100%);
-            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23e0e0e0' fill-opacity='0.3' fill-rule='evenodd'/%3E%3C/svg%3E");
+            right: 80px;
+            top: 50%;
+            transform: translateY(-50%);
             text-align: right;
+            max-width: 500px;
         }
 
-        .hero-right h1 {
-            font-size: 90px;
-            font-weight: 300;
-            color: #333;
-            line-height: 1.0;
+        .hero-content h1 {
+            font-family: 'Playfair Display', 'Cormorant Garamond', serif;
+            font-size: 72px;
+            font-weight: 400;
+            color: #414042;
+            line-height: 1.1;
             margin-bottom: 0;
-            letter-spacing: 0.15em;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
         }
 
-        .hero-right h1 span {
+        .hero-content h1 span {
             display: block;
-            font-size: 48px;
-            letter-spacing: 0.25em;
-            color: #555;
-            margin-top: 10px;
+            font-size: 36px;
+            letter-spacing: 0.15em;
+            color: #6C6D70;
+            margin-top: 5px;
+            font-weight: 400;
         }
 
         .hero-line {
-            width: 250px;
-            height: 4px;
+            width: 120px;
+            height: 3px;
             background: var(--pink);
-            margin: 40px 0;
+            margin: 30px 0 30px auto;
         }
 
         .hero-btn {
             display: inline-block;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            letter-spacing: 0.15em;
+            font-family: 'Mulish', 'Montserrat', sans-serif;
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
             background: var(--pink);
             color: var(--white);
-            padding: 20px 50px;
+            padding: 16px 40px;
             text-decoration: none;
             transition: all 0.3s ease;
+            border-radius: 0;
         }
 
         .hero-btn:hover {
@@ -749,51 +669,34 @@
 
         /* Responsive */
         @media (max-width: 1200px) {
-            .hero-right h1 {
-                font-size: 70px;
+            .hero-content h1 {
+                font-size: 60px;
             }
-            .hero-right h1 span {
-                font-size: 38px;
+            .hero-content h1 span {
+                font-size: 30px;
             }
-            .hero-model {
-                height: 80%;
-            }
-            .hero-circle {
-                width: 350px;
-                height: 350px;
+            .hero-content {
+                right: 60px;
             }
         }
 
         @media (max-width: 1024px) {
             .hero {
-                grid-template-columns: 1fr;
+                height: 45vh;
+                min-height: 400px;
             }
 
-            .hero-left {
-                min-height: 500px;
-                order: 1;
+            .hero-content {
+                right: 40px;
+                max-width: 400px;
             }
 
-            .hero-model {
-                height: 100%;
-                max-height: 500px;
+            .hero-content h1 {
+                font-size: 48px;
             }
 
-            .hero-circle {
-                width: 300px;
-                height: 300px;
-            }
-
-            .hero-paint-stroke {
-                display: none;
-            }
-
-            .hero-right {
-                padding: 60px 40px;
-                align-items: center;
-                text-align: center;
-                order: 2;
-                min-height: auto;
+            .hero-content h1 span {
+                font-size: 24px;
             }
 
             .about-section {
@@ -840,33 +743,38 @@
                 display: block;
             }
 
-            .hero-left {
-                min-height: 350px;
+            .hero {
+                height: 35vh;
+                min-height: 300px;
+                margin-top: 60px;
+                background-position: 25% center;
             }
 
-            .hero-model {
-                max-height: 350px;
+            .hero-content {
+                right: 20px;
+                left: 50%;
+                max-width: none;
+                width: 50%;
             }
 
-            .hero-circle {
-                width: 220px;
-                height: 220px;
+            .hero-content h1 {
+                font-size: 32px;
             }
 
-            .hero-right h1 {
-                font-size: 42px;
-            }
-
-            .hero-right h1 span {
-                font-size: 22px;
+            .hero-content h1 span {
+                font-size: 16px;
+                letter-spacing: 0.1em;
             }
 
             .hero-line {
-                width: 150px;
+                width: 80px;
+                height: 2px;
+                margin: 15px 0 15px auto;
             }
 
-            .hero-right {
-                padding: 50px 30px;
+            .hero-btn {
+                padding: 12px 24px;
+                font-size: 11px;
             }
 
             .about-left {
@@ -960,18 +868,9 @@
         <a href="/app?tab=profile">My Account</a>
     </nav>
 
-    <!-- Hero Section - Split Layout -->
+    <!-- Hero Section - Full Width Banner -->
     <section class="hero">
-        <div class="hero-left">
-            <div class="hero-circle"></div>
-            <div class="hero-paint">
-                <div class="hero-paint-stroke paint-1"></div>
-                <div class="hero-paint-stroke paint-2"></div>
-                <div class="hero-paint-stroke paint-3"></div>
-            </div>
-            <img src="/images/home-image-1.jpg" alt="Flirt Hair Model" class="hero-model">
-        </div>
-        <div class="hero-right">
+        <div class="hero-content">
             <h1>
                 PREMIUM
                 <span>HAIR EXTENSIONS</span>
@@ -1001,25 +900,25 @@
     <section class="services-section" id="services">
         <div class="services-grid">
             <a href="/app?tab=booking&category=tape" class="service-card">
-                <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Tape Extensions">
+                <img src="/images/categories/categories1.jpg" alt="Tape Extensions">
                 <div class="service-card-overlay">
                     <h3 class="service-card-title">Tape</h3>
                 </div>
             </a>
             <a href="/app?tab=booking&category=weft" class="service-card">
-                <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg" alt="Weft Extensions">
+                <img src="/images/categories/categories3.jpg" alt="Weft Extensions">
                 <div class="service-card-overlay">
                     <h3 class="service-card-title">Weft</h3>
                 </div>
             </a>
             <a href="/app?tab=booking&category=colour" class="service-card">
-                <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg" alt="Colour Matching">
+                <img src="/images/categories/categories5.jpg" alt="Colour Matching">
                 <div class="service-card-overlay">
                     <h3 class="service-card-title">Colour Matching</h3>
                 </div>
             </a>
             <a href="/app?tab=booking&category=maintenance" class="service-card">
-                <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories7.jpg" alt="Maintenance">
+                <img src="/images/categories/categories7.jpg" alt="Maintenance">
                 <div class="service-card-overlay">
                     <h3 class="service-card-title">Maintenance</h3>
                 </div>
@@ -1055,21 +954,21 @@
         <div class="reviews-grid">
             <div class="review-card">
                 <div class="review-stars">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/stars.png" alt="5 Stars">
+                    <img src="/images/stars.png" alt="5 Stars">
                 </div>
                 <p class="review-text">"Stunning salon! Amazing service and such kind ladies. Inge made my hair so beautiful and I loved the experience."</p>
                 <div class="review-author">Cassie Quiterres</div>
             </div>
             <div class="review-card">
                 <div class="review-stars">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/stars.png" alt="5 Stars">
+                    <img src="/images/stars.png" alt="5 Stars">
                 </div>
                 <p class="review-text">"What a pleasant experience, from the look and feel of the salon to the friendly staff, not to mention the highly competitive rates! Loving my new look and will most certainly be back!"</p>
                 <div class="review-author">Claudia vd Merwe</div>
             </div>
             <div class="review-card">
                 <div class="review-stars">
-                    <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/stars.png" alt="5 Stars">
+                    <img src="/images/stars.png" alt="5 Stars">
                 </div>
                 <p class="review-text">"Absolutely in love with my flirt hair! Inge is the absolute best at what she does! They definitely made a client for life!"</p>
                 <div class="review-author">Jen Lee</div>
@@ -1081,7 +980,7 @@
     <section class="partners-section">
         <h3 class="partners-title">Our Partners</h3>
         <div class="partners-logos">
-            <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/partners-x3-1024x146.png" alt="Our Partners">
+            <img src="/images/partners-x3.png" alt="Our Partners">
         </div>
     </section>
 
@@ -1096,9 +995,9 @@
 
     <!-- Footer Gallery -->
     <div class="footer-gallery">
-        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg" alt="Flirt Hair Gallery">
-        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg" alt="Flirt Hair Gallery">
-        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images3.jpg" alt="Flirt Hair Gallery">
+        <img src="/images/home-footer-images1.jpg" alt="Flirt Hair Gallery">
+        <img src="/images/home-footer-images2.jpg" alt="Flirt Hair Gallery">
+        <img src="/images/home-footer-images3.jpg" alt="Flirt Hair Gallery">
     </div>
 
     <!-- Footer -->
