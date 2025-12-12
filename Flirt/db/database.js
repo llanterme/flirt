@@ -148,6 +148,10 @@ async function initializeDatabase() {
     await ensureColumn('users', 'hair_profile', 'TEXT');
     await ensureColumn('users', 'notification_prefs', 'TEXT');
 
+    // Business settings migration - ensure proper structure
+    // Check if business_settings has the old key-value structure and migrate if needed
+    await migrateBusinessSettings();
+
     // Staff permissions (JSON object storing permission flags)
     await ensureColumn('users', 'permissions', 'TEXT');
     // Link staff user to stylist profile (optional)
@@ -999,6 +1003,69 @@ async function migrateBookingsStatus() {
         console.log(`Bookings table migrated with MySalonOnline statuses. ${existingData.length} records restored.`);
     } catch (error) {
         console.error('Error migrating bookings statuses:', error.message);
+    }
+}
+
+// Migration to fix business_settings table structure
+// The old schema used key-value pairs, the new schema uses a singleton row with columns
+async function migrateBusinessSettings() {
+    try {
+        // Check if table has the old key-value structure (has 'key' column)
+        const tableInfo = await dbAll(`PRAGMA table_info(business_settings)`);
+        const hasKeyColumn = tableInfo.some(col => col.name === 'key');
+        const hasHoursJsonColumn = tableInfo.some(col => col.name === 'hours_json');
+
+        if (hasKeyColumn && !hasHoursJsonColumn) {
+            console.log('Migrating business_settings from key-value to singleton structure...');
+
+            // Backup existing key-value data
+            const existingData = await dbAll('SELECT * FROM business_settings');
+            const settings = {};
+            for (const row of existingData) {
+                if (row.key) {
+                    settings[row.key] = row.value;
+                }
+            }
+
+            // Drop old table
+            await dbRun('DROP TABLE IF EXISTS business_settings');
+
+            // Create new structure
+            await dbRun(`
+                CREATE TABLE business_settings (
+                    id INTEGER PRIMARY KEY CHECK (id = 1),
+                    business_name TEXT DEFAULT 'Flirt Hair Extensions',
+                    email TEXT DEFAULT 'hello@flirthair.co.za',
+                    phone TEXT DEFAULT '+27 71 617 8519',
+                    address TEXT DEFAULT '58 Nuwe Hoop St, Maroelana, Pretoria, 0081, South Africa',
+                    hours_json TEXT DEFAULT '{"mon":{"open":"08:00","close":"18:00"},"tue":{"open":"08:00","close":"18:00"},"wed":{"open":"08:00","close":"18:00"},"thu":{"open":"08:00","close":"18:00"},"fri":{"open":"08:00","close":"18:00"},"sat":{"open":"09:00","close":"16:00"},"sun":null}',
+                    updated_at TEXT DEFAULT (datetime('now'))
+                )
+            `);
+
+            // Insert default row
+            await dbRun('INSERT INTO business_settings (id) VALUES (1)');
+
+            // Apply any existing values from key-value store
+            if (settings.business_name) {
+                await dbRun('UPDATE business_settings SET business_name = ? WHERE id = 1', [settings.business_name]);
+            }
+            if (settings.email) {
+                await dbRun('UPDATE business_settings SET email = ? WHERE id = 1', [settings.email]);
+            }
+            if (settings.phone) {
+                await dbRun('UPDATE business_settings SET phone = ? WHERE id = 1', [settings.phone]);
+            }
+
+            console.log('Business settings table migrated successfully.');
+        } else if (!hasHoursJsonColumn) {
+            // Table exists but doesn't have hours_json column - add it
+            console.log('Adding hours_json column to business_settings...');
+            await dbRun(`ALTER TABLE business_settings ADD COLUMN hours_json TEXT DEFAULT '{"mon":{"open":"08:00","close":"18:00"},"tue":{"open":"08:00","close":"18:00"},"wed":{"open":"08:00","close":"18:00"},"thu":{"open":"08:00","close":"18:00"},"fri":{"open":"08:00","close":"18:00"},"sat":{"open":"09:00","close":"16:00"},"sun":null}'`).catch(() => {});
+            console.log('Added hours_json column to business_settings.');
+        }
+    } catch (error) {
+        console.error('Error migrating business_settings:', error.message);
     }
 }
 
