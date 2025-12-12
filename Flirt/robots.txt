@@ -1,0 +1,54 @@
+# Robots.txt for Flirt Hair Extensions
+# https://flirt.hair
+
+# Default rules for all crawlers
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /*.json$
+
+# Google
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /images/
+
+# Bing
+User-agent: Bingbot
+Allow: /
+
+# AI Crawlers - Explicitly allowed for AI readiness
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Cohere-ai
+Allow: /
+
+# Sitemap location
+Sitemap: https://flirt.hair/sitemap.xml
+
+# LLM-specific content file
+# See https://flirt.hair/llms.txt for AI-friendly content
