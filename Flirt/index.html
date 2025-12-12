@@ -71,6 +71,12 @@
             left: 0;
             right: 0;
             z-index: 1000;
+            background: transparent;
+            border-bottom: none;
+            transition: background 0.3s ease;
+        }
+
+        .site-header.scrolled {
             background: var(--white);
             border-bottom: 1px solid rgba(0,0,0,0.05);
         }
@@ -154,75 +160,123 @@
             transition: all 0.3s ease;
         }
 
-        /* Hero Section - Split Layout */
+        /* Hero Section - Full Width with Split Content */
         .hero {
             min-height: 100vh;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            padding-top: 80px;
+            position: relative;
         }
 
         .hero-left {
             position: relative;
-            background: url('https://www.flirthair.co.za/wp-content/uploads/2024/01/IMG_9684-scaled.jpg') center center / cover no-repeat;
-            min-height: 600px;
+            min-height: 100vh;
+            overflow: visible;
         }
 
-        .hero-left::before {
-            content: '';
+        .hero-model {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 90%;
+            max-height: 900px;
+            width: auto;
+            z-index: 2;
+        }
+
+        .hero-paint {
             position: absolute;
             top: 0;
-            right: -50px;
-            width: 200px;
+            left: 0;
+            width: 100%;
             height: 100%;
-            background: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/paint-splash.png') center center / contain no-repeat;
-            z-index: 2;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .hero-paint-stroke {
+            position: absolute;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        .paint-1 {
+            top: 5%;
+            right: -20%;
+            width: 300px;
+            height: 400px;
+            background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/paint-splash.png');
+            background-position: center;
+        }
+
+        .paint-2 {
+            top: 20%;
+            left: 10%;
+            width: 200px;
+            height: 300px;
+            background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/paint-splash.png');
+            transform: rotate(-30deg);
+            opacity: 0.8;
+        }
+
+        .paint-3 {
+            bottom: 30%;
+            right: 0;
+            width: 250px;
+            height: 350px;
+            background-image: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/paint-splash.png');
+            transform: rotate(15deg);
         }
 
         .hero-right {
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: flex-start;
+            align-items: flex-end;
             padding: 80px;
+            padding-right: 100px;
             background: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/marble-bg.jpg') center center / cover no-repeat;
             background-color: #f8f8f8;
+            text-align: right;
         }
 
         .hero-right h1 {
-            font-size: 72px;
+            font-size: 90px;
             font-weight: 300;
-            color: var(--gray-medium);
-            line-height: 1.1;
-            margin-bottom: 10px;
+            color: #333;
+            line-height: 1.0;
+            margin-bottom: 0;
+            letter-spacing: 0.15em;
         }
 
         .hero-right h1 span {
             display: block;
-            font-size: 42px;
-            letter-spacing: 0.2em;
+            font-size: 48px;
+            letter-spacing: 0.25em;
+            color: #555;
+            margin-top: 10px;
         }
 
         .hero-line {
-            width: 100px;
-            height: 3px;
+            width: 250px;
+            height: 4px;
             background: var(--pink);
-            margin: 30px 0;
+            margin: 40px 0;
         }
 
         .hero-btn {
             display: inline-block;
             font-family: 'Montserrat', sans-serif;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 500;
             letter-spacing: 0.15em;
             text-transform: uppercase;
             background: var(--pink);
             color: var(--white);
-            padding: 18px 40px;
+            padding: 20px 50px;
             text-decoration: none;
             transition: all 0.3s ease;
-            margin-top: 20px;
         }
 
         .hero-btn:hover {
@@ -673,10 +727,13 @@
         /* Responsive */
         @media (max-width: 1200px) {
             .hero-right h1 {
-                font-size: 56px;
+                font-size: 70px;
             }
             .hero-right h1 span {
-                font-size: 32px;
+                font-size: 38px;
+            }
+            .hero-model {
+                height: 80%;
             }
         }
 
@@ -686,10 +743,16 @@
             }
 
             .hero-left {
-                min-height: 400px;
+                min-height: 500px;
+                order: 1;
             }
 
-            .hero-left::before {
+            .hero-model {
+                height: 100%;
+                max-height: 500px;
+            }
+
+            .hero-paint-stroke {
                 display: none;
             }
 
@@ -697,6 +760,8 @@
                 padding: 60px 40px;
                 align-items: center;
                 text-align: center;
+                order: 2;
+                min-height: auto;
             }
 
             .about-section {
@@ -743,12 +808,24 @@
                 display: block;
             }
 
+            .hero-left {
+                min-height: 350px;
+            }
+
+            .hero-model {
+                max-height: 350px;
+            }
+
             .hero-right h1 {
                 font-size: 42px;
             }
 
             .hero-right h1 span {
-                font-size: 24px;
+                font-size: 22px;
+            }
+
+            .hero-line {
+                width: 150px;
             }
 
             .hero-right {
@@ -848,7 +925,14 @@
 
     <!-- Hero Section - Split Layout -->
     <section class="hero">
-        <div class="hero-left"></div>
+        <div class="hero-left">
+            <div class="hero-paint">
+                <div class="hero-paint-stroke paint-1"></div>
+                <div class="hero-paint-stroke paint-2"></div>
+                <div class="hero-paint-stroke paint-3"></div>
+            </div>
+            <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-image-1.png" alt="Flirt Hair Model" class="hero-model">
+        </div>
         <div class="hero-right">
             <h1>
                 PREMIUM
@@ -1102,6 +1186,16 @@
                     });
                 }
             });
+        });
+
+        // Header scroll effect
+        window.addEventListener('scroll', function() {
+            const header = document.getElementById('siteHeader');
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
         });
 
         // Initialize
