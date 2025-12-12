@@ -9018,6 +9018,15 @@
             localStorage.removeItem('flirt_conversation_id');
             localStorage.removeItem('flirt_guest_id');
             currentConversationId = null;
+
+            // Handle redirect after login (from landing page Book Now)
+            const loginRedirect = sessionStorage.getItem('loginRedirect');
+            if (loginRedirect) {
+                sessionStorage.removeItem('loginRedirect');
+                setTimeout(() => {
+                    switchTab(loginRedirect);
+                }, 300);
+            }
         }
 
         async function checkAuthStatus() {
@@ -15702,6 +15711,22 @@ async function showNotifications() {
             const tab = params.get('tab');
             const category = params.get('category');
             const product = params.get('product');
+            const showLogin = params.get('showLogin');
+            const redirect = params.get('redirect');
+
+            // Handle login modal trigger from landing page
+            if (showLogin === 'true' && !currentUser) {
+                setTimeout(() => {
+                    showAuthModal();
+                    // Store redirect destination for after login
+                    if (redirect) {
+                        sessionStorage.setItem('loginRedirect', redirect);
+                    }
+                }, 300);
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
 
             if (tab) {
                 // Small delay to ensure everything is loaded
