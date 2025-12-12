@@ -455,12 +455,14 @@ class InvoiceRepository {
         }
 
         if (start_date) {
-            whereClauses.push('i.service_date >= ?');
+            // Use date() function to extract just the date part, handling ISO timestamps
+            whereClauses.push("date(i.service_date) >= date(?)");
             params.push(start_date);
         }
 
         if (end_date) {
-            whereClauses.push('i.service_date <= ?');
+            // Use date() function to extract just the date part, handling ISO timestamps
+            whereClauses.push("date(i.service_date) <= date(?)");
             params.push(end_date);
         }
 

@@ -4684,16 +4684,21 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
         const allOrders = await OrderRepository.findAll();
         const allUsers = await UserRepository.findAll();
 
-        // Get invoices for the month (list() returns array directly)
-        const monthInvoices = await InvoiceRepository.list({
-            start_date: monthStart,
-            end_date: today,
-            limit: 1000
+        // Get ALL invoices (no date filter in SQL due to string comparison issues with ISO dates)
+        // Filter by month in JavaScript where we can properly extract the date part
+        const allInvoices = await InvoiceRepository.list({
+            limit: 10000
         });
 
         // Revenue this month from PAID INVOICES (primary source of service revenue)
-        const invoiceRevenue = (monthInvoices || [])
-            .filter(inv => inv.payment_status === 'paid')
+        // Filter by service_date in current month, extracting just the date part to avoid
+        // string comparison issues (e.g., '2025-12-15T10:00:00' > '2025-12-31' as strings)
+        const invoiceRevenue = (allInvoices || [])
+            .filter(inv => {
+                if (inv.payment_status !== 'paid') return false;
+                const serviceDate = inv.service_date ? inv.service_date.split('T')[0] : null;
+                return serviceDate && serviceDate >= monthStart && serviceDate <= monthEnd;
+            })
             .reduce((sum, inv) => sum + (parseFloat(inv.total) || 0), 0);
 
         // Revenue from product orders (secondary source)
