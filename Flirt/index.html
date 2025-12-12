@@ -1106,15 +1106,16 @@
                 box-shadow: 0 4px 15px rgba(246, 117, 153, 0.4);
             }
 
-            /* Service cards - always show overlay on mobile (no hover) */
+            /* Service cards - show text without pink overlay on mobile */
             .service-card .service-card-overlay {
-                background: linear-gradient(to top, rgba(246,117,153,0.85) 0%, rgba(246,117,153,0.5) 50%, transparent 100%);
+                background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
             }
 
             .service-card .service-card-title {
                 opacity: 1;
                 transform: translateY(0);
-                font-size: 20px;
+                font-size: 18px;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.5);
             }
 
             .service-card .service-card-cta {
@@ -1123,6 +1124,8 @@
                 font-size: 10px;
                 padding: 8px 16px;
                 margin-top: 10px;
+                background: var(--pink);
+                border-color: var(--pink);
             }
 
             .about-left {
@@ -1326,14 +1329,14 @@
             }
 
             .service-card .service-card-title {
-                font-size: 16px;
-                letter-spacing: 0.1em;
+                font-size: 14px;
+                letter-spacing: 0.08em;
             }
 
             .service-card .service-card-cta {
-                font-size: 9px;
-                padding: 6px 12px;
-                margin-top: 8px;
+                font-size: 8px;
+                padding: 5px 10px;
+                margin-top: 6px;
             }
 
             .reviews-title {
