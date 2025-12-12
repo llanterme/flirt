@@ -1750,14 +1750,81 @@
             });
         });
 
-        // Header scroll effect
+        // Scroll to about section
+        function scrollToAbout() {
+            const aboutSection = document.getElementById('about');
+            if (aboutSection) {
+                aboutSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Header scroll effect and parallax
         window.addEventListener('scroll', function() {
             const header = document.getElementById('siteHeader');
-            if (window.scrollY > 100) {
+            const scrollY = window.scrollY;
+
+            // Header background
+            if (scrollY > 100) {
                 header.classList.add('scrolled');
             } else {
                 header.classList.remove('scrolled');
             }
+
+            // Parallax effect for hero background
+            const heroBgs = document.querySelectorAll('.hero-bg');
+            heroBgs.forEach(bg => {
+                const speed = 0.5;
+                bg.style.transform = `scale(1.08) translateY(${scrollY * speed * 0.1}px)`;
+            });
+
+            // Hide scroll indicator when scrolling
+            const scrollIndicator = document.querySelector('.scroll-indicator');
+            if (scrollIndicator) {
+                scrollIndicator.style.opacity = scrollY > 50 ? '0' : '1';
+            }
+        });
+
+        // Scroll reveal animation using Intersection Observer
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.15
+        };
+
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observe all reveal elements
+        document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach(el => {
+            revealObserver.observe(el);
+        });
+
+        // Staggered animation observer for grid items
+        const staggerObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    // Add staggered delay based on item index within parent
+                    const parent = entry.target.parentElement;
+                    const siblings = Array.from(parent.querySelectorAll('.stagger-item'));
+                    const itemIndex = siblings.indexOf(entry.target);
+
+                    setTimeout(() => {
+                        entry.target.classList.add('visible');
+                    }, itemIndex * 100);
+
+                    staggerObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.stagger-item').forEach(el => {
+            staggerObserver.observe(el);
         });
 
         // Hero Slider
