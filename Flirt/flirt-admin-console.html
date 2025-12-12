@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FL!RT - Admin Console</title>
     <!-- Flirt Brand Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/icons/icon-72x72.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-72x72.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
     <!-- Google Fonts - Playfair Display + Mulish (from flirthair.co.za) -->
@@ -2978,7 +2978,7 @@
         }
 
         .time-slot.booked::after {
-            content: ' ✗';
+            content: ' ?';
             font-size: 10px;
         }
 
@@ -3124,7 +3124,7 @@
     <div class="admin-layout">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
-            <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close menu">×</button>
+            <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close menu">�</button>
             <div class="sidebar-header">
                 <div class="sidebar-logo"><img src="/images/logo-white.png" alt="FL!RT Hair & Beauty Bar"></div>
                 <div class="sidebar-subtitle">Admin Console</div>
@@ -3325,29 +3325,29 @@
             <!-- Top Bar -->
             <header class="top-bar">
                 <div style="display: flex; align-items: center; gap: 20px;">
-                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">?</button>
                     <h1 class="page-title" id="pageTitle">Dashboard</h1>
                 </div>
                 <div class="top-bar-actions">
                     <div class="search-box" style="position: relative;">
-                        <span>🔍</span>
+                        <span>??</span>
                         <input type="search" id="globalSearch" placeholder="Search customers, bookings..." autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Search" oninput="handleGlobalSearch(event)" onkeydown="handleSearchKeydown(event)">
                         <div class="search-results" id="searchResults"></div>
                     </div>
                     <button class="notification-btn" onclick="showSection('notifications')" title="View Notifications">
-                        🔔
+                        ??
                         <span class="notification-dot" id="notificationDot"></span>
                     </button>
                     <div class="admin-profile" onclick="toggleAdminMenu()" title="Account Menu">
                         <div class="admin-avatar" id="adminAvatar">A</div>
                         <span id="adminName" style="font-weight: 500;">Admin</span>
-                        <span style="font-size: 10px;">▼</span>
+                        <span style="font-size: 10px;">?</span>
                     </div>
                     <div class="admin-dropdown" id="adminDropdown">
-                        <button onclick="showPasswordChangeModal()">🔑 Change Password</button>
-                        <button onclick="showSection('settings')">⚙️ Settings</button>
+                        <button onclick="showPasswordChangeModal()">?? Change Password</button>
+                        <button onclick="showSection('settings')">?? Settings</button>
                         <hr style="margin: 5px 0; border: none; border-top: 1px solid var(--border-soft);">
-                        <button onclick="logout()" style="color: var(--danger);">🚪 Logout</button>
+                        <button onclick="logout()" style="color: var(--danger);">?? Logout</button>
                     </div>
                 </div>
             </header>
@@ -3367,7 +3367,7 @@
                                     <div class="stat-value" id="statMonthRevenue">Loading...</div>
                                     <div class="stat-label">Revenue This Month</div>
                                 </div>
-                                <div class="stat-icon pink">💰</div>
+                                <div class="stat-icon pink">??</div>
                             </div>
                             <div class="stat-change" id="statRevenueChange"></div>
                         </div>
@@ -3377,7 +3377,7 @@
                                     <div class="stat-value" id="statMonthBookings">Loading...</div>
                                     <div class="stat-label">Bookings This Month</div>
                                 </div>
-                                <div class="stat-icon gold">📅</div>
+                                <div class="stat-icon gold">??</div>
                             </div>
                             <div class="stat-change" id="statBookingsChange"></div>
                         </div>
@@ -3387,7 +3387,7 @@
                                     <div class="stat-value" id="statMonthOrders">Loading...</div>
                                     <div class="stat-label">Product Orders This Month</div>
                                 </div>
-                                <div class="stat-icon green">📦</div>
+                                <div class="stat-icon green">??</div>
                             </div>
                             <div class="stat-change" id="statOrdersChange"></div>
                         </div>
@@ -3397,7 +3397,7 @@
                                     <div class="stat-value" id="statActiveCustomers">Loading...</div>
                                     <div class="stat-label">Active Customers</div>
                                 </div>
-                                <div class="stat-icon blue">👥</div>
+                                <div class="stat-icon blue">??</div>
                             </div>
                             <div class="stat-change" id="statCustomersChange"></div>
                         </div>
@@ -3407,19 +3407,19 @@
                     <h3 style="margin-bottom: 15px;">Quick Actions</h3>
                     <div class="quick-actions">
                         <button class="quick-action-btn" onclick="openAdminBookingModal()">
-                            <div class="quick-action-icon">➕</div>
+                            <div class="quick-action-icon">?</div>
                             <div class="quick-action-text">New Booking</div>
                         </button>
                         <button class="quick-action-btn" onclick="openAddProductModal()">
-                            <div class="quick-action-icon">📦</div>
+                            <div class="quick-action-icon">??</div>
                             <div class="quick-action-text">Add Product</div>
                         </button>
                         <button class="quick-action-btn" onclick="openModal('addPromoModal')">
-                            <div class="quick-action-icon">🏷️</div>
+                            <div class="quick-action-icon">???</div>
                             <div class="quick-action-text">Create Promo</div>
                         </button>
                         <button class="quick-action-btn" onclick="showSection('chat')">
-                            <div class="quick-action-icon">💬</div>
+                            <div class="quick-action-icon">??</div>
                             <div class="quick-action-text">View Messages</div>
                         </button>
                     </div>
@@ -3491,7 +3491,7 @@
                             <button class="btn btn-sm" id="bookingsListViewBtn" onclick="setBookingsView('list')" style="background: var(--primary); color: white;">List</button>
                             <button class="btn btn-sm btn-outline" id="bookingsCalendarViewBtn" onclick="setBookingsView('calendar')">Calendar</button>
                         </div>
-                        <button class="btn btn-outline btn-sm" onclick="exportBookingsToCSV()" title="Export filtered results to CSV">📥 Export CSV</button>
+                        <button class="btn btn-outline btn-sm" onclick="exportBookingsToCSV()" title="Export filtered results to CSV">?? Export CSV</button>
                         <button class="btn btn-primary" onclick="openAdminBookingModal()">+ New Booking</button>
                     </div>
 
@@ -3501,16 +3501,16 @@
                             All <span class="filter-count" id="count-all">0</span>
                         </button>
                         <button class="status-filter-tab" data-status="REQUESTED" onclick="filterByStatus('REQUESTED')">
-                            ⏳ Requested <span class="filter-count" id="count-requested">0</span>
+                            ? Requested <span class="filter-count" id="count-requested">0</span>
                         </button>
                         <button class="status-filter-tab" data-status="CONFIRMED" onclick="filterByStatus('CONFIRMED')">
-                            ✓ Confirmed <span class="filter-count" id="count-confirmed">0</span>
+                            ? Confirmed <span class="filter-count" id="count-confirmed">0</span>
                         </button>
                         <button class="status-filter-tab" data-status="COMPLETED" onclick="filterByStatus('COMPLETED')">
-                            ✓✓ Completed <span class="filter-count" id="count-completed">0</span>
+                            ?? Completed <span class="filter-count" id="count-completed">0</span>
                         </button>
                         <button class="status-filter-tab" data-status="CANCELLED" onclick="filterByStatus('CANCELLED')">
-                            ✗ Cancelled <span class="filter-count" id="count-cancelled">0</span>
+                            ? Cancelled <span class="filter-count" id="count-cancelled">0</span>
                         </button>
                     </div>
 
@@ -3602,9 +3602,9 @@
                         <div id="bookingsBulkActionsBar" class="data-card" style="display: none; margin-bottom: 15px; padding: 15px; background: var(--primary-light); border: 2px solid var(--primary);">
                             <div style="display: flex; align-items: center; gap: 15px;">
                                 <span style="font-weight: 600; color: var(--primary);" id="bookingsSelectedCount">0 selected</span>
-                                <button class="btn btn-sm" onclick="bulkConfirmBookings()" style="background: var(--success); color: white;">✓ Confirm Selected</button>
-                                <button class="btn btn-sm" onclick="bulkCompleteBookings()" style="background: var(--info); color: white;">✓ Complete Selected</button>
-                                <button class="btn btn-sm btn-outline" onclick="bulkCancelBookings()" style="color: var(--danger); border-color: var(--danger);">✗ Cancel Selected</button>
+                                <button class="btn btn-sm" onclick="bulkConfirmBookings()" style="background: var(--success); color: white;">? Confirm Selected</button>
+                                <button class="btn btn-sm" onclick="bulkCompleteBookings()" style="background: var(--info); color: white;">? Complete Selected</button>
+                                <button class="btn btn-sm btn-outline" onclick="bulkCancelBookings()" style="color: var(--danger); border-color: var(--danger);">? Cancel Selected</button>
                                 <button class="btn btn-sm btn-outline" onclick="deselectAllBookings()" style="margin-left: auto;">Deselect All</button>
                             </div>
                         </div>
@@ -3631,20 +3631,20 @@
                                             </th>
                                             <th style="width: 80px;">ID</th>
                                             <th style="cursor: pointer;" onclick="sortBookingsBy('customer')">
-                                                Client <span id="sortIconCustomer">↕</span>
+                                                Client <span id="sortIconCustomer">?</span>
                                             </th>
                                             <th style="cursor: pointer;" onclick="sortBookingsBy('service')">
-                                                Service <span id="sortIconService">↕</span>
+                                                Service <span id="sortIconService">?</span>
                                             </th>
                                             <th style="cursor: pointer;" onclick="sortBookingsBy('stylist')">
-                                                Stylist <span id="sortIconStylist">↕</span>
+                                                Stylist <span id="sortIconStylist">?</span>
                                             </th>
                                             <th style="cursor: pointer;" onclick="sortBookingsBy('date')">
-                                                Date <span id="sortIconDate">↕</span>
+                                                Date <span id="sortIconDate">?</span>
                                             </th>
                                             <th>Time</th>
                                             <th style="cursor: pointer;" onclick="sortBookingsBy('status')">
-                                                Status <span id="sortIconStatus">↕</span>
+                                                Status <span id="sortIconStatus">?</span>
                                             </th>
                                             <th>Payment</th>
                                             <th>Actions</th>
@@ -3666,11 +3666,11 @@
                                     Showing 1-50 of 125
                                 </div>
                                 <div style="display: flex; gap: 5px;">
-                                    <button class="btn btn-sm btn-outline" id="bookingsPrevPage" onclick="goToBookingsPage('prev')" disabled>← Previous</button>
+                                    <button class="btn btn-sm btn-outline" id="bookingsPrevPage" onclick="goToBookingsPage('prev')" disabled>? Previous</button>
                                     <div id="bookingsPaginationPages" style="display: flex; gap: 5px;">
                                         <!-- Page numbers rendered dynamically -->
                                     </div>
-                                    <button class="btn btn-sm btn-outline" id="bookingsNextPage" onclick="goToBookingsPage('next')">Next →</button>
+                                    <button class="btn btn-sm btn-outline" id="bookingsNextPage" onclick="goToBookingsPage('next')">Next ?</button>
                                 </div>
                                 <div>
                                     <select id="bookingsPageSize" class="form-input" onchange="onBookingsPageSizeChange()" style="width: auto; padding: 5px 10px; font-size: 13px;">
@@ -3688,9 +3688,9 @@
                         <div class="data-card">
                             <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
-                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(-1)">◀</button>
+                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(-1)">?</button>
                                     <h3 class="data-card-title" id="bookingsCalendarLabel" style="min-width: 200px; text-align: center;">November 2025</h3>
-                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(1)">▶</button>
+                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(1)">?</button>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <div style="display: flex; border: 1px solid var(--gray-light); border-radius: 6px; overflow: hidden;">
@@ -3882,7 +3882,7 @@
 
                                 <div style="display: grid; gap: 10px; margin-bottom: 20px;">
                                     <button class="btn btn-primary" onclick="sendPaymentLink()" style="width: 100%;">
-                                        📧 Send PayFast Payment Link
+                                        ?? Send PayFast Payment Link
                                     </button>
                                     <p style="text-align: center; color: var(--gray-medium); font-size: 12px; margin: 5px 0;">
                                         Sends a secure payment link to the customer via email
@@ -4010,7 +4010,7 @@
                                     <div class="stat-value" id="teamActiveCount">0</div>
                                     <div class="stat-label">Active Stylists</div>
                                 </div>
-                                <div class="stat-icon pink">👩‍🎨</div>
+                                <div class="stat-icon pink">?????</div>
                             </div>
                         </div>
                     </div>
@@ -4087,7 +4087,7 @@
                                     <div class="stat-value" id="payrollTotalBasic">R0</div>
                                     <div class="stat-label">Total Basic Pay</div>
                                 </div>
-                                <div class="stat-icon blue">💵</div>
+                                <div class="stat-icon blue">??</div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -4096,7 +4096,7 @@
                                     <div class="stat-value" id="payrollTotalCommission">R0</div>
                                     <div class="stat-label">Total Commission</div>
                                 </div>
-                                <div class="stat-icon green">📈</div>
+                                <div class="stat-icon green">??</div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -4105,7 +4105,7 @@
                                     <div class="stat-value" id="payrollTotalGross">R0</div>
                                     <div class="stat-label">Total Gross Pay</div>
                                 </div>
-                                <div class="stat-icon pink">💰</div>
+                                <div class="stat-icon pink">??</div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -4114,7 +4114,7 @@
                                     <div class="stat-value" id="payrollStylistCount">0</div>
                                     <div class="stat-label">Stylists</div>
                                 </div>
-                                <div class="stat-icon gold">👩‍🎨</div>
+                                <div class="stat-icon gold">?????</div>
                             </div>
                         </div>
                     </div>
@@ -4193,7 +4193,7 @@
                         <div class="modal-header" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; border-radius: 12px 12px 0 0; padding: 20px 24px;">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="width: 44px; height: 44px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
-                                    💰
+                                    ??
                                 </div>
                                 <div>
                                     <h3 style="margin: 0; font-size: 18px; font-weight: 600;">Basic Salary Settings</h3>
@@ -4209,7 +4209,7 @@
                             <!-- Basic Pay Section -->
                             <div style="background: var(--gray-lightest); border-radius: 12px; padding: 20px;">
                                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                                    <span style="font-size: 18px;">📋</span>
+                                    <span style="font-size: 18px;">??</span>
                                     <span style="font-weight: 600; color: var(--gray-dark);">Basic Monthly Salary</span>
                                 </div>
                                 <div style="position: relative;">
@@ -4233,7 +4233,7 @@
                         <div class="modal-footer" style="padding: 16px 24px 24px; border-top: none; gap: 12px;">
                             <button class="btn btn-outline" onclick="closeModal('stylistPayModal')" style="flex: 1;">Cancel</button>
                             <button class="btn btn-primary" onclick="saveStylistPay()" style="flex: 2;">
-                                <span style="margin-right: 6px;">✓</span> Save Salary
+                                <span style="margin-right: 6px;">?</span> Save Salary
                             </button>
                         </div>
                     </div>
@@ -4307,7 +4307,7 @@
                                 <p style="font-size: 12px; color: var(--gray-dark); margin-bottom: 10px;">Generate a new temporary password and optionally send it to the customer via email.</p>
                                 <div style="display: flex; gap: 10px; align-items: center;">
                                     <button type="button" class="btn btn-outline" onclick="resetCustomerPassword()" style="flex-shrink: 0;">
-                                        🔑 Reset Password
+                                        ?? Reset Password
                                     </button>
                                     <label style="display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--gray-dark);">
                                         <input type="checkbox" id="sendResetEmail" checked> Send email to customer
@@ -4333,23 +4333,23 @@
                                     <h2 id="profileName">Customer Name</h2>
                                     <div class="customer-profile-meta">
                                         <span id="profileEmail">email@example.com</span>
-                                        <span class="meta-divider">•</span>
+                                        <span class="meta-divider">�</span>
                                         <span id="profilePhone">+27 00 000 0000</span>
-                                        <span class="meta-divider">•</span>
+                                        <span class="meta-divider">�</span>
                                         <span id="profileMemberSince">Member since Jan 2024</span>
                                     </div>
                                     <div class="customer-tier-badge" id="profileTierBadge">
-                                        <span class="tier-icon">👑</span>
+                                        <span class="tier-icon">??</span>
                                         <span class="tier-name">Gold Member</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="customer-profile-actions">
                                 <button class="btn btn-outline btn-sm" onclick="editCustomerFromProfile()">
-                                    ✏️ Edit
+                                    ?? Edit
                                 </button>
                                 <button class="btn btn-primary btn-sm" onclick="createInvoiceForCustomer()">
-                                    📄 New Invoice
+                                    ?? New Invoice
                                 </button>
                                 <button class="modal-close" onclick="closeCustomerProfile()">&times;</button>
                             </div>
@@ -4386,25 +4386,25 @@
                         <!-- Tab Navigation -->
                         <div class="customer-profile-tabs">
                             <button class="profile-tab active" data-tab="overview" onclick="switchProfileTab('overview')">
-                                📊 Overview
+                                ?? Overview
                             </button>
                             <button class="profile-tab" data-tab="bookings" onclick="switchProfileTab('bookings')">
-                                📅 Bookings <span class="tab-count" id="tabBookingsCount">0</span>
+                                ?? Bookings <span class="tab-count" id="tabBookingsCount">0</span>
                             </button>
                             <button class="profile-tab" data-tab="orders" onclick="switchProfileTab('orders')">
-                                🛒 Orders <span class="tab-count" id="tabOrdersCount">0</span>
+                                ?? Orders <span class="tab-count" id="tabOrdersCount">0</span>
                             </button>
                             <button class="profile-tab" data-tab="invoices" onclick="switchProfileTab('invoices')">
-                                📄 Invoices <span class="tab-count" id="tabInvoicesCount">0</span>
+                                ?? Invoices <span class="tab-count" id="tabInvoicesCount">0</span>
                             </button>
                             <button class="profile-tab" data-tab="loyalty" onclick="switchProfileTab('loyalty')">
-                                ⭐ Loyalty
+                                ? Loyalty
                             </button>
                             <button class="profile-tab" data-tab="inspo" onclick="switchProfileTab('inspo')">
-                                📸 Inspiration <span class="tab-count" id="tabInspoCount">0</span>
+                                ?? Inspiration <span class="tab-count" id="tabInspoCount">0</span>
                             </button>
                             <button class="profile-tab" data-tab="chat" onclick="switchProfileTab('chat')">
-                                💬 Chat <span class="tab-count" id="tabChatCount">0</span>
+                                ?? Chat <span class="tab-count" id="tabChatCount">0</span>
                             </button>
                         </div>
 
@@ -4456,28 +4456,28 @@
                                         <h4>Quick Stats</h4>
                                         <div class="quick-stats-grid">
                                             <div class="quick-stat">
-                                                <div class="quick-stat-icon">✅</div>
+                                                <div class="quick-stat-icon">?</div>
                                                 <div class="quick-stat-info">
                                                     <span class="quick-stat-value" id="completedBookings">0</span>
                                                     <span class="quick-stat-label">Completed Visits</span>
                                                 </div>
                                             </div>
                                             <div class="quick-stat">
-                                                <div class="quick-stat-icon">📆</div>
+                                                <div class="quick-stat-icon">??</div>
                                                 <div class="quick-stat-info">
                                                     <span class="quick-stat-value" id="upcomingBookings">0</span>
                                                     <span class="quick-stat-label">Upcoming</span>
                                                 </div>
                                             </div>
                                             <div class="quick-stat">
-                                                <div class="quick-stat-icon">🎁</div>
+                                                <div class="quick-stat-icon">??</div>
                                                 <div class="quick-stat-info">
                                                     <span class="quick-stat-value" id="referralsMade">0</span>
                                                     <span class="quick-stat-label">Referrals Made</span>
                                                 </div>
                                             </div>
                                             <div class="quick-stat">
-                                                <div class="quick-stat-icon">📸</div>
+                                                <div class="quick-stat-icon">??</div>
                                                 <div class="quick-stat-info">
                                                     <span class="quick-stat-value" id="inspoPhotos">0</span>
                                                     <span class="quick-stat-label">Inspo Photos</span>
@@ -4506,7 +4506,7 @@
                                         </tbody>
                                     </table>
                                     <div id="noBookingsMessage" class="empty-state" style="display: none;">
-                                        <div class="empty-icon">📅</div>
+                                        <div class="empty-icon">??</div>
                                         <p>No bookings yet</p>
                                     </div>
                                 </div>
@@ -4530,7 +4530,7 @@
                                         </tbody>
                                     </table>
                                     <div id="noOrdersMessage" class="empty-state" style="display: none;">
-                                        <div class="empty-icon">🛒</div>
+                                        <div class="empty-icon">??</div>
                                         <p>No shop orders yet</p>
                                     </div>
                                 </div>
@@ -4555,7 +4555,7 @@
                                         </tbody>
                                     </table>
                                     <div id="noInvoicesMessage" class="empty-state" style="display: none;">
-                                        <div class="empty-icon">📄</div>
+                                        <div class="empty-icon">??</div>
                                         <p>No invoices yet</p>
                                     </div>
                                 </div>
@@ -4581,7 +4581,7 @@
                                                 </tbody>
                                             </table>
                                             <div id="noLoyaltyMessage" class="empty-state" style="display: none;">
-                                                <div class="empty-icon">⭐</div>
+                                                <div class="empty-icon">?</div>
                                                 <p>No points history yet</p>
                                             </div>
                                         </div>
@@ -4595,7 +4595,7 @@
                                     <!-- Populated dynamically -->
                                 </div>
                                 <div id="noInspoMessage" class="empty-state" style="display: none;">
-                                    <div class="empty-icon">📸</div>
+                                    <div class="empty-icon">??</div>
                                     <p>No inspiration photos uploaded</p>
                                 </div>
                             </div>
@@ -4620,7 +4620,7 @@
                                         <!-- Populated dynamically -->
                                     </div>
                                     <div id="noChatMessage" class="empty-state" style="display: none;">
-                                        <div class="empty-icon">💬</div>
+                                        <div class="empty-icon">??</div>
                                         <p>No chat history with this customer</p>
                                         <p style="font-size: 13px; color: var(--text-subtle);">Send a message to start a conversation</p>
                                     </div>
@@ -5256,7 +5256,7 @@
                                     <div class="stat-value" id="productsTotalCount">0</div>
                                     <div class="stat-label">Total Products</div>
                                 </div>
-                                <div class="stat-icon pink">📦</div>
+                                <div class="stat-icon pink">??</div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -5265,7 +5265,7 @@
                                     <div class="stat-value" id="productsLowStockCount">0</div>
                                     <div class="stat-label">Low Stock Alerts</div>
                                 </div>
-                                <div class="stat-icon" style="background: rgba(244, 67, 54, 0.1); color: var(--danger);">⚠️</div>
+                                <div class="stat-icon" style="background: rgba(244, 67, 54, 0.1); color: var(--danger);">??</div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -5274,7 +5274,7 @@
                                     <div class="stat-value" id="productsInventoryValue">R0</div>
                                     <div class="stat-label">Inventory Value</div>
                                 </div>
-                                <div class="stat-icon green">💰</div>
+                                <div class="stat-icon green">??</div>
                             </div>
                         </div>
                     </div>
@@ -5417,16 +5417,16 @@
                             </div>
                             <select id="invoice-status-filter" class="invoice-filter-select" onchange="loadInvoices()">
                                 <option value="">All Statuses</option>
-                                <option value="draft">📝 Draft</option>
-                                <option value="finalized">✅ Finalized</option>
-                                <option value="sent">📧 Sent</option>
-                                <option value="cancelled">❌ Cancelled</option>
+                                <option value="draft">?? Draft</option>
+                                <option value="finalized">? Finalized</option>
+                                <option value="sent">?? Sent</option>
+                                <option value="cancelled">? Cancelled</option>
                             </select>
                             <select id="invoice-payment-filter" class="invoice-filter-select" onchange="loadInvoices()">
                                 <option value="">All Payments</option>
-                                <option value="unpaid">🔴 Unpaid</option>
-                                <option value="partial">🟡 Partial</option>
-                                <option value="paid">🟢 Paid</option>
+                                <option value="unpaid">?? Unpaid</option>
+                                <option value="partial">?? Partial</option>
+                                <option value="paid">?? Paid</option>
                             </select>
                             <select id="invoice-stylist-filter" class="invoice-filter-select" onchange="loadInvoices()">
                                 <option value="">All Stylists</option>
@@ -5820,11 +5820,11 @@
                                     <label class="invoice-form-label">Payment Method <span class="required">*</span></label>
                                     <select id="payment-method" required class="invoice-form-select">
                                         <option value="">Select method...</option>
-                                        <option value="cash">💵 Cash</option>
-                                        <option value="card_on_site">💳 Card (On Site)</option>
-                                        <option value="eft">🏦 EFT</option>
-                                        <option value="payfast">⚡ PayFast</option>
-                                        <option value="yoco">📱 Yoco</option>
+                                        <option value="cash">?? Cash</option>
+                                        <option value="card_on_site">?? Card (On Site)</option>
+                                        <option value="eft">?? EFT</option>
+                                        <option value="payfast">? PayFast</option>
+                                        <option value="yoco">?? Yoco</option>
                                     </select>
                                 </div>
                                 <div class="invoice-form-group">
@@ -6009,12 +6009,12 @@
                             </div>
                             <select id="quote-status-filter" class="invoice-filter-select" onchange="loadQuotes()">
                                 <option value="">All Statuses</option>
-                                <option value="draft">📝 Draft</option>
-                                <option value="sent">📧 Sent</option>
-                                <option value="accepted">✅ Accepted</option>
-                                <option value="declined">❌ Declined</option>
-                                <option value="expired">⏰ Expired</option>
-                                <option value="converted">🔄 Converted</option>
+                                <option value="draft">?? Draft</option>
+                                <option value="sent">?? Sent</option>
+                                <option value="accepted">? Accepted</option>
+                                <option value="declined">? Declined</option>
+                                <option value="expired">? Expired</option>
+                                <option value="converted">?? Converted</option>
                             </select>
                             <select id="quote-stylist-filter" class="invoice-filter-select" onchange="loadQuotes()">
                                 <option value="">All Stylists</option>
@@ -6153,7 +6153,7 @@
                                     <div class="stat-value" id="promoActiveCount">0</div>
                                     <div class="stat-label">Active Promos</div>
                                 </div>
-                                <div class="stat-icon pink">🏷️</div>
+                                <div class="stat-icon pink">???</div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -6162,7 +6162,7 @@
                                     <div class="stat-value" id="promoCodesUsed">0</div>
                                     <div class="stat-label">Codes Used</div>
                                 </div>
-                                <div class="stat-icon gold">🎟️</div>
+                                <div class="stat-icon gold">???</div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -6171,7 +6171,7 @@
                                     <div class="stat-value" id="promoDiscountsGiven">R0</div>
                                     <div class="stat-label">Discounts Given</div>
                                 </div>
-                                <div class="stat-icon green">💸</div>
+                                <div class="stat-icon green">??</div>
                             </div>
                         </div>
                     </div>
@@ -6694,7 +6694,7 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Share Message Template</label>
-                                <textarea id="referralShareMessage" class="form-input" rows="3" placeholder="Check out Flirt Hair Extensions! Use my code {code} for {discount} off your first booking! 💇✨"></textarea>
+                                <textarea id="referralShareMessage" class="form-input" rows="3" placeholder="Check out Flirt Hair Extensions! Use my code {code} for {discount} off your first booking! ???"></textarea>
                                 <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">
                                     Use <code style="background: #f0f0f0; padding: 2px 5px; border-radius: 3px;">{code}</code> for user's code and
                                     <code style="background: #f0f0f0; padding: 2px 5px; border-radius: 3px;">{discount}</code> for the discount (e.g. "10%" or "R50")
@@ -6785,7 +6785,7 @@
                             </p>
                             <div id="dynamicRewardTracks" style="display: grid; gap: 20px;">
                                 <div style="text-align: center; padding: 40px; color: var(--gray-medium); background: var(--gray-light); border-radius: 8px;">
-                                    <span style="font-size: 48px; display: block; margin-bottom: 15px;">🎁</span>
+                                    <span style="font-size: 48px; display: block; margin-bottom: 15px;">??</span>
                                     <p>Loading reward tracks...</p>
                                 </div>
                             </div>
@@ -7219,7 +7219,7 @@
                             <div class="form-group">
                                 <label class="form-label">Notify URL (ITN Endpoint)</label>
                                 <input type="text" id="payfastNotifyUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
-                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Configure this URL in your PayFast account under Settings → Integration</p>
+                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Configure this URL in your PayFast account under Settings ? Integration</p>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
@@ -7261,7 +7261,7 @@
                             <div class="form-group">
                                 <label class="form-label">Webhook URL</label>
                                 <input type="text" id="yocoWebhookUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
-                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Configure this URL in your Yoco Dashboard under Developers → Webhooks</p>
+                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Configure this URL in your Yoco Dashboard under Developers ? Webhooks</p>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
@@ -7851,7 +7851,7 @@
             </div>
             <div class="modal-body">
                 <div class="image-upload" onclick="document.getElementById('staffPhoto').click()">
-                    <div style="font-size: 40px; margin-bottom: 10px;">📷</div>
+                    <div style="font-size: 40px; margin-bottom: 10px;">??</div>
                     <div>Click to upload photo</div>
                     <input type="file" id="staffPhoto" accept="image/*" style="display: none;" onchange="handleStaffPhotoUpload(event)">
                     <img id="staffPhotoPreview" class="image-preview" style="display:none;" alt="Preview">
@@ -7910,13 +7910,13 @@
                 <!-- Tab Navigation -->
                 <div style="display: flex; border-bottom: 2px solid var(--border-soft); background: var(--surface-muted);">
                     <button class="staff-services-tab active" id="tabCategories" onclick="switchServicesTab('categories')">
-                        <span style="font-size: 18px;">📁</span> Add by Category
+                        <span style="font-size: 18px;">??</span> Add by Category
                     </button>
                     <button class="staff-services-tab" id="tabIndividual" onclick="switchServicesTab('individual')">
-                        <span style="font-size: 18px;">📋</span> Add Individual
+                        <span style="font-size: 18px;">??</span> Add Individual
                     </button>
                     <button class="staff-services-tab" id="tabAssigned" onclick="switchServicesTab('assigned')">
-                        <span style="font-size: 18px;">✓</span> Assigned <span id="assignedCountBadge" class="tab-badge">0</span>
+                        <span style="font-size: 18px;">?</span> Assigned <span id="assignedCountBadge" class="tab-badge">0</span>
                     </button>
                 </div>
 
@@ -8113,7 +8113,7 @@
             </div>
             <div class="modal-body">
                 <div class="image-upload" onclick="document.getElementById('productPhoto').click()">
-                    <div style="font-size: 40px; margin-bottom: 10px;">🧴</div>
+                    <div style="font-size: 40px; margin-bottom: 10px;">??</div>
                     <div>Click to upload product image</div>
                     <input type="file" id="productPhoto" accept="image/*" style="display: none;">
                 </div>
@@ -8296,7 +8296,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Offer Title</label>
-                                <input type="text" class="form-input" id="promoTitle" placeholder="e.g., Summer Glow Package 🌟">
+                                <input type="text" class="form-input" id="promoTitle" placeholder="e.g., Summer Glow Package ??">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Badge Text</label>
@@ -8445,7 +8445,7 @@
                 MORNING: {
                     id: 'MORNING',
                     label: 'Morning',
-                    icon: '🌅',
+                    icon: '??',
                     description: '6:00 AM - 12:00 PM',
                     startHour: 6,
                     endHour: 12
@@ -8453,7 +8453,7 @@
                 AFTERNOON: {
                     id: 'AFTERNOON',
                     label: 'Afternoon',
-                    icon: '☀️',
+                    icon: '??',
                     description: '12:00 PM - 3:00 PM',
                     startHour: 12,
                     endHour: 15
@@ -8461,7 +8461,7 @@
                 LATE_AFTERNOON: {
                     id: 'LATE_AFTERNOON',
                     label: 'Late Afternoon',
-                    icon: '🌤️',
+                    icon: '???',
                     description: '3:00 PM - 6:00 PM',
                     startHour: 15,
                     endHour: 18
@@ -8469,7 +8469,7 @@
                 EVENING: {
                     id: 'EVENING',
                     label: 'Evening',
-                    icon: '🌙',
+                    icon: '??',
                     description: '6:00 PM - 10:00 PM',
                     startHour: 18,
                     endHour: 22
@@ -8547,7 +8547,7 @@
             const banner = document.createElement('div');
             banner.id = 'connectionError';
             banner.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; background: #f44336; color: white; padding: 12px; text-align: center; z-index: 10000; font-size: 14px;';
-            banner.innerHTML = '⚠️ Unable to connect to server. Please ensure the backend is running.';
+            banner.innerHTML = '?? Unable to connect to server. Please ensure the backend is running.';
             document.body.prepend(banner);
         }
 
@@ -8887,7 +8887,7 @@
                             <div class="search-result-group-title">Customers</div>
                             ${customers.slice(0, 5).map(c => `
                                 <div class="search-result-item" onclick="selectSearchResult('customers', '${c.id}')">
-                                    <span class="icon">👤</span>
+                                    <span class="icon">??</span>
                                     <div class="details">
                                         <div class="name">${c.name || 'Unknown'}</div>
                                         <div class="meta">${c.email || ''}</div>
@@ -8910,7 +8910,7 @@
                             <div class="search-result-group-title">Bookings</div>
                             ${bookings.slice(0, 5).map(b => `
                                 <div class="search-result-item" onclick="selectSearchResult('bookings', '${b.id}')">
-                                    <span class="icon">📅</span>
+                                    <span class="icon">??</span>
                                     <div class="details">
                                         <div class="name">${b.customerName || b.customer_name || 'Guest'}</div>
                                         <div class="meta">${b.serviceName || b.service_name || 'Service'} - ${b.date || ''}</div>
@@ -8925,7 +8925,7 @@
                 html += `<div class="search-result-group">
                     <div class="search-result-group-title">Quick Navigation</div>
                     <div class="search-result-item" onclick="selectSearchResult('customers'); filterCustomersByQuery('${query.replace(/'/g, "\\'")}')">
-                        <span class="icon">🔍</span>
+                        <span class="icon">??</span>
                         <div class="details">
                             <div class="name">Search all customers for "${query}"</div>
                         </div>
@@ -8995,7 +8995,7 @@
             const alert = document.getElementById('dashboardAlert');
             if (alert) {
                 alert.className = `dashboard-alert ${type}`;
-                alert.innerHTML = `<span>${type === 'error' ? '⚠️' : type === 'warning' ? '⚡' : 'ℹ️'}</span> ${message}`;
+                alert.innerHTML = `<span>${type === 'error' ? '??' : type === 'warning' ? '?' : '??'}</span> ${message}`;
                 alert.style.display = 'flex';
             }
         }
@@ -9073,7 +9073,7 @@
                     tbody.innerHTML = `
                         <tr>
                             <td colspan="6" style="text-align: center; padding: 30px; color: var(--gray-medium);">
-                                📅 No bookings for today
+                                ?? No bookings for today
                             </td>
                         </tr>
                     `;
@@ -9105,12 +9105,12 @@
                             <td><span class="status-badge status-${b.status}">${b.status}</span></td>
                             <td class="action-btns">
                                 ${b.status === 'REQUESTED' ? `
-                                    <button class="btn btn-icon btn-outline booking-confirm-btn" data-booking-id="${b.id}" title="Confirm">✅</button>
+                                    <button class="btn btn-icon btn-outline booking-confirm-btn" data-booking-id="${b.id}" title="Confirm">?</button>
                                 ` : ''}
                                 ${b.status === 'CONFIRMED' ? `
-                                    <button class="btn btn-icon btn-outline booking-complete-btn" data-booking-id="${b.id}" title="Complete">✔️</button>
+                                    <button class="btn btn-icon btn-outline booking-complete-btn" data-booking-id="${b.id}" title="Complete">??</button>
                                 ` : ''}
-                                <button class="btn btn-icon btn-outline" title="View" onclick="showSection('bookings')">👁️</button>
+                                <button class="btn btn-icon btn-outline" title="View" onclick="showSection('bookings')">???</button>
                             </td>
                         </tr>
                     `;
@@ -9636,7 +9636,7 @@
             ['customer', 'service', 'stylist', 'date', 'status'].forEach(f => {
                 const icon = document.getElementById(`sortIcon${f.charAt(0).toUpperCase() + f.slice(1)}`);
                 if (icon) {
-                    icon.textContent = f === field ? (bookingsSortDirection === 'asc' ? '↑' : '↓') : '↕';
+                    icon.textContent = f === field ? (bookingsSortDirection === 'asc' ? '?' : '?') : '?';
                 }
             });
 
@@ -10010,26 +10010,26 @@
                             ${(() => {
                                 const paymentStatus = b.paymentStatus || b.payment_status || 'unpaid';
                                 const paymentBadgeClass = paymentStatus === 'paid' ? 'status-paid' : (paymentStatus === 'pending' ? 'status-pending' : 'status-unpaid');
-                                const paymentLabel = paymentStatus === 'paid' ? '✓ Paid' : (paymentStatus === 'pending' ? '⏳ Pending' : '○ Unpaid');
+                                const paymentLabel = paymentStatus === 'paid' ? '? Paid' : (paymentStatus === 'pending' ? '? Pending' : '? Unpaid');
                                 return `<span class="status-badge ${paymentBadgeClass}" style="font-size: 11px;">${paymentLabel}</span>`;
                             })()}
                             ${b.status === 'CONFIRMED' && (b.paymentStatus || b.payment_status || 'unpaid') !== 'paid' ? `
                                 <div style="margin-top: 4px;">
-                                    <button class="btn btn-sm booking-payment-btn" data-booking-id="${b.id}" title="Payment Options" style="font-size: 10px; padding: 2px 6px;">💳</button>
+                                    <button class="btn btn-sm booking-payment-btn" data-booking-id="${b.id}" title="Payment Options" style="font-size: 10px; padding: 2px 6px;">??</button>
                                 </div>
                             ` : ''}
                         </td>
                         <td class="action-btns">
                             ${b.status === 'REQUESTED' && !b.assignedStartTime ? `
-                                <button class="btn btn-sm btn-primary booking-assign-btn" data-booking-id="${b.id}" title="Assign Time">⏰ Assign</button>
+                                <button class="btn btn-sm btn-primary booking-assign-btn" data-booking-id="${b.id}" title="Assign Time">? Assign</button>
                             ` : `
-                                <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}" title="Edit booking">✏️</button>
+                                <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}" title="Edit booking">??</button>
                             `}
                             ${b.status === 'CONFIRMED' ? `
-                                <button class="btn btn-sm booking-complete-btn" data-booking-id="${b.id}" title="Complete">✓</button>
+                                <button class="btn btn-sm booking-complete-btn" data-booking-id="${b.id}" title="Complete">?</button>
                             ` : ''}
                             ${(b.status === 'REQUESTED' || b.status === 'CONFIRMED') ? `
-                                <button class="btn btn-sm btn-outline booking-cancel-btn" data-booking-id="${b.id}" title="Cancel">✗</button>
+                                <button class="btn btn-sm btn-outline booking-cancel-btn" data-booking-id="${b.id}" title="Cancel">?</button>
                             ` : ''}
                         </td>
                     </tr>
@@ -10048,11 +10048,11 @@
         function attachBookingActionListeners() {
             // Assign Time buttons (for REQUESTED bookings)
             const assignBtns = document.querySelectorAll('.booking-assign-btn');
-            console.log('🔧 Attaching event listeners to', assignBtns.length, 'assign buttons');
+            console.log('?? Attaching event listeners to', assignBtns.length, 'assign buttons');
             assignBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
                     const bookingId = this.getAttribute('data-booking-id');
-                    console.log('🖱️ Assign button clicked for booking:', bookingId);
+                    console.log('??? Assign button clicked for booking:', bookingId);
                     openAssignTimeModal(bookingId);
                 });
             });
@@ -10369,17 +10369,17 @@
                             ${b.stylistName ? `<div style="font-size: 14px; margin-bottom: 5px;"><strong>Stylist:</strong> ${b.stylistName}</div>` : ''}
                             ${b.notes ? `<div style="font-size: 12px; color: var(--gray-medium); margin-top: 8px; padding: 8px; background: var(--gray-light); border-radius: 4px;"><strong>Notes:</strong> ${b.notes}</div>` : ''}
                             <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                                <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}">✏️ Edit</button>
+                                <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}">?? Edit</button>
                                 ${b.status === 'REQUESTED' ? `
-                                    <button class="btn btn-sm btn-primary booking-confirm-close-btn" data-booking-id="${b.id}">✓ Confirm</button>
+                                    <button class="btn btn-sm btn-primary booking-confirm-close-btn" data-booking-id="${b.id}">? Confirm</button>
                                 ` : ''}
                                 ${b.status === 'CONFIRMED' ? `
-                                    <button class="btn btn-sm btn-primary booking-complete-close-btn" data-booking-id="${b.id}">✓ Complete</button>
+                                    <button class="btn btn-sm btn-primary booking-complete-close-btn" data-booking-id="${b.id}">? Complete</button>
                                 ` : ''}
                                 ${(b.status === 'REQUESTED' || b.status === 'CONFIRMED') ? `
-                                    <button class="btn btn-sm btn-outline booking-cancel-close-btn" data-booking-id="${b.id}">✗ Cancel</button>
+                                    <button class="btn btn-sm btn-outline booking-cancel-close-btn" data-booking-id="${b.id}">? Cancel</button>
                                 ` : ''}
-                                <button class="btn btn-sm booking-delete-btn" data-booking-id="${b.id}" style="background: var(--danger); color: white; margin-left: auto;">🗑️ Delete</button>
+                                <button class="btn btn-sm booking-delete-btn" data-booking-id="${b.id}" style="background: var(--danger); color: white; margin-left: auto;">??? Delete</button>
                             </div>
                         </div>
                     `;
@@ -10628,13 +10628,13 @@
                     if (b.status === 'REQUESTED') {
                         quickActions = `
                             <div class="day-view-quick-actions" style="position: absolute; bottom: 3px; right: 3px; display: flex; gap: 3px;">
-                                <button class="quick-confirm-btn" data-booking-id="${b.id}" title="Confirm" style="background: #28a745; color: white; border: none; border-radius: 3px; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">✓</button>
+                                <button class="quick-confirm-btn" data-booking-id="${b.id}" title="Confirm" style="background: #28a745; color: white; border: none; border-radius: 3px; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">?</button>
                             </div>
                         `;
                     } else if (b.status === 'CONFIRMED') {
                         quickActions = `
                             <div class="day-view-quick-actions" style="position: absolute; bottom: 3px; right: 3px; display: flex; gap: 3px;">
-                                <button class="quick-complete-btn" data-booking-id="${b.id}" title="Complete" style="background: #17a2b8; color: white; border: none; border-radius: 3px; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">✓</button>
+                                <button class="quick-complete-btn" data-booking-id="${b.id}" title="Complete" style="background: #17a2b8; color: white; border: none; border-radius: 3px; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">?</button>
                             </div>
                         `;
                     }
@@ -10688,7 +10688,7 @@
                                 <div style="font-size: 10px; color: ${style.text}; opacity: 0.7;">${timeDisplay}${durationDisplay ? ` (${durationDisplay})` : ''}</div>
                                 <div style="font-size: 8px; padding: 1px 5px; border-radius: 3px; background: ${style.border}; color: white; font-weight: 500; white-space: nowrap;">${b.status || 'No Status'}</div>
                             </div>
-                            ${b.customerPhone ? `<div style="font-size: 9px; color: ${style.text}; margin-top: 2px; opacity: 0.6;"><a href="tel:${b.customerPhone}" style="color: inherit; text-decoration: none;" onclick="event.stopPropagation();">📞 ${b.customerPhone}</a></div>` : ''}
+                            ${b.customerPhone ? `<div style="font-size: 9px; color: ${style.text}; margin-top: 2px; opacity: 0.6;"><a href="tel:${b.customerPhone}" style="color: inherit; text-decoration: none;" onclick="event.stopPropagation();">?? ${b.customerPhone}</a></div>` : ''}
                             ${quickActions}
                         </div>
                     `;
@@ -11276,29 +11276,29 @@
 
         async function openAssignTimeModal(bookingId) {
             try {
-                console.log('📋 openAssignTimeModal called with bookingId:', bookingId);
-                console.log('📚 allBookings array has', allBookings.length, 'bookings');
+                console.log('?? openAssignTimeModal called with bookingId:', bookingId);
+                console.log('?? allBookings array has', allBookings.length, 'bookings');
 
                 // Ensure we have stylists data loaded
-                console.log('📝 Step 0: Ensuring admin booking data is loaded...');
+                console.log('?? Step 0: Ensuring admin booking data is loaded...');
                 await ensureAdminBookingData();
-                console.log('✅ Admin booking data loaded. Stylists:', adminBookingStylists.length);
+                console.log('? Admin booking data loaded. Stylists:', adminBookingStylists.length);
 
                 currentAssignBookingId = bookingId;
                 currentAssignBooking = allBookings.find(b => b.id === bookingId);
 
                 if (!currentAssignBooking) {
-                    console.error('❌ Booking not found in allBookings array');
+                    console.error('? Booking not found in allBookings array');
                     alert('Booking not found');
                     return;
                 }
-                console.log('✅ Found booking:', currentAssignBooking);
+                console.log('? Found booking:', currentAssignBooking);
 
                 // Populate booking details
-                console.log('📝 Step 1: Setting customer name...');
+                console.log('?? Step 1: Setting customer name...');
                 document.getElementById('assignTimeCustomer').textContent = currentAssignBooking.customerName || 'Guest';
 
-                console.log('📝 Step 2: Setting requested date...');
+                console.log('?? Step 2: Setting requested date...');
                 const requestedDate = new Date(currentAssignBooking.requestedDate || currentAssignBooking.date);
                 document.getElementById('assignTimeRequestedDate').textContent = requestedDate.toLocaleDateString('en-US', {
                     weekday: 'long',
@@ -11307,14 +11307,14 @@
                     day: 'numeric'
                 });
 
-                console.log('📝 Step 3: Setting time window...');
+                console.log('?? Step 3: Setting time window...');
                 // Format time window
                 const timeWindow = window.BookingConstants?.getTimeWindow(currentAssignBooking.requestedTimeWindow || currentAssignBooking.preferredTimeOfDay);
                 document.getElementById('assignTimeWindow').textContent = timeWindow ?
                     `${timeWindow.icon} ${timeWindow.label} (${timeWindow.description})` :
                     (currentAssignBooking.requestedTimeWindow || currentAssignBooking.preferredTimeOfDay || 'Any');
 
-                console.log('📝 Step 4: Loading services dropdown...');
+                console.log('?? Step 4: Loading services dropdown...');
                 // Load services dropdown
                 const serviceSelect = document.getElementById('assignTimeServiceSelect');
                 if (adminBookingServices && adminBookingServices.length > 0) {
@@ -11323,12 +11323,12 @@
                     serviceSelect.value = currentAssignBooking.serviceId || '';
                 }
 
-                console.log('📝 Step 5: Pre-selecting stylist and date...');
+                console.log('?? Step 5: Pre-selecting stylist and date...');
                 // Pre-select stylist and date
                 document.getElementById('assignTimeStylist').value = currentAssignBooking.stylistId || '';
                 document.getElementById('assignTimeDate').value = currentAssignBooking.requestedDate || currentAssignBooking.date;
 
-                console.log('📝 Step 6: Loading stylists dropdown...');
+                console.log('?? Step 6: Loading stylists dropdown...');
                 // Load stylists dropdown
                 const stylistSelect = document.getElementById('assignTimeStylist');
                 if (adminBookingStylists && adminBookingStylists.length > 0) {
@@ -11338,22 +11338,22 @@
                 }
 
                 // Reset
-                console.log('📝 Step 7: Resetting form...');
+                console.log('?? Step 7: Resetting form...');
                 selectedTimeSlot = null;
                 document.getElementById('assignTimeError').style.display = 'none';
 
                 // Load schedule if stylist and date are selected
-                console.log('📝 Step 8: Checking if we need to load schedule...');
+                console.log('?? Step 8: Checking if we need to load schedule...');
                 if (currentAssignBooking.stylistId && (currentAssignBooking.requestedDate || currentAssignBooking.date)) {
-                    console.log('📝 Step 9: Loading stylist schedule...');
+                    console.log('?? Step 9: Loading stylist schedule...');
                     await loadStylistSchedule();
                 }
 
-                console.log('📝 Step 10: Opening modal...');
+                console.log('?? Step 10: Opening modal...');
                 openModal('assignTimeModal');
-                console.log('✅ Modal opened successfully!');
+                console.log('? Modal opened successfully!');
             } catch (error) {
-                console.error('❌ Error in openAssignTimeModal:', error);
+                console.error('? Error in openAssignTimeModal:', error);
                 console.error('Error stack:', error.stack);
                 alert('Error opening assign modal: ' + error.message);
             }
@@ -11460,7 +11460,7 @@
                     })
                 });
 
-                alert('✅ Time assigned successfully! Booking is now confirmed.');
+                alert('? Time assigned successfully! Booking is now confirmed.');
                 closeModal('assignTimeModal');
                 loadBookings();
             } catch (error) {
@@ -11503,8 +11503,8 @@
                             <td>${s.specialty || 'Stylist'}</td>
                             <td><span class="status-badge status-${s.available !== false ? 'confirmed' : 'cancelled'}">${s.available !== false ? 'Active' : 'Inactive'}</span></td>
                             <td>
-                                <button class="btn btn-sm btn-outline" onclick="editTeamMember('${s.id}')" title="Edit">✏️</button>
-                                <button class="btn btn-sm btn-outline" onclick="deleteTeamMember('${s.id}')" style="margin-left:6px; color: var(--danger);" title="Delete">🗑️</button>
+                                <button class="btn btn-sm btn-outline" onclick="editTeamMember('${s.id}')" title="Edit">??</button>
+                                <button class="btn btn-sm btn-outline" onclick="deleteTeamMember('${s.id}')" style="margin-left:6px; color: var(--danger);" title="Delete">???</button>
                             </td>
                         </tr>
                     `).join('');
@@ -12303,10 +12303,10 @@
                 : '';
 
             // Tier badge
-            const tierIcons = { bronze: '🥉', silver: '🥈', gold: '🥇', platinum: '👑' };
+            const tierIcons = { bronze: '??', silver: '??', gold: '??', platinum: '??' };
             const tier = profile.tier || 'bronze';
             document.getElementById('profileTierBadge').innerHTML = `
-                <span class="tier-icon">${tierIcons[tier] || '🏅'}</span>
+                <span class="tier-icon">${tierIcons[tier] || '??'}</span>
                 <span class="tier-name">${tier.charAt(0).toUpperCase() + tier.slice(1)} Member</span>
             `;
 
@@ -12363,7 +12363,7 @@
             (profile.bookings || []).slice(0, 3).forEach(b => {
                 activities.push({
                     type: 'booking',
-                    icon: '📅',
+                    icon: '??',
                     title: b.serviceName || b.service_name || 'Booking',
                     date: b.date,
                     amount: b.price || b.total
@@ -12374,7 +12374,7 @@
             (profile.orders || []).slice(0, 3).forEach(o => {
                 activities.push({
                     type: 'order',
-                    icon: '🛒',
+                    icon: '??',
                     title: `Order #${(o.id || '').slice(-6).toUpperCase()}`,
                     date: o.createdAt || o.created_at,
                     amount: o.total
@@ -12385,7 +12385,7 @@
             (profile.invoices || []).slice(0, 3).forEach(i => {
                 activities.push({
                     type: 'invoice',
-                    icon: '📄',
+                    icon: '??',
                     title: `Invoice ${i.invoice_number || i.id?.slice(-6).toUpperCase()}`,
                     date: i.created_at,
                     amount: i.total || i.calculated_total
@@ -12455,7 +12455,7 @@
                 </div>
             ` : `
                 <div class="tier-progress-text" style="color: var(--success);">
-                    ✨ Highest tier achieved!
+                    ? Highest tier achieved!
                 </div>
             `;
 
@@ -12609,7 +12609,7 @@
             grid.innerHTML = photos.map(p => `
                 <div class="inspo-photo-card" onclick="viewInspoPhoto('${p.id}')">
                     <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--surface-muted);">
-                        <span style="font-size: 40px; opacity: 0.5;">📸</span>
+                        <span style="font-size: 40px; opacity: 0.5;">??</span>
                     </div>
                     <div class="inspo-photo-overlay">
                         ${p.label || p.notes || formatDate(p.created_at)}
@@ -12693,8 +12693,8 @@
                     <div class="chat-conversation-group">
                         <div class="chat-conversation-header">
                             <span class="chat-conversation-date">
-                                ${conv.source === 'admin_initiated' ? '📤 Started by admin' : '📥 Started by customer'}
-                                · ${formatDate(conv.createdAt)}
+                                ${conv.source === 'admin_initiated' ? '?? Started by admin' : '?? Started by customer'}
+                                � ${formatDate(conv.createdAt)}
                             </span>
                             <span class="chat-conversation-status ${statusClass}">${statusLabel}</span>
                         </div>
@@ -12862,7 +12862,7 @@
                                     <td ${stockClass}>${p.stock}${stockBadge}</td>
                                     <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
                                     <td class="action-btns" style="gap: 6px;">
-                                        <button class="btn btn-sm" onclick="editProduct('${p.id}')" title="Edit product">✏️ Edit</button>
+                                        <button class="btn btn-sm" onclick="editProduct('${p.id}')" title="Edit product">?? Edit</button>
                                         <button class="btn btn-sm" onclick="deleteProduct('${p.id}')" title="Delete product" style="color: var(--danger);">Delete</button>
                                     </td>
                                 </tr>
@@ -12960,7 +12960,7 @@
                         <td ${stockClass}>${p.stock}${stockBadge}</td>
                         <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
                         <td class="action-btns" style="gap: 6px;">
-                            <button class="btn btn-sm" onclick="editProduct('${p.id}')" title="Edit product">✏️ Edit</button>
+                            <button class="btn btn-sm" onclick="editProduct('${p.id}')" title="Edit product">?? Edit</button>
                             <button class="btn btn-sm" onclick="deleteProduct('${p.id}')" title="Delete product" style="color: var(--danger);">Delete</button>
                         </td>
                     </tr>
@@ -13165,7 +13165,7 @@
 
                     const actions = [];
                     if (r.status !== 'paid') {
-                        actions.push(`<button class="btn btn-sm btn-outline" onclick="recalculatePayroll('${r.id}')" title="Recalculate">🔄</button>`);
+                        actions.push(`<button class="btn btn-sm btn-outline" onclick="recalculatePayroll('${r.id}')" title="Recalculate">??</button>`);
                     }
                     if (r.status === 'draft') {
                         actions.push(`<button class="btn btn-sm" onclick="finalizePayroll('${r.id}')">Finalize</button>`);
@@ -13174,7 +13174,7 @@
                         actions.push(`<button class="btn btn-sm btn-primary" onclick="markPayrollPaid('${r.id}')">Mark Paid</button>`);
                     }
                     if (r.status !== 'paid') {
-                        actions.push(`<button class="btn btn-sm btn-outline" onclick="deletePayroll('${r.id}')" style="color: var(--danger);" title="Delete">🗑️</button>`);
+                        actions.push(`<button class="btn btn-sm btn-outline" onclick="deletePayroll('${r.id}')" style="color: var(--danger);" title="Delete">???</button>`);
                     }
 
                     return `
@@ -13433,7 +13433,7 @@
                     const total = formatCurrencyZAR(o.total || 0);
                     const delivery = formatDeliveryLabel(o.deliveryMethod || o.delivery_method || 'pickup');
                     const createdAt = formatDateDisplay(o.createdAt || o.created_at);
-                    const idShort = o.id ? `#${o.id.substring(0, 8)}` : '—';
+                    const idShort = o.id ? `#${o.id.substring(0, 8)}` : '�';
 
                     const actions = [];
                     if (statusKey !== 'processing' && statusKey !== 'cancelled' && statusKey !== 'delivered') {
@@ -13548,9 +13548,9 @@
                                 <td class="action-btns" style="display: flex; gap: 4px;">
                                     <button class="btn btn-sm" onclick="togglePromo('${p.id}', ${!p.active})">${p.active ? 'Disable' : 'Enable'}</button>
                                     <button class="btn btn-sm btn-outline" onclick="toggleHighlighted('${p.id}', ${!p.highlighted})" title="${p.highlighted ? 'Remove from' : 'Add to'} Special Offers">
-                                        ${p.highlighted ? '⭐' : '☆'}
+                                        ${p.highlighted ? '?' : '?'}
                                     </button>
-                                    <button class="btn btn-sm btn-outline" onclick="editPromo('${p.id}')" title="Edit">✏️</button>
+                                    <button class="btn btn-sm btn-outline" onclick="editPromo('${p.id}')" title="Edit">??</button>
                                 </td>
                             </tr>
                         `).join('');
@@ -14039,7 +14039,7 @@
 
                 if (rewardTrackDefinitions.length === 0) {
                     container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--gray-medium); background: var(--gray-light); border-radius: 8px;">' +
-                        '<span style="font-size: 48px; display: block; margin-bottom: 15px;">🎁</span>' +
+                        '<span style="font-size: 48px; display: block; margin-bottom: 15px;">??</span>' +
                         '<p style="margin-bottom: 15px;">No reward tracks configured yet.</p>' +
                         '<button class="btn btn-primary" onclick="showAddTrackModal()">Create Your First Track</button>' +
                     '</div>';
@@ -14049,7 +14049,7 @@
                 container.innerHTML = rewardTrackDefinitions.map(function(track) {
                     var milestones = typeof track.milestones === 'string' ? JSON.parse(track.milestones) : (track.milestones || []);
                     var trackTypeLabel = track.track_type === 'visit_count' ? 'Visit-based' : 'Spend-based';
-                    var trackTypeIcon = track.track_type === 'visit_count' ? '📊' : '💰';
+                    var trackTypeIcon = track.track_type === 'visit_count' ? '??' : '??';
 
                     var milestonesHtml = milestones.map(function(m, idx) {
                         if (track.track_type === 'visit_count') {
@@ -14072,10 +14072,10 @@
                     return '<div style="background: white; border: 1px solid var(--gray-light); border-radius: 12px; overflow: hidden;">' +
                         '<div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background: ' + (track.active ? 'linear-gradient(135deg, #fff5f8 0%, #ffe8ee 100%)' : 'var(--gray-light)') + ';">' +
                             '<div style="display: flex; align-items: center; gap: 15px;">' +
-                                '<span style="font-size: 32px;">' + (track.icon || '🎁') + '</span>' +
+                                '<span style="font-size: 32px;">' + (track.icon || '??') + '</span>' +
                                 '<div>' +
                                     '<h4 style="margin: 0; font-size: 18px;">' + track.display_name + '</h4>' +
-                                    '<p style="margin: 5px 0 0; font-size: 13px; color: var(--gray-medium);">' + trackTypeIcon + ' ' + trackTypeLabel + ' • ' + (track.reward_expiry_days || 90) + ' days expiry</p>' +
+                                    '<p style="margin: 5px 0 0; font-size: 13px; color: var(--gray-medium);">' + trackTypeIcon + ' ' + trackTypeLabel + ' � ' + (track.reward_expiry_days || 90) + ' days expiry</p>' +
                                 '</div>' +
                             '</div>' +
                             '<div style="display: flex; align-items: center; gap: 10px;">' +
@@ -14251,18 +14251,18 @@
                 }).filter(Boolean).join(', ');
 
                 return '<div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: var(--gray-light); border-radius: 8px;">' +
-                    '<span style="font-size: 24px;">' + (track.icon || '🎁') + '</span>' +
+                    '<span style="font-size: 24px;">' + (track.icon || '??') + '</span>' +
                     '<div style="flex: 1;">' +
                         '<div style="font-weight: 600;">' + track.display_name + '</div>' +
                         '<div style="font-size: 12px; color: var(--gray-medium);">' +
-                            (track.track_type === 'visit_count' ? 'Visit-based' : 'Spend-based') + ' • ' +
-                            (milestonesText || 'No milestones') + ' • ' +
+                            (track.track_type === 'visit_count' ? 'Visit-based' : 'Spend-based') + ' � ' +
+                            (milestonesText || 'No milestones') + ' � ' +
                             'Expires in ' + (track.reward_expiry_days || 90) + ' days' +
                         '</div>' +
                     '</div>' +
                     '<div style="display: flex; gap: 5px;">' +
                         '<button class="btn btn-sm btn-outline" onclick="editTrack(\'' + track.id + '\')" title="Edit">Edit</button>' +
-                        '<button class="btn btn-sm btn-danger" onclick="deleteTrack(\'' + track.id + '\')" title="Delete">×</button>' +
+                        '<button class="btn btn-sm btn-danger" onclick="deleteTrack(\'' + track.id + '\')" title="Delete">�</button>' +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -14278,9 +14278,9 @@
             container.innerHTML = categoryMappings.map(mapping =>
                 '<div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--primary-light); border-radius: 20px; font-size: 13px;">' +
                     '<span style="font-weight: 500;">' + mapping.category_name + '</span>' +
-                    '<span style="color: var(--gray-medium);">→</span>' +
+                    '<span style="color: var(--gray-medium);">?</span>' +
                     '<span>' + mapping.track_name + '</span>' +
-                    '<button onclick="deleteCategoryMapping(\'' + mapping.id + '\')" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0 4px;" title="Remove">×</button>' +
+                    '<button onclick="deleteCategoryMapping(\'' + mapping.id + '\')" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0 4px;" title="Remove">�</button>' +
                 '</div>'
             ).join('');
         }
@@ -14309,7 +14309,7 @@
                     '<td style="padding: 8px;">' + (m.track_name || m.track_id) + '</td>' +
                     '<td style="padding: 8px;">' + (m.points_multiplier || 1.0) + 'x</td>' +
                     '<td style="padding: 8px;">' +
-                        '<button onclick="deleteServiceMapping(\'' + m.id + '\')" class="btn btn-sm btn-danger">×</button>' +
+                        '<button onclick="deleteServiceMapping(\'' + m.id + '\')" class="btn btn-sm btn-danger">�</button>' +
                     '</td>' +
                 '</tr>';
             });
@@ -14485,7 +14485,7 @@
                             '</div>' +
                             '<div class="form-group" style="flex: 1;">' +
                                 '<label class="form-label">Icon</label>' +
-                                '<input type="text" id="trackIcon" class="form-input" placeholder="Emoji" value="' + (track ? (track.icon || '🎁') : '🎁') + '" style="width: 80px;">' +
+                                '<input type="text" id="trackIcon" class="form-input" placeholder="Emoji" value="' + (track ? (track.icon || '??') : '??') + '" style="width: 80px;">' +
                             '</div>' +
                             '<div class="form-group" style="flex: 1;">' +
                                 '<label class="form-label">Expiry (days)</label>' +
@@ -14543,7 +14543,7 @@
                             '<input type="checkbox" class="milestone-repeating"' + (m.repeating ? ' checked' : '') + ' onchange="updateMilestoneData(' + idx + ')">' +
                             '<span>Repeat</span>' +
                         '</label>' +
-                        '<button type="button" class="btn btn-sm" style="background: var(--danger); color: white; padding: 4px 8px;" onclick="removeMilestoneRow(' + idx + ')">×</button>' +
+                        '<button type="button" class="btn btn-sm" style="background: var(--danger); color: white; padding: 4px 8px;" onclick="removeMilestoneRow(' + idx + ')">�</button>' +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -14627,7 +14627,7 @@
                 display_name: displayName,
                 description: description,
                 track_type: trackType,
-                icon: icon || '🎁',
+                icon: icon || '??',
                 reward_expiry_days: expiryDays,
                 milestones: milestones,
                 active: active
@@ -14706,7 +14706,7 @@
                     <input type="text" class="form-input ext-id" value="${et.id || ''}" placeholder="ID (e.g. tapes)" style="flex: 1;">
                     <input type="text" class="form-input ext-label" value="${et.label || ''}" placeholder="Label (e.g. Tape Extensions)" style="flex: 2;">
                     <input type="number" class="form-input ext-days" value="${et.maintenanceDays || 0}" placeholder="Days" min="0" style="width: 100px;">
-                    <button class="btn btn-outline" onclick="removeExtensionType(${index})" style="padding: 8px 12px;">×</button>
+                    <button class="btn btn-outline" onclick="removeExtensionType(${index})" style="padding: 8px 12px;">�</button>
                 </div>
             `).join('');
 
@@ -14747,7 +14747,7 @@
             container.innerHTML = tips.map((tip, index) => `
                 <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;" data-tip-index="${index}">
                     <input type="text" class="form-input tip-text" value="${tip}" placeholder="Enter care tip..." style="flex: 1;">
-                    <button class="btn btn-outline" onclick="removeTrackerTip(${index})" style="padding: 8px 12px;">×</button>
+                    <button class="btn btn-outline" onclick="removeTrackerTip(${index})" style="padding: 8px 12px;">�</button>
                 </div>
             `).join('');
         }
@@ -14990,7 +14990,7 @@
             toast.className = `admin-toast ${tone === 'error' ? 'error' : tone === 'success' ? 'success' : ''}`;
             toast.innerHTML = `
                 <span>${message}</span>
-                <button class="toast-close" aria-label="Close" onclick="this.closest('.admin-toast').remove()">×</button>
+                <button class="toast-close" aria-label="Close" onclick="this.closest('.admin-toast').remove()">�</button>
             `;
             container.appendChild(toast);
             setTimeout(() => {
@@ -15201,7 +15201,7 @@
                 const data = categoryMap[cat];
                 const percentage = Math.round((data.assigned / data.total) * 100);
                 const cardClass = data.assigned === data.total ? 'full' : data.assigned > 0 ? 'partial' : '';
-                const statusText = data.assigned === data.total ? '✓ All assigned' :
+                const statusText = data.assigned === data.total ? '? All assigned' :
                                    data.assigned > 0 ? `${data.assigned} of ${data.total} assigned` :
                                    `${data.total} services`;
 
@@ -15433,7 +15433,7 @@
                 <div class="service-item">
                     <div class="service-item-info">
                         <div class="service-item-name">${service.name}</div>
-                        <div class="service-item-meta">${service.category} • R${service.price} • ${service.duration || '–'}min</div>
+                        <div class="service-item-meta">${service.category} � R${service.price} � ${service.duration || '�'}min</div>
                     </div>
                     <button class="btn btn-sm btn-primary" onclick="addServiceToStaff('${service.id}')">Add</button>
                 </div>
@@ -15447,7 +15447,7 @@
             if (staffCurrentServices.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 60px 20px; color: var(--text-subtle);">
-                        <div style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;">📋</div>
+                        <div style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;">??</div>
                         <p style="margin: 0;">No services assigned yet</p>
                         <p style="margin: 10px 0 0 0; font-size: 13px;">Use the "Add by Category" tab to quickly assign services</p>
                     </div>
@@ -15481,7 +15481,7 @@
                                 <div class="service-item-info">
                                     <div class="service-item-name">${ss.service_name}</div>
                                     <div class="service-item-meta">
-                                        R${ss.custom_price || ss.default_price} • ${ss.custom_duration || ss.default_duration || '–'}min
+                                        R${ss.custom_price || ss.default_price} � ${ss.custom_duration || ss.default_duration || '�'}min
                                         ${ss.custom_price || ss.custom_duration ? ' <span style="color: var(--primary);">(custom)</span>' : ''}
                                     </div>
                                 </div>
@@ -16996,13 +16996,13 @@
                         </div>
                         <div style="display: flex; gap: 8px; flex-shrink: 0;">
                             <button class="btn btn-sm btn-outline" onclick="toggleHairTip('${tip.id}')" title="${tip.active ? 'Deactivate' : 'Activate'}">
-                                ${tip.active ? '👁️' : '👁️‍🗨️'}
+                                ${tip.active ? '???' : '???????'}
                             </button>
                             <button class="btn btn-sm btn-outline" onclick="editHairTip('${tip.id}')" title="Edit">
-                                ✏️
+                                ??
                             </button>
                             <button class="btn btn-sm btn-outline" onclick="deleteHairTip('${tip.id}')" title="Delete" style="color: var(--danger);">
-                                🗑️
+                                ???
                             </button>
                         </div>
                     </div>
@@ -17436,11 +17436,11 @@
             // Status badge
             const statusBadge = document.getElementById('payfastStatusBadge');
             if (payfast.configured) {
-                statusBadge.textContent = '✓ Configured';
+                statusBadge.textContent = '? Configured';
                 statusBadge.style.background = 'var(--success)';
                 statusBadge.style.display = 'inline-block';
             } else {
-                statusBadge.textContent = '⚠ Not Configured';
+                statusBadge.textContent = '? Not Configured';
                 statusBadge.style.background = 'var(--warning)';
                 statusBadge.style.display = 'inline-block';
             }
@@ -17455,9 +17455,9 @@
             // Passphrase indicator
             const passphraseIcon = document.getElementById('payfastPassphraseIcon');
             if (payfast.hasPassphrase) {
-                passphraseIcon.innerHTML = '<span style="color: var(--success);">✓</span>';
+                passphraseIcon.innerHTML = '<span style="color: var(--success);">?</span>';
             } else {
-                passphraseIcon.innerHTML = '<span style="color: var(--gray-medium);">✗</span>';
+                passphraseIcon.innerHTML = '<span style="color: var(--gray-medium);">?</span>';
             }
 
             // Missing vars
@@ -17478,11 +17478,11 @@
             // Status badge
             const statusBadge = document.getElementById('yocoStatusBadge');
             if (yoco.configured) {
-                statusBadge.textContent = '✓ Configured';
+                statusBadge.textContent = '? Configured';
                 statusBadge.style.background = 'var(--success)';
                 statusBadge.style.display = 'inline-block';
             } else {
-                statusBadge.textContent = '⚠ Not Configured';
+                statusBadge.textContent = '? Not Configured';
                 statusBadge.style.background = 'var(--warning)';
                 statusBadge.style.display = 'inline-block';
             }
@@ -17497,16 +17497,16 @@
             // Icons for configured items
             const publicKeyIcon = document.getElementById('yocoPublicKeyIcon');
             if (yoco.hasPublicKey) {
-                publicKeyIcon.innerHTML = '<span style="color: var(--success);">✓</span>';
+                publicKeyIcon.innerHTML = '<span style="color: var(--success);">?</span>';
             } else {
-                publicKeyIcon.innerHTML = '<span style="color: var(--gray-medium);">✗</span>';
+                publicKeyIcon.innerHTML = '<span style="color: var(--gray-medium);">?</span>';
             }
 
             const webhookSecretIcon = document.getElementById('yocoWebhookSecretIcon');
             if (yoco.hasWebhookSecret) {
-                webhookSecretIcon.innerHTML = '<span style="color: var(--success);">✓</span>';
+                webhookSecretIcon.innerHTML = '<span style="color: var(--success);">?</span>';
             } else {
-                webhookSecretIcon.innerHTML = '<span style="color: var(--warning);">⚠</span>';
+                webhookSecretIcon.innerHTML = '<span style="color: var(--warning);">?</span>';
             }
 
             // Missing vars
@@ -17911,10 +17911,10 @@
 
             // Set border and icon based on type
             const colors = {
-                success: { border: '#4CAF50', icon: '✓' },
-                error: { border: '#e74c3c', icon: '✕' },
-                warning: { border: '#FF9800', icon: '⚠' },
-                info: { border: '#2196F3', icon: 'ℹ' }
+                success: { border: '#4CAF50', icon: '?' },
+                error: { border: '#e74c3c', icon: '?' },
+                warning: { border: '#FF9800', icon: '?' },
+                info: { border: '#2196F3', icon: '?' }
             };
 
             const config = colors[type] || colors.info;
@@ -17936,7 +17936,7 @@
 
             // Add close button
             const closeBtn = document.createElement('button');
-            closeBtn.innerHTML = '×';
+            closeBtn.innerHTML = '�';
             closeBtn.style.cssText = `
                 background: none;
                 border: none;
@@ -18406,7 +18406,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-soft);">
                             <div>
                                 <div style="font-weight: 500;">R${parseFloat(p.amount).toFixed(2)}</div>
-                                <div style="font-size: 12px; color: var(--text-muted);">${p.payment_method} ${p.reference ? `• ${p.reference}` : ''}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">${p.payment_method} ${p.reference ? `� ${p.reference}` : ''}</div>
                             </div>
                             <div style="font-size: 13px; color: var(--text-muted);">${formatDate(p.payment_date)}</div>
                         </div>
@@ -19608,7 +19608,7 @@ Would you like to perform an action on this quote?
                 <div class="picker-item" onclick="addServiceToInvoice('${service.id}')">
                     <div class="picker-item-info">
                         <h5>${service.name}</h5>
-                        <span>${service.category || 'General'} • ${service.duration || 60} min</span>
+                        <span>${service.category || 'General'} � ${service.duration || 60} min</span>
                     </div>
                     <div class="picker-item-price">R${(service.price || 0).toFixed(2)}</div>
                 </div>
@@ -19810,7 +19810,7 @@ Would you like to perform an action on this quote?
                 <div class="invoice-line-item">
                     <div class="invoice-line-item-info">
                         <h5>${product.product_name}</h5>
-                        <span>${product.product_category} • ${product.product_type === 'retail' ? '🛍️ Retail' : '🎨 Service'}</span>
+                        <span>${product.product_category} � ${product.product_type === 'retail' ? '??? Retail' : '?? Service'}</span>
                     </div>
                     <div class="invoice-line-item-qty">
                         <span>Qty:</span>
