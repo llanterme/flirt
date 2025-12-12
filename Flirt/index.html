@@ -916,14 +916,9 @@
             </div>
             <div class="footer-col">
                 <h4>CONTACT</h4>
-                <p>
-                    Shop 5, Willowbridge Centre<br>
-                    Carl Cronje Drive<br>
-                    Bellville, Cape Town<br>
-                    <br>
-                    Tel: 021 123 4567<br>
-                    Email: info@flirt.hair
-                </p>
+                <div id="footerContactInfo">
+                    <p>Loading...</p>
+                </div>
             </div>
         </div>
         <div class="footer-bottom">
@@ -996,9 +991,52 @@
             });
         });
 
+        // Load business contact info from API
+        async function loadBusinessInfo() {
+            try {
+                const response = await fetch('/api/business-info');
+                const data = await response.json();
+
+                if (data.success && data.business) {
+                    const biz = data.business;
+                    const contactDiv = document.getElementById('footerContactInfo');
+
+                    let addressParts = [];
+                    if (biz.address_line1) addressParts.push(biz.address_line1);
+                    if (biz.address_line2) addressParts.push(biz.address_line2);
+                    if (biz.address_city) addressParts.push(biz.address_city);
+                    if (biz.address_postal) addressParts.push(biz.address_postal);
+
+                    let contactHtml = '<p>';
+                    if (addressParts.length > 0) {
+                        contactHtml += addressParts.join('<br>') + '<br><br>';
+                    }
+                    if (biz.phone) {
+                        contactHtml += `Tel: ${biz.phone}<br>`;
+                        // Update WhatsApp link with actual phone
+                        const whatsappLink = document.querySelector('a[href*="wa.me"]');
+                        if (whatsappLink) {
+                            const cleanPhone = biz.phone.replace(/[^0-9]/g, '');
+                            whatsappLink.href = `https://wa.me/${cleanPhone}`;
+                        }
+                    }
+                    if (biz.email) {
+                        contactHtml += `Email: ${biz.email}`;
+                    }
+                    contactHtml += '</p>';
+
+                    contactDiv.innerHTML = contactHtml;
+                }
+            } catch (error) {
+                console.log('Business info will use defaults');
+                document.getElementById('footerContactInfo').innerHTML = '<p>Contact us via the app</p>';
+            }
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadLatestProducts();
+            loadBusinessInfo();
         });
     </script>
 </body>
