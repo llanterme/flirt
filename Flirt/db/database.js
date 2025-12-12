@@ -1014,6 +1014,7 @@ async function migrateBusinessSettings() {
         const tableInfo = await dbAll(`PRAGMA table_info(business_settings)`);
         const hasKeyColumn = tableInfo.some(col => col.name === 'key');
         const hasHoursJsonColumn = tableInfo.some(col => col.name === 'hours_json');
+        const hasAddressLine1 = tableInfo.some(col => col.name === 'address_line1');
 
         if (hasKeyColumn && !hasHoursJsonColumn) {
             console.log('Migrating business_settings from key-value to singleton structure...');
@@ -1030,14 +1031,21 @@ async function migrateBusinessSettings() {
             // Drop old table
             await dbRun('DROP TABLE IF EXISTS business_settings');
 
-            // Create new structure
+            // Create new structure with all columns
             await dbRun(`
                 CREATE TABLE business_settings (
                     id INTEGER PRIMARY KEY CHECK (id = 1),
-                    business_name TEXT DEFAULT 'Flirt Hair Extensions',
+                    business_name TEXT DEFAULT 'Flirt Hair & Beauty Bar',
+                    address TEXT DEFAULT '58 Nuwe Hoop St, Maroelana, Pretoria, 0081, South Africa',
+                    address_line1 TEXT DEFAULT 'Shop 5, Lifestyle Centre',
+                    address_line2 TEXT DEFAULT 'Corner Witkoppen & Cedar Road',
+                    address_city TEXT DEFAULT 'Fourways, Johannesburg',
+                    address_postal TEXT DEFAULT '2191',
                     email TEXT DEFAULT 'hello@flirthair.co.za',
                     phone TEXT DEFAULT '+27 71 617 8519',
-                    address TEXT DEFAULT '58 Nuwe Hoop St, Maroelana, Pretoria, 0081, South Africa',
+                    website TEXT DEFAULT '',
+                    vat_registered TEXT DEFAULT 'false',
+                    vat_number TEXT DEFAULT '',
                     hours_json TEXT DEFAULT '{"mon":{"open":"08:00","close":"18:00"},"tue":{"open":"08:00","close":"18:00"},"wed":{"open":"08:00","close":"18:00"},"thu":{"open":"08:00","close":"18:00"},"fri":{"open":"08:00","close":"18:00"},"sat":{"open":"09:00","close":"16:00"},"sun":null}',
                     updated_at TEXT DEFAULT (datetime('now'))
                 )
@@ -1047,23 +1055,51 @@ async function migrateBusinessSettings() {
             await dbRun('INSERT INTO business_settings (id) VALUES (1)');
 
             // Apply any existing values from key-value store
-            if (settings.business_name) {
-                await dbRun('UPDATE business_settings SET business_name = ? WHERE id = 1', [settings.business_name]);
-            }
-            if (settings.email) {
-                await dbRun('UPDATE business_settings SET email = ? WHERE id = 1', [settings.email]);
-            }
-            if (settings.phone) {
-                await dbRun('UPDATE business_settings SET phone = ? WHERE id = 1', [settings.phone]);
+            const columnMap = {
+                'business_name': 'business_name',
+                'email': 'email',
+                'phone': 'phone',
+                'address_line1': 'address_line1',
+                'address_line2': 'address_line2',
+                'address_city': 'address_city',
+                'address_postal': 'address_postal',
+                'vat_registered': 'vat_registered',
+                'vat_number': 'vat_number',
+                'website': 'website'
+            };
+
+            for (const [key, column] of Object.entries(columnMap)) {
+                if (settings[key]) {
+                    await dbRun(`UPDATE business_settings SET ${column} = ? WHERE id = 1`, [settings[key]]);
+                }
             }
 
             console.log('Business settings table migrated successfully.');
-        } else if (!hasHoursJsonColumn) {
-            // Table exists but doesn't have hours_json column - add it
-            console.log('Adding hours_json column to business_settings...');
-            await dbRun(`ALTER TABLE business_settings ADD COLUMN hours_json TEXT DEFAULT '{"mon":{"open":"08:00","close":"18:00"},"tue":{"open":"08:00","close":"18:00"},"wed":{"open":"08:00","close":"18:00"},"thu":{"open":"08:00","close":"18:00"},"fri":{"open":"08:00","close":"18:00"},"sat":{"open":"09:00","close":"16:00"},"sun":null}'`).catch(() => {});
-            console.log('Added hours_json column to business_settings.');
+        } else {
+            // Ensure all required columns exist (for existing singleton tables)
+            const columnsToAdd = [
+                { name: 'hours_json', def: `TEXT DEFAULT '{"mon":{"open":"08:00","close":"18:00"},"tue":{"open":"08:00","close":"18:00"},"wed":{"open":"08:00","close":"18:00"},"thu":{"open":"08:00","close":"18:00"},"fri":{"open":"08:00","close":"18:00"},"sat":{"open":"09:00","close":"16:00"},"sun":null}'` },
+                { name: 'address_line1', def: `TEXT DEFAULT 'Shop 5, Lifestyle Centre'` },
+                { name: 'address_line2', def: `TEXT DEFAULT 'Corner Witkoppen & Cedar Road'` },
+                { name: 'address_city', def: `TEXT DEFAULT 'Fourways, Johannesburg'` },
+                { name: 'address_postal', def: `TEXT DEFAULT '2191'` },
+                { name: 'vat_registered', def: `TEXT DEFAULT 'false'` },
+                { name: 'vat_number', def: `TEXT DEFAULT ''` },
+                { name: 'website', def: `TEXT DEFAULT ''` }
+            ];
+
+            for (const col of columnsToAdd) {
+                const exists = tableInfo.some(c => c.name === col.name);
+                if (!exists) {
+                    console.log(`Adding ${col.name} column to business_settings...`);
+                    await dbRun(`ALTER TABLE business_settings ADD COLUMN ${col.name} ${col.def}`).catch(() => {});
+                }
+            }
         }
+
+        // Ensure the singleton row exists
+        await dbRun('INSERT OR IGNORE INTO business_settings (id) VALUES (1)');
+
     } catch (error) {
         console.error('Error migrating business_settings:', error.message);
     }
@@ -4064,44 +4100,32 @@ const QuoteRepository = new QuoteRepositoryClass(getDb());
 
 // ============================================
 // BUSINESS SETTINGS REPOSITORY
+// Uses singleton row structure (id=1) with named columns
 // ============================================
 const BusinessSettingsRepository = {
     // Get all business settings as an object
     async getAll() {
-        const rows = await dbAll('SELECT key, value FROM business_settings');
-        const settings = {};
-        for (const row of rows) {
-            settings[row.key] = row.value;
+        // First try singleton structure
+        const row = await dbGet('SELECT * FROM business_settings WHERE id = 1');
+        if (row) {
+            // Return as key-value object for API compatibility
+            return {
+                business_name: row.business_name || 'Flirt Hair & Beauty Bar',
+                address_line1: row.address_line1 || '',
+                address_line2: row.address_line2 || '',
+                address_city: row.address_city || '',
+                address_postal: row.address_postal || '',
+                address: row.address || '',
+                vat_registered: row.vat_registered || 'false',
+                vat_number: row.vat_number || '',
+                phone: row.phone || '',
+                email: row.email || '',
+                website: row.website || '',
+                hours_json: row.hours_json || '{}'
+            };
         }
-        return settings;
-    },
-
-    // Get a single setting by key
-    async get(key) {
-        const row = await dbGet('SELECT value FROM business_settings WHERE key = ?', [key]);
-        return row ? row.value : null;
-    },
-
-    // Set a single setting
-    async set(key, value) {
-        await dbRun(`
-            INSERT INTO business_settings (key, value, updated_at)
-            VALUES (?, ?, datetime('now'))
-            ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')
-        `, [key, value]);
-    },
-
-    // Update multiple settings at once
-    async updateMany(settings) {
-        for (const [key, value] of Object.entries(settings)) {
-            await this.set(key, value);
-        }
-        return this.getAll();
-    },
-
-    // Initialize default settings if they don't exist
-    async initDefaults() {
-        const defaults = {
+        // Fallback - return defaults
+        return {
             business_name: 'Flirt Hair & Beauty Bar',
             address_line1: 'Shop 5, Lifestyle Centre',
             address_line2: 'Corner Witkoppen & Cedar Road',
@@ -4113,13 +4137,47 @@ const BusinessSettingsRepository = {
             email: '',
             website: ''
         };
+    },
 
-        for (const [key, value] of Object.entries(defaults)) {
-            const existing = await this.get(key);
-            if (existing === null) {
-                await this.set(key, value);
+    // Get a single setting by key
+    async get(key) {
+        const settings = await this.getAll();
+        return settings[key] || null;
+    },
+
+    // Set a single setting
+    async set(key, value) {
+        // Ensure row exists
+        await dbRun('INSERT OR IGNORE INTO business_settings (id) VALUES (1)');
+        // Update the specific column
+        const allowedColumns = ['business_name', 'address_line1', 'address_line2', 'address_city',
+                                'address_postal', 'address', 'vat_registered', 'vat_number',
+                                'phone', 'email', 'website', 'hours_json'];
+        if (allowedColumns.includes(key)) {
+            await dbRun(`UPDATE business_settings SET ${key} = ?, updated_at = datetime('now') WHERE id = 1`, [value]);
+        }
+    },
+
+    // Update multiple settings at once
+    async updateMany(settings) {
+        // Ensure row exists
+        await dbRun('INSERT OR IGNORE INTO business_settings (id) VALUES (1)');
+
+        const allowedColumns = ['business_name', 'address_line1', 'address_line2', 'address_city',
+                                'address_postal', 'address', 'vat_registered', 'vat_number',
+                                'phone', 'email', 'website', 'hours_json'];
+
+        for (const [key, value] of Object.entries(settings)) {
+            if (allowedColumns.includes(key)) {
+                await dbRun(`UPDATE business_settings SET ${key} = ?, updated_at = datetime('now') WHERE id = 1`, [value]);
             }
         }
+        return this.getAll();
+    },
+
+    // Initialize default settings if they don't exist
+    async initDefaults() {
+        await dbRun('INSERT OR IGNORE INTO business_settings (id) VALUES (1)');
     }
 };
 
