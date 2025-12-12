@@ -8636,7 +8636,7 @@ async function seedProductsDefaults() {
                 description: 'A dry powder finishing spray that allows for natural movement, yet holds everything in just the right place. The end result is your dream hair with a soft, velvety feel.',
                 price: 495,
                 stock: 20,
-                imageUrl: '/images/products/KMU387_DOO.OVER_250ml-02-300x300.png'
+                imageUrl: '/images/products/KMU296_DOO.OVER_250ML_NA-03-300x300.png'
             },
             {
                 id: 'prod_kevin-murphy-plumping-wash',
@@ -8672,7 +8672,7 @@ async function seedProductsDefaults() {
                 description: 'A moisturising shampoo for coloured hair. Kakadu Plum provides intensive hydration without weighing hair down.',
                 price: 450,
                 stock: 14,
-                imageUrl: '/images/products/HYDRATE-ME.WASH_250ml-300x300.png'
+                imageUrl: '/images/products/KMU116_HYDRATE-ME.WASH_250ml-03-300x300.png'
             },
             {
                 id: 'prod_kevin-murphy-hydrate-me-rinse',
@@ -8681,7 +8681,7 @@ async function seedProductsDefaults() {
                 description: 'A smoothing conditioner that deeply hydrates dry, coloured hair while adding shine and softness.',
                 price: 480,
                 stock: 14,
-                imageUrl: '/images/products/HYDRATE-ME.RINSE_250ml-300x300.png'
+                imageUrl: '/images/products/KMU118_HYDRATE-ME.RINSE_250ml-03-300x300.png'
             },
             // Hair Extensions
             {
@@ -8691,7 +8691,7 @@ async function seedProductsDefaults() {
                 description: 'Premium quality tape-in hair extensions, 18 inches long. Natural human hair, available in various colours.',
                 price: 2800,
                 stock: 25,
-                imageUrl: '/images/products/categories1.jpg'
+                imageUrl: '/images/categories/categories1.jpg'
             },
             {
                 id: 'prod_tape-extensions-22',
@@ -8700,7 +8700,7 @@ async function seedProductsDefaults() {
                 description: 'Premium quality tape-in hair extensions, 22 inches long. Natural human hair for length and volume.',
                 price: 3500,
                 stock: 20,
-                imageUrl: '/images/products/categories1.jpg'
+                imageUrl: '/images/categories/categories1.jpg'
             },
             {
                 id: 'prod_weft-extensions-18',
@@ -8709,7 +8709,7 @@ async function seedProductsDefaults() {
                 description: 'Hand-tied weft extensions, 18 inches. Perfect for adding volume and length with minimal damage.',
                 price: 3200,
                 stock: 15,
-                imageUrl: '/images/products/categories3.jpg'
+                imageUrl: '/images/categories/categories3.jpg'
             },
             {
                 id: 'prod_weft-extensions-22',
@@ -8718,7 +8718,7 @@ async function seedProductsDefaults() {
                 description: 'Hand-tied weft extensions, 22 inches. Luxurious length for stunning transformations.',
                 price: 4000,
                 stock: 12,
-                imageUrl: '/images/products/categories3.jpg'
+                imageUrl: '/images/categories/categories3.jpg'
             },
             // Hair Care Tools
             {
@@ -8792,20 +8792,56 @@ async function migrateProductImagesToLocal() {
     try {
         const products = await ProductRepository.findAll({});
         let updated = 0;
-        
+
+        // Map of incorrect filenames to correct ones
+        const filenameCorrections = {
+            'KMU387_DOO.OVER_250ml-02-300x300.png': 'KMU296_DOO.OVER_250ML_NA-03-300x300.png',
+            'HYDRATE-ME.WASH_250ml-300x300.png': 'KMU116_HYDRATE-ME.WASH_250ml-03-300x300.png',
+            'HYDRATE-ME.RINSE_250ml-300x300.png': 'KMU118_HYDRATE-ME.RINSE_250ml-03-300x300.png',
+        };
+
         for (const product of products) {
             const oldUrl = product.image_url || product.imageUrl;
-            if (!oldUrl || !oldUrl.includes('flirthair.co.za')) continue;
-            
-            // Extract filename from URL
-            const match = oldUrl.match(/\/([^\/]+\.(?:png|jpg|jpeg|gif|webp))$/i);
-            if (match) {
-                const newUrl = '/images/products/' + match[1];
+            if (!oldUrl) continue;
+
+            let newUrl = oldUrl;
+            let needsUpdate = false;
+
+            // Fix flirthair.co.za URLs
+            if (oldUrl.includes('flirthair.co.za')) {
+                const match = oldUrl.match(/\/([^\/]+\.(?:png|jpg|jpeg|gif|webp))$/i);
+                if (match) {
+                    const filename = match[1];
+                    // Check if it's a category image
+                    if (filename.startsWith('categories')) {
+                        newUrl = '/images/categories/' + filename;
+                    } else {
+                        newUrl = '/images/products/' + filename;
+                    }
+                    needsUpdate = true;
+                }
+            }
+
+            // Fix incorrect filenames
+            for (const [wrong, correct] of Object.entries(filenameCorrections)) {
+                if (newUrl.includes(wrong)) {
+                    newUrl = newUrl.replace(wrong, correct);
+                    needsUpdate = true;
+                }
+            }
+
+            // Fix /images/products/categories paths to /images/categories/
+            if (newUrl.includes('/images/products/categories')) {
+                newUrl = newUrl.replace('/images/products/categories', '/images/categories/categories');
+                needsUpdate = true;
+            }
+
+            if (needsUpdate) {
                 await ProductRepository.update(product.id, { image_url: newUrl });
                 updated++;
             }
         }
-        
+
         if (updated > 0) {
             console.log('Migrated ' + updated + ' product images to local paths');
         }
