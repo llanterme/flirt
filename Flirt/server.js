@@ -4984,7 +4984,7 @@ app.put('/api/admin/business-settings', authenticateAdmin, async (req, res) => {
     try {
         const allowedKeys = [
             'business_name', 'address_line1', 'address_line2', 'address_city',
-            'address_postal', 'vat_number', 'phone', 'email', 'website'
+            'address_postal', 'vat_registered', 'vat_number', 'phone', 'email', 'website', 'hours_json'
         ];
 
         const updates = {};
