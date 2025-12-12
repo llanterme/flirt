@@ -762,6 +762,11 @@ CREATE TABLE IF NOT EXISTS invoices (
     finalized_at TEXT,
     internal_notes TEXT,
     client_notes TEXT,
+    customer_type TEXT DEFAULT 'individual' CHECK(customer_type IN ('individual', 'company')),
+    company_name TEXT,
+    business_address TEXT,
+    vat_number TEXT,
+    company_reg TEXT,
     created_by TEXT REFERENCES users(id),
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT
@@ -904,3 +909,106 @@ INSERT OR IGNORE INTO discount_presets (id, name, discount_type, discount_value,
 ('loyalty_platinum', 'Platinum Member', 'percentage', 15, 3),
 ('first_time', 'First Visit', 'percentage', 10, 4),
 ('referral', 'Referral Bonus', 'fixed', 50, 5);
+
+-- ============================================
+-- QUOTES TABLE (Quote/Estimate header)
+-- ============================================
+CREATE TABLE IF NOT EXISTS quotes (
+    id TEXT PRIMARY KEY,
+    quote_number TEXT UNIQUE,
+    user_id TEXT REFERENCES users(id),
+    stylist_id TEXT REFERENCES stylists(id),
+    services_subtotal REAL DEFAULT 0,
+    products_subtotal REAL DEFAULT 0,
+    subtotal REAL NOT NULL,
+    discount_type TEXT CHECK(discount_type IN ('percentage', 'fixed', 'loyalty_points', 'promo_code', 'manual')),
+    discount_value REAL DEFAULT 0,
+    discount_amount REAL DEFAULT 0,
+    discount_reason TEXT,
+    tax_rate REAL DEFAULT 0.15,
+    tax_amount REAL DEFAULT 0,
+    total REAL NOT NULL,
+    status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'sent', 'accepted', 'declined', 'expired', 'converted')),
+    valid_until TEXT,
+    quote_date TEXT DEFAULT (date('now')),
+    accepted_at TEXT,
+    converted_invoice_id TEXT REFERENCES invoices(id),
+    internal_notes TEXT,
+    client_notes TEXT,
+    customer_type TEXT DEFAULT 'individual' CHECK(customer_type IN ('individual', 'company')),
+    company_name TEXT,
+    business_address TEXT,
+    vat_number TEXT,
+    company_reg TEXT,
+    created_by TEXT REFERENCES users(id),
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_quotes_user ON quotes(user_id);
+CREATE INDEX IF NOT EXISTS idx_quotes_stylist ON quotes(stylist_id);
+CREATE INDEX IF NOT EXISTS idx_quotes_status ON quotes(status);
+CREATE INDEX IF NOT EXISTS idx_quotes_valid_until ON quotes(valid_until);
+
+-- ============================================
+-- QUOTE_SERVICES TABLE (Service line items for quotes)
+-- ============================================
+CREATE TABLE IF NOT EXISTS quote_services (
+    id TEXT PRIMARY KEY,
+    quote_id TEXT NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
+    service_id TEXT REFERENCES services(id),
+    service_name TEXT NOT NULL,
+    service_description TEXT,
+    service_category TEXT,
+    unit_price REAL NOT NULL,
+    quantity REAL DEFAULT 1,
+    discount REAL DEFAULT 0,
+    total REAL NOT NULL,
+    duration_minutes INTEGER,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_quote_services_quote ON quote_services(quote_id);
+
+-- ============================================
+-- QUOTE_PRODUCTS TABLE (Product line items for quotes)
+-- ============================================
+CREATE TABLE IF NOT EXISTS quote_products (
+    id TEXT PRIMARY KEY,
+    quote_id TEXT NOT NULL REFERENCES quotes(id) ON DELETE CASCADE,
+    product_id TEXT REFERENCES products(id),
+    product_name TEXT NOT NULL,
+    product_category TEXT,
+    product_type TEXT CHECK(product_type IN ('service_product', 'retail')),
+    unit_price REAL NOT NULL,
+    quantity REAL NOT NULL,
+    discount REAL DEFAULT 0,
+    total REAL NOT NULL,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_quote_products_quote ON quote_products(quote_id);
+
+-- ============================================
+-- BUSINESS SETTINGS (Configurable business info)
+-- ============================================
+CREATE TABLE IF NOT EXISTS business_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Insert default business settings
+INSERT OR IGNORE INTO business_settings (key, value) VALUES
+('business_name', 'Flirt Hair & Beauty Bar'),
+('address_line1', 'Shop 5, Lifestyle Centre'),
+('address_line2', 'Corner Witkoppen & Cedar Road'),
+('address_city', 'Fourways, Johannesburg'),
+('address_postal', '2191'),
+('vat_registered', 'false'),
+('vat_number', ''),
+('phone', ''),
+('email', ''),
+('website', '');

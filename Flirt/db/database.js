@@ -460,6 +460,11 @@ async function initializeDatabase() {
             finalized_at TEXT,
             internal_notes TEXT,
             client_notes TEXT,
+            customer_type TEXT DEFAULT 'individual' CHECK(customer_type IN ('individual', 'company')),
+            company_name TEXT,
+            business_address TEXT,
+            vat_number TEXT,
+            company_reg TEXT,
             created_by TEXT REFERENCES users(id),
             created_at TEXT DEFAULT (datetime('now')),
             updated_at TEXT,
@@ -468,6 +473,13 @@ async function initializeDatabase() {
             FOREIGN KEY (stylist_id) REFERENCES stylists(id)
         )
     `);
+
+    // Add customer_type and company columns if they don't exist (for existing databases)
+    await dbRun(`ALTER TABLE invoices ADD COLUMN customer_type TEXT DEFAULT 'individual' CHECK(customer_type IN ('individual', 'company'))`).catch(() => {});
+    await dbRun(`ALTER TABLE invoices ADD COLUMN company_name TEXT`).catch(() => {});
+    await dbRun(`ALTER TABLE invoices ADD COLUMN business_address TEXT`).catch(() => {});
+    await dbRun(`ALTER TABLE invoices ADD COLUMN vat_number TEXT`).catch(() => {});
+    await dbRun(`ALTER TABLE invoices ADD COLUMN company_reg TEXT`).catch(() => {});
     await ensureIndex('idx_invoices_booking', 'invoices', 'booking_id');
     await ensureIndex('idx_invoices_user', 'invoices', 'user_id');
     await ensureIndex('idx_invoices_stylist', 'invoices', 'stylist_id');
@@ -3978,6 +3990,67 @@ const CategoryRewardMappingRepository = {
 // Initialize Invoice Repository
 const InvoiceRepository = new InvoiceRepositoryClass(getDb());
 
+// ============================================
+// BUSINESS SETTINGS REPOSITORY
+// ============================================
+const BusinessSettingsRepository = {
+    // Get all business settings as an object
+    async getAll() {
+        const rows = await dbAll('SELECT key, value FROM business_settings');
+        const settings = {};
+        for (const row of rows) {
+            settings[row.key] = row.value;
+        }
+        return settings;
+    },
+
+    // Get a single setting by key
+    async get(key) {
+        const row = await dbGet('SELECT value FROM business_settings WHERE key = ?', [key]);
+        return row ? row.value : null;
+    },
+
+    // Set a single setting
+    async set(key, value) {
+        await dbRun(`
+            INSERT INTO business_settings (key, value, updated_at)
+            VALUES (?, ?, datetime('now'))
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')
+        `, [key, value]);
+    },
+
+    // Update multiple settings at once
+    async updateMany(settings) {
+        for (const [key, value] of Object.entries(settings)) {
+            await this.set(key, value);
+        }
+        return this.getAll();
+    },
+
+    // Initialize default settings if they don't exist
+    async initDefaults() {
+        const defaults = {
+            business_name: 'Flirt Hair & Beauty Bar',
+            address_line1: 'Shop 5, Lifestyle Centre',
+            address_line2: 'Corner Witkoppen & Cedar Road',
+            address_city: 'Fourways, Johannesburg',
+            address_postal: '2191',
+            vat_registered: 'false',
+            vat_number: '',
+            phone: '',
+            email: '',
+            website: ''
+        };
+
+        for (const [key, value] of Object.entries(defaults)) {
+            const existing = await this.get(key);
+            if (existing === null) {
+                await this.set(key, value);
+            }
+        }
+    }
+};
+
 module.exports = {
     getDb,
     dbRun,
@@ -4013,5 +4086,7 @@ module.exports = {
     ServiceRewardMappingRepository,
     CategoryRewardMappingRepository,
     // Invoicing System
-    InvoiceRepository
+    InvoiceRepository,
+    // Business Settings
+    BusinessSettingsRepository
 };

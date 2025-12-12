@@ -147,6 +147,11 @@ class InvoiceRepository {
             discount_reason,
             client_notes,
             internal_notes,
+            customer_type = 'individual',
+            company_name,
+            business_address,
+            vat_number,
+            company_reg,
             created_by
         } = invoiceData;
 
@@ -219,8 +224,9 @@ class InvoiceRepository {
                 payment_status, amount_paid, amount_due,
                 commission_total,
                 status, service_date, client_notes, internal_notes,
+                customer_type, company_name, business_address, vat_number, company_reg,
                 created_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
             invoice_id, booking_id, user_id, stylist_id,
             services_subtotal, products_subtotal, subtotal,
@@ -229,6 +235,7 @@ class InvoiceRepository {
             'unpaid', 0, amount_due,
             commission_total,
             'draft', service_date, client_notes, internal_notes,
+            customer_type, company_name || null, business_address || null, vat_number || null, company_reg || null,
             created_by
         ]);
 

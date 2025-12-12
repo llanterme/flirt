@@ -2826,6 +2826,13 @@
                     </svg>
                     Payment Settings
                 </a>
+                <a class="nav-item" onclick="showSection('business-settings', event)">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Business Details
+                </a>
                 <a class="nav-item admin-only" onclick="showSection('staff', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -5007,6 +5014,35 @@
                                         <!-- Customer & Details -->
                                         <div class="invoice-form-section">
                                             <div class="invoice-form-section-title">Customer Details</div>
+
+                                            <!-- Customer Type Toggle -->
+                                            <div class="invoice-form-row" style="margin-bottom: 16px;">
+                                                <div class="invoice-form-group" style="flex: 1;">
+                                                    <label class="invoice-form-label">Customer Type</label>
+                                                    <div style="display: flex; gap: 8px;">
+                                                        <button type="button" id="customer-type-individual" class="customer-type-btn active" onclick="setCustomerType('individual')" style="flex: 1; padding: 10px 16px; border: 2px solid var(--brand-pink); border-radius: 8px; background: var(--brand-pink); color: white; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                                            <svg style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                                <circle cx="12" cy="7" r="4"></circle>
+                                                            </svg>
+                                                            Individual
+                                                        </button>
+                                                        <button type="button" id="customer-type-company" class="customer-type-btn" onclick="setCustomerType('company')" style="flex: 1; padding: 10px 16px; border: 2px solid var(--border-soft); border-radius: 8px; background: white; color: var(--brand-charcoal); font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                                            <svg style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                <path d="M3 21h18"></path>
+                                                                <path d="M5 21V7l8-4v18"></path>
+                                                                <path d="M19 21V11l-6-4"></path>
+                                                                <path d="M9 9v.01"></path>
+                                                                <path d="M9 12v.01"></path>
+                                                                <path d="M9 15v.01"></path>
+                                                                <path d="M9 18v.01"></path>
+                                                            </svg>
+                                                            Company
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div class="invoice-form-row">
                                                 <div class="invoice-form-group">
                                                     <label class="invoice-form-label">Customer <span class="required">*</span></label>
@@ -5021,6 +5057,33 @@
                                                     </select>
                                                 </div>
                                             </div>
+
+                                            <!-- Company Details (hidden by default) -->
+                                            <div id="company-details-section" style="display: none;">
+                                                <div class="invoice-form-row">
+                                                    <div class="invoice-form-group" style="flex: 1;">
+                                                        <label class="invoice-form-label">Company Name <span class="required">*</span></label>
+                                                        <input type="text" id="invoice-company-name" class="invoice-form-input" placeholder="Enter company name...">
+                                                    </div>
+                                                </div>
+                                                <div class="invoice-form-row">
+                                                    <div class="invoice-form-group" style="flex: 1;">
+                                                        <label class="invoice-form-label">Business Address</label>
+                                                        <textarea id="invoice-business-address" rows="2" class="invoice-form-textarea" placeholder="Enter business address..."></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="invoice-form-row">
+                                                    <div class="invoice-form-group">
+                                                        <label class="invoice-form-label">VAT Number</label>
+                                                        <input type="text" id="invoice-vat-number" class="invoice-form-input" placeholder="e.g., 4123456789">
+                                                    </div>
+                                                    <div class="invoice-form-group">
+                                                        <label class="invoice-form-label">Company Reg. Number</label>
+                                                        <input type="text" id="invoice-company-reg" class="invoice-form-input" placeholder="e.g., 2024/123456/07">
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div class="invoice-form-row">
                                                 <div class="invoice-form-group">
                                                     <label class="invoice-form-label">Service Date <span class="required">*</span></label>
@@ -5162,8 +5225,8 @@
                                                 <span class="label">Discount</span>
                                                 <span class="value" id="invoice-discount-amount">-R0.00</span>
                                             </div>
-                                            <div class="invoice-totals-row">
-                                                <span class="label">VAT (15%)</span>
+                                            <div class="invoice-totals-row" id="invoice-tax-row">
+                                                <span class="label" id="invoice-tax-label">VAT (15%)</span>
                                                 <span class="value" id="invoice-tax-amount">R0.00</span>
                                             </div>
                                             <div class="invoice-totals-row total">
@@ -5338,11 +5401,11 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; background: var(--gray-light);">
                                 <div>
                                     <div style="font-size: 11px; text-transform: uppercase; color: var(--text-subtle); margin-bottom: 4px;">From</div>
-                                    <div style="font-weight: 600; font-size: 16px; color: var(--brand-pink);">Flirt Hair & Beauty Bar</div>
-                                    <div style="font-size: 13px; color: var(--text-muted);">Shop 5, Lifestyle Centre</div>
-                                    <div style="font-size: 13px; color: var(--text-muted);">Corner Witkoppen & Cedar Road</div>
-                                    <div style="font-size: 13px; color: var(--text-muted);">Fourways, Johannesburg, 2191</div>
-                                    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">VAT No: 4123456789</div>
+                                    <div id="view-invoice-biz-name" style="font-weight: 600; font-size: 16px; color: var(--brand-pink);">Flirt Hair & Beauty Bar</div>
+                                    <div id="view-invoice-biz-line1" style="font-size: 13px; color: var(--text-muted);">Shop 5, Lifestyle Centre</div>
+                                    <div id="view-invoice-biz-line2" style="font-size: 13px; color: var(--text-muted);">Corner Witkoppen & Cedar Road</div>
+                                    <div id="view-invoice-biz-city" style="font-size: 13px; color: var(--text-muted);">Fourways, Johannesburg, 2191</div>
+                                    <div id="view-invoice-biz-vat" style="font-size: 13px; color: var(--text-muted); margin-top: 4px; display: none;"></div>
                                 </div>
                                 <div>
                                     <div style="font-size: 11px; text-transform: uppercase; color: var(--text-subtle); margin-bottom: 4px;">Bill To</div>
@@ -6614,6 +6677,127 @@
                                 <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">YOCO_PUBLIC_KEY</code> - Your Yoco public key</li>
                                 <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">YOCO_WEBHOOK_SECRET</code> - Your Yoco webhook secret</li>
                             </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Business Settings Section -->
+                <section id="business-settings" class="page-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Business Details</h2>
+                        <p style="color: var(--gray-medium); margin-top: 5px;">Configure your business information for invoices and documents</p>
+                    </div>
+
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Business Information</h3>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Business Name</label>
+                                    <input type="text" id="bizBusinessName" class="form-input" placeholder="Flirt Hair & Beauty Bar">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Address Line 1</label>
+                                    <input type="text" id="bizAddressLine1" class="form-input" placeholder="Shop number, Building name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Address Line 2</label>
+                                    <input type="text" id="bizAddressLine2" class="form-input" placeholder="Street address">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">City / Suburb</label>
+                                    <input type="text" id="bizAddressCity" class="form-input" placeholder="Fourways, Johannesburg">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Postal Code</label>
+                                    <input type="text" id="bizAddressPostal" class="form-input" placeholder="2191">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">VAT Registration</label>
+                                    <div style="display: flex; gap: 16px; margin-top: 8px;">
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                            <input type="radio" name="bizVatRegistered" id="bizVatRegisteredYes" value="yes" onchange="toggleVatNumberField()">
+                                            <span>VAT Registered</span>
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                            <input type="radio" name="bizVatRegistered" id="bizVatRegisteredNo" value="no" onchange="toggleVatNumberField()" checked>
+                                            <span>Not VAT Registered</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row" id="bizVatNumberRow" style="display: none;">
+                                <div class="form-group">
+                                    <label class="form-label">VAT Number</label>
+                                    <input type="text" id="bizVatNumber" class="form-input" placeholder="e.g. 4123456789">
+                                </div>
+                            </div>
+
+                            <hr style="margin: 24px 0; border: none; border-top: 1px solid var(--border-soft);">
+
+                            <h4 style="margin-bottom: 16px; font-size: 14px; color: var(--text-subtle);">Contact Details</h4>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" id="bizPhone" class="form-input" placeholder="011 465 1234">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Email Address</label>
+                                    <input type="email" id="bizEmail" class="form-input" placeholder="info@flirthair.co.za">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Website</label>
+                                    <input type="text" id="bizWebsite" class="form-input" placeholder="www.flirthair.co.za">
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: flex-end; margin-top: 20px; gap: 12px;">
+                                <button class="btn btn-outline" onclick="loadBusinessDetailsForm()">
+                                    Reset
+                                </button>
+                                <button class="btn btn-primary" onclick="saveBusinessDetailsForm()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                                    Save Business Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Invoice Preview -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <h3 class="data-card-title">Invoice Preview</h3>
+                        </div>
+                        <div style="padding: 25px;">
+                            <p style="color: var(--gray-medium); margin-bottom: 16px;">This is how your business details will appear on invoices:</p>
+                            <div style="background: white; border: 1px solid var(--border-soft); border-radius: 8px; padding: 20px; max-width: 400px;">
+                                <div id="bizPreviewName" style="font-size: 18px; font-weight: 600; color: var(--brand-pink); margin-bottom: 8px;">Flirt Hair & Beauty Bar</div>
+                                <div id="bizPreviewAddress" style="font-size: 13px; color: var(--gray-medium); line-height: 1.6;">
+                                    <div id="bizPreviewLine1">Shop 5, Lifestyle Centre</div>
+                                    <div id="bizPreviewLine2">Corner Witkoppen & Cedar Road</div>
+                                    <div id="bizPreviewCity">Fourways, Johannesburg, 2191</div>
+                                </div>
+                                <div id="bizPreviewVat" style="font-size: 12px; color: var(--gray-medium); margin-top: 8px; display: none;">VAT No: <span id="bizPreviewVatNum"></span></div>
+                                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-soft); font-size: 12px; color: var(--gray-medium);">
+                                    <div id="bizPreviewContact"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -7942,6 +8126,7 @@
                 'hair-tips': 'Hair Care Tips',
                 'loyalty-settings': 'Loyalty Settings',
                 'hair-tracker-settings': 'Hair Tracker Settings',
+                'business-settings': 'Business Details',
                 'settings': 'Settings'
             };
             document.getElementById('pageTitle').textContent = titles[sectionId] || 'Dashboard';
@@ -7978,6 +8163,7 @@
                 case 'hair-tips': loadHairTips(); break;
                 case 'staff': loadStaff(); break;
                 case 'settings': loadSettingsPage(); break;
+                case 'business-settings': loadBusinessDetailsForm(); break;
             }
 
             // Close sidebar on mobile after navigation
@@ -16718,6 +16904,177 @@
             }
         }
 
+        // ============================================
+        // BUSINESS DETAILS FORM (for invoices)
+        // ============================================
+        let cachedBusinessInfo = null;
+
+        function toggleVatNumberField() {
+            const isVatRegistered = document.getElementById('bizVatRegisteredYes').checked;
+            document.getElementById('bizVatNumberRow').style.display = isVatRegistered ? '' : 'none';
+            updateBusinessPreview();
+        }
+
+        async function loadBusinessDetailsForm() {
+            try {
+                const response = await fetch(`${API_BASE}/business-info`);
+                const data = await response.json();
+
+                if (data.success && data.business) {
+                    const biz = data.business;
+                    cachedBusinessInfo = biz;
+
+                    document.getElementById('bizBusinessName').value = biz.business_name || '';
+                    document.getElementById('bizAddressLine1').value = biz.address_line1 || '';
+                    document.getElementById('bizAddressLine2').value = biz.address_line2 || '';
+                    document.getElementById('bizAddressCity').value = biz.address_city || '';
+                    document.getElementById('bizAddressPostal').value = biz.address_postal || '';
+                    document.getElementById('bizPhone').value = biz.phone || '';
+                    document.getElementById('bizEmail').value = biz.email || '';
+                    document.getElementById('bizWebsite').value = biz.website || '';
+
+                    // VAT registration status
+                    const isVatRegistered = biz.vat_registered === 'true' || biz.vat_registered === true;
+                    document.getElementById('bizVatRegisteredYes').checked = isVatRegistered;
+                    document.getElementById('bizVatRegisteredNo').checked = !isVatRegistered;
+                    document.getElementById('bizVatNumberRow').style.display = isVatRegistered ? '' : 'none';
+                    document.getElementById('bizVatNumber').value = biz.vat_number || '';
+
+                    updateBusinessPreview();
+                }
+            } catch (error) {
+                console.error('Error loading business details:', error);
+            }
+        }
+
+        function updateBusinessPreview() {
+            const name = document.getElementById('bizBusinessName').value || 'Flirt Hair & Beauty Bar';
+            const line1 = document.getElementById('bizAddressLine1').value || '';
+            const line2 = document.getElementById('bizAddressLine2').value || '';
+            const city = document.getElementById('bizAddressCity').value || '';
+            const postal = document.getElementById('bizAddressPostal').value || '';
+            const phone = document.getElementById('bizPhone').value || '';
+            const email = document.getElementById('bizEmail').value || '';
+            const website = document.getElementById('bizWebsite').value || '';
+            const isVatRegistered = document.getElementById('bizVatRegisteredYes').checked;
+            const vatNumber = document.getElementById('bizVatNumber').value || '';
+
+            document.getElementById('bizPreviewName').textContent = name;
+            document.getElementById('bizPreviewLine1').textContent = line1;
+            document.getElementById('bizPreviewLine2').textContent = line2;
+
+            let cityPostal = city;
+            if (postal) cityPostal += (city ? ', ' : '') + postal;
+            document.getElementById('bizPreviewCity').textContent = cityPostal;
+
+            // VAT display
+            const vatDiv = document.getElementById('bizPreviewVat');
+            if (isVatRegistered && vatNumber) {
+                vatDiv.style.display = '';
+                document.getElementById('bizPreviewVatNum').textContent = vatNumber;
+            } else {
+                vatDiv.style.display = 'none';
+            }
+
+            // Contact info
+            const contactParts = [];
+            if (phone) contactParts.push(`Tel: ${phone}`);
+            if (email) contactParts.push(email);
+            if (website) contactParts.push(website);
+            document.getElementById('bizPreviewContact').textContent = contactParts.join(' | ');
+        }
+
+        async function saveBusinessDetailsForm() {
+            const isVatRegistered = document.getElementById('bizVatRegisteredYes').checked;
+
+            const payload = {
+                business_name: document.getElementById('bizBusinessName').value.trim(),
+                address_line1: document.getElementById('bizAddressLine1').value.trim(),
+                address_line2: document.getElementById('bizAddressLine2').value.trim(),
+                address_city: document.getElementById('bizAddressCity').value.trim(),
+                address_postal: document.getElementById('bizAddressPostal').value.trim(),
+                vat_registered: isVatRegistered ? 'true' : 'false',
+                vat_number: isVatRegistered ? document.getElementById('bizVatNumber').value.trim() : '',
+                phone: document.getElementById('bizPhone').value.trim(),
+                email: document.getElementById('bizEmail').value.trim(),
+                website: document.getElementById('bizWebsite').value.trim()
+            };
+
+            // Validate email if provided
+            if (payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+                showAdminToast('Please enter a valid email address', 'error');
+                return;
+            }
+
+            // Validate VAT number if registered
+            if (isVatRegistered && !payload.vat_number) {
+                showAdminToast('Please enter a VAT number', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/business-settings`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    cachedBusinessInfo = payload;
+                    showAdminToast('Business details saved successfully!', 'success');
+                } else {
+                    throw new Error(data.error || 'Failed to save');
+                }
+            } catch (error) {
+                console.error('Error saving business details:', error);
+                showAdminToast('Failed to save business details: ' + error.message, 'error');
+            }
+        }
+
+        // Get cached business info for invoices (fetches if not cached)
+        async function getBusinessInfo() {
+            if (cachedBusinessInfo) return cachedBusinessInfo;
+
+            try {
+                const response = await fetch(`${API_BASE}/business-info`);
+                const data = await response.json();
+                if (data.success && data.business) {
+                    cachedBusinessInfo = data.business;
+                    return cachedBusinessInfo;
+                }
+            } catch (error) {
+                console.error('Error fetching business info:', error);
+            }
+
+            // Return defaults if fetch fails
+            return {
+                business_name: 'Flirt Hair & Beauty Bar',
+                address_line1: 'Shop 5, Lifestyle Centre',
+                address_line2: 'Corner Witkoppen & Cedar Road',
+                address_city: 'Fourways, Johannesburg',
+                address_postal: '2191',
+                vat_registered: 'false',
+                vat_number: '',
+                phone: '',
+                email: '',
+                website: ''
+            };
+        }
+
+        // Add input listeners for live preview
+        document.addEventListener('DOMContentLoaded', function() {
+            const bizFields = ['bizBusinessName', 'bizAddressLine1', 'bizAddressLine2', 'bizAddressCity',
+                              'bizAddressPostal', 'bizVatNumber', 'bizPhone', 'bizEmail', 'bizWebsite'];
+            bizFields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', updateBusinessPreview);
+            });
+        });
+
         function navigateToSection(sectionId) {
             showSection(sectionId);
         }
@@ -16847,6 +17204,11 @@
         let currentInvoice = {
             services: [],
             products: [],
+            customer_type: 'individual', // 'individual' or 'company'
+            company_name: '',
+            business_address: '',
+            vat_number: '',
+            company_reg: '',
             totals: {
                 services_subtotal: 0,
                 products_subtotal: 0,
@@ -16863,6 +17225,58 @@
         let invoiceStylists = [];
         let invoiceCustomers = [];
         let currentPaymentInvoice = null;
+
+        // Customer type toggle for invoices
+        function setCustomerType(type) {
+            currentInvoice.customer_type = type;
+
+            const individualBtn = document.getElementById('customer-type-individual');
+            const companyBtn = document.getElementById('customer-type-company');
+            const companySection = document.getElementById('company-details-section');
+            const companyNameInput = document.getElementById('invoice-company-name');
+
+            if (type === 'company') {
+                // Style company button as active
+                companyBtn.style.borderColor = 'var(--brand-pink)';
+                companyBtn.style.background = 'var(--brand-pink)';
+                companyBtn.style.color = 'white';
+                // Style individual button as inactive
+                individualBtn.style.borderColor = 'var(--border-soft)';
+                individualBtn.style.background = 'white';
+                individualBtn.style.color = 'var(--brand-charcoal)';
+                // Show company details
+                companySection.style.display = 'block';
+                // Make company name required
+                if (companyNameInput) companyNameInput.required = true;
+            } else {
+                // Style individual button as active
+                individualBtn.style.borderColor = 'var(--brand-pink)';
+                individualBtn.style.background = 'var(--brand-pink)';
+                individualBtn.style.color = 'white';
+                // Style company button as inactive
+                companyBtn.style.borderColor = 'var(--border-soft)';
+                companyBtn.style.background = 'white';
+                companyBtn.style.color = 'var(--brand-charcoal)';
+                // Hide company details
+                companySection.style.display = 'none';
+                // Remove required from company name
+                if (companyNameInput) companyNameInput.required = false;
+            }
+        }
+
+        // Reset customer type form to individual
+        function resetCustomerType() {
+            setCustomerType('individual');
+            // Clear company fields
+            const companyName = document.getElementById('invoice-company-name');
+            const businessAddress = document.getElementById('invoice-business-address');
+            const vatNumber = document.getElementById('invoice-vat-number');
+            const companyReg = document.getElementById('invoice-company-reg');
+            if (companyName) companyName.value = '';
+            if (businessAddress) businessAddress.value = '';
+            if (vatNumber) vatNumber.value = '';
+            if (companyReg) companyReg.value = '';
+        }
 
         // Load invoices
         async function loadInvoices() {
@@ -16976,6 +17390,14 @@
                                                 <circle cx="12" cy="12" r="3"></circle>
                                             </svg>
                                         </button>
+                                        ${inv.status === 'finalized' ? `
+                                            <button class="invoice-action-btn" onclick="printInvoiceById('${inv.id}')" title="Print">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"></path>
+                                                    <rect x="6" y="14" width="12" height="8"></rect>
+                                                </svg>
+                                            </button>
+                                        ` : ''}
                                         ${inv.payment_status !== 'paid' && inv.status === 'finalized' ? `
                                             <button class="invoice-action-btn" onclick="showPaymentModal('${inv.id}')" title="Record Payment" style="color:var(--success);">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -17052,6 +17474,24 @@
 
                 const data = await response.json();
                 const invoice = data.invoice;
+
+                // Populate business info from dynamic settings
+                const biz = await getBusinessInfo();
+                document.getElementById('view-invoice-biz-name').textContent = biz.business_name || 'Flirt Hair & Beauty Bar';
+                document.getElementById('view-invoice-biz-line1').textContent = biz.address_line1 || '';
+                document.getElementById('view-invoice-biz-line2').textContent = biz.address_line2 || '';
+                let cityPostal = biz.address_city || '';
+                if (biz.address_postal) cityPostal += (cityPostal ? ', ' : '') + biz.address_postal;
+                document.getElementById('view-invoice-biz-city').textContent = cityPostal;
+
+                // VAT display
+                const vatDiv = document.getElementById('view-invoice-biz-vat');
+                if (biz.vat_registered === 'true' && biz.vat_number) {
+                    vatDiv.textContent = `VAT No: ${biz.vat_number}`;
+                    vatDiv.style.display = '';
+                } else {
+                    vatDiv.style.display = 'none';
+                }
 
                 // Populate header
                 document.getElementById('view-invoice-number').textContent = invoice.invoice_number || `Draft #${invoice.id.slice(0, 8)}`;
@@ -17228,12 +17668,50 @@
             }
         }
 
-        function printInvoice() {
+        // Print invoice directly by ID (from list view)
+        async function printInvoiceById(id) {
+            try {
+                const response = await fetch(`${API_BASE}/admin/invoices/${id}`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to load invoice');
+
+                const data = await response.json();
+                const invoice = data.invoice;
+
+                await generatePrintableInvoice(invoice);
+            } catch (error) {
+                console.error('Print invoice error:', error);
+                showAdminToast('Failed to load invoice for printing', 'error');
+            }
+        }
+
+        async function printInvoice() {
             if (!currentViewInvoiceId) return;
+
+            // Get business info for print
+            const biz = await getBusinessInfo();
+            const bizName = biz.business_name || 'Flirt Hair & Beauty Bar';
+            let bizAddress = '';
+            if (biz.address_line1) bizAddress += biz.address_line1 + '<br>';
+            if (biz.address_line2) bizAddress += biz.address_line2 + '<br>';
+            let cityPostal = biz.address_city || '';
+            if (biz.address_postal) cityPostal += (cityPostal ? ', ' : '') + biz.address_postal;
+            if (cityPostal) bizAddress += cityPostal + '<br>';
+            const vatHtml = (biz.vat_registered === 'true' && biz.vat_number)
+                ? `<div class="vat-number">VAT No: ${biz.vat_number}</div>`
+                : '';
+
+            // Build footer contact info
+            const contactParts = [];
+            if (biz.phone) contactParts.push(`Tel: ${biz.phone}`);
+            if (biz.email) contactParts.push(biz.email);
+            if (biz.website) contactParts.push(biz.website);
+            const footerContact = contactParts.length > 0 ? contactParts.join(' | ') : '';
 
             // Open print-friendly version in new window
             const printWindow = window.open('', '_blank');
-            const modal = document.getElementById('view-invoice-modal');
             const invoiceNumber = document.getElementById('view-invoice-number').textContent;
             const invoiceDate = document.getElementById('view-invoice-date').textContent;
             const customer = document.getElementById('view-invoice-customer').textContent;
@@ -17279,11 +17757,8 @@
                         <div>
                             <div class="logo">FLIRT</div>
                             <div class="business-info">
-                                Hair & Beauty Bar<br>
-                                Shop 5, Lifestyle Centre<br>
-                                Corner Witkoppen & Cedar Road<br>
-                                Fourways, Johannesburg, 2191<br>
-                                <div class="vat-number">VAT No: 4123456789</div>
+                                ${bizAddress}
+                                ${vatHtml}
                             </div>
                         </div>
                         <div class="invoice-info">
@@ -17315,8 +17790,190 @@
                     ` : ''}
                     <div class="totals">${totalsHtml}</div>
                     <div class="footer">
-                        Thank you for choosing Flirt Hair & Beauty Bar!<br>
-                        Tel: 011 465 1234 | Email: info@flirthair.co.za | www.flirthair.co.za
+                        Thank you for choosing ${bizName}!<br>
+                        ${footerContact}
+                    </div>
+                    <script>window.onload = function() { window.print(); }<\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        // Generate printable invoice from invoice object (used by printInvoiceById)
+        async function generatePrintableInvoice(invoice) {
+            // Get business info for print
+            const biz = await getBusinessInfo();
+            const bizName = biz.business_name || 'Flirt Hair & Beauty Bar';
+            let bizAddress = '';
+            if (biz.address_line1) bizAddress += biz.address_line1 + '<br>';
+            if (biz.address_line2) bizAddress += biz.address_line2 + '<br>';
+            let cityPostal = biz.address_city || '';
+            if (biz.address_postal) cityPostal += (cityPostal ? ', ' : '') + biz.address_postal;
+            if (cityPostal) bizAddress += cityPostal + '<br>';
+            const vatHtml = (biz.vat_registered === 'true' && biz.vat_number)
+                ? `<div class="vat-number">VAT No: ${biz.vat_number}</div>`
+                : '';
+
+            // Build footer contact info
+            const contactParts = [];
+            if (biz.phone) contactParts.push(`Tel: ${biz.phone}`);
+            if (biz.email) contactParts.push(biz.email);
+            if (biz.website) contactParts.push(biz.website);
+            const footerContact = contactParts.length > 0 ? contactParts.join(' | ') : '';
+
+            const printWindow = window.open('', '_blank');
+
+            const invoiceNumber = invoice.invoice_number || `Draft #${invoice.id.slice(0, 8)}`;
+            const invoiceDate = formatDate(invoice.created_at);
+            const customer = invoice.customer?.name || 'Walk-in Customer';
+            const customerEmail = invoice.customer?.email || '';
+            const customerPhone = invoice.customer?.phone || '';
+            const stylist = invoice.stylist?.name || 'Not assigned';
+
+            // Build services HTML
+            const servicesHtml = (invoice.services || []).map(s => `
+                <div style="display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #eee;">
+                    <div>
+                        <div style="font-weight: 500;">${s.service_name}</div>
+                        ${s.quantity > 1 ? `<div style="font-size: 12px; color: #666;">Qty: ${s.quantity}</div>` : ''}
+                    </div>
+                    <div style="font-weight: 600;">R${parseFloat(s.line_total || s.unit_price * s.quantity).toFixed(2)}</div>
+                </div>
+            `).join('') || '<div style="padding: 16px; text-align: center; color: #666;">No services</div>';
+
+            // Build products HTML
+            const productsHtml = (invoice.products && invoice.products.length > 0) ? invoice.products.map(p => `
+                <div style="display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #eee;">
+                    <div>
+                        <div style="font-weight: 500;">${p.product_name}</div>
+                        <div style="font-size: 12px; color: #666;">Qty: ${p.quantity} @ R${parseFloat(p.unit_price).toFixed(2)}</div>
+                    </div>
+                    <div style="font-weight: 600;">R${parseFloat(p.line_total || p.unit_price * p.quantity).toFixed(2)}</div>
+                </div>
+            `).join('') : '';
+
+            // Build totals HTML
+            let totalsHtml = `
+                <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee;">
+                    <span>Services Subtotal</span>
+                    <span>R${parseFloat(invoice.services_subtotal || 0).toFixed(2)}</span>
+                </div>
+            `;
+            if (invoice.products_subtotal > 0) {
+                totalsHtml += `
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee;">
+                        <span>Products Subtotal</span>
+                        <span>R${parseFloat(invoice.products_subtotal).toFixed(2)}</span>
+                    </div>
+                `;
+            }
+            if (invoice.discount_amount > 0) {
+                totalsHtml += `
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; color: green;">
+                        <span>Discount ${invoice.discount_reason ? `(${invoice.discount_reason})` : ''}</span>
+                        <span>-R${parseFloat(invoice.discount_amount).toFixed(2)}</span>
+                    </div>
+                `;
+            }
+            if (invoice.tax_amount > 0) {
+                totalsHtml += `
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee;">
+                        <span>VAT (15%)</span>
+                        <span>R${parseFloat(invoice.tax_amount).toFixed(2)}</span>
+                    </div>
+                `;
+            }
+            totalsHtml += `
+                <div style="display: flex; justify-content: space-between; padding: 12px 0; font-size: 18px; font-weight: bold; color: #F67599; border-top: 1px solid #ddd; margin-top: 8px;">
+                    <span>TOTAL</span>
+                    <span>R${parseFloat(invoice.total).toFixed(2)}</span>
+                </div>
+            `;
+
+            // Company details for invoice (if company customer)
+            let billToHtml = `
+                <div class="value">${customer}</div>
+                ${customerEmail ? `<div>${customerEmail}</div>` : ''}
+                ${customerPhone ? `<div>${customerPhone}</div>` : ''}
+            `;
+            if (invoice.customer_type === 'company' && invoice.company_name) {
+                billToHtml = `
+                    <div class="value">${invoice.company_name}</div>
+                    <div>${customer}</div>
+                    ${invoice.business_address ? `<div style="white-space: pre-line;">${invoice.business_address}</div>` : ''}
+                    ${invoice.vat_number ? `<div>VAT: ${invoice.vat_number}</div>` : ''}
+                    ${invoice.company_reg ? `<div>Reg: ${invoice.company_reg}</div>` : ''}
+                    ${customerEmail ? `<div>${customerEmail}</div>` : ''}
+                    ${customerPhone ? `<div>${customerPhone}</div>` : ''}
+                `;
+            }
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Invoice ${invoiceNumber}</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+                        .header { display: flex; justify-content: space-between; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #F67599; }
+                        .logo { font-size: 28px; font-weight: bold; color: #F67599; }
+                        .invoice-info { text-align: right; }
+                        .invoice-number { font-size: 20px; font-weight: bold; }
+                        .details { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; }
+                        .label { font-size: 11px; text-transform: uppercase; color: #666; margin-bottom: 4px; }
+                        .value { font-weight: 600; }
+                        .section { margin-bottom: 24px; }
+                        .section-title { font-size: 12px; text-transform: uppercase; color: #666; margin-bottom: 12px; }
+                        .items { border: 1px solid #ddd; border-radius: 4px; }
+                        .item { display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #eee; }
+                        .item:last-child { border-bottom: none; }
+                        .totals { background: #f5f5f5; padding: 16px; border-radius: 4px; }
+                        .business-info { font-size: 13px; color: #666; line-height: 1.5; }
+                        .vat-number { margin-top: 8px; font-size: 12px; }
+                        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #888; }
+                        @media print { body { padding: 20px; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div>
+                            <div class="logo">FLIRT</div>
+                            <div class="business-info">
+                                ${bizAddress}
+                                ${vatHtml}
+                            </div>
+                        </div>
+                        <div class="invoice-info">
+                            <div class="invoice-number">${invoiceNumber}</div>
+                            <div>${invoiceDate}</div>
+                        </div>
+                    </div>
+                    <div class="details">
+                        <div>
+                            <div class="label">Bill To</div>
+                            ${billToHtml}
+                        </div>
+                        <div>
+                            <div class="label">Stylist</div>
+                            <div class="value">${stylist}</div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="section-title">Services</div>
+                        <div class="items">${servicesHtml}</div>
+                    </div>
+                    ${productsHtml ? `
+                    <div class="section">
+                        <div class="section-title">Products</div>
+                        <div class="items">${productsHtml}</div>
+                    </div>
+                    ` : ''}
+                    <div class="totals">${totalsHtml}</div>
+                    <div class="footer">
+                        Thank you for choosing ${bizName}!<br>
+                        ${footerContact}
                     </div>
                     <script>window.onload = function() { window.print(); }<\/script>
                 </body>
@@ -17372,6 +18029,11 @@
                         price: parseFloat(p.price) || 0,
                         quantity: p.quantity || 1
                     })),
+                    customer_type: invoice.customer_type || 'individual',
+                    company_name: invoice.company_name || '',
+                    business_address: invoice.business_address || '',
+                    vat_number: invoice.vat_number || '',
+                    company_reg: invoice.company_reg || '',
                     totals: {
                         services_subtotal: parseFloat(invoice.services_subtotal) || 0,
                         products_subtotal: parseFloat(invoice.products_subtotal) || 0,
@@ -17407,6 +18069,19 @@
                 const discountInput = document.getElementById('invoice-discount');
                 if (discountInput) {
                     discountInput.value = invoice.discount_amount || 0;
+                }
+
+                // Set customer type and populate company fields
+                setCustomerType(invoice.customer_type || 'individual');
+                if (invoice.customer_type === 'company') {
+                    const companyNameInput = document.getElementById('invoice-company-name');
+                    const businessAddressInput = document.getElementById('invoice-business-address');
+                    const vatNumberInput = document.getElementById('invoice-vat-number');
+                    const companyRegInput = document.getElementById('invoice-company-reg');
+                    if (companyNameInput) companyNameInput.value = invoice.company_name || '';
+                    if (businessAddressInput) businessAddressInput.value = invoice.business_address || '';
+                    if (vatNumberInput) vatNumberInput.value = invoice.vat_number || '';
+                    if (companyRegInput) companyRegInput.value = invoice.company_reg || '';
                 }
 
                 // Render services and products lists
@@ -17515,6 +18190,11 @@
             currentInvoice = {
                 services: [],
                 products: [],
+                customer_type: 'individual',
+                company_name: '',
+                business_address: '',
+                vat_number: '',
+                company_reg: '',
                 totals: { services_subtotal: 0, products_subtotal: 0, subtotal: 0, discount_amount: 0, tax_amount: 0, total: 0, commission: 0 }
             };
 
@@ -17529,6 +18209,9 @@
             document.getElementById('invoice-form').reset();
             document.getElementById('invoice-services-list').innerHTML = '<p style="text-align: center; color: var(--text-subtle); padding: 20px;">No services added yet</p>';
             document.getElementById('invoice-products-list').innerHTML = '<p style="text-align: center; color: var(--text-subtle); padding: 20px;">No products added yet</p>';
+
+            // Reset customer type to individual
+            resetCustomerType();
 
             calculateInvoiceTotals();
 
@@ -17905,8 +18588,8 @@
             calculateInvoiceTotals();
         }
 
-        // Calculate totals
-        function calculateInvoiceTotals() {
+        // Calculate totals - checks VAT registration status
+        async function calculateInvoiceTotals() {
             const services_subtotal = currentInvoice.services.reduce((sum, s) => sum + s.total, 0);
             const products_subtotal = currentInvoice.products.reduce((sum, p) => sum + p.total, 0);
             const subtotal = services_subtotal + products_subtotal;
@@ -17924,7 +18607,11 @@
             }
 
             const taxable = subtotal - discount_amount;
-            const tax_amount = taxable * 0.15;
+
+            // Check if business is VAT registered
+            const biz = await getBusinessInfo();
+            const isVatRegistered = biz.vat_registered === 'true';
+            const tax_amount = isVatRegistered ? taxable * 0.15 : 0;
             const total = taxable + tax_amount;
             const commission = subtotal * 0.30; // Approximate 30%
 
@@ -17932,7 +18619,16 @@
             document.getElementById('invoice-products-subtotal').textContent = `R${products_subtotal.toFixed(2)}`;
             document.getElementById('invoice-subtotal').textContent = `R${subtotal.toFixed(2)}`;
             document.getElementById('invoice-discount-amount').textContent = `-R${discount_amount.toFixed(2)}`;
-            document.getElementById('invoice-tax-amount').textContent = `R${tax_amount.toFixed(2)}`;
+
+            // Show/hide VAT row based on VAT registration status
+            const taxRow = document.getElementById('invoice-tax-row');
+            if (isVatRegistered) {
+                taxRow.style.display = '';
+                document.getElementById('invoice-tax-amount').textContent = `R${tax_amount.toFixed(2)}`;
+            } else {
+                taxRow.style.display = 'none';
+            }
+
             document.getElementById('invoice-total').textContent = `R${total.toFixed(2)}`;
             document.getElementById('invoice-commission').textContent = `R${commission.toFixed(2)}`;
 
@@ -17955,11 +18651,28 @@
                 const serviceDate = document.getElementById('invoice-service-date').value;
                 const bookingId = document.getElementById('invoice-booking').value || null;
 
+                // Get company details
+                const customerType = currentInvoice.customer_type || 'individual';
+                const companyName = document.getElementById('invoice-company-name')?.value || '';
+                const businessAddress = document.getElementById('invoice-business-address')?.value || '';
+                const vatNumber = document.getElementById('invoice-vat-number')?.value || '';
+                const companyReg = document.getElementById('invoice-company-reg')?.value || '';
+
                 if (!customerId || !stylistId || !serviceDate) {
                     if (typeof showNotification === 'function') {
                         showNotification('Please fill in all required fields', 'error');
                     } else {
                         alert('Please fill in all required fields');
+                    }
+                    return;
+                }
+
+                // Validate company name if company customer
+                if (customerType === 'company' && !companyName.trim()) {
+                    if (typeof showNotification === 'function') {
+                        showNotification('Please enter company name', 'error');
+                    } else {
+                        alert('Please enter company name');
                     }
                     return;
                 }
@@ -17986,6 +18699,11 @@
                     service_date: serviceDate,
                     services: currentInvoice.services,
                     products: currentInvoice.products,
+                    customer_type: customerType,
+                    company_name: customerType === 'company' ? companyName : null,
+                    business_address: customerType === 'company' ? businessAddress : null,
+                    vat_number: customerType === 'company' ? vatNumber : null,
+                    company_reg: customerType === 'company' ? companyReg : null,
                     discount_type: discountType,
                     discount_value: discountValue,
                     discount_reason: discountReason,
