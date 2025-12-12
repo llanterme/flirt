@@ -2431,11 +2431,13 @@
             text-decoration: underline;
         }
 
-        /* Improved Product Grid */
+        /* Improved Product Grid - Fewer items per row */
         .product-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
         }
 
         .product-grid.list-view {
@@ -2443,32 +2445,67 @@
             gap: 16px;
         }
 
-        /* Improved Product Card */
+        /* Load More Section */
+        .load-more-section {
+            text-align: center;
+            padding: 40px 0;
+            border-top: 1px solid #f0f0f0;
+            margin-top: 40px;
+        }
+
+        .load-more-btn {
+            padding: 14px 50px;
+            border: 2px solid var(--brand-pink);
+            background: white;
+            color: var(--brand-pink);
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .load-more-btn:hover {
+            background: var(--brand-pink);
+            color: white;
+        }
+
+        .load-more-info {
+            margin-top: 12px;
+            color: #999;
+            font-size: 13px;
+        }
+
+        /* Cleaner Product Card */
         .product-card {
             background: white;
-            border-radius: 16px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            box-shadow: 0 1px 6px rgba(0,0,0,0.04);
             transition: all 0.3s ease;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             position: relative;
+            border: 1px solid #f5f5f5;
         }
 
         .product-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            border-color: #eee;
         }
 
         .product-card-image-wrapper {
             position: relative;
-            background: linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%);
-            padding: 20px;
+            background: #fafafa;
+            padding: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 200px;
+            min-height: 180px;
+            overflow: hidden;
         }
 
         .product-card-badges {
@@ -2484,13 +2521,14 @@
         .product-badge {
             padding: 4px 10px;
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .product-badge.sale {
-            background: #ff4757;
+            background: var(--brand-pink);
             color: white;
         }
 
@@ -2503,8 +2541,8 @@
             position: absolute;
             bottom: 12px;
             right: 12px;
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             background: var(--brand-pink);
             color: white;
@@ -2516,7 +2554,7 @@
             opacity: 0;
             transform: scale(0.8);
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(246, 117, 153, 0.4);
+            box-shadow: 0 2px 8px rgba(246, 117, 153, 0.3);
             z-index: 2;
         }
 
@@ -2527,37 +2565,39 @@
 
         .product-card-quick-add:hover {
             background: #e55a82;
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
 
         .product-image {
             width: 100%;
-            height: 160px;
+            height: 140px;
             object-fit: contain;
-            transition: transform 0.3s ease;
+            transition: transform 0.4s ease;
         }
 
         .product-card:hover .product-image {
-            transform: scale(1.05);
+            transform: scale(1.03);
         }
 
         .product-image-placeholder {
             width: 100%;
-            height: 160px;
+            height: 140px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #ccc;
-            font-size: 12px;
+            color: #d0d0d0;
+            font-size: 11px;
             text-align: center;
+            background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
+            border-radius: 8px;
         }
 
         .product-image-placeholder svg {
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             margin-bottom: 8px;
-            opacity: 0.5;
+            opacity: 0.4;
         }
 
         .product-info {
@@ -2568,20 +2608,20 @@
         }
 
         .product-category-tag {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--brand-pink);
-            font-weight: 500;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
             margin-bottom: 6px;
         }
 
         .product-name {
             font-weight: 600;
-            font-size: 15px;
-            color: var(--gray-dark);
-            margin-bottom: 8px;
-            line-height: 1.3;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 4px;
+            line-height: 1.4;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -2589,69 +2629,68 @@
         }
 
         .product-description {
-            color: var(--gray-medium);
-            font-size: 13px;
-            margin-bottom: 12px;
-            flex: 1;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            line-height: 1.4;
+            display: none;
         }
 
         .product-price-row {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 12px;
+            margin-top: auto;
+            padding-top: 8px;
         }
 
         .product-price {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
-            color: var(--brand-pink);
+            color: #333;
         }
 
         .product-original-price {
-            font-size: 14px;
-            color: #999;
+            font-size: 13px;
+            color: #bbb;
             text-decoration: line-through;
         }
 
         .product-discount-badge {
             background: #fff0f3;
-            color: #ff4757;
-            font-size: 11px;
+            color: var(--brand-pink);
+            font-size: 10px;
             font-weight: 600;
             padding: 2px 6px;
             border-radius: 4px;
         }
 
         .product-card-footer {
-            padding: 0 16px 16px;
+            padding: 12px 16px 16px;
+            border-top: 1px solid #f5f5f5;
         }
 
         .product-add-btn {
             width: 100%;
-            padding: 12px;
-            border: 2px solid var(--brand-pink);
-            border-radius: 10px;
-            background: white;
-            color: var(--brand-pink);
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #f8f8f8;
+            color: #333;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .product-add-btn:hover {
             background: var(--brand-pink);
             color: white;
+        }
+
+        .product-add-btn svg {
+            width: 16px;
+            height: 16px;
         }
 
         /* List View Card */
@@ -14235,7 +14274,15 @@ async function showNotifications() {
             renderProducts();
         }
 
-        function renderProducts() {
+        // Pagination state
+        let productsPerPage = 9;
+        let currentPage = 1;
+
+        function renderProducts(resetPage = true) {
+            if (resetPage) {
+                currentPage = 1;
+            }
+
             let productsToDisplay = [...filteredProducts];
 
             // Apply sorting
@@ -14280,31 +14327,51 @@ async function showNotifications() {
             const saleProducts = productsToDisplay.filter(p => p.sale_price || p.salePrice);
             const regularProducts = currentCategory === 'sale' ? saleProducts : productsToDisplay;
 
-            // Show/hide sale section
+            // Hide sale section - cleaner layout
             const saleSection = document.getElementById('saleProductsSection');
-            const saleGrid = document.getElementById('saleProductsGrid');
-
-            if (saleProducts.length > 0 && currentCategory === 'all') {
-                saleSection.style.display = 'flex';
-                saleGrid.style.display = 'grid';
-                saleGrid.innerHTML = saleProducts.slice(0, 4).map(product => renderProductCard(product, true)).join('');
-            } else {
+            if (saleSection) {
                 saleSection.style.display = 'none';
-                saleGrid.style.display = 'none';
             }
+
+            // Calculate pagination
+            const totalProducts = regularProducts.length;
+            const displayedCount = Math.min(currentPage * productsPerPage, totalProducts);
+            const paginatedProducts = regularProducts.slice(0, displayedCount);
+            const hasMore = displayedCount < totalProducts;
 
             // Update product count
             const productCountEl = document.getElementById('productCount');
             if (productCountEl) {
-                productCountEl.textContent = `${regularProducts.length} product${regularProducts.length !== 1 ? 's' : ''}`;
+                productCountEl.textContent = `Showing ${displayedCount} of ${totalProducts} products`;
             }
 
             // Render main products grid
             const allProductsGrid = document.getElementById('allProductsGrid');
             if (regularProducts.length === 0) {
-                allProductsGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-subtle);">No products found</div>';
+                allProductsGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: #999;">No products found</div>';
             } else {
-                allProductsGrid.innerHTML = regularProducts.map(product => renderProductCard(product, false)).join('');
+                const productsHtml = paginatedProducts.map(product => renderProductCard(product, false)).join('');
+                const loadMoreHtml = hasMore ? `
+                    <div class="load-more-section" style="grid-column: 1 / -1;">
+                        <button class="load-more-btn" onclick="loadMoreProducts()">Load More Products</button>
+                        <p class="load-more-info">${totalProducts - displayedCount} more products available</p>
+                    </div>
+                ` : '';
+                allProductsGrid.innerHTML = productsHtml + loadMoreHtml;
+            }
+        }
+
+        function loadMoreProducts() {
+            currentPage++;
+            renderProducts(false);
+            // Smooth scroll to show new products
+            const grid = document.getElementById('allProductsGrid');
+            const cards = grid.querySelectorAll('.product-card');
+            if (cards.length > productsPerPage) {
+                const newFirstCard = cards[(currentPage - 1) * productsPerPage];
+                if (newFirstCard) {
+                    newFirstCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             }
         }
 
@@ -14316,29 +14383,32 @@ async function showNotifications() {
             const imageUrl = product.image_url || product.imageUrl || '';
             const category = product.category || 'Hair Care';
 
-            // Truncate description
-            const description = product.description || 'Premium hair care product from Flirt Hair & Beauty.';
-            const truncatedDesc = description.length > 60 ? description.substring(0, 60).trim() + '...' : description;
+            // Clean product name - truncate if too long
+            const productName = product.name.length > 40 ? product.name.substring(0, 40) + '...' : product.name;
 
-            // Image HTML - show placeholder if no image
+            // Image HTML - show nicer placeholder if no image
             const imageHtml = imageUrl
-                ? `<img src="${imageUrl}" alt="${product.name}" class="product-image" onerror="this.parentElement.innerHTML = '<div class=\\'product-image-placeholder\\'><svg viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><rect x=\\'3\\' y=\\'3\\' width=\\'18\\' height=\\'18\\' rx=\\'2\\' ry=\\'2\\'></rect><circle cx=\\'8.5\\' cy=\\'8.5\\' r=\\'1.5\\'></circle><polyline points=\\'21 15 16 10 5 21\\'></polyline></svg><span>Image unavailable</span></div>'">`
+                ? `<img src="${imageUrl}" alt="${product.name}" class="product-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                   <div class="product-image-placeholder" style="display: none;">
+                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                       </svg>
+                       <span>${category}</span>
+                   </div>`
                 : `<div class="product-image-placeholder">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                        <polyline points="21 15 16 10 5 21"></polyline>
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                     </svg>
-                    <span>No image</span>
+                    <span>${category}</span>
                 </div>`;
 
             return `
                 <div class="product-card" onclick="showProductDetails('${product.id}')">
                     <div class="product-card-image-wrapper">
-                        ${hasDiscount ? `<div class="product-card-badges"><span class="product-badge sale">-${discountPercent}%</span></div>` : ''}
+                        ${hasDiscount ? `<div class="product-card-badges"><span class="product-badge sale">${discountPercent}% OFF</span></div>` : ''}
                         ${imageHtml}
                         <button class="product-card-quick-add" onclick="event.stopPropagation(); addToCartFromProduct('${product.id}', '${product.name.replace(/'/g, "\\'")}', ${price}, ${originalPrice}, '${(imageUrl || '').replace(/'/g, "\\'")}')" title="Add to cart">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
@@ -14346,22 +14416,20 @@ async function showNotifications() {
                     </div>
                     <div class="product-info">
                         <div class="product-category-tag">${category}</div>
-                        <div class="product-name">${product.name}</div>
-                        <div class="product-description">${truncatedDesc}</div>
+                        <div class="product-name">${productName}</div>
                         <div class="product-price-row">
                             <span class="product-price">R${parseFloat(price).toFixed(2)}</span>
                             ${hasDiscount ? `<span class="product-original-price">R${parseFloat(originalPrice).toFixed(2)}</span>` : ''}
-                            ${hasDiscount ? `<span class="product-discount-badge">${discountPercent}% OFF</span>` : ''}
                         </div>
                     </div>
                     <div class="product-card-footer">
                         <button class="product-add-btn" onclick="event.stopPropagation(); addToCartFromProduct('${product.id}', '${product.name.replace(/'/g, "\\'")}', ${price}, ${originalPrice}, '${(imageUrl || '').replace(/'/g, "\\'")}')">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="9" cy="21" r="1"></circle>
                                 <circle cx="20" cy="21" r="1"></circle>
                                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                             </svg>
-                            Add to Cart
+                            Add
                         </button>
                     </div>
                 </div>
