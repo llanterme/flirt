@@ -1356,7 +1356,6 @@
             <a href="/" class="logo">FL<span>!</span>RT</a>
             <nav class="main-nav">
                 <a href="#services" class="nav-link">Services</a>
-                <a href="/app?tab=shop" class="nav-link">Shop</a>
                 <a href="#about" class="nav-link">About</a>
                 <a href="#contact" class="nav-link">Contact</a>
                 <a href="javascript:void(0)" class="nav-link" id="authNavLink" onclick="handleAuthClick(event)">Sign In</a>
@@ -1374,7 +1373,6 @@
     <nav class="mobile-nav" id="mobileNav">
         <button class="mobile-close" onclick="toggleMobileMenu()">&times;</button>
         <a href="#services" onclick="toggleMobileMenu()">Services</a>
-        <a href="/app?tab=shop">Shop</a>
         <a href="#about" onclick="toggleMobileMenu()">About</a>
         <a href="#contact" onclick="toggleMobileMenu()">Contact</a>
         <a href="javascript:void(0)" id="mobileAuthLink" onclick="handleAuthClick(event); toggleMobileMenu();">Sign In</a>
@@ -1396,7 +1394,7 @@
                     <span>HAIR EXTENSIONS</span>
                 </h1>
                 <div class="hero-line"></div>
-                <a href="/app?tab=shop" class="hero-btn">VIEW PRODUCTS</a>
+                <a href="#services" class="hero-btn">VIEW SERVICES</a>
             </div>
         </div>
         <!-- Scroll Indicator -->
@@ -1455,28 +1453,6 @@
                     <span class="service-card-cta">Book Now</span>
                 </div>
             </a>
-        </div>
-    </section>
-
-    <!-- Products Section -->
-    <section class="products-section">
-        <div class="section-header reveal">
-            <h2 class="section-title">OUR LATEST PRODUCTS</h2>
-            <a href="/app?tab=shop" class="view-all-link">View All Products</a>
-        </div>
-        <div class="products-grid" id="productsGrid">
-            <div class="product-card stagger-item">
-                <div class="product-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">Loading...</div>
-            </div>
-            <div class="product-card stagger-item">
-                <div class="product-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">Loading...</div>
-            </div>
-            <div class="product-card stagger-item">
-                <div class="product-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">Loading...</div>
-            </div>
-            <div class="product-card stagger-item">
-                <div class="product-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">Loading...</div>
-            </div>
         </div>
     </section>
 
@@ -1551,7 +1527,6 @@
             </div>
             <div class="footer-col">
                 <h4>QUICK LINKS</h4>
-                <a href="/app?tab=shop">Shop</a>
                 <a href="/app?tab=booking">Book Appointment</a>
                 <a href="#services">Our Services</a>
                 <a href="#about">About Us</a>
@@ -1580,27 +1555,6 @@
         function toggleMobileMenu() {
             const mobileNav = document.getElementById('mobileNav');
             mobileNav.classList.toggle('active');
-        }
-
-        // Load products from API
-        async function loadLatestProducts() {
-            try {
-                const response = await fetch('/api/products?limit=4');
-                const data = await response.json();
-
-                if (data.success && data.products && data.products.length > 0) {
-                    const grid = document.getElementById('productsGrid');
-                    grid.innerHTML = data.products.map(product => `
-                        <a href="/app?tab=shop&product=${product.id}" class="product-card stagger-item">
-                            <img src="${product.image_url || product.image || product.imageUrl || '/images/products/placeholder.png'}" alt="${product.name}" class="product-image" onerror="this.src='/images/products/placeholder.png'">
-                            <h3 class="product-title">${product.name}</h3>
-                            <p class="product-price">R${parseFloat(product.price).toFixed(2)}</p>
-                        </a>
-                    `).join('');
-                }
-            } catch (error) {
-                console.log('Products will load from app');
-            }
         }
 
         // Load business contact info from API
@@ -1776,7 +1730,6 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            loadLatestProducts();
             loadBusinessInfo();
             updateAuthLinks();
         });
