@@ -4690,13 +4690,20 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
             limit: 10000
         });
 
+        // Helper function to extract date (YYYY-MM-DD) from various datetime formats
+        // Handles: '2025-12-12T10:30:00', '2025-12-12 10:30:00', '2025-12-12'
+        const extractDate = (dateStr) => {
+            if (!dateStr) return null;
+            // Split on 'T' or space to handle both ISO and SQLite datetime formats
+            return dateStr.split(/[T\s]/)[0];
+        };
+
         // Revenue this month from PAID INVOICES (primary source of service revenue)
-        // Filter by service_date in current month, extracting just the date part to avoid
-        // string comparison issues (e.g., '2025-12-15T10:00:00' > '2025-12-31' as strings)
+        // Filter by service_date in current month
         const invoiceRevenue = (allInvoices || [])
             .filter(inv => {
                 if (inv.payment_status !== 'paid') return false;
-                const serviceDate = inv.service_date ? inv.service_date.split('T')[0] : null;
+                const serviceDate = extractDate(inv.service_date);
                 return serviceDate && serviceDate >= monthStart && serviceDate <= monthEnd;
             })
             .reduce((sum, inv) => sum + (parseFloat(inv.total) || 0), 0);
@@ -4705,23 +4712,23 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
         const orderRevenue = allOrders
             .filter(o => {
                 if (o.status === 'cancelled') return false;
-                const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
+                const orderDate = extractDate(o.createdAt || o.created_at);
                 return orderDate && orderDate >= monthStart && orderDate <= today;
             })
-            .reduce((sum, o) => sum + (o.total || 0), 0);
+            .reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
 
         // Total monthly revenue = invoices + product orders
         const monthRevenue = invoiceRevenue + orderRevenue;
 
         // Bookings this month (all bookings in current month, including future dates)
         const monthBookings = allBookings.filter(b => {
-            const bookingDate = b.requestedDate || b.date;
+            const bookingDate = extractDate(b.requested_date || b.requestedDate || b.date);
             return bookingDate && bookingDate >= monthStart && bookingDate <= monthEnd;
         }).length;
 
         // Product orders this month
         const monthOrders = allOrders.filter(o => {
-            const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
+            const orderDate = extractDate(o.createdAt || o.created_at);
             return orderDate && orderDate >= monthStart && orderDate <= today;
         }).length;
 
@@ -4730,18 +4737,24 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
         const activeUserIds = new Set();
 
         allBookings.forEach(b => {
-            const bookingDate = b.requestedDate || b.date;
-            if (bookingDate >= ninetyDaysAgo) activeUserIds.add(b.userId);
+            const bookingDate = extractDate(b.requested_date || b.requestedDate || b.date);
+            const usrId = b.user_id || b.userId;
+            if (bookingDate && bookingDate >= ninetyDaysAgo && usrId) {
+                activeUserIds.add(usrId);
+            }
         });
         allOrders.forEach(o => {
-            const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
-            if (orderDate && orderDate >= ninetyDaysAgo) activeUserIds.add(o.userId);
+            const orderDate = extractDate(o.createdAt || o.created_at);
+            const usrId = o.user_id || o.userId;
+            if (orderDate && orderDate >= ninetyDaysAgo && usrId) {
+                activeUserIds.add(usrId);
+            }
         });
         const activeCustomers = activeUserIds.size;
 
         // Today's bookings count
         const todayBookings = allBookings.filter(b => {
-            const bookingDate = b.requestedDate || b.date;
+            const bookingDate = extractDate(b.requested_date || b.requestedDate || b.date);
             return bookingDate === today;
         }).length;
         const pendingBookings = allBookings.filter(b => b.status === 'REQUESTED').length;
