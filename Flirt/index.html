@@ -1591,8 +1591,8 @@
                 if (data.success && data.products && data.products.length > 0) {
                     const grid = document.getElementById('productsGrid');
                     grid.innerHTML = data.products.map(product => `
-                        <a href="/app?tab=shop&product=${product.id}" class="product-card">
-                            <img src="${product.image || product.imageUrl || 'https://via.placeholder.com/300x300?text=Product'}" alt="${product.name}" class="product-image">
+                        <a href="/app?tab=shop&product=${product.id}" class="product-card stagger-item">
+                            <img src="${product.image_url || product.image || product.imageUrl || '/images/products/placeholder.png'}" alt="${product.name}" class="product-image" onerror="this.src='/images/products/placeholder.png'">
                             <h3 class="product-title">${product.name}</h3>
                             <p class="product-price">R${parseFloat(product.price).toFixed(2)}</p>
                         </a>
