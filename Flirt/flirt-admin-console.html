@@ -2241,6 +2241,24 @@
                 grid-template-columns: 1fr;
             }
 
+            /* Staff modal responsive */
+            #staff-modal .modal-content {
+                max-width: 95%;
+            }
+
+            #staff-modal .modal-body > div {
+                grid-template-columns: 1fr !important;
+                gap: 20px !important;
+            }
+
+            #staff-permissions-grid {
+                max-height: 250px !important;
+            }
+
+            #staff-permissions-grid > div > div:last-child {
+                grid-template-columns: 1fr !important;
+            }
+
             /* Calendar mobile */
             .calendar-grid {
                 grid-template-columns: repeat(7, 1fr);
@@ -5957,49 +5975,62 @@
 
                 <!-- Add/Edit Staff Modal -->
                 <div id="staff-modal" class="modal" style="display: none;">
-                    <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-content" style="max-width: 800px;">
                         <div class="modal-header">
                             <h3 id="staff-modal-title">Add Staff Member</h3>
                             <button class="modal-close" onclick="closeStaffModal()">&times;</button>
                         </div>
                         <div class="modal-body">
                             <input type="hidden" id="staff-edit-id">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Name *</label>
-                                    <input type="text" class="form-input" id="staff-name" placeholder="Full name">
+
+                            <!-- Two Column Layout for Staff Details and Permissions -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                                <!-- Left Column: Staff Details -->
+                                <div>
+                                    <h4 style="margin: 0 0 15px 0; color: var(--dark); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Staff Details</h4>
+                                    <div class="form-group">
+                                        <label class="form-label">Name *</label>
+                                        <input type="text" class="form-input" id="staff-name" placeholder="Full name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Email *</label>
+                                        <input type="email" class="form-input" id="staff-email" placeholder="Email address">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Phone</label>
+                                        <input type="tel" class="form-input" id="staff-phone" placeholder="Phone number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Link to Stylist (Optional)</label>
+                                        <select class="form-input" id="staff-stylist">
+                                            <option value="">-- No linked stylist --</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" id="staff-password-group">
+                                        <label class="form-label">Initial Password</label>
+                                        <input type="text" class="form-input" id="staff-password" placeholder="Leave blank to auto-generate">
+                                        <small style="color: #666; font-size: 11px; margin-top: 5px; display: block;">Staff member will be required to change password on first login</small>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label">Email *</label>
-                                    <input type="email" class="form-input" id="staff-email" placeholder="Email address">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-label">Phone</label>
-                                    <input type="tel" class="form-input" id="staff-phone" placeholder="Phone number">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Link to Stylist (Optional)</label>
-                                    <select class="form-input" id="staff-stylist">
-                                        <option value="">-- No linked stylist --</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-group" id="staff-password-group">
-                                <label class="form-label">Initial Password (leave blank to auto-generate)</label>
-                                <input type="text" class="form-input" id="staff-password" placeholder="Temporary password">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" style="margin-bottom: 15px;">Permissions</label>
-                                <div id="staff-permissions-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                                    <!-- Permissions will be loaded dynamically -->
+
+                                <!-- Right Column: Permissions -->
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                        <h4 style="margin: 0; color: var(--dark); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Permissions</h4>
+                                        <div style="display: flex; gap: 8px;">
+                                            <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAllPermissions(true)" style="font-size: 11px; padding: 4px 10px;">Select All</button>
+                                            <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAllPermissions(false)" style="font-size: 11px; padding: 4px 10px;">Clear All</button>
+                                        </div>
+                                    </div>
+                                    <div id="staff-permissions-grid" style="display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto; padding-right: 5px;">
+                                        <!-- Permissions will be loaded dynamically -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button class="btn btn-secondary" onclick="closeStaffModal()">Cancel</button>
-                            <button class="btn btn-primary" onclick="saveAdminStaff()">Save</button>
+                            <button class="btn btn-primary" onclick="saveAdminStaff()">Save Staff Member</button>
                         </div>
                     </div>
                 </div>
@@ -11149,15 +11180,57 @@
 
         function renderPermissionsGrid(currentPermissions) {
             const grid = document.getElementById('staff-permissions-grid');
-            grid.innerHTML = Object.entries(permissionsList).map(([key, perm]) => `
-                <label style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #f7f7f7; border-radius: 6px; cursor: pointer;">
-                    <input type="checkbox" id="perm-${key}" ${currentPermissions[key] ? 'checked' : ''} style="width: 18px; height: 18px;">
-                    <div>
-                        <div style="font-weight: 500;">${perm.label}</div>
-                        <div style="font-size: 11px; color: #666;">${perm.description}</div>
+
+            // Group permissions by category
+            const categories = {
+                'Operations': ['bookings', 'customers', 'services', 'stylists'],
+                'Commerce': ['products', 'orders', 'invoices'],
+                'Marketing': ['promotions', 'gallery', 'rewards'],
+                'Support': ['chat', 'reports']
+            };
+
+            let html = '';
+            for (const [category, keys] of Object.entries(categories)) {
+                const categoryPerms = keys.filter(k => permissionsList[k]);
+                if (categoryPerms.length === 0) continue;
+
+                html += `<div style="margin-bottom: 12px;">
+                    <div style="font-size: 11px; text-transform: uppercase; color: #888; font-weight: 600; margin-bottom: 6px; letter-spacing: 0.5px;">${category}</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                        ${categoryPerms.map(key => {
+                            const perm = permissionsList[key];
+                            const isChecked = currentPermissions[key] ? 'checked' : '';
+                            return `
+                                <label class="perm-item" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: ${isChecked ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' : '#f8f9fa'}; border: 1px solid ${isChecked ? '#86efac' : '#e5e7eb'}; border-radius: 8px; cursor: pointer; transition: all 0.15s ease;"
+                                       onchange="this.style.background = this.querySelector('input').checked ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' : '#f8f9fa'; this.style.borderColor = this.querySelector('input').checked ? '#86efac' : '#e5e7eb';">
+                                    <input type="checkbox" id="perm-${key}" ${isChecked} style="width: 16px; height: 16px; margin-top: 2px; accent-color: #22c55e;">
+                                    <div style="flex: 1; min-width: 0;">
+                                        <div style="font-weight: 600; font-size: 13px; color: #1f2937;">${perm.label}</div>
+                                        <div style="font-size: 11px; color: #6b7280; line-height: 1.3;">${perm.description}</div>
+                                    </div>
+                                </label>
+                            `;
+                        }).join('')}
                     </div>
-                </label>
-            `).join('');
+                </div>`;
+            }
+
+            grid.innerHTML = html;
+        }
+
+        function toggleAllPermissions(selectAll) {
+            Object.keys(permissionsList).forEach(key => {
+                const checkbox = document.getElementById(`perm-${key}`);
+                if (checkbox) {
+                    checkbox.checked = selectAll;
+                    // Trigger visual update
+                    const label = checkbox.closest('label');
+                    if (label) {
+                        label.style.background = selectAll ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' : '#f8f9fa';
+                        label.style.borderColor = selectAll ? '#86efac' : '#e5e7eb';
+                    }
+                }
+            });
         }
 
         function closeStaffModal() {
@@ -11190,14 +11263,16 @@
                 let result;
                 if (editId) {
                     // Update existing
-                    result = await apiCall(`/admin/staff/${editId}`, 'PUT', {
-                        name, phone, permissions, stylistId
+                    result = await apiCall(`/admin/staff/${editId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ name, phone, permissions, stylistId })
                     });
                     showAdminToast('Staff member updated successfully', 'success');
                 } else {
                     // Create new
-                    result = await apiCall('/admin/staff', 'POST', {
-                        email, name, phone, permissions, stylistId, password: password || undefined
+                    result = await apiCall('/admin/staff', {
+                        method: 'POST',
+                        body: JSON.stringify({ email, name, phone, permissions, stylistId, password: password || undefined })
                     });
                     if (result.temporaryPassword) {
                         showAdminToast(`Staff created! Temporary password: ${result.temporaryPassword}`, 'success');
@@ -11218,7 +11293,7 @@
             if (!confirm(`Reset password for ${staffName}?\\n\\nA new temporary password will be generated.`)) return;
 
             try {
-                const result = await apiCall(`/admin/staff/${staffId}/reset-password`, 'POST');
+                const result = await apiCall(`/admin/staff/${staffId}/reset-password`, { method: 'POST' });
                 showAdminToast('Password reset successfully', 'success');
                 alert(`Password reset for ${staffName}!\\n\\nNew temporary password: ${result.temporaryPassword}\\n\\nPlease share this with the staff member.`);
             } catch (error) {
@@ -11230,7 +11305,7 @@
             if (!confirm(`Remove ${staffName} as staff?\\n\\nThey will be converted to a regular customer account and lose all admin access.`)) return;
 
             try {
-                await apiCall(`/admin/staff/${staffId}`, 'DELETE');
+                await apiCall(`/admin/staff/${staffId}`, { method: 'DELETE' });
                 showAdminToast('Staff member removed', 'success');
                 loadStaff();
             } catch (error) {
