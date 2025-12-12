@@ -8141,7 +8141,18 @@ app.get('/api/loyalty/config', (req, res) => {
 // SERVE HTML PAGES
 // ============================================
 
+// Landing page (new marketing site)
 app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Client app (PWA for bookings, shop, profile, etc.)
+app.get('/app', (req, res) => {
+    res.sendFile(path.join(__dirname, 'flirt-hair-app.html'));
+});
+
+// Legacy route - redirect to app
+app.get('/flirt-hair-app.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'flirt-hair-app.html'));
 });
 

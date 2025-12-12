@@ -15071,6 +15071,52 @@ async function showNotifications() {
 
             // Initialize time window selector
             initTimeWindowSelector();
+
+            // Handle URL parameters for deep linking from landing page
+            handleUrlParameters();
+        }
+
+        // Handle URL parameters for navigation from landing page
+        function handleUrlParameters() {
+            const params = new URLSearchParams(window.location.search);
+            const tab = params.get('tab');
+            const category = params.get('category');
+            const product = params.get('product');
+
+            if (tab) {
+                // Small delay to ensure everything is loaded
+                setTimeout(() => {
+                    switchTab(tab);
+
+                    // Handle specific category pre-selection for booking
+                    if (tab === 'booking' && category) {
+                        // Pre-select hair type and trigger category expansion
+                        modernBookingState.bookingType = 'hair';
+                        modernBookingState.targetCategory = category;
+                        document.querySelectorAll('.service-type-card').forEach(card => {
+                            card.classList.remove('selected');
+                            if (card.querySelector('.card-title')?.textContent.includes('Hair')) {
+                                card.classList.add('selected');
+                            }
+                        });
+                        document.getElementById('step1ContinueBtn').disabled = false;
+                    }
+
+                    // Handle specific product view
+                    if (tab === 'shop' && product) {
+                        // Load product detail after products are loaded
+                        setTimeout(() => {
+                            const productId = parseInt(product);
+                            if (productId && typeof showProductDetail === 'function') {
+                                showProductDetail(productId);
+                            }
+                        }, 500);
+                    }
+                }, 300);
+
+                // Clean URL without reload
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
         }
 
         // Initialize time window selector chips

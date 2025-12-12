@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flirt Hair Extensions - Premium European Virgin Hair</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Flirt is a first of its kind one stop extension shop offering premium European Virgin 100% Remy human hair extensions. Specialising in weft, tape and keratin installations.">
+    <meta name="keywords" content="hair extensions, tape extensions, weft extensions, keratin extensions, remy hair, virgin hair, South Africa">
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Flirt Hair">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --black: #000000;
+            --white: #ffffff;
+            --gray-dark: #32373c;
+            --gray-light: #f8f8f8;
+            --pink: #F67599;
+            --pink-light: rgba(246, 117, 153, 0.1);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--black);
+            line-height: 1.6;
+            background: var(--white);
+        }
+
+        /* Typography */
+        h1, h2, h3, h4 {
+            font-family: 'Josefin Sans', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Header */
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: var(--white);
+            transition: all 0.3s ease;
+        }
+
+        .site-header.scrolled {
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            color: var(--black);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--pink);
+        }
+
+        .main-nav {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .nav-link {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--black);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--pink);
+        }
+
+        .nav-btn {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: var(--gray-dark);
+            color: var(--white);
+            padding: 12px 28px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--black);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        .mobile-menu-btn span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--black);
+            margin: 5px 0;
+            transition: all 0.3s ease;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: var(--black);
+            overflow: hidden;
+            padding-top: 80px;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/home-image-1.jpg') center center / cover no-repeat;
+            opacity: 0.7;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            color: var(--white);
+            padding: 40px;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            margin-bottom: 40px;
+            line-height: 1.2;
+        }
+
+        .hero-btn {
+            display: inline-block;
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            background: var(--white);
+            color: var(--black);
+            padding: 18px 45px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .hero-btn:hover {
+            background: var(--pink);
+            color: var(--white);
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 100px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 36px;
+            font-weight: 400;
+            letter-spacing: 0.15em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* About Section */
+        .about-section {
+            text-align: center;
+        }
+
+        .about-text {
+            max-width: 800px;
+            margin: 0 auto 40px;
+            font-size: 16px;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .about-btns {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn-outline {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: transparent;
+            color: var(--black);
+            padding: 14px 32px;
+            border: 2px solid var(--black);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .btn-solid {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: var(--gray-dark);
+            color: var(--white);
+            padding: 16px 32px;
+            border: none;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-solid:hover {
+            background: var(--black);
+        }
+
+        /* Services Grid */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-top: 50px;
+        }
+
+        .service-card {
+            position: relative;
+            aspect-ratio: 1;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .service-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .service-card:hover img {
+            transform: scale(1.1);
+        }
+
+        .service-card-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 30px 20px 20px;
+        }
+
+        .service-card-title {
+            color: var(--white);
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Products Section */
+        .products-section {
+            background: var(--gray-light);
+            padding: 100px 40px;
+        }
+
+        .products-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto 50px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .product-card {
+            background: var(--white);
+            text-align: center;
+            padding: 20px;
+            text-decoration: none;
+            color: var(--black);
+            transition: all 0.3s ease;
+        }
+
+        .product-card:hover {
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+        }
+
+        .product-image {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            margin-bottom: 15px;
+        }
+
+        .product-title {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+        }
+
+        .product-price {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-dark);
+        }
+
+        /* Reviews Section */
+        .reviews-section {
+            padding: 100px 40px;
+            background: var(--white);
+        }
+
+        .reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            max-width: 1200px;
+            margin: 50px auto 0;
+        }
+
+        .review-card {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .review-stars {
+            margin-bottom: 20px;
+        }
+
+        .review-stars img {
+            height: 20px;
+        }
+
+        .star {
+            color: #FFD700;
+            font-size: 20px;
+        }
+
+        .review-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .review-author {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        /* Partners Section */
+        .partners-section {
+            padding: 60px 40px;
+            background: var(--gray-light);
+            text-align: center;
+        }
+
+        .partners-title {
+            font-size: 14px;
+            letter-spacing: 0.2em;
+            margin-bottom: 30px;
+            color: #666;
+        }
+
+        .partners-logos {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .partners-logos img {
+            max-width: 100%;
+            opacity: 0.7;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: var(--black);
+            color: var(--white);
+            text-align: center;
+            padding: 100px 40px;
+        }
+
+        .cta-section h2 {
+            font-size: 42px;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            margin-bottom: 40px;
+        }
+
+        .cta-btns {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .cta-btn {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 18px 40px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .cta-btn-primary {
+            background: var(--white);
+            color: var(--black);
+        }
+
+        .cta-btn-primary:hover {
+            background: var(--pink);
+            color: var(--white);
+        }
+
+        .cta-btn-secondary {
+            background: transparent;
+            color: var(--white);
+            border: 2px solid var(--white);
+        }
+
+        .cta-btn-secondary:hover {
+            background: var(--white);
+            color: var(--black);
+        }
+
+        /* Footer Gallery */
+        .footer-gallery {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .footer-gallery img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+        }
+
+        /* Footer */
+        .site-footer {
+            background: var(--black);
+            color: var(--white);
+            padding: 60px 40px;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+        }
+
+        .footer-col h4 {
+            font-size: 14px;
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+        }
+
+        .footer-col a {
+            display: block;
+            color: #999;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 10px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-col a:hover {
+            color: var(--white);
+        }
+
+        .footer-col p {
+            color: #999;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .footer-social a:hover {
+            background: var(--pink);
+            border-color: var(--pink);
+        }
+
+        .footer-social svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--white);
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 40px auto 0;
+            padding-top: 40px;
+            border-top: 1px solid #333;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+        }
+
+        /* Mobile Menu */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--white);
+            z-index: 999;
+            padding: 100px 40px;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .mobile-nav.active {
+            display: flex;
+        }
+
+        .mobile-nav a {
+            font-family: 'Josefin Sans', sans-serif;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--black);
+            text-decoration: none;
+        }
+
+        .mobile-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 32px;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .services-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .footer-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-container {
+                padding: 15px 20px;
+            }
+
+            .main-nav {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+                letter-spacing: 0.1em;
+            }
+
+            .section {
+                padding: 60px 20px;
+            }
+
+            .section-title {
+                font-size: 24px;
+            }
+
+            .services-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .products-section {
+                padding: 60px 20px;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .reviews-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-section h2 {
+                font-size: 28px;
+            }
+
+            .footer-container {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .footer-social {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="site-header" id="siteHeader">
+        <div class="header-container">
+            <a href="/" class="logo">FL<span>!</span>RT</a>
+            <nav class="main-nav">
+                <a href="#services" class="nav-link">Services</a>
+                <a href="/app?tab=shop" class="nav-link">Shop</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="#contact" class="nav-link">Contact</a>
+                <a href="/app?tab=booking" class="nav-btn">Book Now</a>
+            </nav>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation -->
+    <nav class="mobile-nav" id="mobileNav">
+        <button class="mobile-close" onclick="toggleMobileMenu()">&times;</button>
+        <a href="#services" onclick="toggleMobileMenu()">Services</a>
+        <a href="/app?tab=shop">Shop</a>
+        <a href="#about" onclick="toggleMobileMenu()">About</a>
+        <a href="#contact" onclick="toggleMobileMenu()">Contact</a>
+        <a href="/app?tab=booking">Book Now</a>
+        <a href="/app?tab=profile">My Account</a>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <h1>PREMIUM HAIR<br>EXTENSIONS</h1>
+            <a href="/app?tab=shop" class="hero-btn">VIEW PRODUCTS</a>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="section about-section" id="about">
+        <h2 class="section-title">ABOUT FLIRT HAIR</h2>
+        <p class="about-text">
+            Flirt is a first of its kind one stop extension shop. Flirt offers a premium range European Virgin 100% Remy, human hair extension range. Flirt is a full service salon. Flirt is bringing hair extensions directly to the public to make it accessible to everyone. We specialise in weft, tape and keratin extension installations. We also stock our premium hair extension range, so no need for multiple salon visits. You want it, we've got it.
+        </p>
+        <div class="about-btns">
+            <a href="#services" class="btn-outline">MORE ABOUT US</a>
+            <a href="/price-list.pdf" class="btn-outline" target="_blank">EXTENSIONS PRICE LIST</a>
+        </div>
+    </section>
+
+    <!-- Services Grid -->
+    <section class="section" id="services">
+        <div class="services-grid">
+            <div class="service-card" onclick="goToApp('booking', 'tape')">
+                <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg" alt="Tape Extensions">
+                <div class="service-card-overlay">
+                    <h3 class="service-card-title">Tape Extensions</h3>
+                </div>
+            </div>
+            <div class="service-card" onclick="goToApp('booking', 'weft')">
+                <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg" alt="Weft Extensions">
+                <div class="service-card-overlay">
+                    <h3 class="service-card-title">Weft Extensions</h3>
+                </div>
+            </div>
+            <div class="service-card" onclick="goToApp('booking', 'colour')">
+                <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg" alt="Colour Matching">
+                <div class="service-card-overlay">
+                    <h3 class="service-card-title">Colour Matching</h3>
+                </div>
+            </div>
+            <div class="service-card" onclick="goToApp('booking', 'maintenance')">
+                <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/categories7.jpg" alt="Maintenance">
+                <div class="service-card-overlay">
+                    <h3 class="service-card-title">Maintenance</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products-section">
+        <div class="products-header">
+            <h2 class="section-title">OUR LATEST PRODUCTS</h2>
+            <a href="/app?tab=shop" class="btn-outline">VIEW ALL PRODUCTS</a>
+        </div>
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be loaded dynamically -->
+            <div class="product-card">
+                <div class="product-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">Loading...</div>
+            </div>
+            <div class="product-card">
+                <div class="product-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">Loading...</div>
+            </div>
+            <div class="product-card">
+                <div class="product-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">Loading...</div>
+            </div>
+            <div class="product-card">
+                <div class="product-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">Loading...</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reviews Section -->
+    <section class="reviews-section">
+        <h2 class="section-title">CUSTOMER REVIEWS</h2>
+        <div class="reviews-grid">
+            <div class="review-card">
+                <div class="review-stars">
+                    <span class="star">&#9733;</span>
+                    <span class="star">&#9733;</span>
+                    <span class="star">&#9733;</span>
+                    <span class="star">&#9733;</span>
+                    <span class="star">&#9733;</span>
+                </div>
+                <p class="review-text">"Stunning salon! Amazing service and such kind ladies. Inge made my hair so beautiful and I loved the experience."</p>
+                <div class="review-author">Cassie Quiterres</div>
+            </div>
+            <div class="review-card">
+                <div class="review-stars">
+                    <span class="star">&#9733;</span>
+                    <span class="star">&#9733;</span>
+                    <span class="star">&#9733;</span>
+                    <span class="star">&#9733;</span>
+                    <span class="star">&#9733;</span>
+                </div>
+                <p class="review-text">"What a pleasant experience, from the look and feel of the salon to the friendly staff, not to mention the highly competitive rates! Loving my new look and will most certainly be back!"</p>
+                <div class="review-author">Claudia vd Merwe</div>
+            </div>
+            <div class="review-card">
+                <div class="review-stars">
+                    <span class="star">&#9733;</span>
+                    <span class="star">&#9733;</span>
+                    <span class="star">&#9733;</span>
+                    <span class="star">&#9733;</span>
+                    <span class="star">&#9733;</span>
+                </div>
+                <p class="review-text">"Absolutely in love with my flirt hair! Inge is the absolute best at what she does! They definitely made a client for life!"</p>
+                <div class="review-author">Jen Lee</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Partners Section -->
+    <section class="partners-section">
+        <h3 class="partners-title">OUR PARTNERS</h3>
+        <div class="partners-logos">
+            <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/partners-x3-1024x146.png" alt="Our Partners">
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section" id="contact">
+        <h2>FALL IN LOVE WITH YOUR HAIR</h2>
+        <div class="cta-btns">
+            <a href="/app?tab=booking" class="cta-btn cta-btn-primary">BOOK NOW</a>
+            <a href="https://wa.me/27821234567" class="cta-btn cta-btn-secondary" target="_blank">GET IN TOUCH</a>
+        </div>
+    </section>
+
+    <!-- Footer Gallery -->
+    <div class="footer-gallery">
+        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg" alt="Flirt Hair Gallery">
+        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg" alt="Flirt Hair Gallery">
+        <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images3.jpg" alt="Flirt Hair Gallery">
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-container">
+            <div class="footer-col">
+                <h4>FLIRT HAIR</h4>
+                <p>Premium European Virgin 100% Remy human hair extensions. Your one stop extension shop.</p>
+                <div class="footer-social">
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank">
+                        <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </a>
+                    <a href="https://www.facebook.com/flirthairsa/" target="_blank">
+                        <svg viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
+                    </a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4>QUICK LINKS</h4>
+                <a href="/app?tab=shop">Shop</a>
+                <a href="/app?tab=booking">Book Appointment</a>
+                <a href="#services">Our Services</a>
+                <a href="#about">About Us</a>
+            </div>
+            <div class="footer-col">
+                <h4>SERVICES</h4>
+                <a href="/app?tab=booking&category=tape">Tape Extensions</a>
+                <a href="/app?tab=booking&category=weft">Weft Extensions</a>
+                <a href="/app?tab=booking&category=keratin">Keratin Extensions</a>
+                <a href="/app?tab=booking&category=maintenance">Maintenance</a>
+            </div>
+            <div class="footer-col">
+                <h4>CONTACT</h4>
+                <p>
+                    Shop 5, Willowbridge Centre<br>
+                    Carl Cronje Drive<br>
+                    Bellville, Cape Town<br>
+                    <br>
+                    Tel: 021 123 4567<br>
+                    Email: info@flirt.hair
+                </p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Flirt Hair Extensions. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Header scroll effect
+        window.addEventListener('scroll', function() {
+            const header = document.getElementById('siteHeader');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const mobileNav = document.getElementById('mobileNav');
+            mobileNav.classList.toggle('active');
+        }
+
+        // Navigate to app with specific tab
+        function goToApp(tab, category) {
+            let url = '/app';
+            if (tab) {
+                url += '?tab=' + tab;
+            }
+            if (category) {
+                url += '&category=' + category;
+            }
+            window.location.href = url;
+            return false;
+        }
+
+        // Load products from API
+        async function loadLatestProducts() {
+            try {
+                const response = await fetch('/api/products?limit=4');
+                const data = await response.json();
+
+                if (data.success && data.products && data.products.length > 0) {
+                    const grid = document.getElementById('productsGrid');
+                    grid.innerHTML = data.products.map(product => `
+                        <a href="/app?tab=shop&product=${product.id}" class="product-card">
+                            <img src="${product.image || product.imageUrl || 'https://via.placeholder.com/300x300?text=Product'}" alt="${product.name}" class="product-image">
+                            <h3 class="product-title">${product.name}</h3>
+                            <p class="product-price">R${parseFloat(product.price).toFixed(2)}</p>
+                        </a>
+                    `).join('');
+                }
+            } catch (error) {
+                console.log('Products will load from app');
+            }
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLatestProducts();
+        });
+    </script>
+</body>
+</html>
