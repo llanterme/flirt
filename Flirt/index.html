@@ -177,14 +177,90 @@
             to { width: 120px; opacity: 1; }
         }
 
-        /* Hero Section - Slider */
+        @keyframes scrollBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Scroll-triggered Animation Classes */
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-60px);
+            transition: all 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(60px);
+            transition: all 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .reveal-scale {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal-scale.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Staggered grid animations */
+        .stagger-item {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stagger-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Hero Section - Full Height */
         .hero {
             position: relative;
             width: 100%;
-            min-height: 500px;
-            height: 55vh;
-            max-height: 600px;
-            margin-top: 80px;
+            min-height: 100vh;
+            height: 100vh;
+            margin-top: 0;
             overflow: hidden;
         }
 
@@ -202,7 +278,7 @@
             height: 100%;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.6s ease-in-out, visibility 0.6s;
+            transition: opacity 0.8s ease-in-out, visibility 0.8s;
         }
 
         .hero-slide.active {
@@ -328,7 +404,7 @@
         /* Hero Navigation Dots */
         .hero-dots {
             position: absolute;
-            bottom: 30px;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -349,6 +425,74 @@
         .hero-dot.active,
         .hero-dot:hover {
             background: var(--pink);
+        }
+
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            animation: scrollBounce 2s ease-in-out infinite;
+        }
+
+        .scroll-indicator span {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--gray-dark);
+        }
+
+        .scroll-indicator svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--pink);
+        }
+
+        /* Decorative floating elements */
+        .hero-decoration {
+            position: absolute;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .hero-decoration-1 {
+            top: 20%;
+            left: 10%;
+            width: 80px;
+            height: 80px;
+            border: 2px solid rgba(246, 117, 153, 0.2);
+            border-radius: 50%;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        .hero-decoration-2 {
+            bottom: 30%;
+            right: 5%;
+            width: 120px;
+            height: 120px;
+            border: 2px solid rgba(246, 117, 153, 0.15);
+            border-radius: 50%;
+            animation: pulse 5s ease-in-out infinite 1s;
+        }
+
+        .hero-decoration-3 {
+            top: 40%;
+            left: 5%;
+            width: 6px;
+            height: 6px;
+            background: var(--pink);
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: float 6s ease-in-out infinite;
         }
 
         /* About Section - Two Columns */
@@ -412,6 +556,7 @@
         /* Services Section */
         .services-section {
             padding: 0;
+            position: relative;
         }
 
         .services-grid {
@@ -430,11 +575,11 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.6s ease;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .service-card:hover img {
-            transform: scale(1.1);
+            transform: scale(1.15);
         }
 
         .service-card-overlay {
@@ -443,15 +588,16 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.3);
+            background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.1) 100%);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: background 0.3s ease;
+            transition: all 0.4s ease;
         }
 
         .service-card:hover .service-card-overlay {
-            background: rgba(0,0,0,0.5);
+            background: linear-gradient(to top, rgba(246,117,153,0.8) 0%, rgba(246,117,153,0.4) 50%, rgba(0,0,0,0.2) 100%);
         }
 
         .service-card-title {
@@ -462,6 +608,32 @@
             letter-spacing: 0.15em;
             text-transform: uppercase;
             text-align: center;
+            transform: translateY(10px);
+            transition: transform 0.4s ease;
+        }
+
+        .service-card:hover .service-card-title {
+            transform: translateY(-5px);
+        }
+
+        .service-card-cta {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--white);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease 0.1s;
+            margin-top: 15px;
+            padding: 8px 20px;
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+
+        .service-card:hover .service-card-cta {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         /* Products Section */
@@ -509,10 +681,29 @@
             text-align: center;
             text-decoration: none;
             color: var(--gray-dark);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--pink);
+            transition: all 0.4s ease;
+            transform: translateX(-50%);
+        }
+
+        .product-card:hover::after {
+            width: 60%;
         }
 
         .product-card:hover .product-image {
-            transform: scale(1.02);
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
         }
 
         .product-image {
@@ -520,7 +711,8 @@
             aspect-ratio: 1;
             object-fit: cover;
             margin-bottom: 20px;
-            transition: transform 0.3s ease;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 4px;
         }
 
         .product-title {
@@ -588,7 +780,7 @@
         /* Partners Section */
         .partners-section {
             padding: 60px 50px;
-            background: var(--white);
+            background: #414042;
             text-align: center;
         }
 
@@ -599,31 +791,41 @@
             letter-spacing: 0.2em;
             text-transform: uppercase;
             margin-bottom: 40px;
-            color: var(--gray-medium);
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .partners-logos img {
-            max-width: 500px;
-            opacity: 0.6;
+            max-width: 600px;
+            width: 100%;
+            opacity: 0.9;
         }
 
         /* CTA Section */
         .cta-section {
-            background: var(--gray-dark);
-            color: var(--white);
-            text-align: center;
-            padding: 100px 50px;
+            background: url('/images/cta-bg.jpg') center center / cover no-repeat;
+            color: var(--gray-dark);
+            text-align: left;
+            padding: 80px 50px;
+            position: relative;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .cta-content {
+            max-width: 500px;
         }
 
         .cta-section h2 {
             font-size: 42px;
-            font-weight: 300;
-            margin-bottom: 50px;
+            font-weight: 400;
+            margin-bottom: 30px;
+            color: #414042;
         }
 
         .cta-btns {
             display: flex;
-            justify-content: center;
             gap: 20px;
         }
 
@@ -639,24 +841,24 @@
         }
 
         .cta-btn-primary {
-            background: var(--white);
-            color: var(--gray-dark);
+            background: var(--pink);
+            color: var(--white);
         }
 
         .cta-btn-primary:hover {
-            background: var(--pink);
+            background: var(--pink-dark);
             color: var(--white);
         }
 
         .cta-btn-secondary {
             background: transparent;
-            color: var(--white);
-            border: 1px solid var(--white);
+            color: var(--gray-dark);
+            border: 1px solid var(--gray-dark);
         }
 
         .cta-btn-secondary:hover {
-            background: var(--white);
-            color: var(--gray-dark);
+            background: var(--gray-dark);
+            color: var(--white);
         }
 
         /* Footer Gallery */
@@ -950,6 +1152,12 @@
 
             .cta-section {
                 padding: 60px 20px;
+                text-align: center;
+                background-position: right center;
+            }
+
+            .cta-content {
+                max-width: 100%;
             }
 
             .cta-section h2 {
@@ -972,6 +1180,210 @@
 
             .footer-social {
                 justify-content: center;
+            }
+        }
+
+        /* Price List Popup Modal */
+        .price-popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .price-popup-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+        }
+
+        .price-popup {
+            background: var(--white);
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            border-radius: 8px;
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .price-popup-overlay.active .price-popup {
+            transform: scale(1);
+        }
+
+        .price-popup-header {
+            background: var(--pink);
+            padding: 25px 30px;
+            position: relative;
+            text-align: center;
+        }
+
+        .price-popup-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--white);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .price-popup-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--white);
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .price-popup-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .price-popup-content {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .price-popup-section {
+            margin-bottom: 35px;
+        }
+
+        .price-popup-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .price-popup-section h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--pink);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .price-popup-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .price-popup-table th {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gray-medium);
+            text-align: center;
+            padding: 10px 6px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .price-popup-table th:first-child {
+            text-align: left;
+        }
+
+        .price-popup-table td {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            color: var(--gray-dark);
+            text-align: center;
+            padding: 10px 6px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .price-popup-table td:first-child {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .price-popup-table tbody tr:hover {
+            background: #fdf5f7;
+        }
+
+        .price-popup-note {
+            font-size: 11px;
+            color: var(--gray-medium);
+            font-style: italic;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .price-popup-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #f0f0f0;
+            text-align: center;
+        }
+
+        .price-popup-footer a {
+            display: inline-block;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: var(--pink);
+            color: var(--white);
+            padding: 12px 30px;
+            text-decoration: none;
+            transition: background 0.3s ease;
+        }
+
+        .price-popup-footer a:hover {
+            background: var(--pink-dark);
+        }
+
+        @media (max-width: 768px) {
+            .price-popup {
+                width: 95%;
+                max-height: 90vh;
+            }
+
+            .price-popup-header {
+                padding: 20px;
+            }
+
+            .price-popup-header h2 {
+                font-size: 18px;
+            }
+
+            .price-popup-content {
+                padding: 20px;
+            }
+
+            .price-popup-table {
+                font-size: 11px;
+            }
+
+            .price-popup-table th,
+            .price-popup-table td {
+                padding: 8px 4px;
+            }
+
+            .price-popup-table th {
+                font-size: 10px;
             }
         }
     </style>
@@ -1055,7 +1467,7 @@
             </p>
             <div class="about-links">
                 <a href="#services" class="about-link">More About Us</a>
-                <a href="/price-list.html" class="about-link">Extensions Price List</a>
+                <a href="javascript:void(0)" class="about-link" onclick="openPricePopup()">Extensions Price List</a>
             </div>
         </div>
         <div class="about-right"></div>
@@ -1151,10 +1563,12 @@
 
     <!-- CTA Section -->
     <section class="cta-section" id="contact">
-        <h2>FALL IN LOVE WITH YOUR HAIR</h2>
-        <div class="cta-btns">
-            <a href="/app?tab=booking" class="cta-btn cta-btn-primary">BOOK NOW</a>
-            <a href="https://wa.me/27821234567" class="cta-btn cta-btn-secondary" target="_blank" id="whatsappBtn">GET IN TOUCH</a>
+        <div class="cta-content">
+            <h2>FALL IN LOVE WITH YOUR HAIR</h2>
+            <div class="cta-btns">
+                <a href="/app?tab=booking" class="cta-btn cta-btn-primary">BOOK NOW</a>
+                <a href="https://wa.me/27821234567" class="cta-btn cta-btn-secondary" target="_blank" id="whatsappBtn">GET IN TOUCH</a>
+            </div>
         </div>
     </section>
 
@@ -1383,6 +1797,140 @@
             loadBusinessInfo();
             updateAuthLinks();
         });
+
+        // Price List Popup Functions
+        function openPricePopup() {
+            const overlay = document.getElementById('pricePopupOverlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('active'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePricePopup() {
+            const overlay = document.getElementById('pricePopupOverlay');
+            overlay.classList.remove('active');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        // Close popup when clicking outside
+        document.addEventListener('click', function(e) {
+            const overlay = document.getElementById('pricePopupOverlay');
+            if (e.target === overlay) {
+                closePricePopup();
+            }
+        });
+
+        // Close popup with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePricePopup();
+            }
+        });
     </script>
+
+    <!-- Price List Popup Modal -->
+    <div class="price-popup-overlay" id="pricePopupOverlay">
+        <div class="price-popup">
+            <div class="price-popup-header">
+                <h2>Extensions Price List</h2>
+                <button class="price-popup-close" onclick="closePricePopup()">&times;</button>
+            </div>
+            <div class="price-popup-content">
+                <!-- Tape-In Extensions -->
+                <div class="price-popup-section">
+                    <h3>Tape-In Extensions</h3>
+                    <table class="price-popup-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>16"</th>
+                                <th>18"</th>
+                                <th>20"</th>
+                                <th>22"</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>10 Tapes</td><td>R3,665</td><td>R3,875</td><td>R4,205</td><td>R5,860</td></tr>
+                            <tr><td>20 Tapes</td><td>R5,825</td><td>R6,245</td><td>R6,880</td><td>R9,217</td></tr>
+                            <tr><td>30 Tapes</td><td>R7,840</td><td>R8,470</td><td>R9,560</td><td>R12,425</td></tr>
+                            <tr><td>40 Tapes</td><td>R9,850</td><td>R11,140</td><td>R12,405</td><td>R16,085</td></tr>
+                            <tr><td>50 Tapes</td><td>R11,865</td><td>R13,360</td><td>R15,015</td><td>R19,295</td></tr>
+                            <tr><td>60 Tapes</td><td>R13,875</td><td>R16,495</td><td>R17,570</td><td>R22,500</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="price-popup-note">Includes installation at Flirt</p>
+                </div>
+
+                <!-- Weft-In Extensions -->
+                <div class="price-popup-section">
+                    <h3>Weft-In Extensions</h3>
+                    <table class="price-popup-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>1 Weft</th>
+                                <th>2 Wefts</th>
+                                <th>3 Wefts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>16"/40cm</td><td>R5,815</td><td>R9,775</td><td>R13,795</td></tr>
+                            <tr><td>18"/45cm</td><td>R6,325</td><td>R10,625</td><td>R14,350</td></tr>
+                            <tr><td>20"/50cm</td><td>R6,530</td><td>R10,910</td><td>R15,640</td></tr>
+                            <tr><td>22"/55cm</td><td>R8,050</td><td>R12,485</td><td>R17,085</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="price-popup-note">Includes installation at Flirt</p>
+                </div>
+
+                <!-- Keratin Extensions -->
+                <div class="price-popup-section">
+                    <h3>Keratin Extensions</h3>
+                    <table class="price-popup-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>18"</th>
+                                <th>20"</th>
+                                <th>22"</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>25 Strands</td><td>R3,500</td><td>R3,825</td><td>R4,100</td></tr>
+                            <tr><td>50 Strands</td><td>R5,605</td><td>R6,247</td><td>R6,800</td></tr>
+                            <tr><td>75 Strands</td><td>R7,705</td><td>R8,670</td><td>R9,500</td></tr>
+                            <tr><td>100 Strands</td><td>R10,060</td><td>R11,345</td><td>R12,450</td></tr>
+                            <tr><td>125 Strands</td><td>R12,060</td><td>R13,670</td><td>R15,050</td></tr>
+                            <tr><td>150 Strands</td><td>R14,110</td><td>R16,040</td><td>R17,700</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="price-popup-note">Includes installation at Flirt</p>
+                </div>
+
+                <!-- Clip-In Extensions -->
+                <div class="price-popup-section">
+                    <h3>Clip-In Extensions</h3>
+                    <table class="price-popup-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>120G Set</th>
+                                <th>160G Set</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>20"/50cm</td><td>R5,750</td><td>R6,775</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="price-popup-footer">
+                <a href="/app?tab=booking">Book Appointment</a>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
