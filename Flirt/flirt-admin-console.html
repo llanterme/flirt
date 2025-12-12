@@ -18565,20 +18565,33 @@
                 // Set the current invoice for editing
                 currentInvoice = {
                     id: invoice.id,
-                    services: (invoice.services || []).map(s => ({
-                        id: s.service_id || s.id,
-                        name: s.service_name || s.name,
-                        price: parseFloat(s.price) || 0,
-                        quantity: s.quantity || 1,
-                        stylistId: s.stylist_id,
-                        stylistName: s.stylist_name
-                    })),
-                    products: (invoice.products || []).map(p => ({
-                        id: p.product_id || p.id,
-                        name: p.product_name || p.name,
-                        price: parseFloat(p.price) || 0,
-                        quantity: p.quantity || 1
-                    })),
+                    services: (invoice.services || []).map(s => {
+                        const unitPrice = parseFloat(s.unit_price || s.price) || 0;
+                        const qty = parseInt(s.quantity) || 1;
+                        return {
+                            id: s.service_id || s.id,
+                            service_name: s.service_name || s.name || 'Unknown Service',
+                            service_category: s.service_category || s.category || 'Service',
+                            unit_price: unitPrice,
+                            quantity: qty,
+                            total: unitPrice * qty,
+                            stylist_id: s.stylist_id,
+                            stylist_name: s.stylist_name
+                        };
+                    }),
+                    products: (invoice.products || []).map(p => {
+                        const unitPrice = parseFloat(p.unit_price || p.price) || 0;
+                        const qty = parseInt(p.quantity) || 1;
+                        return {
+                            id: p.product_id || p.id,
+                            product_name: p.product_name || p.name || 'Unknown Product',
+                            product_category: p.product_category || p.category || 'Product',
+                            product_type: p.product_type || 'retail',
+                            unit_price: unitPrice,
+                            quantity: qty,
+                            total: unitPrice * qty
+                        };
+                    }),
                     customer_type: invoice.customer_type || 'individual',
                     company_name: invoice.company_name || '',
                     business_address: invoice.business_address || '',
