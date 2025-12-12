@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const loyaltyHelper = require('../helpers/loyalty');
 const InvoiceRepositoryClass = require('./repositories/InvoiceRepository');
+const QuoteRepositoryClass = require('./repositories/QuoteRepository');
 
 // Database path configuration:
 // 1. DATABASE_PATH env var (for Railway Volume: /app/data/flirt.db)
@@ -3990,6 +3991,9 @@ const CategoryRewardMappingRepository = {
 // Initialize Invoice Repository
 const InvoiceRepository = new InvoiceRepositoryClass(getDb());
 
+// Initialize Quote Repository
+const QuoteRepository = new QuoteRepositoryClass(getDb());
+
 // ============================================
 // BUSINESS SETTINGS REPOSITORY
 // ============================================
@@ -4087,6 +4091,8 @@ module.exports = {
     CategoryRewardMappingRepository,
     // Invoicing System
     InvoiceRepository,
+    // Quote System
+    QuoteRepository,
     // Business Settings
     BusinessSettingsRepository
 };

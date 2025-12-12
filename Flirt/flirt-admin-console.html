@@ -2754,6 +2754,14 @@
                     Invoices
                     <span class="nav-badge" id="unpaid-invoices-count" style="display: none;">0</span>
                 </a>
+                <a class="nav-item" onclick="showSection('quotes', event)">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <path d="M9 15l2 2 4-4"></path>
+                    </svg>
+                    Quotes
+                </a>
                 <a class="nav-item" onclick="showSection('commissions', event)">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="1" x2="12" y2="23"></line>
@@ -5483,6 +5491,100 @@
                 </div>
 
                 <!-- ============================================ -->
+                <!-- QUOTES SECTION -->
+                <!-- ============================================ -->
+                <section id="quotes" class="page-section">
+                    <!-- Header -->
+                    <div class="invoice-header">
+                        <div class="invoice-header-left">
+                            <h1>Quotes</h1>
+                            <p>Create and manage quotes for customers. Convert to invoices when accepted.</p>
+                        </div>
+                        <div class="invoice-header-actions">
+                            <button class="btn btn-primary" onclick="showCreateQuote()">
+                                <svg style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                New Quote
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="invoice-stats-row" id="quote-stats-row">
+                        <div class="invoice-stat-card">
+                            <div class="stat-label">Total Quotes</div>
+                            <div class="stat-value" id="stat-total-quotes">0</div>
+                            <div class="stat-subtext">All time</div>
+                        </div>
+                        <div class="invoice-stat-card">
+                            <div class="stat-label">Draft</div>
+                            <div class="stat-value" id="stat-draft-quotes">0</div>
+                            <div class="stat-subtext">Not yet sent</div>
+                        </div>
+                        <div class="invoice-stat-card">
+                            <div class="stat-label">Sent</div>
+                            <div class="stat-value" id="stat-sent-quotes">0</div>
+                            <div class="stat-subtext">Awaiting response</div>
+                        </div>
+                        <div class="invoice-stat-card highlight">
+                            <div class="stat-label">Converted</div>
+                            <div class="stat-value" id="stat-converted-quotes">0</div>
+                            <div class="stat-subtext">Became invoices</div>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="invoice-filters">
+                        <div class="invoice-filters-row">
+                            <div class="invoice-search-wrapper">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input type="text" id="quote-search" class="invoice-search-input"
+                                    placeholder="Search by quote #, customer name, or email..."
+                                    oninput="debounceQuoteSearch()">
+                            </div>
+                            <select id="quote-status-filter" class="invoice-filter-select" onchange="loadQuotes()">
+                                <option value="">All Statuses</option>
+                                <option value="draft">📝 Draft</option>
+                                <option value="sent">📧 Sent</option>
+                                <option value="accepted">✅ Accepted</option>
+                                <option value="declined">❌ Declined</option>
+                                <option value="expired">⏰ Expired</option>
+                                <option value="converted">🔄 Converted</option>
+                            </select>
+                            <select id="quote-stylist-filter" class="invoice-filter-select" onchange="loadQuotes()">
+                                <option value="">All Stylists</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Quote List -->
+                    <div class="invoice-list-wrapper">
+                        <div id="quote-list-container">
+                            <div class="invoice-empty-state">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <h3>No quotes yet</h3>
+                                <p>Create your first quote to send a proposal to a customer</p>
+                                <button class="btn btn-primary" onclick="showCreateQuote()">
+                                    <svg style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    Create Quote
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ============================================ -->
                 <!-- COMMISSIONS SECTION -->
                 <!-- ============================================ -->
                 <section id="commissions" class="page-section">
@@ -8127,6 +8229,7 @@
                 'loyalty-settings': 'Loyalty Settings',
                 'hair-tracker-settings': 'Hair Tracker Settings',
                 'business-settings': 'Business Details',
+                'quotes': 'Quotes',
                 'settings': 'Settings'
             };
             document.getElementById('pageTitle').textContent = titles[sectionId] || 'Dashboard';
@@ -8164,6 +8267,7 @@
                 case 'staff': loadStaff(); break;
                 case 'settings': loadSettingsPage(); break;
                 case 'business-settings': loadBusinessDetailsForm(); break;
+                case 'quotes': loadQuotes(); break;
             }
 
             // Close sidebar on mobile after navigation
@@ -18136,6 +18240,429 @@
                 'void': 'secondary'
             };
             return classes[status] || 'secondary';
+        }
+
+        // ============================================
+        // QUOTES FUNCTIONS
+        // ============================================
+        let quoteSearchTimeout = null;
+
+        function debounceQuoteSearch() {
+            if (quoteSearchTimeout) clearTimeout(quoteSearchTimeout);
+            quoteSearchTimeout = setTimeout(() => loadQuotes(), 300);
+        }
+
+        async function loadQuotes() {
+            try {
+                // Populate stylist filter
+                const stylistFilter = document.getElementById('quote-stylist-filter');
+                if (stylistFilter && stylistFilter.options.length <= 1) {
+                    const stylistsData = await apiCall('/stylists');
+                    if (stylistsData.stylists) {
+                        stylistsData.stylists.forEach(s => {
+                            const opt = document.createElement('option');
+                            opt.value = s.id;
+                            opt.textContent = s.name;
+                            stylistFilter.appendChild(opt);
+                        });
+                    }
+                }
+
+                // Build filters
+                const filters = new URLSearchParams();
+                const search = document.getElementById('quote-search')?.value;
+                const status = document.getElementById('quote-status-filter')?.value;
+                const stylistId = document.getElementById('quote-stylist-filter')?.value;
+
+                if (search) filters.append('search', search);
+                if (status) filters.append('status', status);
+                if (stylistId) filters.append('stylist_id', stylistId);
+
+                // Fetch quotes
+                const data = await apiCall(`/admin/quotes?${filters.toString()}`);
+                const quotes = data.quotes || [];
+
+                // Update stats
+                const statsData = await apiCall('/admin/quotes/stats');
+                if (statsData.stats) {
+                    document.getElementById('stat-total-quotes').textContent = statsData.stats.total || 0;
+                    document.getElementById('stat-draft-quotes').textContent = statsData.stats.draft || 0;
+                    document.getElementById('stat-sent-quotes').textContent = statsData.stats.sent || 0;
+                    document.getElementById('stat-converted-quotes').textContent = statsData.stats.converted || 0;
+                }
+
+                // Render quotes list
+                renderQuotesList(quotes);
+            } catch (error) {
+                console.error('Error loading quotes:', error);
+                showAdminToast('Failed to load quotes', 'error');
+            }
+        }
+
+        function renderQuotesList(quotes) {
+            const container = document.getElementById('quote-list-container');
+
+            if (quotes.length === 0) {
+                container.innerHTML = `
+                    <div class="invoice-empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <h3>No quotes found</h3>
+                        <p>Create a new quote or adjust your filters</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="invoice-list">
+                    ${quotes.map(q => `
+                        <div class="invoice-list-item" onclick="viewQuote('${q.id}')">
+                            <div class="invoice-list-main">
+                                <div class="invoice-list-info">
+                                    <span class="invoice-number">${q.quote_number || `Draft #${q.id.slice(0, 8)}`}</span>
+                                    <span class="invoice-customer">${q.customer_name || 'No customer'}</span>
+                                </div>
+                                <div class="invoice-list-meta">
+                                    <span class="invoice-date">${formatDate(q.quote_date)}</span>
+                                    ${q.valid_until ? `<span class="invoice-due">Valid until: ${formatDate(q.valid_until)}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="invoice-list-details">
+                                <span class="badge badge-${getQuoteStatusBadgeClass(q.status)}">${q.status}</span>
+                                <span class="invoice-amount">R${parseFloat(q.total).toFixed(2)}</span>
+                            </div>
+                            <div class="invoice-list-actions" onclick="event.stopPropagation()">
+                                ${q.status === 'draft' ? `
+                                    <button class="invoice-action-btn" onclick="editQuote('${q.id}')" title="Edit">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                        </svg>
+                                    </button>
+                                    <button class="invoice-action-btn" onclick="sendQuote('${q.id}')" title="Send">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+                                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                        </svg>
+                                    </button>
+                                    <button class="invoice-action-btn danger" onclick="deleteQuote('${q.id}')" title="Delete">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                ` : ''}
+                                ${q.status === 'sent' ? `
+                                    <button class="invoice-action-btn success" onclick="acceptQuote('${q.id}')" title="Accept">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </button>
+                                    <button class="invoice-action-btn danger" onclick="declineQuote('${q.id}')" title="Decline">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
+                                    </button>
+                                ` : ''}
+                                ${(q.status === 'accepted' || q.status === 'sent') ? `
+                                    <button class="invoice-action-btn primary" onclick="convertQuoteToInvoice('${q.id}')" title="Convert to Invoice">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="12" y1="18" x2="12" y2="12"></line>
+                                            <line x1="9" y1="15" x2="15" y2="15"></line>
+                                        </svg>
+                                    </button>
+                                ` : ''}
+                                <button class="invoice-action-btn" onclick="printQuote('${q.id}')" title="Print">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+                                        <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"></path>
+                                        <rect x="6" y="14" width="12" height="8"></rect>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function getQuoteStatusBadgeClass(status) {
+            const classes = {
+                'draft': 'secondary',
+                'sent': 'info',
+                'accepted': 'success',
+                'declined': 'danger',
+                'expired': 'warning',
+                'converted': 'primary'
+            };
+            return classes[status] || 'secondary';
+        }
+
+        async function viewQuote(id) {
+            try {
+                const data = await apiCall(`/admin/quotes/${id}`);
+                const quote = data.quote;
+                if (!quote) return;
+
+                // Build services HTML
+                const servicesHtml = (quote.services || []).map(s => `
+                    <div style="display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border-soft);">
+                        <div>
+                            <div style="font-weight: 500;">${s.service_name}</div>
+                            ${s.quantity > 1 ? `<div style="font-size: 12px; color: var(--text-muted);">Qty: ${s.quantity}</div>` : ''}
+                        </div>
+                        <div style="font-weight: 600;">R${parseFloat(s.total).toFixed(2)}</div>
+                    </div>
+                `).join('') || '<div style="padding: 16px; text-align: center; color: var(--text-muted);">No services</div>';
+
+                // Build products HTML
+                const productsHtml = (quote.products || []).length > 0 ?
+                    quote.products.map(p => `
+                        <div style="display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border-soft);">
+                            <div>
+                                <div style="font-weight: 500;">${p.product_name}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">Qty: ${p.quantity} @ R${parseFloat(p.unit_price).toFixed(2)}</div>
+                            </div>
+                            <div style="font-weight: 600;">R${parseFloat(p.total).toFixed(2)}</div>
+                        </div>
+                    `).join('') : '';
+
+                // Show in alert/modal for now (simplified view)
+                const content = `
+Quote: ${quote.quote_number || 'Draft'}
+Status: ${quote.status}
+Customer: ${quote.customer?.name || 'No customer'}
+Valid Until: ${quote.valid_until || 'N/A'}
+Total: R${parseFloat(quote.total).toFixed(2)}
+
+Would you like to perform an action on this quote?
+                `;
+
+                // For now, just show a simple action menu
+                const actions = [];
+                if (quote.status === 'draft') actions.push('Edit', 'Send');
+                if (quote.status === 'sent') actions.push('Accept', 'Decline');
+                if (quote.status === 'accepted' || quote.status === 'sent') actions.push('Convert to Invoice');
+                actions.push('Print', 'Close');
+
+                const action = prompt(content + '\n\nAvailable actions: ' + actions.join(', ') + '\n\nEnter action:');
+
+                if (action) {
+                    const actionLower = action.toLowerCase().trim();
+                    if (actionLower === 'edit') editQuote(id);
+                    else if (actionLower === 'send') sendQuote(id);
+                    else if (actionLower === 'accept') acceptQuote(id);
+                    else if (actionLower === 'decline') declineQuote(id);
+                    else if (actionLower === 'convert to invoice' || actionLower === 'convert') convertQuoteToInvoice(id);
+                    else if (actionLower === 'print') printQuote(id);
+                }
+            } catch (error) {
+                console.error('Error viewing quote:', error);
+                showAdminToast('Failed to load quote', 'error');
+            }
+        }
+
+        function showCreateQuote() {
+            // Reuse invoice modal but in quote mode
+            showCreateInvoice();
+            // Change title and behavior
+            document.getElementById('invoice-modal-title').textContent = 'Create Quote';
+            currentInvoice.isQuote = true;
+        }
+
+        function editQuote(id) {
+            showAdminToast('Quote edit - reusing invoice modal', 'info');
+            // Would reuse invoice edit with quote data
+        }
+
+        async function sendQuote(id) {
+            if (!confirm('Send this quote to the customer? This will generate a quote number.')) return;
+            try {
+                await apiCall(`/admin/quotes/${id}/send`, { method: 'PUT' });
+                showAdminToast('Quote sent successfully', 'success');
+                loadQuotes();
+            } catch (error) {
+                console.error('Error sending quote:', error);
+                showAdminToast('Failed to send quote: ' + error.message, 'error');
+            }
+        }
+
+        async function acceptQuote(id) {
+            if (!confirm('Mark this quote as accepted?')) return;
+            try {
+                await apiCall(`/admin/quotes/${id}/accept`, { method: 'PUT' });
+                showAdminToast('Quote accepted', 'success');
+                loadQuotes();
+            } catch (error) {
+                console.error('Error accepting quote:', error);
+                showAdminToast('Failed to accept quote: ' + error.message, 'error');
+            }
+        }
+
+        async function declineQuote(id) {
+            if (!confirm('Mark this quote as declined?')) return;
+            try {
+                await apiCall(`/admin/quotes/${id}/decline`, { method: 'PUT' });
+                showAdminToast('Quote declined', 'success');
+                loadQuotes();
+            } catch (error) {
+                console.error('Error declining quote:', error);
+                showAdminToast('Failed to decline quote: ' + error.message, 'error');
+            }
+        }
+
+        async function convertQuoteToInvoice(id) {
+            const serviceDate = prompt('Enter service date for the invoice (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+            if (!serviceDate) return;
+
+            if (!confirm('Convert this quote to an invoice? The quote will be marked as converted.')) return;
+
+            try {
+                const result = await apiCall(`/admin/quotes/${id}/convert`, {
+                    method: 'POST',
+                    body: JSON.stringify({ service_date: serviceDate })
+                });
+                showAdminToast(`Quote converted! Invoice created: ${result.invoice?.invoice_number || result.invoice?.id}`, 'success');
+                loadQuotes();
+                // Optionally switch to invoices section
+                if (confirm('View the new invoice?')) {
+                    showSection('invoices');
+                    setTimeout(() => viewInvoice(result.invoice.id), 500);
+                }
+            } catch (error) {
+                console.error('Error converting quote:', error);
+                showAdminToast('Failed to convert quote: ' + error.message, 'error');
+            }
+        }
+
+        async function deleteQuote(id) {
+            if (!confirm('Are you sure you want to delete this draft quote?')) return;
+            try {
+                await apiCall(`/admin/quotes/${id}`, { method: 'DELETE' });
+                showAdminToast('Quote deleted', 'success');
+                loadQuotes();
+            } catch (error) {
+                console.error('Error deleting quote:', error);
+                showAdminToast('Failed to delete quote: ' + error.message, 'error');
+            }
+        }
+
+        async function printQuote(id) {
+            try {
+                const data = await apiCall(`/admin/quotes/${id}`);
+                const quote = data.quote;
+                if (!quote) return;
+
+                // Get business info
+                const biz = await getBusinessInfo();
+                const bizName = biz.business_name || 'Flirt Hair & Beauty Bar';
+                let bizAddress = '';
+                if (biz.address_line1) bizAddress += biz.address_line1 + '<br>';
+                if (biz.address_line2) bizAddress += biz.address_line2 + '<br>';
+                let cityPostal = biz.address_city || '';
+                if (biz.address_postal) cityPostal += (cityPostal ? ', ' : '') + biz.address_postal;
+                if (cityPostal) bizAddress += cityPostal + '<br>';
+                const vatHtml = (biz.vat_registered === 'true' && biz.vat_number)
+                    ? `<div style="font-size: 12px; margin-top: 8px;">VAT No: ${biz.vat_number}</div>` : '';
+
+                const contactParts = [];
+                if (biz.phone) contactParts.push(`Tel: ${biz.phone}`);
+                if (biz.email) contactParts.push(biz.email);
+                if (biz.website) contactParts.push(biz.website);
+                const footerContact = contactParts.join(' | ');
+
+                const servicesHtml = (quote.services || []).map(s => `
+                    <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee;">
+                        <span>${s.service_name}${s.quantity > 1 ? ` (x${s.quantity})` : ''}</span>
+                        <span>R${parseFloat(s.total).toFixed(2)}</span>
+                    </div>
+                `).join('');
+
+                const productsHtml = (quote.products || []).length > 0 ? quote.products.map(p => `
+                    <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee;">
+                        <span>${p.product_name} (x${p.quantity})</span>
+                        <span>R${parseFloat(p.total).toFixed(2)}</span>
+                    </div>
+                `).join('') : '';
+
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Quote ${quote.quote_number || quote.id.slice(0, 8)}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+                            .header { display: flex; justify-content: space-between; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #F67599; }
+                            .logo { font-size: 28px; font-weight: bold; color: #F67599; }
+                            .quote-badge { background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+                            .details { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+                            .section-title { font-size: 12px; text-transform: uppercase; color: #666; margin-bottom: 12px; }
+                            .items { border: 1px solid #ddd; border-radius: 4px; margin-bottom: 20px; }
+                            .totals { background: #f5f5f5; padding: 16px; border-radius: 4px; }
+                            .total-row { display: flex; justify-content: space-between; padding: 6px 0; }
+                            .total-row.grand { font-size: 18px; font-weight: bold; color: #F67599; border-top: 1px solid #ddd; padding-top: 12px; margin-top: 8px; }
+                            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #888; }
+                            .validity { background: #fef3c7; padding: 12px; border-radius: 4px; margin-bottom: 20px; text-align: center; }
+                            @media print { body { padding: 20px; } }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <div>
+                                <div class="logo">FLIRT</div>
+                                <div style="font-size: 13px; color: #666; line-height: 1.5;">
+                                    ${bizAddress}
+                                    ${vatHtml}
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
+                                    <span class="quote-badge">QUOTE</span>
+                                </div>
+                                <div style="font-size: 20px; font-weight: bold; margin-top: 8px;">${quote.quote_number || 'Draft'}</div>
+                                <div>${formatDate(quote.quote_date)}</div>
+                            </div>
+                        </div>
+                        ${quote.valid_until ? `<div class="validity">Valid until: <strong>${formatDate(quote.valid_until)}</strong></div>` : ''}
+                        <div class="details">
+                            <div>
+                                <div class="section-title">Prepared For</div>
+                                <div style="font-weight: 600;">${quote.customer?.name || 'Customer'}</div>
+                                ${quote.customer?.email ? `<div>${quote.customer.email}</div>` : ''}
+                                ${quote.customer?.phone ? `<div>${quote.customer.phone}</div>` : ''}
+                            </div>
+                            <div>
+                                <div class="section-title">Stylist</div>
+                                <div style="font-weight: 600;">${quote.stylist?.name || 'Not assigned'}</div>
+                            </div>
+                        </div>
+                        ${servicesHtml ? `<div class="section-title">Services</div><div class="items">${servicesHtml}</div>` : ''}
+                        ${productsHtml ? `<div class="section-title">Products</div><div class="items">${productsHtml}</div>` : ''}
+                        <div class="totals">
+                            <div class="total-row"><span>Subtotal</span><span>R${parseFloat(quote.subtotal).toFixed(2)}</span></div>
+                            ${quote.discount_amount > 0 ? `<div class="total-row" style="color: green;"><span>Discount</span><span>-R${parseFloat(quote.discount_amount).toFixed(2)}</span></div>` : ''}
+                            ${quote.tax_amount > 0 ? `<div class="total-row"><span>VAT (15%)</span><span>R${parseFloat(quote.tax_amount).toFixed(2)}</span></div>` : ''}
+                            <div class="total-row grand"><span>TOTAL</span><span>R${parseFloat(quote.total).toFixed(2)}</span></div>
+                        </div>
+                        ${quote.client_notes ? `<div style="margin-top: 20px; padding: 12px; background: #f9f9f9; border-radius: 4px;"><strong>Notes:</strong><br>${quote.client_notes}</div>` : ''}
+                        <div class="footer">
+                            Thank you for considering ${bizName}!<br>
+                            ${footerContact}
+                        </div>
+                        <script>window.onload = function() { window.print(); }<\/script>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+            } catch (error) {
+                console.error('Error printing quote:', error);
+                showAdminToast('Failed to print quote', 'error');
+            }
         }
 
         // Update pending orders badge in nav

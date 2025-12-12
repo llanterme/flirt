@@ -50,7 +50,7 @@ const uploadServiceImage = multer({
 // Database imports - SQLite-only (mandatory)
 const DATABASE_PATH = process.env.DATABASE_PATH || './db/flirt.db';
 
-let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository, PayrollRepository, PasswordResetRepository, RewardsConfigRepository, RewardTrackRepository, UserRewardRepository, ServicePackageRepository, UserPackageRepository, InvoiceRepository, RewardTrackDefinitionRepository, ServiceRewardMappingRepository, CategoryRewardMappingRepository;
+let db, UserRepository, StylistRepository, ServiceRepository, BookingRepository, ProductRepository, OrderRepository, PromoRepository, GalleryRepository, PaymentRepository, PaymentSettingsRepository, LoyaltyRepository, NotificationRepository, ChatRepository, HairTipRepository, PayrollRepository, PasswordResetRepository, RewardsConfigRepository, RewardTrackRepository, UserRewardRepository, ServicePackageRepository, UserPackageRepository, InvoiceRepository, QuoteRepository, RewardTrackDefinitionRepository, ServiceRewardMappingRepository, CategoryRewardMappingRepository, BusinessSettingsRepository;
 
 try {
     const dbModule = require('./db/database');
@@ -85,6 +85,10 @@ try {
     CategoryRewardMappingRepository = dbModule.CategoryRewardMappingRepository;
     // Invoicing System
     InvoiceRepository = dbModule.InvoiceRepository;
+    // Quote System
+    QuoteRepository = dbModule.QuoteRepository;
+    // Business Settings
+    BusinessSettingsRepository = dbModule.BusinessSettingsRepository;
 
     // Ensure database directory exists
     const dbDir = path.dirname(DATABASE_PATH);
@@ -4947,24 +4951,13 @@ app.put('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
 // BUSINESS SETTINGS API
 // ============================================
 
-// Get business settings
+// Get business settings (uses key-value table)
 app.get('/api/admin/business-settings', authenticateAdmin, async (req, res) => {
     try {
-        let row = await db.dbGet('SELECT * FROM business_settings WHERE id = 1');
-        if (!row) {
-            // Create default if not exists
-            await db.dbRun('INSERT OR IGNORE INTO business_settings (id) VALUES (1)');
-            row = await db.dbGet('SELECT * FROM business_settings WHERE id = 1');
-        }
+        const settings = await BusinessSettingsRepository.getAll();
         res.json({
             success: true,
-            settings: {
-                businessName: row.business_name,
-                email: row.email,
-                phone: row.phone,
-                address: row.address,
-                hours: JSON.parse(row.hours_json || '{}')
-            }
+            settings: settings
         });
     } catch (error) {
         console.error('Error fetching business settings:', error);
@@ -4972,40 +4965,44 @@ app.get('/api/admin/business-settings', authenticateAdmin, async (req, res) => {
     }
 });
 
+// Get business settings (public - for invoices)
+app.get('/api/business-info', async (req, res) => {
+    try {
+        const settings = await BusinessSettingsRepository.getAll();
+        res.json({
+            success: true,
+            business: settings
+        });
+    } catch (error) {
+        console.error('Error fetching business info:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch business info' });
+    }
+});
+
 // Update business settings
 app.put('/api/admin/business-settings', authenticateAdmin, async (req, res) => {
     try {
-        const { businessName, email, phone, address, hours } = req.body;
+        const allowedKeys = [
+            'business_name', 'address_line1', 'address_line2', 'address_city',
+            'address_postal', 'vat_number', 'phone', 'email', 'website'
+        ];
 
-        // Validate email format
-        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            return res.status(400).json({ success: false, message: 'Invalid email format' });
+        const updates = {};
+        for (const key of allowedKeys) {
+            if (req.body[key] !== undefined) {
+                updates[key] = req.body[key];
+            }
         }
 
-        const hoursJson = hours ? JSON.stringify(hours) : null;
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({ success: false, message: 'No valid settings provided' });
+        }
 
-        await db.dbRun(`
-            UPDATE business_settings
-            SET business_name = COALESCE(?, business_name),
-                email = COALESCE(?, email),
-                phone = COALESCE(?, phone),
-                address = COALESCE(?, address),
-                hours_json = COALESCE(?, hours_json),
-                updated_at = datetime('now')
-            WHERE id = 1
-        `, [businessName, email, phone, address, hoursJson]);
-
-        const updated = await db.dbGet('SELECT * FROM business_settings WHERE id = 1');
+        const settings = await BusinessSettingsRepository.updateMany(updates);
         res.json({
             success: true,
             message: 'Business settings updated successfully',
-            settings: {
-                businessName: updated.business_name,
-                email: updated.email,
-                phone: updated.phone,
-                address: updated.address,
-                hours: JSON.parse(updated.hours_json || '{}')
-            }
+            settings: settings
         });
     } catch (error) {
         console.error('Error updating business settings:', error);
@@ -10057,6 +10054,142 @@ function adminOrStaff(req, res, next) {
         res.status(403).json({ error: 'Admin or staff access required' });
     }
 }
+
+// ============================================
+// QUOTES API
+// ============================================
+
+// Create new quote
+app.post('/api/admin/quotes', authenticateToken, adminOrStaff, async (req, res) => {
+    try {
+        const quoteData = {
+            ...req.body,
+            created_by: req.user.id
+        };
+        const quote = await QuoteRepository.create(quoteData);
+        res.json({ success: true, quote });
+    } catch (error) {
+        console.error('Create quote error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// List quotes with filters
+app.get('/api/admin/quotes', authenticateToken, adminOrStaff, async (req, res) => {
+    try {
+        const filters = {
+            status: req.query.status,
+            stylist_id: req.query.stylist_id,
+            user_id: req.query.user_id,
+            start_date: req.query.start_date,
+            end_date: req.query.end_date,
+            search: req.query.search,
+            limit: parseInt(req.query.limit) || 50,
+            offset: parseInt(req.query.offset) || 0
+        };
+        const quotes = await QuoteRepository.list(filters);
+        res.json({ success: true, quotes });
+    } catch (error) {
+        console.error('List quotes error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get quote statistics
+app.get('/api/admin/quotes/stats', authenticateToken, adminOrStaff, async (req, res) => {
+    try {
+        const stats = await QuoteRepository.getStats();
+        res.json({ success: true, stats });
+    } catch (error) {
+        console.error('Quote stats error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get single quote
+app.get('/api/admin/quotes/:id', authenticateToken, async (req, res) => {
+    try {
+        const quote = await QuoteRepository.getById(req.params.id);
+        if (!quote) {
+            return res.status(404).json({ error: 'Quote not found' });
+        }
+        res.json({ success: true, quote });
+    } catch (error) {
+        console.error('Get quote error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update quote
+app.put('/api/admin/quotes/:id', authenticateToken, adminOrStaff, async (req, res) => {
+    try {
+        const quote = await QuoteRepository.update(req.params.id, req.body);
+        res.json({ success: true, quote });
+    } catch (error) {
+        console.error('Update quote error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Delete quote (draft only)
+app.delete('/api/admin/quotes/:id', authenticateToken, adminOrStaff, async (req, res) => {
+    try {
+        await QuoteRepository.delete(req.params.id);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Delete quote error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Send quote (generate quote number and mark as sent)
+app.put('/api/admin/quotes/:id/send', authenticateToken, adminOrStaff, async (req, res) => {
+    try {
+        const quote = await QuoteRepository.send(req.params.id);
+        res.json({ success: true, quote });
+    } catch (error) {
+        console.error('Send quote error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Accept quote
+app.put('/api/admin/quotes/:id/accept', authenticateToken, adminOrStaff, async (req, res) => {
+    try {
+        const quote = await QuoteRepository.accept(req.params.id);
+        res.json({ success: true, quote });
+    } catch (error) {
+        console.error('Accept quote error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Decline quote
+app.put('/api/admin/quotes/:id/decline', authenticateToken, adminOrStaff, async (req, res) => {
+    try {
+        const quote = await QuoteRepository.decline(req.params.id);
+        res.json({ success: true, quote });
+    } catch (error) {
+        console.error('Decline quote error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Convert quote to invoice
+app.post('/api/admin/quotes/:id/convert', authenticateToken, adminOrStaff, async (req, res) => {
+    try {
+        const { service_date } = req.body;
+        const result = await QuoteRepository.convertToInvoice(
+            req.params.id,
+            InvoiceRepository,
+            service_date
+        );
+        res.json({ success: true, quote: result.quote, invoice: result.invoice });
+    } catch (error) {
+        console.error('Convert quote error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // ============================================
 // START SERVER
