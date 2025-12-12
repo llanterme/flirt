@@ -476,7 +476,8 @@ async function initializeDatabase() {
     `);
 
     // Add customer_type and company columns if they don't exist (for existing databases)
-    await dbRun(`ALTER TABLE invoices ADD COLUMN customer_type TEXT DEFAULT 'individual' CHECK(customer_type IN ('individual', 'company'))`).catch(() => {});
+    // Note: SQLite doesn't support CHECK constraints in ALTER TABLE, so we add without constraint
+    await dbRun(`ALTER TABLE invoices ADD COLUMN customer_type TEXT DEFAULT 'individual'`).catch(() => {});
     await dbRun(`ALTER TABLE invoices ADD COLUMN company_name TEXT`).catch(() => {});
     await dbRun(`ALTER TABLE invoices ADD COLUMN business_address TEXT`).catch(() => {});
     await dbRun(`ALTER TABLE invoices ADD COLUMN vat_number TEXT`).catch(() => {});
