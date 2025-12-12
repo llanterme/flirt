@@ -24,10 +24,10 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
 
-    <!-- Google Fonts - Closest to Lulo Clean One & Humanist -->
+    <!-- Google Fonts - Playfair Display + Mulish (from flirthair.co.za) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;600&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Mulish:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -51,11 +51,14 @@
         }
 
         :root {
-            /* Flirt Brand Colors - from Style Guide */
-            --brand-pink: #F67599;          /* Primary - Pantone 190 C */
+            /* Flirt Brand Colors - from flirthair.co.za WordPress Theme */
+            --brand-pink: #F67599;          /* Primary/Accent - Elementor global */
             --brand-pink-dark: #e05a7f;     /* Darker pink for hover states */
-            --brand-charcoal: #414042;      /* Secondary - Pantone Black 7 C */
+            --brand-charcoal: #414042;      /* Primary text - Elementor global */
             --brand-white: #ffffff;         /* Base color */
+            --brand-beige: #E1D9CD;         /* Warm beige accent */
+            --brand-light-pink: #EFDBE4;    /* Light pink accent */
+            --brand-text: #6C6D70;          /* Body text color */
 
             /* Legacy variable mapping for compatibility */
             --primary-black: #414042;
@@ -63,7 +66,7 @@
             --accent-pink: #F67599;
             --accent-gold: #F67599;         /* Using pink instead of gold for brand consistency */
             --gray-dark: #414042;
-            --gray-medium: #6d6e70;
+            --gray-medium: #6C6D70;
             --gray-light: #f8f8f8;
             --success: #4CAF50;
             --warning: #FF9800;
@@ -78,17 +81,17 @@
         }
 
         body {
-            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Mulish', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-weight: 300;
             background: var(--gray-light);
             color: var(--brand-charcoal);
             line-height: 1.6;
         }
 
-        /* Brand Typography */
+        /* Brand Typography - Playfair Display for headings, Mulish for body */
         .logo, h1, h2, h3, .section-title {
-            font-family: 'Josefin Sans', 'Helvetica Neue', Arial, sans-serif;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
+            font-family: 'Playfair Display', Georgia, serif;
+            letter-spacing: 0.05em;
         }
 
         /* App Container */
@@ -5860,7 +5863,7 @@
     <div class="app-container">
         <!-- Header -->
         <header class="app-header">
-            <div class="logo"><img src="Flirt pink logo 2.jpeg" alt="FL!RT Hair & Beauty Bar"></div>
+            <div class="logo"><img src="/images/flirt-logo.png" alt="FL!RT Hair & Beauty Bar" style="height: 40px; width: auto;"></div>
             <div class="header-center">
                 <span class="header-tagline">Premium Hair Extensions</span>
             </div>

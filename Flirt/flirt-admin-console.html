@@ -8,10 +8,10 @@
     <link rel="icon" type="image/svg+xml" href="/icons/icon-72x72.svg">
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
-    <!-- Google Fonts - Flirt Brand Typography -->
+    <!-- Google Fonts - Playfair Display + Mulish (from flirthair.co.za) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;600&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Mulish:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chart.js for dashboard charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
@@ -53,16 +53,17 @@
         }
 
         body {
-            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Mulish', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-weight: 400;
             background: var(--gray-light);
             color: var(--brand-charcoal);
             line-height: 1.6;
         }
 
-        /* Brand Typography */
+        /* Brand Typography - Playfair Display for headings */
         h1, h2, h3, .sidebar-logo, .page-title {
-            font-family: 'Josefin Sans', 'Helvetica Neue', Arial, sans-serif;
-            letter-spacing: 0.1em;
+            font-family: 'Playfair Display', Georgia, serif;
+            letter-spacing: 0.05em;
         }
 
         /* Layout */
@@ -116,9 +117,9 @@
         }
 
         .sidebar-subtitle {
-            font-family: 'Josefin Sans', Arial, sans-serif;
+            font-family: 'Mulish', Arial, sans-serif;
             font-size: 11px;
-            letter-spacing: 0.2em;
+            letter-spacing: 0.15em;
             text-transform: uppercase;
             color: rgba(255,255,255,0.5);
             margin-top: 30px;
@@ -3125,7 +3126,7 @@
         <aside class="sidebar" id="sidebar">
             <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close menu">×</button>
             <div class="sidebar-header">
-                <div class="sidebar-logo"><img src="Flirt pink logo 2.jpeg" alt="FL!RT Hair & Beauty Bar"></div>
+                <div class="sidebar-logo"><img src="/images/logo-white.png" alt="FL!RT Hair & Beauty Bar"></div>
                 <div class="sidebar-subtitle">Admin Console</div>
             </div>
 
