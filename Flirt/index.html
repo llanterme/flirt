@@ -1714,6 +1714,147 @@
                 text-align: center;
             }
         }
+
+        /* Booking Popup Modal with iframe */
+        .booking-popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .booking-popup-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+        }
+
+        .booking-popup {
+            background: var(--white);
+            width: 95%;
+            max-width: 500px;
+            height: 90vh;
+            max-height: 800px;
+            border-radius: 16px;
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .booking-popup-overlay.active .booking-popup {
+            transform: scale(1);
+        }
+
+        .booking-popup-header {
+            background: linear-gradient(135deg, var(--pink) 0%, var(--pink-dark) 100%);
+            padding: 15px 20px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .booking-popup-header h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px;
+            font-weight: 400;
+            color: var(--white);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .booking-popup-close {
+            position: absolute;
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            font-size: 24px;
+            color: var(--white);
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .booking-popup-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .booking-popup-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .booking-popup-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .booking-popup-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: var(--gray-medium);
+        }
+
+        .booking-popup-loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f0f0f0;
+            border-top-color: var(--pink);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .booking-popup {
+                width: 100%;
+                height: 100%;
+                max-height: none;
+                border-radius: 0;
+            }
+
+            .booking-popup-header {
+                padding: 12px 15px;
+            }
+
+            .booking-popup-header h2 {
+                font-size: 16px;
+            }
+
+            .booking-popup-close {
+                width: 32px;
+                height: 32px;
+                font-size: 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1792,28 +1933,28 @@
     <!-- Services Grid -->
     <section class="services-section" id="services">
         <div class="services-grid">
-            <a href="/app?tab=booking&category=tape" class="service-card stagger-item">
+            <a href="javascript:void(0)" onclick="handleBookNowClick('tape')" class="service-card stagger-item">
                 <img src="/images/categories/categories1.jpg" alt="Tape Extensions">
                 <div class="service-card-overlay">
                     <h3 class="service-card-title">Tape</h3>
                     <span class="service-card-cta">Book Now</span>
                 </div>
             </a>
-            <a href="/app?tab=booking&category=weft" class="service-card stagger-item">
+            <a href="javascript:void(0)" onclick="handleBookNowClick('weft')" class="service-card stagger-item">
                 <img src="/images/categories/categories3.jpg" alt="Weft Extensions">
                 <div class="service-card-overlay">
                     <h3 class="service-card-title">Weft</h3>
                     <span class="service-card-cta">Book Now</span>
                 </div>
             </a>
-            <a href="/app?tab=booking&category=colour" class="service-card stagger-item">
+            <a href="javascript:void(0)" onclick="handleBookNowClick('colour')" class="service-card stagger-item">
                 <img src="/images/categories/categories5.jpg" alt="Colour Matching">
                 <div class="service-card-overlay">
                     <h3 class="service-card-title">Colour Matching</h3>
                     <span class="service-card-cta">Book Now</span>
                 </div>
             </a>
-            <a href="/app?tab=booking&category=maintenance" class="service-card stagger-item">
+            <a href="javascript:void(0)" onclick="handleBookNowClick('maintenance')" class="service-card stagger-item">
                 <img src="/images/categories/categories7.jpg" alt="Maintenance">
                 <div class="service-card-overlay">
                     <h3 class="service-card-title">Maintenance</h3>
@@ -1864,7 +2005,7 @@
         <div class="cta-content reveal-left">
             <h2>FALL IN LOVE WITH YOUR HAIR</h2>
             <div class="cta-btns">
-                <a href="/app?tab=booking" class="cta-btn cta-btn-primary">BOOK NOW</a>
+                <a href="javascript:void(0)" onclick="handleBookNowClick()" class="cta-btn cta-btn-primary">BOOK NOW</a>
                 <a href="https://wa.me/27821234567" class="cta-btn cta-btn-secondary" target="_blank" id="whatsappBtn">GET IN TOUCH</a>
             </div>
         </div>
@@ -1894,16 +2035,16 @@
             </div>
             <div class="footer-col">
                 <h4>QUICK LINKS</h4>
-                <a href="/app?tab=booking">Book Appointment</a>
+                <a href="javascript:void(0)" onclick="handleBookNowClick()">Book Appointment</a>
                 <a href="#services">Our Services</a>
                 <a href="#about">About Us</a>
             </div>
             <div class="footer-col">
                 <h4>SERVICES</h4>
-                <a href="/app?tab=booking&category=tape">Tape Extensions</a>
-                <a href="/app?tab=booking&category=weft">Weft Extensions</a>
-                <a href="/app?tab=booking&category=keratin">Keratin Extensions</a>
-                <a href="/app?tab=booking&category=maintenance">Maintenance</a>
+                <a href="javascript:void(0)" onclick="handleBookNowClick('tape')">Tape Extensions</a>
+                <a href="javascript:void(0)" onclick="handleBookNowClick('weft')">Weft Extensions</a>
+                <a href="javascript:void(0)" onclick="handleBookNowClick('keratin')">Keratin Extensions</a>
+                <a href="javascript:void(0)" onclick="handleBookNowClick('maintenance')">Maintenance</a>
             </div>
             <div class="footer-col">
                 <h4>CONTACT</h4>
@@ -2086,13 +2227,49 @@
             }
         }
 
-        // Handle Book Now click - require login
-        function handleBookNowClick() {
-            if (isLoggedIn()) {
-                window.location.href = '/app?tab=booking';
-            } else {
-                window.location.href = '/app?showLogin=true&redirect=booking';
+        // Handle Book Now click - open popup
+        function handleBookNowClick(category) {
+            let url = '/app?tab=booking&embedded=true';
+            if (category) {
+                url += '&category=' + category;
             }
+            openBookingPopup(url);
+        }
+
+        // Booking Popup Functions
+        function openBookingPopup(url) {
+            const overlay = document.getElementById('bookingPopupOverlay');
+            const iframe = document.getElementById('bookingIframe');
+            const loading = document.getElementById('bookingLoading');
+
+            // Set iframe URL
+            url = url || '/app?tab=booking&embedded=true';
+            iframe.src = url;
+
+            // Show loading
+            loading.style.display = 'block';
+
+            // Show popup
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('active'), 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeBookingPopup() {
+            const overlay = document.getElementById('bookingPopupOverlay');
+            const iframe = document.getElementById('bookingIframe');
+
+            overlay.classList.remove('active');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                iframe.src = ''; // Clear iframe
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        function hideBookingLoading() {
+            const loading = document.getElementById('bookingLoading');
+            loading.style.display = 'none';
         }
 
         // Initialize
@@ -2120,9 +2297,13 @@
 
         // Close popup when clicking outside
         document.addEventListener('click', function(e) {
-            const overlay = document.getElementById('pricePopupOverlay');
-            if (e.target === overlay) {
+            const priceOverlay = document.getElementById('pricePopupOverlay');
+            const bookingOverlay = document.getElementById('bookingPopupOverlay');
+            if (e.target === priceOverlay) {
                 closePricePopup();
+            }
+            if (e.target === bookingOverlay) {
+                closeBookingPopup();
             }
         });
 
@@ -2130,6 +2311,7 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closePricePopup();
+                closeBookingPopup();
             }
         });
     </script>
@@ -2239,7 +2421,24 @@
                 </div>
             </div>
             <div class="price-popup-footer">
-                <a href="/app?tab=booking">Book Appointment</a>
+                <a href="javascript:void(0)" onclick="closePricePopup(); openBookingPopup();">Book Appointment</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Popup Modal -->
+    <div class="booking-popup-overlay" id="bookingPopupOverlay">
+        <div class="booking-popup">
+            <div class="booking-popup-header">
+                <h2>Book Appointment</h2>
+                <button class="booking-popup-close" onclick="closeBookingPopup()">&times;</button>
+            </div>
+            <div class="booking-popup-content">
+                <div class="booking-popup-loading" id="bookingLoading">
+                    <div class="spinner"></div>
+                    <p>Loading...</p>
+                </div>
+                <iframe id="bookingIframe" src="" onload="hideBookingLoading()"></iframe>
             </div>
         </div>
     </div>
