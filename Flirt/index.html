@@ -527,7 +527,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.1) 100%);
+            background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.3) 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -536,19 +536,22 @@
         }
 
         .service-card:hover .service-card-overlay {
-            background: linear-gradient(to top, rgba(246,117,153,0.8) 0%, rgba(246,117,153,0.4) 50%, rgba(0,0,0,0.2) 100%);
+            background: linear-gradient(to top, rgba(246,117,153,0.9) 0%, rgba(246,117,153,0.6) 40%, rgba(0,0,0,0.3) 100%);
         }
 
         .service-card-title {
             color: var(--white);
             font-family: 'Cormorant Garamond', serif;
-            font-size: 24px;
-            font-weight: 400;
+            font-size: 28px;
+            font-weight: 500;
             letter-spacing: 0.15em;
             text-transform: uppercase;
             text-align: center;
             transform: translateY(10px);
             transition: transform 0.4s ease;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            padding: 0 15px;
+            line-height: 1.3;
         }
 
         .service-card:hover .service-card-title {
@@ -557,22 +560,25 @@
 
         .service-card-cta {
             font-family: 'Montserrat', sans-serif;
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: 0.1em;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
             color: var(--white);
             opacity: 0;
             transform: translateY(20px);
             transition: all 0.4s ease 0.1s;
-            margin-top: 15px;
-            padding: 8px 20px;
-            border: 1px solid rgba(255,255,255,0.8);
+            margin-top: 18px;
+            padding: 10px 24px;
+            border: 2px solid rgba(255,255,255,0.9);
+            background: rgba(0,0,0,0.2);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
         }
 
         .service-card:hover .service-card-cta {
             opacity: 1;
             transform: translateY(0);
+            background: rgba(255,255,255,0.15);
         }
 
         /* Products Section */
