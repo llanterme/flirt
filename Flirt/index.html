@@ -1005,12 +1005,16 @@
             .hero-content {
                 right: 60px;
             }
+            .hero-decoration-1,
+            .hero-decoration-2 {
+                display: none;
+            }
         }
 
         @media (max-width: 1024px) {
             .hero {
-                height: 45vh;
-                min-height: 400px;
+                height: 100vh;
+                min-height: 600px;
             }
 
             .hero-content {
@@ -1024,6 +1028,14 @@
 
             .hero-content h1 span {
                 font-size: 24px;
+            }
+
+            .scroll-indicator {
+                bottom: 20px;
+            }
+
+            .hero-dots {
+                bottom: 80px;
             }
 
             .about-section {
@@ -1071,9 +1083,9 @@
             }
 
             .hero {
-                height: 35vh;
-                min-height: 300px;
-                margin-top: 60px;
+                height: 100vh;
+                min-height: 500px;
+                margin-top: 0;
             }
 
             .hero-bg {
@@ -1088,11 +1100,11 @@
             }
 
             .hero-content h1 {
-                font-size: 32px;
+                font-size: 28px;
             }
 
             .hero-content h1 span {
-                font-size: 16px;
+                font-size: 14px;
                 letter-spacing: 0.1em;
             }
 
@@ -1100,6 +1112,24 @@
                 height: 2px;
                 margin: 15px 0 15px auto;
                 animation: expandLineMobile 0.8s ease-out 0.9s forwards;
+            }
+
+            .scroll-indicator {
+                bottom: 15px;
+            }
+
+            .scroll-indicator span {
+                font-size: 8px;
+            }
+
+            .hero-dots {
+                bottom: 70px;
+            }
+
+            .hero-decoration-1,
+            .hero-decoration-2,
+            .hero-decoration-3 {
+                display: none;
             }
 
             @keyframes expandLineMobile {
@@ -1421,7 +1451,12 @@
     </nav>
 
     <!-- Hero Section - Slider -->
-    <section class="hero">
+    <section class="hero" id="hero">
+        <!-- Decorative Elements -->
+        <div class="hero-decoration hero-decoration-1"></div>
+        <div class="hero-decoration hero-decoration-2"></div>
+        <div class="hero-decoration hero-decoration-3"></div>
+
         <div class="hero-slider">
             <!-- Slide 1 -->
             <div class="hero-slide hero-slide-1 active">
@@ -1455,11 +1490,18 @@
             <div class="hero-dot active" onclick="goToSlide(0)"></div>
             <div class="hero-dot" onclick="goToSlide(1)"></div>
         </div>
+        <!-- Scroll Indicator -->
+        <div class="scroll-indicator" onclick="scrollToAbout()">
+            <span>Scroll</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+        </div>
     </section>
 
     <!-- About Section - Two Columns -->
     <section class="about-section" id="about">
-        <div class="about-left">
+        <div class="about-left reveal-left">
             <h2 class="about-title">ABOUT FLIRT HAIR</h2>
             <div class="about-line"></div>
             <p class="about-text">
@@ -1470,34 +1512,38 @@
                 <a href="javascript:void(0)" class="about-link" onclick="openPricePopup()">Extensions Price List</a>
             </div>
         </div>
-        <div class="about-right"></div>
+        <div class="about-right reveal-right"></div>
     </section>
 
     <!-- Services Grid -->
     <section class="services-section" id="services">
         <div class="services-grid">
-            <a href="/app?tab=booking&category=tape" class="service-card">
+            <a href="/app?tab=booking&category=tape" class="service-card stagger-item">
                 <img src="/images/categories/categories1.jpg" alt="Tape Extensions">
                 <div class="service-card-overlay">
                     <h3 class="service-card-title">Tape</h3>
+                    <span class="service-card-cta">Book Now</span>
                 </div>
             </a>
-            <a href="/app?tab=booking&category=weft" class="service-card">
+            <a href="/app?tab=booking&category=weft" class="service-card stagger-item">
                 <img src="/images/categories/categories3.jpg" alt="Weft Extensions">
                 <div class="service-card-overlay">
                     <h3 class="service-card-title">Weft</h3>
+                    <span class="service-card-cta">Book Now</span>
                 </div>
             </a>
-            <a href="/app?tab=booking&category=colour" class="service-card">
+            <a href="/app?tab=booking&category=colour" class="service-card stagger-item">
                 <img src="/images/categories/categories5.jpg" alt="Colour Matching">
                 <div class="service-card-overlay">
                     <h3 class="service-card-title">Colour Matching</h3>
+                    <span class="service-card-cta">Book Now</span>
                 </div>
             </a>
-            <a href="/app?tab=booking&category=maintenance" class="service-card">
+            <a href="/app?tab=booking&category=maintenance" class="service-card stagger-item">
                 <img src="/images/categories/categories7.jpg" alt="Maintenance">
                 <div class="service-card-overlay">
                     <h3 class="service-card-title">Maintenance</h3>
+                    <span class="service-card-cta">Book Now</span>
                 </div>
             </a>
         </div>
@@ -1505,21 +1551,21 @@
 
     <!-- Products Section -->
     <section class="products-section">
-        <div class="section-header">
+        <div class="section-header reveal">
             <h2 class="section-title">OUR LATEST PRODUCTS</h2>
             <a href="/app?tab=shop" class="view-all-link">View All Products</a>
         </div>
         <div class="products-grid" id="productsGrid">
-            <div class="product-card">
+            <div class="product-card stagger-item">
                 <div class="product-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">Loading...</div>
             </div>
-            <div class="product-card">
+            <div class="product-card stagger-item">
                 <div class="product-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">Loading...</div>
             </div>
-            <div class="product-card">
+            <div class="product-card stagger-item">
                 <div class="product-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">Loading...</div>
             </div>
-            <div class="product-card">
+            <div class="product-card stagger-item">
                 <div class="product-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">Loading...</div>
             </div>
         </div>
@@ -1527,23 +1573,23 @@
 
     <!-- Reviews Section -->
     <section class="reviews-section">
-        <h2 class="reviews-title">CUSTOMER REVIEWS</h2>
+        <h2 class="reviews-title reveal">CUSTOMER REVIEWS</h2>
         <div class="reviews-grid">
-            <div class="review-card">
+            <div class="review-card stagger-item">
                 <div class="review-stars">
                     <img src="/images/stars.png" alt="5 Stars">
                 </div>
                 <p class="review-text">"Stunning salon! Amazing service and such kind ladies. Inge made my hair so beautiful and I loved the experience."</p>
                 <div class="review-author">Cassie Quiterres</div>
             </div>
-            <div class="review-card">
+            <div class="review-card stagger-item">
                 <div class="review-stars">
                     <img src="/images/stars.png" alt="5 Stars">
                 </div>
                 <p class="review-text">"What a pleasant experience, from the look and feel of the salon to the friendly staff, not to mention the highly competitive rates! Loving my new look and will most certainly be back!"</p>
                 <div class="review-author">Claudia vd Merwe</div>
             </div>
-            <div class="review-card">
+            <div class="review-card stagger-item">
                 <div class="review-stars">
                     <img src="/images/stars.png" alt="5 Stars">
                 </div>
@@ -1554,7 +1600,7 @@
     </section>
 
     <!-- Partners Section -->
-    <section class="partners-section">
+    <section class="partners-section reveal-scale">
         <h3 class="partners-title">Our Partners</h3>
         <div class="partners-logos">
             <img src="/images/partners-x3.png" alt="Our Partners">
@@ -1563,7 +1609,7 @@
 
     <!-- CTA Section -->
     <section class="cta-section" id="contact">
-        <div class="cta-content">
+        <div class="cta-content reveal-left">
             <h2>FALL IN LOVE WITH YOUR HAIR</h2>
             <div class="cta-btns">
                 <a href="/app?tab=booking" class="cta-btn cta-btn-primary">BOOK NOW</a>
