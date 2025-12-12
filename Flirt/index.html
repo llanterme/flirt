@@ -762,6 +762,8 @@
 
         .cta-content {
             max-width: 500px;
+            position: relative;
+            z-index: 2;
         }
 
         .cta-section h2 {
@@ -1150,12 +1152,27 @@
                 background-position: right center;
             }
 
+            /* Add semi-transparent overlay for better text visibility on mobile */
+            .cta-section::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(to right, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.85) 60%, rgba(255,255,255,0.6) 100%);
+                z-index: 1;
+            }
+
             .cta-content {
                 max-width: 100%;
+                position: relative;
+                z-index: 2;
             }
 
             .cta-section h2 {
                 font-size: 28px;
+                text-shadow: 0 1px 2px rgba(255,255,255,0.5);
             }
 
             .cta-btns {
@@ -1167,6 +1184,11 @@
                 /* Larger touch target */
                 min-width: 200px;
                 padding: 16px 40px;
+            }
+
+            .cta-btn-secondary {
+                background: rgba(255,255,255,0.8);
+                border: 2px solid var(--gray-dark);
             }
 
             .site-footer {
@@ -1312,15 +1334,29 @@
                 max-width: 280px;
             }
 
+            .cta-section::before {
+                background: rgba(255,255,255,0.9);
+            }
+
             .cta-section h2 {
-                font-size: 24px;
+                font-size: 22px;
                 line-height: 1.3;
+                color: #333;
             }
 
             .cta-btn {
                 min-width: 180px;
                 padding: 14px 30px;
                 font-size: 11px;
+            }
+
+            .cta-btn-primary {
+                box-shadow: 0 4px 15px rgba(246, 117, 153, 0.4);
+            }
+
+            .cta-btn-secondary {
+                background: var(--white);
+                border: 2px solid var(--gray-dark);
             }
 
             .footer-gallery {
