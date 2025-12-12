@@ -990,25 +990,3 @@ CREATE TABLE IF NOT EXISTS quote_products (
 );
 
 CREATE INDEX IF NOT EXISTS idx_quote_products_quote ON quote_products(quote_id);
-
--- ============================================
--- BUSINESS SETTINGS (Configurable business info)
--- ============================================
-CREATE TABLE IF NOT EXISTS business_settings (
-    key TEXT PRIMARY KEY,
-    value TEXT,
-    updated_at TEXT DEFAULT (datetime('now'))
-);
-
--- Insert default business settings
-INSERT OR IGNORE INTO business_settings (key, value) VALUES
-('business_name', 'Flirt Hair & Beauty Bar'),
-('address_line1', 'Shop 5, Lifestyle Centre'),
-('address_line2', 'Corner Witkoppen & Cedar Road'),
-('address_city', 'Fourways, Johannesburg'),
-('address_postal', '2191'),
-('vat_registered', 'false'),
-('vat_number', ''),
-('phone', ''),
-('email', ''),
-('website', '');
