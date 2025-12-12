@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price List - Flirt Hair Extensions</title>
+    <meta name="description" content="Premium European Virgin 100% Remy human hair extension pricing. Tape, Weft, Keratin and Clip-in extensions available.">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-72x72.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Mulish:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --pink: #F67599;
+            --pink-dark: #e55a82;
+            --gray-dark: #414042;
+            --gray-text: #6C6D70;
+            --white: #ffffff;
+            --bg-light: #fafafa;
+        }
+
+        body {
+            font-family: 'Mulish', sans-serif;
+            color: var(--gray-dark);
+            line-height: 1.6;
+            background: var(--white);
+        }
+
+        /* Header */
+        .page-header {
+            background: var(--pink);
+            padding: 60px 20px 80px;
+            text-align: center;
+            position: relative;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            font-weight: 400;
+            color: var(--white);
+            text-decoration: none;
+            letter-spacing: 0.1em;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .logo span {
+            color: var(--white);
+        }
+
+        .tagline {
+            font-family: 'Mulish', sans-serif;
+            font-size: 12px;
+            font-weight: 300;
+            letter-spacing: 0.3em;
+            color: var(--white);
+            text-transform: uppercase;
+            margin-bottom: 30px;
+        }
+
+        .header-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .header-divider .line {
+            width: 80px;
+            height: 2px;
+            background: var(--white);
+        }
+
+        .header-divider .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--white);
+            border-radius: 50%;
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            font-weight: 400;
+            color: var(--white);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--white);
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .back-link svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Main Content */
+        .price-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 20px 80px;
+        }
+
+        /* Section Styles */
+        .price-section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 400;
+            color: var(--pink);
+            text-align: center;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .section-divider {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .section-divider .dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .section-divider .dot {
+            width: 4px;
+            height: 4px;
+            background: var(--pink);
+            border-radius: 50%;
+        }
+
+        /* Table Styles */
+        .price-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .price-table th {
+            font-family: 'Mulish', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-text);
+            text-align: center;
+            padding: 12px 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .price-table th:first-child {
+            text-align: left;
+        }
+
+        .price-table td {
+            font-family: 'Mulish', sans-serif;
+            font-size: 14px;
+            color: var(--gray-dark);
+            text-align: center;
+            padding: 14px 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .price-table td:first-child {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .price-table tbody tr:hover {
+            background: #fdf5f7;
+        }
+
+        .price-table tbody tr:last-child td {
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .installation-note {
+            font-size: 13px;
+            color: var(--gray-text);
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: var(--bg-light);
+            padding: 60px 20px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .cta-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 400;
+            color: var(--gray-dark);
+            margin-bottom: 20px;
+        }
+
+        .cta-text {
+            font-size: 16px;
+            color: var(--gray-text);
+            max-width: 500px;
+            margin: 0 auto 30px;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            font-family: 'Mulish', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: var(--pink);
+            color: var(--white);
+            padding: 16px 40px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .cta-btn:hover {
+            background: var(--pink-dark);
+        }
+
+        /* Footer */
+        .page-footer {
+            text-align: center;
+            padding: 30px 20px;
+            font-size: 13px;
+            color: var(--gray-text);
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .page-footer a {
+            color: var(--pink);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 40px 15px 60px;
+            }
+
+            .logo {
+                font-size: 36px;
+            }
+
+            .page-title {
+                font-size: 24px;
+                letter-spacing: 0.15em;
+            }
+
+            .price-content {
+                padding: 40px 15px 60px;
+            }
+
+            .section-title {
+                font-size: 18px;
+            }
+
+            .price-table {
+                font-size: 12px;
+            }
+
+            .price-table th,
+            .price-table td {
+                padding: 10px 4px;
+            }
+
+            .price-table th {
+                font-size: 11px;
+            }
+
+            .price-table td {
+                font-size: 12px;
+            }
+
+            /* Make tables horizontally scrollable on mobile */
+            .table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .price-table {
+                min-width: 500px;
+            }
+        }
+
+        @media print {
+            .back-link,
+            .cta-section,
+            .page-footer {
+                display: none;
+            }
+
+            .page-header {
+                background: var(--pink) !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .price-section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="page-header">
+        <a href="/" class="back-link">
+            <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+            Back to Home
+        </a>
+        <a href="/" class="logo">FL<span>!</span>RT</a>
+        <p class="tagline">Premium Hair Extensions</p>
+        <div class="header-divider">
+            <span class="line"></span>
+            <span class="dot"></span>
+            <span class="line"></span>
+        </div>
+        <h1 class="page-title">Price List</h1>
+    </header>
+
+    <!-- Price Content -->
+    <main class="price-content">
+        <!-- Tape-In Extensions -->
+        <section class="price-section">
+            <h2 class="section-title">Tape-In Extensions</h2>
+            <div class="section-divider">
+                <div class="dots">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="price-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>16"/40cm</th>
+                            <th>18"/45cm</th>
+                            <th>20"/50cm</th>
+                            <th>20"/55cm</th>
+                            <th>22"/60cm</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>10 Tapes</td>
+                            <td>R3 665</td>
+                            <td>R3 875</td>
+                            <td>R4 205</td>
+                            <td>R4 490</td>
+                            <td>R5 860</td>
+                        </tr>
+                        <tr>
+                            <td>20 Tapes</td>
+                            <td>R5 825</td>
+                            <td>R6 245</td>
+                            <td>R6 880</td>
+                            <td>R7 520</td>
+                            <td>R9 217</td>
+                        </tr>
+                        <tr>
+                            <td>30 Tapes</td>
+                            <td>R7 840</td>
+                            <td>R8 470</td>
+                            <td>R9 560</td>
+                            <td>R10 375</td>
+                            <td>R12 425</td>
+                        </tr>
+                        <tr>
+                            <td>40 Tapes</td>
+                            <td>R9 850</td>
+                            <td>R11 140</td>
+                            <td>R12 405</td>
+                            <td>R13 685</td>
+                            <td>R16 085</td>
+                        </tr>
+                        <tr>
+                            <td>50 Tapes</td>
+                            <td>R11 865</td>
+                            <td>R13 360</td>
+                            <td>R15 015</td>
+                            <td>R16 545</td>
+                            <td>R19 295</td>
+                        </tr>
+                        <tr>
+                            <td>60 Tapes</td>
+                            <td>R13 875</td>
+                            <td>R16 495</td>
+                            <td>R17 570</td>
+                            <td>R19 400</td>
+                            <td>R22 500</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="installation-note">Includes installation at Flirt</p>
+        </section>
+
+        <!-- Tape Weft Extensions -->
+        <section class="price-section">
+            <h2 class="section-title">Tape Weft Extensions</h2>
+            <div class="section-divider">
+                <div class="dots">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="price-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>1 Weft</th>
+                            <th>2 Wefts</th>
+                            <th>3 Wefts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>13" Single Width - 20"-22"</td>
+                            <td>R5 370</td>
+                            <td>R9 090</td>
+                            <td>R12 560</td>
+                        </tr>
+                        <tr>
+                            <td>26" Double Width - 20"-22"</td>
+                            <td>R9 090</td>
+                            <td>R15 840</td>
+                            <td>R22 470</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="installation-note">Includes installation at Flirt</p>
+        </section>
+
+        <!-- Weft-In Extensions -->
+        <section class="price-section">
+            <h2 class="section-title">Weft-In Extensions</h2>
+            <div class="section-divider">
+                <div class="dots">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="price-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>1 Weft</th>
+                            <th>2 Wefts</th>
+                            <th>3 Wefts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>16"/40cm</td>
+                            <td>R5 815</td>
+                            <td>R9 775</td>
+                            <td>R13 795</td>
+                        </tr>
+                        <tr>
+                            <td>18"/45cm</td>
+                            <td>R6 325</td>
+                            <td>R10 625</td>
+                            <td>R14 350</td>
+                        </tr>
+                        <tr>
+                            <td>20"/50cm</td>
+                            <td>R6 530</td>
+                            <td>R10 910</td>
+                            <td>R15 640</td>
+                        </tr>
+                        <tr>
+                            <td>22"/55cm</td>
+                            <td>R8 050</td>
+                            <td>R12 485</td>
+                            <td>R17 085</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="installation-note">Includes installation at Flirt</p>
+        </section>
+
+        <!-- Keratin Extensions -->
+        <section class="price-section">
+            <h2 class="section-title">Keratin Extensions</h2>
+            <div class="section-divider">
+                <div class="dots">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="price-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>18"/45cm</th>
+                            <th>20"/50cm</th>
+                            <th>22"/55cm</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>25 Strands</td>
+                            <td>R3 500</td>
+                            <td>R3 825</td>
+                            <td>R4 100</td>
+                        </tr>
+                        <tr>
+                            <td>50 Strands</td>
+                            <td>R5 605</td>
+                            <td>R6 247</td>
+                            <td>R6 800</td>
+                        </tr>
+                        <tr>
+                            <td>75 Strands</td>
+                            <td>R7 705</td>
+                            <td>R8 670</td>
+                            <td>R9 500</td>
+                        </tr>
+                        <tr>
+                            <td>100 Strands</td>
+                            <td>R10 060</td>
+                            <td>R11 345</td>
+                            <td>R12 450</td>
+                        </tr>
+                        <tr>
+                            <td>125 Strands</td>
+                            <td>R12 060</td>
+                            <td>R13 670</td>
+                            <td>R15 050</td>
+                        </tr>
+                        <tr>
+                            <td>150 Strands</td>
+                            <td>R14 110</td>
+                            <td>R16 040</td>
+                            <td>R17 700</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="installation-note">Includes installation at Flirt</p>
+        </section>
+
+        <!-- Clip-In Extensions -->
+        <section class="price-section">
+            <h2 class="section-title">Clip-In Extensions</h2>
+            <div class="section-divider">
+                <div class="dots">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="price-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>120G Set</th>
+                            <th>160G Set</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>20"/50cm</td>
+                            <td>R5 750</td>
+                            <td>R6 775</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="installation-note">Includes installation at Flirt</p>
+        </section>
+    </main>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <h2 class="cta-title">Ready to Transform Your Hair?</h2>
+        <p class="cta-text">Book a consultation with our expert stylists to find the perfect extensions for you.</p>
+        <a href="/app?tab=booking" class="cta-btn">Book Appointment</a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+        <p>&copy; 2025 <a href="/">Flirt Hair Extensions</a>. All rights reserved. Prices subject to change.</p>
+    </footer>
+</body>
+</html>
