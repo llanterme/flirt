@@ -785,6 +785,219 @@
             gap: 10px;
         }
 
+        /* Staff Modal Step Tabs */
+        .staff-step-tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .staff-step-tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: transparent;
+            transition: background 0.2s ease;
+        }
+
+        .staff-step-tab.active::after {
+            background: var(--brand-pink);
+        }
+
+        .staff-step-tab:hover {
+            background: rgba(246, 117, 153, 0.05);
+        }
+
+        .staff-step-tab .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--border-soft);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .staff-step-tab.active .step-number {
+            background: var(--brand-pink);
+            color: white;
+        }
+
+        .staff-step-tab.completed .step-number {
+            background: var(--success);
+            color: white;
+        }
+
+        .staff-step-tab .step-label {
+            font-weight: 500;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .staff-step-tab.active .step-label {
+            color: var(--brand-charcoal);
+        }
+
+        /* Role Preset Buttons */
+        .role-preset-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 12px;
+            background: #f8f9fa;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .role-preset-btn:hover {
+            background: var(--primary-light);
+            border-color: var(--brand-pink);
+        }
+
+        .role-preset-btn.active {
+            background: var(--primary-light);
+            border-color: var(--brand-pink);
+        }
+
+        .role-preset-btn svg {
+            color: var(--text-muted);
+            transition: color 0.2s ease;
+        }
+
+        .role-preset-btn:hover svg,
+        .role-preset-btn.active svg {
+            color: var(--brand-pink);
+        }
+
+        .role-preset-btn span {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .role-preset-btn:hover span,
+        .role-preset-btn.active span {
+            color: var(--brand-charcoal);
+        }
+
+        /* Text Action Buttons */
+        .btn-text-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-text-action:hover {
+            background: var(--primary-light);
+            color: var(--brand-pink);
+        }
+
+        /* Permission Category */
+        .perm-category {
+            background: #fafafa;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .perm-category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #f0f0f0;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--brand-charcoal);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .perm-category-header svg {
+            color: var(--brand-pink);
+        }
+
+        .perm-category-items {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 12px;
+        }
+
+        .perm-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .perm-item:hover {
+            border-color: var(--brand-pink);
+            background: rgba(246, 117, 153, 0.02);
+        }
+
+        .perm-item.checked {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-color: #86efac;
+        }
+
+        .perm-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-top: 1px;
+            accent-color: #22c55e;
+            cursor: pointer;
+        }
+
+        .perm-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .perm-item-label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #1f2937;
+            margin-bottom: 2px;
+        }
+
+        .perm-item-desc {
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1.3;
+        }
+
         /* Charts placeholder */
         .chart-container {
             background: white;
@@ -2246,17 +2459,33 @@
                 max-width: 95%;
             }
 
-            #staff-modal .modal-body > div {
+            #staff-step-1 .form-row {
                 grid-template-columns: 1fr !important;
-                gap: 20px !important;
+            }
+
+            .role-preset-btn {
+                padding: 12px 8px !important;
+            }
+
+            .role-preset-btn svg {
+                width: 20px !important;
+                height: 20px !important;
+            }
+
+            .role-preset-btn span {
+                font-size: 11px !important;
             }
 
             #staff-permissions-grid {
                 max-height: 250px !important;
             }
 
-            #staff-permissions-grid > div > div:last-child {
+            #staff-permissions-grid .perm-category-items {
                 grid-template-columns: 1fr !important;
+            }
+
+            .staff-step-tab .step-label {
+                display: none;
             }
 
             /* Calendar mobile */
@@ -5975,62 +6204,149 @@
 
                 <!-- Add/Edit Staff Modal -->
                 <div id="staff-modal" class="modal" style="display: none;">
-                    <div class="modal-content" style="max-width: 800px;">
+                    <div class="modal-content" style="max-width: 680px;">
                         <div class="modal-header">
                             <h3 id="staff-modal-title">Add Staff Member</h3>
                             <button class="modal-close" onclick="closeStaffModal()">&times;</button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body" style="padding: 0;">
                             <input type="hidden" id="staff-edit-id">
 
-                            <!-- Two Column Layout for Staff Details and Permissions -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-                                <!-- Left Column: Staff Details -->
-                                <div>
-                                    <h4 style="margin: 0 0 15px 0; color: var(--dark); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Staff Details</h4>
+                            <!-- Step Indicator -->
+                            <div id="staff-modal-steps" style="display: flex; border-bottom: 1px solid var(--border-soft); background: #fafafa;">
+                                <button type="button" class="staff-step-tab active" data-step="1" onclick="showStaffStep(1)">
+                                    <span class="step-number">1</span>
+                                    <span class="step-label">Details</span>
+                                </button>
+                                <button type="button" class="staff-step-tab" data-step="2" onclick="showStaffStep(2)">
+                                    <span class="step-number">2</span>
+                                    <span class="step-label">Permissions</span>
+                                </button>
+                            </div>
+
+                            <!-- Step 1: Staff Details -->
+                            <div id="staff-step-1" class="staff-step-content" style="padding: 24px;">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Full Name
+                                        <span style="color: var(--danger);">*</span>
+                                    </label>
+                                    <input type="text" class="form-input" id="staff-name" placeholder="e.g. Sarah Johnson">
+                                </div>
+                                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                     <div class="form-group">
-                                        <label class="form-label">Name *</label>
-                                        <input type="text" class="form-input" id="staff-name" placeholder="Full name">
+                                        <label class="form-label">
+                                            Email Address
+                                            <span style="color: var(--danger);">*</span>
+                                        </label>
+                                        <input type="email" class="form-input" id="staff-email" placeholder="sarah@flirt.co.za">
+                                        <small style="color: var(--text-subtle); font-size: 11px; margin-top: 4px; display: block;">Used for login</small>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label">Email *</label>
-                                        <input type="email" class="form-input" id="staff-email" placeholder="Email address">
+                                        <label class="form-label">Phone Number</label>
+                                        <input type="tel" class="form-input" id="staff-phone" placeholder="082 123 4567">
                                     </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Phone</label>
-                                        <input type="tel" class="form-input" id="staff-phone" placeholder="Phone number">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Link to Stylist (Optional)</label>
-                                        <select class="form-input" id="staff-stylist">
-                                            <option value="">-- No linked stylist --</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group" id="staff-password-group">
-                                        <label class="form-label">Initial Password</label>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Link to Stylist Profile</label>
+                                    <select class="form-input" id="staff-stylist">
+                                        <option value="">No linked stylist</option>
+                                    </select>
+                                    <small style="color: var(--text-subtle); font-size: 11px; margin-top: 4px; display: block;">Link to show this staff member's bookings and performance</small>
+                                </div>
+                                <div class="form-group" id="staff-password-group">
+                                    <label class="form-label">Initial Password</label>
+                                    <div style="position: relative;">
                                         <input type="text" class="form-input" id="staff-password" placeholder="Leave blank to auto-generate">
-                                        <small style="color: #666; font-size: 11px; margin-top: 5px; display: block;">Staff member will be required to change password on first login</small>
+                                        <button type="button" onclick="generateStaffPassword()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--primary-light); color: var(--primary); border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">Generate</button>
+                                    </div>
+                                    <small style="color: var(--text-subtle); font-size: 11px; margin-top: 4px; display: block;">Staff will change password on first login</small>
+                                </div>
+
+                                <div style="display: flex; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-soft);">
+                                    <button type="button" class="btn btn-primary" onclick="showStaffStep(2)">
+                                        Next: Set Permissions
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 6px;">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Step 2: Permissions -->
+                            <div id="staff-step-2" class="staff-step-content" style="padding: 24px; display: none;">
+                                <!-- Role Presets -->
+                                <div style="margin-bottom: 20px;">
+                                    <label class="form-label" style="margin-bottom: 10px;">Quick Setup - Choose a Role</label>
+                                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                                        <button type="button" class="role-preset-btn" onclick="applyRolePreset('receptionist')">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                            <span>Receptionist</span>
+                                        </button>
+                                        <button type="button" class="role-preset-btn" onclick="applyRolePreset('stylist')">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                                            </svg>
+                                            <span>Stylist</span>
+                                        </button>
+                                        <button type="button" class="role-preset-btn" onclick="applyRolePreset('manager')">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="8.5" cy="7" r="4"></circle>
+                                                <line x1="20" y1="8" x2="20" y2="14"></line>
+                                                <line x1="23" y1="11" x2="17" y2="11"></line>
+                                            </svg>
+                                            <span>Manager</span>
+                                        </button>
+                                        <button type="button" class="role-preset-btn" onclick="applyRolePreset('custom')">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                            </svg>
+                                            <span>Custom</span>
+                                        </button>
                                     </div>
                                 </div>
 
-                                <!-- Right Column: Permissions -->
-                                <div>
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                        <h4 style="margin: 0; color: var(--dark); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Permissions</h4>
-                                        <div style="display: flex; gap: 8px;">
-                                            <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAllPermissions(true)" style="font-size: 11px; padding: 4px 10px;">Select All</button>
-                                            <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAllPermissions(false)" style="font-size: 11px; padding: 4px 10px;">Clear All</button>
-                                        </div>
-                                    </div>
-                                    <div id="staff-permissions-grid" style="display: flex; flex-direction: column; gap: 8px; max-height: 380px; overflow-y: auto; padding-right: 5px;">
-                                        <!-- Permissions will be loaded dynamically -->
+                                <!-- Permission Details -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                    <label class="form-label" style="margin: 0;">Fine-tune Permissions</label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button type="button" class="btn-text-action" onclick="toggleAllPermissions(true)">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                                            Select All
+                                        </button>
+                                        <button type="button" class="btn-text-action" onclick="toggleAllPermissions(false)">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                                            Clear All
+                                        </button>
                                     </div>
                                 </div>
+
+                                <div id="staff-permissions-grid" style="display: flex; flex-direction: column; gap: 16px; max-height: 320px; overflow-y: auto; padding-right: 8px;">
+                                    <!-- Permissions will be loaded dynamically -->
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-soft);">
+                                    <button type="button" class="btn btn-secondary" onclick="showStaffStep(1)">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                            <polyline points="15 18 9 12 15 6"></polyline>
+                                        </svg>
+                                        Back
+                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="saveAdminStaff()">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                            <polyline points="7 3 7 8 15 8"></polyline>
+                                        </svg>
+                                        Save Staff Member
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn btn-secondary" onclick="closeStaffModal()">Cancel</button>
-                            <button class="btn btn-primary" onclick="saveAdminStaff()">Save Staff Member</button>
                         </div>
                     </div>
                 </div>
@@ -11134,6 +11450,48 @@
             }).join('');
         }
 
+        // Role presets for quick permission assignment
+        const rolePresets = {
+            receptionist: {
+                name: 'Receptionist',
+                permissions: ['bookings', 'customers', 'chat']
+            },
+            stylist: {
+                name: 'Stylist',
+                permissions: ['bookings', 'customers', 'services']
+            },
+            manager: {
+                name: 'Manager',
+                permissions: ['bookings', 'customers', 'services', 'stylists', 'products', 'orders', 'invoices', 'promotions', 'gallery', 'rewards', 'chat', 'reports']
+            },
+            custom: {
+                name: 'Custom',
+                permissions: []
+            }
+        };
+
+        let currentStaffStep = 1;
+        let selectedRolePreset = null;
+
+        function showStaffStep(step) {
+            currentStaffStep = step;
+
+            // Update step tabs
+            document.querySelectorAll('.staff-step-tab').forEach(tab => {
+                const tabStep = parseInt(tab.dataset.step);
+                tab.classList.remove('active', 'completed');
+                if (tabStep === step) {
+                    tab.classList.add('active');
+                } else if (tabStep < step) {
+                    tab.classList.add('completed');
+                }
+            });
+
+            // Show/hide step content
+            document.getElementById('staff-step-1').style.display = step === 1 ? 'block' : 'none';
+            document.getElementById('staff-step-2').style.display = step === 2 ? 'block' : 'none';
+        }
+
         function showAddStaffModal() {
             document.getElementById('staff-modal-title').textContent = 'Add Staff Member';
             document.getElementById('staff-edit-id').value = '';
@@ -11146,8 +11504,13 @@
 
             // Populate stylists dropdown
             const stylistSelect = document.getElementById('staff-stylist');
-            stylistSelect.innerHTML = '<option value="">-- No linked stylist --</option>' +
+            stylistSelect.innerHTML = '<option value="">No linked stylist</option>' +
                 stylistsForStaff.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+            // Reset to step 1
+            showStaffStep(1);
+            selectedRolePreset = null;
+            clearRolePresetSelection();
 
             // Populate permissions grid
             renderPermissionsGrid({});
@@ -11169,8 +11532,13 @@
 
             // Populate stylists dropdown
             const stylistSelect = document.getElementById('staff-stylist');
-            stylistSelect.innerHTML = '<option value="">-- No linked stylist --</option>' +
+            stylistSelect.innerHTML = '<option value="">No linked stylist</option>' +
                 stylistsForStaff.map(s => `<option value="${s.id}" ${staff.stylistId === s.id ? 'selected' : ''}>${s.name}</option>`).join('');
+
+            // Reset to step 1
+            showStaffStep(1);
+            selectedRolePreset = null;
+            clearRolePresetSelection();
 
             // Populate permissions grid
             renderPermissionsGrid(staff.permissions || {});
@@ -11178,35 +11546,94 @@
             document.getElementById('staff-modal').style.display = 'flex';
         }
 
+        function generateStaffPassword() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+            let password = '';
+            for (let i = 0; i < 10; i++) {
+                password += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('staff-password').value = password;
+        }
+
+        function clearRolePresetSelection() {
+            document.querySelectorAll('.role-preset-btn').forEach(btn => btn.classList.remove('active'));
+        }
+
+        function applyRolePreset(preset) {
+            selectedRolePreset = preset;
+            clearRolePresetSelection();
+
+            // Highlight selected preset button
+            const presetBtns = document.querySelectorAll('.role-preset-btn');
+            presetBtns.forEach(btn => {
+                if (btn.onclick.toString().includes(`'${preset}'`)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Get permissions for this preset
+            const presetData = rolePresets[preset];
+            if (!presetData) return;
+
+            // Clear all permissions first
+            toggleAllPermissions(false);
+
+            // Set permissions based on preset
+            presetData.permissions.forEach(key => {
+                const checkbox = document.getElementById(`perm-${key}`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    const label = checkbox.closest('label');
+                    if (label) {
+                        label.classList.add('checked');
+                    }
+                }
+            });
+        }
+
         function renderPermissionsGrid(currentPermissions) {
             const grid = document.getElementById('staff-permissions-grid');
 
-            // Group permissions by category
+            // Category icons and groupings
             const categories = {
-                'Operations': ['bookings', 'customers', 'services', 'stylists'],
-                'Commerce': ['products', 'orders', 'invoices'],
-                'Marketing': ['promotions', 'gallery', 'rewards'],
-                'Support': ['chat', 'reports']
+                'Operations': {
+                    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+                    keys: ['bookings', 'customers', 'services', 'stylists']
+                },
+                'Commerce': {
+                    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>',
+                    keys: ['products', 'orders', 'invoices']
+                },
+                'Marketing': {
+                    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
+                    keys: ['promotions', 'gallery', 'rewards']
+                },
+                'Support': {
+                    icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
+                    keys: ['chat', 'reports']
+                }
             };
 
             let html = '';
-            for (const [category, keys] of Object.entries(categories)) {
-                const categoryPerms = keys.filter(k => permissionsList[k]);
+            for (const [category, catData] of Object.entries(categories)) {
+                const categoryPerms = catData.keys.filter(k => permissionsList[k]);
                 if (categoryPerms.length === 0) continue;
 
-                html += `<div style="margin-bottom: 12px;">
-                    <div style="font-size: 11px; text-transform: uppercase; color: #888; font-weight: 600; margin-bottom: 6px; letter-spacing: 0.5px;">${category}</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                html += `<div class="perm-category">
+                    <div class="perm-category-header">
+                        ${catData.icon}
+                        ${category}
+                    </div>
+                    <div class="perm-category-items">
                         ${categoryPerms.map(key => {
                             const perm = permissionsList[key];
-                            const isChecked = currentPermissions[key] ? 'checked' : '';
+                            const isChecked = currentPermissions[key];
                             return `
-                                <label class="perm-item" style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: ${isChecked ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' : '#f8f9fa'}; border: 1px solid ${isChecked ? '#86efac' : '#e5e7eb'}; border-radius: 8px; cursor: pointer; transition: all 0.15s ease;"
-                                       onchange="this.style.background = this.querySelector('input').checked ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' : '#f8f9fa'; this.style.borderColor = this.querySelector('input').checked ? '#86efac' : '#e5e7eb';">
-                                    <input type="checkbox" id="perm-${key}" ${isChecked} style="width: 16px; height: 16px; margin-top: 2px; accent-color: #22c55e;">
-                                    <div style="flex: 1; min-width: 0;">
-                                        <div style="font-weight: 600; font-size: 13px; color: #1f2937;">${perm.label}</div>
-                                        <div style="font-size: 11px; color: #6b7280; line-height: 1.3;">${perm.description}</div>
+                                <label class="perm-item ${isChecked ? 'checked' : ''}" onclick="togglePermissionStyle(this)">
+                                    <input type="checkbox" id="perm-${key}" ${isChecked ? 'checked' : ''}>
+                                    <div class="perm-item-content">
+                                        <div class="perm-item-label">${perm.label}</div>
+                                        <div class="perm-item-desc">${perm.description}</div>
                                     </div>
                                 </label>
                             `;
@@ -11218,16 +11645,29 @@
             grid.innerHTML = html;
         }
 
+        function togglePermissionStyle(label) {
+            setTimeout(() => {
+                const checkbox = label.querySelector('input[type="checkbox"]');
+                if (checkbox.checked) {
+                    label.classList.add('checked');
+                } else {
+                    label.classList.remove('checked');
+                }
+            }, 0);
+        }
+
         function toggleAllPermissions(selectAll) {
             Object.keys(permissionsList).forEach(key => {
                 const checkbox = document.getElementById(`perm-${key}`);
                 if (checkbox) {
                     checkbox.checked = selectAll;
-                    // Trigger visual update
                     const label = checkbox.closest('label');
                     if (label) {
-                        label.style.background = selectAll ? 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' : '#f8f9fa';
-                        label.style.borderColor = selectAll ? '#86efac' : '#e5e7eb';
+                        if (selectAll) {
+                            label.classList.add('checked');
+                        } else {
+                            label.classList.remove('checked');
+                        }
                     }
                 }
             });
@@ -11235,6 +11675,8 @@
 
         function closeStaffModal() {
             document.getElementById('staff-modal').style.display = 'none';
+            // Reset to step 1 for next open
+            showStaffStep(1);
         }
 
         async function saveAdminStaff() {
