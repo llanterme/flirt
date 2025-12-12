@@ -898,6 +898,218 @@
             color: var(--brand-charcoal);
         }
 
+        /* Staff Panel - Full Width Slide-Over */
+        #staff-modal.modal {
+            align-items: stretch;
+            justify-content: flex-end;
+            padding: 0;
+        }
+
+        #staff-modal .modal-content {
+            max-width: none !important;
+            width: 100% !important;
+            max-height: 100vh;
+            height: 100vh;
+            margin: 0;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        #staff-modal .modal-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border-soft);
+            background: white;
+            flex-shrink: 0;
+        }
+
+        #staff-modal .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: row;
+            padding: 0 !important;
+        }
+
+        /* Two-column layout for staff modal */
+        .staff-modal-columns {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            width: 100%;
+            min-height: 100%;
+        }
+
+        .staff-modal-left {
+            padding: 30px;
+            background: #fafbfc;
+            border-right: 1px solid var(--border-soft);
+            overflow-y: auto;
+        }
+
+        .staff-modal-right {
+            padding: 30px;
+            overflow-y: auto;
+            background: white;
+        }
+
+        .staff-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .staff-section-title svg {
+            width: 18px;
+            height: 18px;
+            color: var(--brand-pink);
+        }
+
+        .staff-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .staff-form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        /* Role Cards Grid */
+        .role-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .role-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 16px;
+            background: #f8f9fa;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .role-card:hover {
+            background: #fff0f3;
+            border-color: var(--brand-pink);
+        }
+
+        .role-card.active {
+            background: #fff0f3;
+            border-color: var(--brand-pink);
+        }
+
+        .role-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .role-card-icon.receptionist { background: #e3f2fd; color: #1976d2; }
+        .role-card-icon.stylist { background: #fce4ec; color: #c2185b; }
+        .role-card-icon.manager { background: #e8f5e9; color: #388e3c; }
+        .role-card-icon.custom { background: #f3e5f5; color: #7b1fa2; }
+
+        .role-card-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--brand-charcoal);
+            margin-bottom: 4px;
+        }
+
+        .role-card-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Permissions Section */
+        .permissions-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .permissions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-height: calc(100vh - 450px);
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        /* Staff Modal Footer */
+        .staff-modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid var(--border-soft);
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 900px) {
+            .staff-modal-columns {
+                grid-template-columns: 1fr;
+            }
+
+            .staff-modal-left {
+                border-right: none;
+                border-bottom: 1px solid var(--border-soft);
+            }
+
+            .permissions-grid {
+                grid-template-columns: 1fr;
+                max-height: none;
+            }
+
+            .role-cards-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .role-cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .staff-form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* Text Action Buttons */
         .btn-text-action {
             display: inline-flex;
@@ -6202,151 +6414,159 @@
                     </div>
                 </section>
 
-                <!-- Add/Edit Staff Modal -->
+                <!-- Add/Edit Staff Modal - Full Width Slide-Over -->
                 <div id="staff-modal" class="modal" style="display: none;">
-                    <div class="modal-content" style="max-width: 900px; width: 90%;">
+                    <div class="modal-content">
                         <div class="modal-header">
                             <h3 id="staff-modal-title">Add Staff Member</h3>
                             <button class="modal-close" onclick="closeStaffModal()">&times;</button>
                         </div>
-                        <div class="modal-body" style="padding: 0;">
+                        <div class="modal-body">
                             <input type="hidden" id="staff-edit-id">
 
-                            <!-- Step Indicator -->
-                            <div id="staff-modal-steps" style="display: flex; border-bottom: 1px solid var(--border-soft); background: #fafafa;">
-                                <button type="button" class="staff-step-tab active" data-step="1" onclick="showStaffStep(1)">
-                                    <span class="step-number">1</span>
-                                    <span class="step-label">Details</span>
-                                </button>
-                                <button type="button" class="staff-step-tab" data-step="2" onclick="showStaffStep(2)">
-                                    <span class="step-number">2</span>
-                                    <span class="step-label">Permissions</span>
-                                </button>
-                            </div>
+                            <!-- Two Column Layout -->
+                            <div class="staff-modal-columns">
+                                <!-- Left Column: Personal Details -->
+                                <div class="staff-modal-left">
+                                    <div class="staff-section-title">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                        Personal Details
+                                    </div>
 
-                            <!-- Step 1: Staff Details -->
-                            <div id="staff-step-1" class="staff-step-content" style="padding: 24px;">
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        Full Name
-                                        <span style="color: var(--danger);">*</span>
-                                    </label>
-                                    <input type="text" class="form-input" id="staff-name" placeholder="e.g. Sarah Johnson">
-                                </div>
-                                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                     <div class="form-group">
                                         <label class="form-label">
-                                            Email Address
+                                            Full Name
                                             <span style="color: var(--danger);">*</span>
                                         </label>
-                                        <input type="email" class="form-input" id="staff-email" placeholder="sarah@flirt.co.za">
-                                        <small style="color: var(--text-subtle); font-size: 11px; margin-top: 4px; display: block;">Used for login</small>
+                                        <input type="text" class="form-input" id="staff-name" placeholder="e.g. Sarah Johnson">
                                     </div>
+
+                                    <div class="staff-form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">
+                                                Email Address
+                                                <span style="color: var(--danger);">*</span>
+                                            </label>
+                                            <input type="email" class="form-input" id="staff-email" placeholder="sarah@flirt.co.za">
+                                            <small style="color: var(--text-subtle); font-size: 11px; margin-top: 4px; display: block;">Used for login</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Phone Number</label>
+                                            <input type="tel" class="form-input" id="staff-phone" placeholder="082 123 4567">
+                                        </div>
+                                    </div>
+
                                     <div class="form-group">
-                                        <label class="form-label">Phone Number</label>
-                                        <input type="tel" class="form-input" id="staff-phone" placeholder="082 123 4567">
+                                        <label class="form-label">Link to Stylist Profile</label>
+                                        <select class="form-input" id="staff-stylist">
+                                            <option value="">No linked stylist</option>
+                                        </select>
+                                        <small style="color: var(--text-subtle); font-size: 11px; margin-top: 4px; display: block;">Link to show this staff member's bookings and performance</small>
                                     </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Link to Stylist Profile</label>
-                                    <select class="form-input" id="staff-stylist">
-                                        <option value="">No linked stylist</option>
-                                    </select>
-                                    <small style="color: var(--text-subtle); font-size: 11px; margin-top: 4px; display: block;">Link to show this staff member's bookings and performance</small>
-                                </div>
-                                <div class="form-group" id="staff-password-group">
-                                    <label class="form-label">Initial Password</label>
-                                    <div style="position: relative;">
-                                        <input type="text" class="form-input" id="staff-password" placeholder="Leave blank to auto-generate">
-                                        <button type="button" onclick="generateStaffPassword()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--primary-light); color: var(--primary); border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">Generate</button>
+
+                                    <div class="form-group" id="staff-password-group">
+                                        <label class="form-label">Initial Password</label>
+                                        <div style="position: relative;">
+                                            <input type="text" class="form-input" id="staff-password" placeholder="Leave blank to auto-generate">
+                                            <button type="button" onclick="generateStaffPassword()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--primary-light); color: var(--primary); border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">Generate</button>
+                                        </div>
+                                        <small style="color: var(--text-subtle); font-size: 11px; margin-top: 4px; display: block;">Staff will change password on first login</small>
                                     </div>
-                                    <small style="color: var(--text-subtle); font-size: 11px; margin-top: 4px; display: block;">Staff will change password on first login</small>
                                 </div>
 
-                                <div style="display: flex; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-soft);">
-                                    <button type="button" class="btn btn-primary" onclick="showStaffStep(2)">
-                                        Next: Set Permissions
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 6px;">
-                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                <!-- Right Column: Role & Permissions -->
+                                <div class="staff-modal-right">
+                                    <div class="staff-section-title">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                                         </svg>
-                                    </button>
+                                        Role & Permissions
+                                    </div>
+
+                                    <!-- Role Presets -->
+                                    <div style="margin-bottom: 24px;">
+                                        <label class="form-label" style="margin-bottom: 12px;">Quick Setup - Choose a Role</label>
+                                        <div class="role-cards-grid">
+                                            <div class="role-card" onclick="applyRolePreset('receptionist')" data-role="receptionist">
+                                                <div class="role-card-icon receptionist">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                        <circle cx="12" cy="7" r="4"></circle>
+                                                    </svg>
+                                                </div>
+                                                <div class="role-card-name">Receptionist</div>
+                                                <div class="role-card-desc">Bookings & basic access</div>
+                                            </div>
+                                            <div class="role-card" onclick="applyRolePreset('stylist')" data-role="stylist">
+                                                <div class="role-card-icon stylist">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                                                    </svg>
+                                                </div>
+                                                <div class="role-card-name">Stylist</div>
+                                                <div class="role-card-desc">Own bookings & clients</div>
+                                            </div>
+                                            <div class="role-card" onclick="applyRolePreset('manager')" data-role="manager">
+                                                <div class="role-card-icon manager">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                                        <circle cx="8.5" cy="7" r="4"></circle>
+                                                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                                                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                                                    </svg>
+                                                </div>
+                                                <div class="role-card-name">Manager</div>
+                                                <div class="role-card-desc">Full management access</div>
+                                            </div>
+                                            <div class="role-card" onclick="applyRolePreset('custom')" data-role="custom">
+                                                <div class="role-card-icon custom">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                        <circle cx="12" cy="12" r="3"></circle>
+                                                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                                    </svg>
+                                                </div>
+                                                <div class="role-card-name">Custom</div>
+                                                <div class="role-card-desc">Choose individual permissions</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Permission Details -->
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                        <label class="form-label" style="margin: 0;">Fine-tune Permissions</label>
+                                        <div style="display: flex; gap: 8px;">
+                                            <button type="button" class="btn-text-action" onclick="toggleAllPermissions(true)">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                                                Select All
+                                            </button>
+                                            <button type="button" class="btn-text-action" onclick="toggleAllPermissions(false)">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                                                Clear All
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div id="staff-permissions-grid" class="permissions-grid">
+                                        <!-- Permissions will be loaded dynamically -->
+                                    </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Step 2: Permissions -->
-                            <div id="staff-step-2" class="staff-step-content" style="padding: 24px; display: none;">
-                                <!-- Role Presets -->
-                                <div style="margin-bottom: 20px;">
-                                    <label class="form-label" style="margin-bottom: 10px;">Quick Setup - Choose a Role</label>
-                                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
-                                        <button type="button" class="role-preset-btn" onclick="applyRolePreset('receptionist')">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                                <circle cx="12" cy="7" r="4"></circle>
-                                            </svg>
-                                            <span>Receptionist</span>
-                                        </button>
-                                        <button type="button" class="role-preset-btn" onclick="applyRolePreset('stylist')">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-                                            </svg>
-                                            <span>Stylist</span>
-                                        </button>
-                                        <button type="button" class="role-preset-btn" onclick="applyRolePreset('manager')">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                                <circle cx="8.5" cy="7" r="4"></circle>
-                                                <line x1="20" y1="8" x2="20" y2="14"></line>
-                                                <line x1="23" y1="11" x2="17" y2="11"></line>
-                                            </svg>
-                                            <span>Manager</span>
-                                        </button>
-                                        <button type="button" class="role-preset-btn" onclick="applyRolePreset('custom')">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                                <circle cx="12" cy="12" r="3"></circle>
-                                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                                            </svg>
-                                            <span>Custom</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Permission Details -->
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                    <label class="form-label" style="margin: 0;">Fine-tune Permissions</label>
-                                    <div style="display: flex; gap: 8px;">
-                                        <button type="button" class="btn-text-action" onclick="toggleAllPermissions(true)">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                                            Select All
-                                        </button>
-                                        <button type="button" class="btn-text-action" onclick="toggleAllPermissions(false)">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
-                                            Clear All
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div id="staff-permissions-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; max-height: 400px; overflow-y: auto; padding-right: 8px;">
-                                    <!-- Permissions will be loaded dynamically -->
-                                </div>
-
-                                <div style="display: flex; justify-content: space-between; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-soft);">
-                                    <button type="button" class="btn btn-secondary" onclick="showStaffStep(1)">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                                            <polyline points="15 18 9 12 15 6"></polyline>
-                                        </svg>
-                                        Back
-                                    </button>
-                                    <button type="button" class="btn btn-primary" onclick="saveAdminStaff()">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
-                                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                                            <polyline points="7 3 7 8 15 8"></polyline>
-                                        </svg>
-                                        Save Staff Member
-                                    </button>
-                                </div>
-                            </div>
+                        <!-- Footer with action buttons -->
+                        <div class="modal-footer" style="padding: 16px 30px; border-top: 1px solid var(--border-soft); display: flex; justify-content: flex-end; gap: 12px; background: white; flex-shrink: 0;">
+                            <button type="button" class="btn btn-secondary" onclick="closeStaffModal()">Cancel</button>
+                            <button type="button" class="btn btn-primary" onclick="saveAdminStaff()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                    <polyline points="7 3 7 8 15 8"></polyline>
+                                </svg>
+                                Save Staff Member
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -11557,17 +11777,28 @@
 
         function clearRolePresetSelection() {
             document.querySelectorAll('.role-preset-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.role-card').forEach(card => card.classList.remove('active'));
         }
 
         function applyRolePreset(preset) {
             selectedRolePreset = preset;
             clearRolePresetSelection();
 
-            // Highlight selected preset button
+            // Highlight selected preset button (legacy .role-preset-btn)
             const presetBtns = document.querySelectorAll('.role-preset-btn');
             presetBtns.forEach(btn => {
                 if (btn.onclick.toString().includes(`'${preset}'`)) {
                     btn.classList.add('active');
+                }
+            });
+
+            // Highlight selected role card (new .role-card)
+            const roleCards = document.querySelectorAll('.role-card');
+            roleCards.forEach(card => {
+                if (card.dataset.role === preset) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
                 }
             });
 
@@ -12534,7 +12765,7 @@
             await showCreateInvoice();
             // Pre-select the customer after modal opens
             setTimeout(() => {
-                const customerSelect = document.getElementById('invoiceCustomerSelect');
+                const customerSelect = document.getElementById('invoice-customer');
                 if (customerSelect) {
                     customerSelect.value = currentProfileCustomerId;
                     // Trigger change event to update any dependent fields
@@ -17983,13 +18214,25 @@
 
         // Update invoice stats cards
         function updateInvoiceStats(invoices) {
-            const totalInvoices = invoices.length;
-            const paidInvoices = invoices.filter(i => i.payment_status === 'paid');
-            const unpaidInvoices = invoices.filter(i => i.payment_status !== 'paid' && i.status === 'finalized');
+            // Get current month boundaries for filtering
+            const now = new Date();
+            const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            const monthEnd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+
+            // Filter invoices for current month (by service_date)
+            const monthInvoices = invoices.filter(i => {
+                const serviceDate = i.service_date ? i.service_date.split('T')[0] : null;
+                return serviceDate && serviceDate >= monthStart && serviceDate <= monthEnd;
+            });
+
+            const totalInvoices = monthInvoices.length;
+            const paidInvoices = monthInvoices.filter(i => i.payment_status === 'paid');
+            const unpaidInvoices = monthInvoices.filter(i => i.payment_status !== 'paid' && i.status === 'finalized');
 
             const totalRevenue = paidInvoices.reduce((sum, i) => sum + (i.total || 0), 0);
             const pendingAmount = unpaidInvoices.reduce((sum, i) => sum + ((i.total || 0) - (i.amount_paid || 0)), 0);
-            const totalCommissions = invoices.reduce((sum, i) => sum + (i.commission || 0), 0);
+            const totalCommissions = paidInvoices.reduce((sum, i) => sum + (i.commission || 0), 0);
 
             document.getElementById('stat-total-invoices').textContent = totalInvoices;
             document.getElementById('stat-total-revenue').textContent = `R${totalRevenue.toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
@@ -18609,7 +18852,7 @@
                 };
 
                 // Populate form fields
-                const customerSelect = document.getElementById('invoiceCustomerSelect');
+                const customerSelect = document.getElementById('invoice-customer');
                 if (customerSelect && invoice.user_id) {
                     customerSelect.value = invoice.user_id;
                 }
@@ -18619,19 +18862,40 @@
                     stylistSelect.value = invoice.stylist_id;
                 }
 
+                const bookingSelect = document.getElementById('invoice-booking');
+                if (bookingSelect && invoice.booking_id) {
+                    bookingSelect.value = invoice.booking_id;
+                }
+
                 const dateInput = document.getElementById('invoice-service-date');
                 if (dateInput && invoice.service_date) {
                     dateInput.value = invoice.service_date.split('T')[0];
                 }
 
-                const notesInput = document.getElementById('invoice-notes');
-                if (notesInput) {
-                    notesInput.value = invoice.notes || '';
+                // Set notes
+                const clientNotesInput = document.getElementById('invoice-client-notes');
+                if (clientNotesInput) {
+                    clientNotesInput.value = invoice.notes || '';
                 }
 
-                const discountInput = document.getElementById('invoice-discount');
-                if (discountInput) {
-                    discountInput.value = invoice.discount_amount || 0;
+                const internalNotesInput = document.getElementById('invoice-internal-notes');
+                if (internalNotesInput) {
+                    internalNotesInput.value = invoice.internal_notes || '';
+                }
+
+                // Set discount fields
+                const discountTypeSelect = document.getElementById('invoice-discount-type');
+                const discountValueInput = document.getElementById('invoice-discount-value');
+                const discountReasonInput = document.getElementById('invoice-discount-reason');
+
+                if (discountTypeSelect && invoice.discount_type) {
+                    discountTypeSelect.value = invoice.discount_type;
+                }
+                if (discountValueInput && invoice.discount_value) {
+                    discountValueInput.value = invoice.discount_value;
+                }
+                if (discountReasonInput && invoice.discount_reason) {
+                    discountReasonInput.value = invoice.discount_reason;
                 }
 
                 // Set customer type and populate company fields
