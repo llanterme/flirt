@@ -223,6 +223,13 @@ async function seedAdminUser() {
             console.error('Warning: Failed to seed products:', err.message);
         }
 
+        // Migrate product images from flirthair.co.za URLs to local paths
+        try {
+            await migrateProductImagesToLocal();
+        } catch (err) {
+            console.error('Warning: Failed to migrate product images:', err.message);
+        }
+
         // Load persisted payment configuration into runtime (if any)
         try {
             const storedPaymentConfig = await PaymentSettingsRepository.getConfig();
@@ -8469,7 +8476,7 @@ async function seedStylistsDefaults() {
                 instagram: '@lisathompson',
                 color: '#F67599',
                 available: true,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg'
+                imageUrl: '/images/products/home-footer-images1.jpg'
             },
             {
                 id: 'stylist_emma',
@@ -8481,7 +8488,7 @@ async function seedStylistsDefaults() {
                 instagram: '@emmaextensions',
                 color: '#414042',
                 available: true,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg'
+                imageUrl: '/images/products/home-footer-images2.jpg'
             },
             {
                 id: 'stylist_sarah',
@@ -8493,7 +8500,7 @@ async function seedStylistsDefaults() {
                 instagram: '@sarahcolor',
                 color: '#FFB6C1',
                 available: true,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg'
+                imageUrl: '/images/products/categories1.jpg'
             },
             {
                 id: 'stylist_maya',
@@ -8505,7 +8512,7 @@ async function seedStylistsDefaults() {
                 instagram: '@mayamaintains',
                 color: '#6d6e70',
                 available: true,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images3.jpg'
+                imageUrl: '/images/products/home-footer-images3.jpg'
             }
         ];
 
@@ -8548,49 +8555,49 @@ async function seedGalleryDefaults() {
 
         const defaults = [
             {
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images1.jpg',
+                imageUrl: '/images/products/home-footer-images1.jpg',
                 altText: 'Salon inspo 1',
                 label: 'Salon inspo',
                 category: 'inspiration'
             },
             {
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg',
+                imageUrl: '/images/products/home-footer-images2.jpg',
                 altText: 'Salon inspo 2',
                 label: 'Salon inspo',
                 category: 'inspiration'
             },
             {
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg',
+                imageUrl: '/images/products/categories1.jpg',
                 altText: 'Tape extensions',
                 label: 'Tape extensions',
                 category: 'services'
             },
             {
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg',
+                imageUrl: '/images/products/categories3.jpg',
                 altText: 'Weft installation',
                 label: 'Weft installation',
                 category: 'services'
             },
             {
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg',
+                imageUrl: '/images/products/categories5.jpg',
                 altText: 'Color matching',
                 label: 'Color matching',
                 category: 'services'
             },
             {
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU249_PLUMPING.WASH_250ml-03-300x300.png',
+                imageUrl: '/images/products/KMU249_PLUMPING.WASH_250ml-03-300x300.png',
                 altText: 'Plumping Wash',
                 label: 'Plumping Wash',
                 category: 'products'
             },
             {
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU491_SESSION.SPRAY_FLEX_400ML_EU-02-300x300.png',
+                imageUrl: '/images/products/KMU491_SESSION.SPRAY_FLEX_400ML_EU-02-300x300.png',
                 altText: 'Session Spray',
                 label: 'Session Spray',
                 category: 'products'
             },
             {
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU291_STIMULATE-ME.WASH_250ml-03-300x300.png',
+                imageUrl: '/images/products/KMU291_STIMULATE-ME.WASH_250ml-03-300x300.png',
                 altText: 'Stimulate Me Wash',
                 label: 'Stimulate Me Wash',
                 category: 'products'
@@ -8629,7 +8636,7 @@ async function seedProductsDefaults() {
                 description: 'A dry powder finishing spray that allows for natural movement, yet holds everything in just the right place. The end result is your dream hair with a soft, velvety feel.',
                 price: 495,
                 stock: 20,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU387_DOO.OVER_250ml-02-300x300.png'
+                imageUrl: '/images/products/KMU387_DOO.OVER_250ml-02-300x300.png'
             },
             {
                 id: 'prod_kevin-murphy-plumping-wash',
@@ -8638,7 +8645,7 @@ async function seedProductsDefaults() {
                 description: 'A densifying shampoo that thickens and strengthens fine, limp hair. Ginger Root and Nettle extracts help stimulate the scalp.',
                 price: 450,
                 stock: 15,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU249_PLUMPING.WASH_250ml-03-300x300.png'
+                imageUrl: '/images/products/KMU249_PLUMPING.WASH_250ml-03-300x300.png'
             },
             {
                 id: 'prod_kevin-murphy-session-spray',
@@ -8647,7 +8654,7 @@ async function seedProductsDefaults() {
                 description: 'A lightweight finishing spray with a flexible hold. Perfect for creating styles that move naturally.',
                 price: 520,
                 stock: 18,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU491_SESSION.SPRAY_FLEX_400ML_EU-02-300x300.png'
+                imageUrl: '/images/products/KMU491_SESSION.SPRAY_FLEX_400ML_EU-02-300x300.png'
             },
             {
                 id: 'prod_kevin-murphy-stimulate-me',
@@ -8656,7 +8663,7 @@ async function seedProductsDefaults() {
                 description: 'An invigorating shampoo for hair and scalp. Enriched with Camphor Crystals and Bergamot to refresh and awaken.',
                 price: 450,
                 stock: 12,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/KMU291_STIMULATE-ME.WASH_250ml-03-300x300.png'
+                imageUrl: '/images/products/KMU291_STIMULATE-ME.WASH_250ml-03-300x300.png'
             },
             {
                 id: 'prod_kevin-murphy-hydrate-me',
@@ -8665,7 +8672,7 @@ async function seedProductsDefaults() {
                 description: 'A moisturising shampoo for coloured hair. Kakadu Plum provides intensive hydration without weighing hair down.',
                 price: 450,
                 stock: 14,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/HYDRATE-ME.WASH_250ml-300x300.png'
+                imageUrl: '/images/products/HYDRATE-ME.WASH_250ml-300x300.png'
             },
             {
                 id: 'prod_kevin-murphy-hydrate-me-rinse',
@@ -8674,7 +8681,7 @@ async function seedProductsDefaults() {
                 description: 'A smoothing conditioner that deeply hydrates dry, coloured hair while adding shine and softness.',
                 price: 480,
                 stock: 14,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2023/03/HYDRATE-ME.RINSE_250ml-300x300.png'
+                imageUrl: '/images/products/HYDRATE-ME.RINSE_250ml-300x300.png'
             },
             // Hair Extensions
             {
@@ -8684,7 +8691,7 @@ async function seedProductsDefaults() {
                 description: 'Premium quality tape-in hair extensions, 18 inches long. Natural human hair, available in various colours.',
                 price: 2800,
                 stock: 25,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg'
+                imageUrl: '/images/products/categories1.jpg'
             },
             {
                 id: 'prod_tape-extensions-22',
@@ -8693,7 +8700,7 @@ async function seedProductsDefaults() {
                 description: 'Premium quality tape-in hair extensions, 22 inches long. Natural human hair for length and volume.',
                 price: 3500,
                 stock: 20,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg'
+                imageUrl: '/images/products/categories1.jpg'
             },
             {
                 id: 'prod_weft-extensions-18',
@@ -8702,7 +8709,7 @@ async function seedProductsDefaults() {
                 description: 'Hand-tied weft extensions, 18 inches. Perfect for adding volume and length with minimal damage.',
                 price: 3200,
                 stock: 15,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg'
+                imageUrl: '/images/products/categories3.jpg'
             },
             {
                 id: 'prod_weft-extensions-22',
@@ -8711,7 +8718,7 @@ async function seedProductsDefaults() {
                 description: 'Hand-tied weft extensions, 22 inches. Luxurious length for stunning transformations.',
                 price: 4000,
                 stock: 12,
-                imageUrl: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg'
+                imageUrl: '/images/products/categories3.jpg'
             },
             // Hair Care Tools
             {
@@ -8777,6 +8784,33 @@ async function seedProductsDefaults() {
         console.log('Seeded default products');
     } catch (err) {
         console.error('Failed to seed products:', err.message);
+    }
+}
+
+// Migrate product images from flirthair.co.za URLs to local paths
+async function migrateProductImagesToLocal() {
+    try {
+        const products = await ProductRepository.findAll({});
+        let updated = 0;
+        
+        for (const product of products) {
+            const oldUrl = product.image_url || product.imageUrl;
+            if (!oldUrl || !oldUrl.includes('flirthair.co.za')) continue;
+            
+            // Extract filename from URL
+            const match = oldUrl.match(/\/([^\/]+\.(?:png|jpg|jpeg|gif|webp))$/i);
+            if (match) {
+                const newUrl = '/images/products/' + match[1];
+                await ProductRepository.update(product.id, { image_url: newUrl });
+                updated++;
+            }
+        }
+        
+        if (updated > 0) {
+            console.log('Migrated ' + updated + ' product images to local paths');
+        }
+    } catch (err) {
+        console.error('Failed to migrate product images:', err.message);
     }
 }
 

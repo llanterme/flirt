@@ -4,7 +4,7 @@
     <!-- Runtime-configurable client settings (override by replacing content) -->
     <meta name="flirt-api-base" content="/api">
     <meta name="flirt-support-whatsapp" content="27821234567">
-    <meta name="flirt-media-base" content="https://www.flirthair.co.za">
+    <meta name="flirt-media-base" content="">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FL!RT - Premium Hair Extensions</title>
@@ -658,7 +658,7 @@
             right: 0;
             width: 200px;
             height: 200px;
-            background: url('https://www.flirthair.co.za/wp-content/uploads/2022/03/home-image-1.jpg') center/cover;
+            background: url('/images/home-image-1.jpg') center/cover;
             opacity: 0.1;
             border-radius: 50%;
         }
@@ -7707,7 +7707,7 @@
         <div class="cart-items" id="cartItems">
             <!-- Cart items will be added dynamically -->
             <div class="cart-item">
-                <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-Angel-300x300.png" class="cart-item-image" alt="Angel Wash">
+                <img src="/images/products/KEVIN-MURPHY-Angel-300x300.png" class="cart-item-image" alt="Angel Wash">
                 <div class="cart-item-details">
                     <div class="cart-item-name">Angel.Wash</div>
                     <div class="cart-item-price">R385</div>
@@ -7720,7 +7720,7 @@
                 </div>
             </div>
             <div class="cart-item">
-                <img src="https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-09-300x300.png" class="cart-item-image" alt="Bedroom Hair">
+                <img src="/images/products/KEVIN-MURPHY-09-300x300.png" class="cart-item-image" alt="Bedroom Hair">
                 <div class="cart-item-details">
                     <div class="cart-item-name">Bedroom.Hair</div>
                     <div class="cart-item-price">R420</div>
@@ -8579,7 +8579,7 @@
         // Media base URL for static assets (override via meta if CDN changes)
         const MEDIA_BASE = (() => {
             const meta = document.querySelector('meta[name="flirt-media-base"]');
-            return meta && meta.content ? meta.content.replace(/\/$/, '') : 'https://www.flirthair.co.za';
+            return meta && meta.content ? meta.content.replace(/\/$/, '') : '';
         })();
 
         // Get auth token from storage
@@ -10305,11 +10305,11 @@
 
         // Default images for services (fallback when no image_url)
         const defaultServiceImages = {
-            'tape': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg',
-            'weft': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories3.jpg',
-            'color': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories5.jpg',
-            'maintenance': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories7.jpg',
-            'default': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories1.jpg'
+            'tape': '/images/categories/categories1.jpg',
+            'weft': '/images/categories/categories3.jpg',
+            'color': '/images/categories/categories5.jpg',
+            'maintenance': '/images/categories/categories7.jpg',
+            'default': '/images/categories/categories1.jpg'
         };
 
         // Format duration in minutes to human-readable string
@@ -10639,9 +10639,9 @@
 
                 // Default images for service types
                 const defaultImages = {
-                    'hair': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images3.jpg',
-                    'beauty': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/home-footer-images2.jpg',
-                    'spa': 'https://www.flirthair.co.za/wp-content/uploads/2022/03/categories7.jpg'
+                    'hair': '/images/home-footer-images3.jpg',
+                    'beauty': '/images/home-footer-images2.jpg',
+                    'spa': '/images/categories/categories7.jpg'
                 };
 
                 container.innerHTML = data.types.map(typeData => {
@@ -14376,7 +14376,7 @@ async function showNotifications() {
             const originalPrice = product.price;
             const hasDiscount = price < originalPrice;
             const discountPercent = hasDiscount ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
-            const imageUrl = product.image_url || product.imageUrl || 'https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-Angel-300x300.png';
+            const imageUrl = product.image_url || product.imageUrl || '/images/products/KEVIN-MURPHY-Angel-300x300.png';
             const stock = product.stock || 0;
 
             // Update image
@@ -14470,7 +14470,7 @@ async function showNotifications() {
             const quantity = parseInt(document.getElementById('qv-quantity').value) || 1;
             const price = currentQuickViewProduct.sale_price || currentQuickViewProduct.salePrice || currentQuickViewProduct.price;
             const originalPrice = currentQuickViewProduct.price;
-            const imageUrl = currentQuickViewProduct.image_url || currentQuickViewProduct.imageUrl || 'https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-Angel-300x300.png';
+            const imageUrl = currentQuickViewProduct.image_url || currentQuickViewProduct.imageUrl || '/images/products/KEVIN-MURPHY-Angel-300x300.png';
 
             const existingItem = cart.find(item => item.id === currentQuickViewProduct.id);
             if (existingItem) {
@@ -14586,7 +14586,7 @@ async function showNotifications() {
                     price: price,
                     originalPrice: originalPrice,
                     qty: 1,
-                image: 'https://www.flirthair.co.za/wp-content/uploads/2022/03/KEVIN-MURPHY-Angel-300x300.png'
+                image: '/images/products/KEVIN-MURPHY-Angel-300x300.png'
                 });
             }
             saveCartToStorage(); // Persist cart
