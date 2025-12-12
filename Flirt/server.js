@@ -8837,7 +8837,7 @@ async function migrateProductImagesToLocal() {
             }
 
             if (needsUpdate) {
-                await ProductRepository.update(product.id, { image_url: newUrl });
+                await ProductRepository.update(product.id, { imageUrl: newUrl });
                 updated++;
             }
         }
