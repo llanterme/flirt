@@ -1087,6 +1087,25 @@
                 font-size: 11px;
             }
 
+            /* Service cards - always show overlay on mobile (no hover) */
+            .service-card .service-card-overlay {
+                background: linear-gradient(to top, rgba(246,117,153,0.85) 0%, rgba(246,117,153,0.5) 50%, transparent 100%);
+            }
+
+            .service-card .service-card-title {
+                opacity: 1;
+                transform: translateY(0);
+                font-size: 20px;
+            }
+
+            .service-card .service-card-cta {
+                opacity: 1;
+                transform: translateY(0);
+                font-size: 10px;
+                padding: 8px 16px;
+                margin-top: 10px;
+            }
+
             .about-left {
                 padding: 50px 30px;
             }
@@ -1098,6 +1117,12 @@
             .about-links {
                 flex-direction: column;
                 gap: 15px;
+            }
+
+            .about-link {
+                /* Larger touch target */
+                padding: 10px 0;
+                display: inline-block;
             }
 
             .section-header {
@@ -1138,6 +1163,12 @@
                 align-items: center;
             }
 
+            .cta-btn {
+                /* Larger touch target */
+                min-width: 200px;
+                padding: 16px 40px;
+            }
+
             .site-footer {
                 padding: 50px 20px;
             }
@@ -1149,6 +1180,184 @@
 
             .footer-social {
                 justify-content: center;
+            }
+
+            .footer-social a {
+                /* Larger touch target for social icons */
+                width: 48px;
+                height: 48px;
+            }
+        }
+
+        /* Extra small screens (phones in portrait) */
+        @media (max-width: 480px) {
+            .logo {
+                font-size: 22px;
+                letter-spacing: 0.2em;
+            }
+
+            .hero {
+                min-height: 100svh; /* Use svh for mobile browsers with address bar */
+            }
+
+            .hero-bg {
+                background-position: 30% center;
+            }
+
+            .hero-content {
+                right: 15px;
+                left: auto;
+                width: auto;
+                max-width: 55%;
+                text-align: right;
+            }
+
+            .hero-content h1 {
+                font-size: 22px;
+                line-height: 1.2;
+            }
+
+            .hero-content h1 span {
+                font-size: 11px;
+                letter-spacing: 0.08em;
+                margin-top: 3px;
+            }
+
+            .hero-line {
+                margin: 10px 0 10px auto;
+            }
+
+            @keyframes expandLineMobile {
+                from { width: 0; opacity: 0; }
+                to { width: 60px; opacity: 1; }
+            }
+
+            .hero-btn {
+                padding: 10px 18px;
+                font-size: 10px;
+            }
+
+            .scroll-indicator {
+                bottom: 10px;
+            }
+
+            .scroll-indicator span {
+                font-size: 7px;
+                letter-spacing: 0.15em;
+            }
+
+            .scroll-indicator svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            .about-left {
+                padding: 40px 20px;
+            }
+
+            .about-title {
+                font-size: 24px;
+            }
+
+            .about-text {
+                font-size: 14px;
+                line-height: 1.8;
+            }
+
+            .about-right {
+                min-height: 300px;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .service-card {
+                aspect-ratio: 1;
+            }
+
+            .service-card .service-card-title {
+                font-size: 16px;
+                letter-spacing: 0.1em;
+            }
+
+            .service-card .service-card-cta {
+                font-size: 9px;
+                padding: 6px 12px;
+                margin-top: 8px;
+            }
+
+            .reviews-title {
+                font-size: 24px;
+                margin-bottom: 40px;
+            }
+
+            .review-card {
+                padding: 0 10px;
+            }
+
+            .review-text {
+                font-size: 13px;
+            }
+
+            .review-author {
+                font-size: 12px;
+            }
+
+            .partners-section {
+                padding: 40px 20px;
+            }
+
+            .partners-logos img {
+                max-width: 280px;
+            }
+
+            .cta-section h2 {
+                font-size: 24px;
+                line-height: 1.3;
+            }
+
+            .cta-btn {
+                min-width: 180px;
+                padding: 14px 30px;
+                font-size: 11px;
+            }
+
+            .footer-gallery {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+
+            .footer-col h4 {
+                font-size: 12px;
+            }
+
+            .footer-col p,
+            .footer-col a {
+                font-size: 13px;
+            }
+
+            .footer-bottom {
+                font-size: 11px;
+                margin-top: 40px;
+                padding-top: 30px;
+            }
+
+            /* Mobile nav improvements */
+            .mobile-nav {
+                padding: 80px 30px;
+            }
+
+            .mobile-nav a {
+                font-size: 16px;
+                padding: 12px 0;
+            }
+
+            .mobile-close {
+                top: 20px;
+                right: 20px;
+                width: 44px;
+                height: 44px;
+                font-size: 28px;
             }
         }
 
@@ -1339,20 +1548,105 @@
             }
 
             .price-popup-content {
-                padding: 20px;
+                padding: 15px;
+            }
+
+            .price-popup-section {
+                margin-bottom: 25px;
+            }
+
+            /* Make tables horizontally scrollable on mobile */
+            .price-popup-table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin: 0 -5px;
+                padding: 0 5px;
             }
 
             .price-popup-table {
                 font-size: 11px;
+                min-width: 320px;
             }
 
             .price-popup-table th,
             .price-popup-table td {
                 padding: 8px 4px;
+                white-space: nowrap;
             }
 
             .price-popup-table th {
                 font-size: 10px;
+            }
+
+            .price-popup-table td:first-child {
+                font-size: 11px;
+            }
+
+            .price-popup-footer {
+                padding: 15px 20px;
+            }
+
+            .price-popup-footer a {
+                padding: 14px 24px;
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .price-popup {
+                width: 98%;
+                max-height: 92vh;
+                border-radius: 12px;
+            }
+
+            .price-popup-header {
+                padding: 15px;
+            }
+
+            .price-popup-header h2 {
+                font-size: 16px;
+                letter-spacing: 0.15em;
+            }
+
+            .price-popup-close {
+                top: 10px;
+                right: 10px;
+                width: 40px;
+                height: 40px;
+            }
+
+            .price-popup-content {
+                padding: 12px;
+            }
+
+            .price-popup-section h3 {
+                font-size: 15px;
+                margin-bottom: 10px;
+            }
+
+            .price-popup-table {
+                font-size: 10px;
+                min-width: 300px;
+            }
+
+            .price-popup-table th {
+                font-size: 9px;
+                padding: 6px 3px;
+            }
+
+            .price-popup-table td {
+                padding: 6px 3px;
+                font-size: 10px;
+            }
+
+            .price-popup-note {
+                font-size: 10px;
+            }
+
+            .price-popup-footer a {
+                display: block;
+                width: 100%;
+                text-align: center;
             }
         }
     </style>
@@ -1786,89 +2080,97 @@
                 <!-- Tape-In Extensions -->
                 <div class="price-popup-section">
                     <h3>Tape-In Extensions</h3>
-                    <table class="price-popup-table">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>16"</th>
-                                <th>18"</th>
-                                <th>20"</th>
-                                <th>22"</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>10 Tapes</td><td>R3,665</td><td>R3,875</td><td>R4,205</td><td>R5,860</td></tr>
-                            <tr><td>20 Tapes</td><td>R5,825</td><td>R6,245</td><td>R6,880</td><td>R9,217</td></tr>
-                            <tr><td>30 Tapes</td><td>R7,840</td><td>R8,470</td><td>R9,560</td><td>R12,425</td></tr>
-                            <tr><td>40 Tapes</td><td>R9,850</td><td>R11,140</td><td>R12,405</td><td>R16,085</td></tr>
-                            <tr><td>50 Tapes</td><td>R11,865</td><td>R13,360</td><td>R15,015</td><td>R19,295</td></tr>
-                            <tr><td>60 Tapes</td><td>R13,875</td><td>R16,495</td><td>R17,570</td><td>R22,500</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="price-popup-table-wrapper">
+                        <table class="price-popup-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>16"</th>
+                                    <th>18"</th>
+                                    <th>20"</th>
+                                    <th>22"</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>10 Tapes</td><td>R3,665</td><td>R3,875</td><td>R4,205</td><td>R5,860</td></tr>
+                                <tr><td>20 Tapes</td><td>R5,825</td><td>R6,245</td><td>R6,880</td><td>R9,217</td></tr>
+                                <tr><td>30 Tapes</td><td>R7,840</td><td>R8,470</td><td>R9,560</td><td>R12,425</td></tr>
+                                <tr><td>40 Tapes</td><td>R9,850</td><td>R11,140</td><td>R12,405</td><td>R16,085</td></tr>
+                                <tr><td>50 Tapes</td><td>R11,865</td><td>R13,360</td><td>R15,015</td><td>R19,295</td></tr>
+                                <tr><td>60 Tapes</td><td>R13,875</td><td>R16,495</td><td>R17,570</td><td>R22,500</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <p class="price-popup-note">Includes installation at Flirt</p>
                 </div>
 
                 <!-- Weft-In Extensions -->
                 <div class="price-popup-section">
                     <h3>Weft-In Extensions</h3>
-                    <table class="price-popup-table">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>1 Weft</th>
-                                <th>2 Wefts</th>
-                                <th>3 Wefts</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>16"/40cm</td><td>R5,815</td><td>R9,775</td><td>R13,795</td></tr>
-                            <tr><td>18"/45cm</td><td>R6,325</td><td>R10,625</td><td>R14,350</td></tr>
-                            <tr><td>20"/50cm</td><td>R6,530</td><td>R10,910</td><td>R15,640</td></tr>
-                            <tr><td>22"/55cm</td><td>R8,050</td><td>R12,485</td><td>R17,085</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="price-popup-table-wrapper">
+                        <table class="price-popup-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>1 Weft</th>
+                                    <th>2 Wefts</th>
+                                    <th>3 Wefts</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>16"/40cm</td><td>R5,815</td><td>R9,775</td><td>R13,795</td></tr>
+                                <tr><td>18"/45cm</td><td>R6,325</td><td>R10,625</td><td>R14,350</td></tr>
+                                <tr><td>20"/50cm</td><td>R6,530</td><td>R10,910</td><td>R15,640</td></tr>
+                                <tr><td>22"/55cm</td><td>R8,050</td><td>R12,485</td><td>R17,085</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <p class="price-popup-note">Includes installation at Flirt</p>
                 </div>
 
                 <!-- Keratin Extensions -->
                 <div class="price-popup-section">
                     <h3>Keratin Extensions</h3>
-                    <table class="price-popup-table">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>18"</th>
-                                <th>20"</th>
-                                <th>22"</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>25 Strands</td><td>R3,500</td><td>R3,825</td><td>R4,100</td></tr>
-                            <tr><td>50 Strands</td><td>R5,605</td><td>R6,247</td><td>R6,800</td></tr>
-                            <tr><td>75 Strands</td><td>R7,705</td><td>R8,670</td><td>R9,500</td></tr>
-                            <tr><td>100 Strands</td><td>R10,060</td><td>R11,345</td><td>R12,450</td></tr>
-                            <tr><td>125 Strands</td><td>R12,060</td><td>R13,670</td><td>R15,050</td></tr>
-                            <tr><td>150 Strands</td><td>R14,110</td><td>R16,040</td><td>R17,700</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="price-popup-table-wrapper">
+                        <table class="price-popup-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>18"</th>
+                                    <th>20"</th>
+                                    <th>22"</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>25 Strands</td><td>R3,500</td><td>R3,825</td><td>R4,100</td></tr>
+                                <tr><td>50 Strands</td><td>R5,605</td><td>R6,247</td><td>R6,800</td></tr>
+                                <tr><td>75 Strands</td><td>R7,705</td><td>R8,670</td><td>R9,500</td></tr>
+                                <tr><td>100 Strands</td><td>R10,060</td><td>R11,345</td><td>R12,450</td></tr>
+                                <tr><td>125 Strands</td><td>R12,060</td><td>R13,670</td><td>R15,050</td></tr>
+                                <tr><td>150 Strands</td><td>R14,110</td><td>R16,040</td><td>R17,700</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <p class="price-popup-note">Includes installation at Flirt</p>
                 </div>
 
                 <!-- Clip-In Extensions -->
                 <div class="price-popup-section">
                     <h3>Clip-In Extensions</h3>
-                    <table class="price-popup-table">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                <th>120G Set</th>
-                                <th>160G Set</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>20"/50cm</td><td>R5,750</td><td>R6,775</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="price-popup-table-wrapper">
+                        <table class="price-popup-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>120G Set</th>
+                                    <th>160G Set</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>20"/50cm</td><td>R5,750</td><td>R6,775</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div class="price-popup-footer">
