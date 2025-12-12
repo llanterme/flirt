@@ -161,6 +161,49 @@
             transition: all 0.3s ease;
         }
 
+        /* Hero Animation Keyframes */
+        @keyframes kenBurns {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(1.08);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes expandLine {
+            from {
+                width: 0;
+                opacity: 0;
+            }
+            to {
+                width: 120px;
+                opacity: 1;
+            }
+        }
+
         /* Hero Section - Full Width Banner Style (matching flirthair.co.za) */
         .hero {
             position: relative;
@@ -169,7 +212,18 @@
             height: 55vh;
             max-height: 600px;
             margin-top: 80px;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: url('/images/hero-banner.jpg') left center / cover no-repeat;
+            animation: kenBurns 20s ease-out forwards;
+            transform-origin: left center;
         }
 
         .hero-content {
@@ -179,6 +233,7 @@
             transform: translateY(-50%);
             text-align: right;
             max-width: 500px;
+            z-index: 2;
         }
 
         .hero-content h1 {
@@ -190,6 +245,8 @@
             margin-bottom: 0;
             letter-spacing: 0.02em;
             text-transform: uppercase;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.3s forwards;
         }
 
         .hero-content h1 span {
@@ -199,13 +256,17 @@
             color: #6C6D70;
             margin-top: 5px;
             font-weight: 400;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 0.6s forwards;
         }
 
         .hero-line {
-            width: 120px;
+            width: 0;
             height: 3px;
             background: var(--pink);
             margin: 30px 0 30px auto;
+            opacity: 0;
+            animation: expandLine 0.8s ease-out 0.9s forwards;
         }
 
         .hero-btn {
@@ -221,6 +282,8 @@
             text-decoration: none;
             transition: all 0.3s ease;
             border-radius: 0;
+            opacity: 0;
+            animation: fadeInUp 1s ease-out 1.1s forwards;
         }
 
         .hero-btn:hover {
@@ -748,6 +811,9 @@
                 height: 35vh;
                 min-height: 300px;
                 margin-top: 60px;
+            }
+
+            .hero-bg {
                 background-position: 25% center;
             }
 
@@ -768,9 +834,20 @@
             }
 
             .hero-line {
-                width: 80px;
                 height: 2px;
                 margin: 15px 0 15px auto;
+                animation: expandLineMobile 0.8s ease-out 0.9s forwards;
+            }
+
+            @keyframes expandLineMobile {
+                from {
+                    width: 0;
+                    opacity: 0;
+                }
+                to {
+                    width: 80px;
+                    opacity: 1;
+                }
             }
 
             .hero-btn {
@@ -871,6 +948,7 @@
 
     <!-- Hero Section - Full Width Banner -->
     <section class="hero">
+        <div class="hero-bg"></div>
         <div class="hero-content">
             <h1>
                 PREMIUM
