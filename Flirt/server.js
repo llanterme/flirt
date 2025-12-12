@@ -4799,13 +4799,23 @@ app.get('/api/admin/revenue-trend', authenticateAdmin, async (req, res) => {
         const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         const endDate = now.toISOString().split('T')[0];
 
-        // Get all paid invoices in the range (list() returns array directly)
-        const paidInvoices = await InvoiceRepository.list({
-            start_date: startDate,
-            end_date: endDate,
+        // Helper to extract date from various datetime formats
+        const extractDate = (dateStr) => {
+            if (!dateStr) return null;
+            return dateStr.split(/[T\s]/)[0];
+        };
+
+        // Get ALL paid invoices and filter in JS to avoid SQL date comparison issues
+        const allPaidInvoices = await InvoiceRepository.list({
             payment_status: 'paid',
-            limit: 1000
+            limit: 10000
         }) || [];
+
+        // Filter to date range in JavaScript
+        const paidInvoices = allPaidInvoices.filter(inv => {
+            const invDate = extractDate(inv.service_date);
+            return invDate && invDate >= startDate && invDate <= endDate;
+        });
 
         // Build array of dates for the last N days
         const labels = [];
@@ -4819,8 +4829,7 @@ app.get('/api/admin/revenue-trend', authenticateAdmin, async (req, res) => {
             // Sum revenue for this day from INVOICES (service revenue)
             const dayInvoiceRevenue = paidInvoices
                 .filter(inv => {
-                    // Use service_date or created_at for matching
-                    const invDate = inv.service_date || (inv.created_at ? inv.created_at.split('T')[0] : null);
+                    const invDate = extractDate(inv.service_date);
                     return invDate === dateStr;
                 })
                 .reduce((sum, inv) => sum + (parseFloat(inv.total) || 0), 0);
@@ -4829,10 +4838,10 @@ app.get('/api/admin/revenue-trend', authenticateAdmin, async (req, res) => {
             const dayOrderRevenue = allOrders
                 .filter(o => {
                     if (o.status === 'cancelled' || o.paymentStatus !== 'paid') return false;
-                    const orderDate = o.createdAt ? o.createdAt.split('T')[0] : null;
+                    const orderDate = extractDate(o.createdAt || o.created_at);
                     return orderDate === dateStr;
                 })
-                .reduce((sum, o) => sum + (o.total || 0), 0);
+                .reduce((sum, o) => sum + (parseFloat(o.total) || 0), 0);
 
             values.push(dayInvoiceRevenue + dayOrderRevenue);
         }
@@ -4857,7 +4866,13 @@ app.get('/api/admin/popular-services', authenticateAdmin, async (req, res) => {
         const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         const endDate = now.toISOString().split('T')[0];
 
-        // Get service counts from invoice_services table (most accurate revenue source)
+        // Helper to extract date from various datetime formats
+        const extractDate = (dateStr) => {
+            if (!dateStr) return null;
+            return dateStr.split(/[T\s]/)[0];
+        };
+
+        // Get service counts from invoice_services table using date() function for proper comparison
         const invoiceServiceCounts = await db.dbAll(`
             SELECT
                 isv.service_name,
@@ -4865,8 +4880,8 @@ app.get('/api/admin/popular-services', authenticateAdmin, async (req, res) => {
                 SUM(isv.total) as revenue
             FROM invoice_services isv
             JOIN invoices i ON isv.invoice_id = i.id
-            WHERE i.service_date >= ?
-              AND i.service_date <= ?
+            WHERE date(i.service_date) >= date(?)
+              AND date(i.service_date) <= date(?)
               AND i.status != 'void'
             GROUP BY isv.service_name
             ORDER BY count DESC
@@ -4879,9 +4894,10 @@ app.get('/api/admin/popular-services', authenticateAdmin, async (req, res) => {
 
             const serviceCounts = {};
             allBookings.forEach(b => {
-                const bookingDate = b.requestedDate || b.date;
-                if (bookingDate >= startDate) {
-                    const serviceName = b.serviceName || 'Unknown';
+                // Handle both snake_case and camelCase field names
+                const bookingDate = extractDate(b.requested_date || b.requestedDate || b.date);
+                if (bookingDate && bookingDate >= startDate && bookingDate <= endDate) {
+                    const serviceName = b.service_name || b.serviceName || 'Unknown';
                     serviceCounts[serviceName] = (serviceCounts[serviceName] || 0) + 1;
                 }
             });
