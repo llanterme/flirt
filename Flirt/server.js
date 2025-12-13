@@ -235,9 +235,10 @@ async function seedAdminUser() {
         try {
             let storedPaymentConfig = await PaymentSettingsRepository.getConfig();
 
-            // Seed PayFast sandbox config if not configured or URLs are missing
+            // Seed PayFast sandbox config if not configured, URLs are missing, or passphrase is missing
             const needsUpdate = !storedPaymentConfig ||
                                 !storedPaymentConfig.payfast?.merchantId ||
+                                !storedPaymentConfig.payfast?.passphrase ||
                                 !storedPaymentConfig.appUrl ||
                                 storedPaymentConfig.appUrl === '';
 
@@ -249,7 +250,7 @@ async function seedAdminUser() {
                     payfast: {
                         merchantId: storedPaymentConfig?.payfast?.merchantId || '10000100',      // PayFast sandbox merchant ID
                         merchantKey: storedPaymentConfig?.payfast?.merchantKey || '46f0cd694581a', // PayFast sandbox merchant key
-                        passphrase: storedPaymentConfig?.payfast?.passphrase || '',               // Empty for sandbox
+                        passphrase: storedPaymentConfig?.payfast?.passphrase || 'jt7NOE43FZPn',   // PayFast sandbox passphrase (required for signature)
                         sandbox: storedPaymentConfig?.payfast?.sandbox !== false                  // Enable sandbox mode by default
                     },
                     yoco: {
