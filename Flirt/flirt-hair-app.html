@@ -2688,6 +2688,32 @@
             text-decoration: line-through;
         }
 
+        /* Float Payment Info - Buy Now Pay Later */
+        .float-payment-info {
+            font-size: 11px;
+            color: #666;
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        .float-amount {
+            color: #e91e63;
+            font-weight: 600;
+        }
+
+        .float-logo {
+            font-weight: 700;
+            color: #333;
+            letter-spacing: -0.5px;
+        }
+
+        .float-logo .float-o {
+            color: #e91e63;
+            font-size: 8px;
+            vertical-align: super;
+            margin: 0 -1px;
+        }
+
         .product-discount-badge {
             background: #fff0f3;
             color: var(--brand-pink);
@@ -14426,6 +14452,9 @@ async function showNotifications() {
             const imageUrl = product.image_url || product.imageUrl || '';
             const category = product.category || 'Hair Care';
 
+            // Float "Pay in 4" calculation (price divided by 4 installments)
+            const floatMonthly = (price / 4).toFixed(2);
+
             // Clean product name - truncate if too long
             const productName = product.name.length > 40 ? product.name.substring(0, 40) + '...' : product.name;
 
@@ -14463,6 +14492,9 @@ async function showNotifications() {
                         <div class="product-price-row">
                             <span class="product-price">R${parseFloat(price).toFixed(2)}</span>
                             ${hasDiscount ? `<span class="product-original-price">R${parseFloat(originalPrice).toFixed(2)}</span>` : ''}
+                        </div>
+                        <div class="float-payment-info">
+                            Or as low as <span class="float-amount">R${floatMonthly}</span> / month with <span class="float-logo">fl<span class="float-o">&#9679;</span>at</span>
                         </div>
                     </div>
                     <div class="product-card-footer">
