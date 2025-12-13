@@ -3331,29 +3331,29 @@
             <!-- Top Bar -->
             <header class="top-bar">
                 <div style="display: flex; align-items: center; gap: 20px;">
-                    <button class="mobile-menu-btn" onclick="toggleSidebar()">?</button>
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">&#9776;</button>
                     <h1 class="page-title" id="pageTitle">Dashboard</h1>
                 </div>
                 <div class="top-bar-actions">
                     <div class="search-box" style="position: relative;">
-                        <span>??</span>
+                        <span>&#128269;</span>
                         <input type="search" id="globalSearch" placeholder="Search customers, bookings..." autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Search" oninput="handleGlobalSearch(event)" onkeydown="handleSearchKeydown(event)">
                         <div class="search-results" id="searchResults"></div>
                     </div>
                     <button class="notification-btn" onclick="showSection('notifications')" title="View Notifications">
-                        ??
+                        &#128276;
                         <span class="notification-dot" id="notificationDot"></span>
                     </button>
                     <div class="admin-profile" onclick="toggleAdminMenu()" title="Account Menu">
                         <div class="admin-avatar" id="adminAvatar">A</div>
                         <span id="adminName" style="font-weight: 500;">Admin</span>
-                        <span style="font-size: 10px;">?</span>
+                        <span style="font-size: 10px;">&#9660;</span>
                     </div>
                     <div class="admin-dropdown" id="adminDropdown">
-                        <button onclick="showPasswordChangeModal()">?? Change Password</button>
-                        <button onclick="showSection('settings')">?? Settings</button>
+                        <button onclick="showPasswordChangeModal()">&#128274; Change Password</button>
+                        <button onclick="showSection('settings')">&#9881; Settings</button>
                         <hr style="margin: 5px 0; border: none; border-top: 1px solid var(--border-soft);">
-                        <button onclick="logout()" style="color: var(--danger);">?? Logout</button>
+                        <button onclick="logout()" style="color: var(--danger);">&#128682; Logout</button>
                     </div>
                 </div>
             </header>
@@ -3550,7 +3550,7 @@
                             <button class="btn btn-sm" id="bookingsListViewBtn" onclick="setBookingsView('list')" style="background: var(--primary); color: white;">List</button>
                             <button class="btn btn-sm btn-outline" id="bookingsCalendarViewBtn" onclick="setBookingsView('calendar')">Calendar</button>
                         </div>
-                        <button class="btn btn-outline btn-sm" onclick="exportBookingsToCSV()" title="Export filtered results to CSV">?? Export CSV</button>
+                        <button class="btn btn-outline btn-sm" onclick="exportBookingsToCSV()" title="Export filtered results to CSV">&#128229; Export CSV</button>
                         <button class="btn btn-primary" onclick="openAdminBookingModal()">+ New Booking</button>
                     </div>
 
@@ -3560,16 +3560,16 @@
                             All <span class="filter-count" id="count-all">0</span>
                         </button>
                         <button class="status-filter-tab" data-status="REQUESTED" onclick="filterByStatus('REQUESTED')">
-                            ? Requested <span class="filter-count" id="count-requested">0</span>
+                            &#128337; Requested <span class="filter-count" id="count-requested">0</span>
                         </button>
                         <button class="status-filter-tab" data-status="CONFIRMED" onclick="filterByStatus('CONFIRMED')">
-                            ? Confirmed <span class="filter-count" id="count-confirmed">0</span>
+                            &#9989; Confirmed <span class="filter-count" id="count-confirmed">0</span>
                         </button>
                         <button class="status-filter-tab" data-status="COMPLETED" onclick="filterByStatus('COMPLETED')">
-                            ?? Completed <span class="filter-count" id="count-completed">0</span>
+                            &#10004; Completed <span class="filter-count" id="count-completed">0</span>
                         </button>
                         <button class="status-filter-tab" data-status="CANCELLED" onclick="filterByStatus('CANCELLED')">
-                            ? Cancelled <span class="filter-count" id="count-cancelled">0</span>
+                            &#10060; Cancelled <span class="filter-count" id="count-cancelled">0</span>
                         </button>
                     </div>
 
@@ -3690,20 +3690,20 @@
                                             </th>
                                             <th style="width: 80px;">ID</th>
                                             <th style="cursor: pointer;" onclick="sortBookingsBy('customer')">
-                                                Client <span id="sortIconCustomer">?</span>
+                                                Client <span id="sortIconCustomer">&#8645;</span>
                                             </th>
                                             <th style="cursor: pointer;" onclick="sortBookingsBy('service')">
-                                                Service <span id="sortIconService">?</span>
+                                                Service <span id="sortIconService">&#8645;</span>
                                             </th>
                                             <th style="cursor: pointer;" onclick="sortBookingsBy('stylist')">
-                                                Stylist <span id="sortIconStylist">?</span>
+                                                Stylist <span id="sortIconStylist">&#8645;</span>
                                             </th>
                                             <th style="cursor: pointer;" onclick="sortBookingsBy('date')">
-                                                Date <span id="sortIconDate">?</span>
+                                                Date <span id="sortIconDate">&#8645;</span>
                                             </th>
                                             <th>Time</th>
                                             <th style="cursor: pointer;" onclick="sortBookingsBy('status')">
-                                                Status <span id="sortIconStatus">?</span>
+                                                Status <span id="sortIconStatus">&#8645;</span>
                                             </th>
                                             <th>Payment</th>
                                             <th>Actions</th>
@@ -3747,9 +3747,9 @@
                         <div class="data-card">
                             <div class="data-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
-                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(-1)">?</button>
+                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(-1)">&#9664;</button>
                                     <h3 class="data-card-title" id="bookingsCalendarLabel" style="min-width: 200px; text-align: center;">November 2025</h3>
-                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(1)">?</button>
+                                    <button class="btn btn-sm btn-outline" onclick="changeBookingsCalendarPeriod(1)">&#9654;</button>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <div style="display: flex; border: 1px solid var(--gray-light); border-radius: 6px; overflow: hidden;">
@@ -4427,17 +4427,17 @@
                                         <span id="profileMemberSince">Member since Jan 2024</span>
                                     </div>
                                     <div class="customer-tier-badge" id="profileTierBadge">
-                                        <span class="tier-icon">??</span>
+                                        <span class="tier-icon">&#11088;</span>
                                         <span class="tier-name">Gold Member</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="customer-profile-actions">
                                 <button class="btn btn-outline btn-sm" onclick="editCustomerFromProfile()">
-                                    ?? Edit
+                                    &#9998; Edit
                                 </button>
                                 <button class="btn btn-primary btn-sm" onclick="createInvoiceForCustomer()">
-                                    ?? New Invoice
+                                    &#128196; New Invoice
                                 </button>
                                 <button class="modal-close" onclick="closeCustomerProfile()">&times;</button>
                             </div>
@@ -4544,28 +4544,28 @@
                                         <h4>Quick Stats</h4>
                                         <div class="quick-stats-grid">
                                             <div class="quick-stat">
-                                                <div class="quick-stat-icon">?</div>
+                                                <div class="quick-stat-icon">&#10004;</div>
                                                 <div class="quick-stat-info">
                                                     <span class="quick-stat-value" id="completedBookings">0</span>
                                                     <span class="quick-stat-label">Completed Visits</span>
                                                 </div>
                                             </div>
                                             <div class="quick-stat">
-                                                <div class="quick-stat-icon">??</div>
+                                                <div class="quick-stat-icon">&#128197;</div>
                                                 <div class="quick-stat-info">
                                                     <span class="quick-stat-value" id="upcomingBookings">0</span>
                                                     <span class="quick-stat-label">Upcoming</span>
                                                 </div>
                                             </div>
                                             <div class="quick-stat">
-                                                <div class="quick-stat-icon">??</div>
+                                                <div class="quick-stat-icon">&#128101;</div>
                                                 <div class="quick-stat-info">
                                                     <span class="quick-stat-value" id="referralsMade">0</span>
                                                     <span class="quick-stat-label">Referrals Made</span>
                                                 </div>
                                             </div>
                                             <div class="quick-stat">
-                                                <div class="quick-stat-icon">??</div>
+                                                <div class="quick-stat-icon">&#128247;</div>
                                                 <div class="quick-stat-info">
                                                     <span class="quick-stat-value" id="inspoPhotos">0</span>
                                                     <span class="quick-stat-label">Inspo Photos</span>
@@ -5524,16 +5524,16 @@
                             </div>
                             <select id="invoice-status-filter" class="invoice-filter-select" onchange="loadInvoices()">
                                 <option value="">All Statuses</option>
-                                <option value="draft">?? Draft</option>
-                                <option value="finalized">? Finalized</option>
-                                <option value="sent">?? Sent</option>
-                                <option value="cancelled">? Cancelled</option>
+                                <option value="draft">&#128221; Draft</option>
+                                <option value="finalized">&#9989; Finalized</option>
+                                <option value="sent">&#128228; Sent</option>
+                                <option value="cancelled">&#10060; Cancelled</option>
                             </select>
                             <select id="invoice-payment-filter" class="invoice-filter-select" onchange="loadInvoices()">
                                 <option value="">All Payments</option>
-                                <option value="unpaid">?? Unpaid</option>
-                                <option value="partial">?? Partial</option>
-                                <option value="paid">?? Paid</option>
+                                <option value="unpaid">&#128308; Unpaid</option>
+                                <option value="partial">&#128992; Partial</option>
+                                <option value="paid">&#128994; Paid</option>
                             </select>
                             <select id="invoice-stylist-filter" class="invoice-filter-select" onchange="loadInvoices()">
                                 <option value="">All Stylists</option>
@@ -6540,8 +6540,8 @@
                 </section>
 
                 <!-- Add/Edit Staff Modal - Full Width Slide-Over -->
-                <div id="staff-modal" class="modal" style="display: none;">
-                    <div class="modal-content">
+                <div id="staff-modal" class="modal-overlay">
+                    <div class="modal-content" style="max-width: 800px; width: 95%;">
                         <div class="modal-header">
                             <h3 id="staff-modal-title">Add Staff Member</h3>
                             <button class="modal-close" onclick="closeStaffModal()">&times;</button>
@@ -8034,13 +8034,13 @@
                 <!-- Tab Navigation -->
                 <div style="display: flex; border-bottom: 2px solid var(--border-soft); background: var(--surface-muted);">
                     <button class="staff-services-tab active" id="tabCategories" onclick="switchServicesTab('categories')">
-                        <span style="font-size: 18px;">??</span> Add by Category
+                        <span style="font-size: 18px;">&#128193;</span> Add by Category
                     </button>
                     <button class="staff-services-tab" id="tabIndividual" onclick="switchServicesTab('individual')">
-                        <span style="font-size: 18px;">??</span> Add Individual
+                        <span style="font-size: 18px;">&#10133;</span> Add Individual
                     </button>
                     <button class="staff-services-tab" id="tabAssigned" onclick="switchServicesTab('assigned')">
-                        <span style="font-size: 18px;">?</span> Assigned <span id="assignedCountBadge" class="tab-badge">0</span>
+                        <span style="font-size: 18px;">&#9989;</span> Assigned <span id="assignedCountBadge" class="tab-badge">0</span>
                     </button>
                 </div>
 
@@ -9760,7 +9760,7 @@
             ['customer', 'service', 'stylist', 'date', 'status'].forEach(f => {
                 const icon = document.getElementById(`sortIcon${f.charAt(0).toUpperCase() + f.slice(1)}`);
                 if (icon) {
-                    icon.textContent = f === field ? (bookingsSortDirection === 'asc' ? '?' : '?') : '?';
+                    icon.innerHTML = f === field ? (bookingsSortDirection === 'asc' ? '&#9650;' : '&#9660;') : '&#8645;';
                 }
             });
 
@@ -10134,26 +10134,26 @@
                             ${(() => {
                                 const paymentStatus = b.paymentStatus || b.payment_status || 'unpaid';
                                 const paymentBadgeClass = paymentStatus === 'paid' ? 'status-paid' : (paymentStatus === 'pending' ? 'status-pending' : 'status-unpaid');
-                                const paymentLabel = paymentStatus === 'paid' ? '? Paid' : (paymentStatus === 'pending' ? '? Pending' : '? Unpaid');
+                                const paymentLabel = paymentStatus === 'paid' ? '&#128994; Paid' : (paymentStatus === 'pending' ? '&#128992; Pending' : '&#128308; Unpaid');
                                 return `<span class="status-badge ${paymentBadgeClass}" style="font-size: 11px;">${paymentLabel}</span>`;
                             })()}
                             ${b.status === 'CONFIRMED' && (b.paymentStatus || b.payment_status || 'unpaid') !== 'paid' ? `
                                 <div style="margin-top: 4px;">
-                                    <button class="btn btn-sm booking-payment-btn" data-booking-id="${b.id}" title="Payment Options" style="font-size: 10px; padding: 2px 6px;">??</button>
+                                    <button class="btn btn-sm booking-payment-btn" data-booking-id="${b.id}" title="Payment Options" style="font-size: 10px; padding: 2px 6px;">&#128179;</button>
                                 </div>
                             ` : ''}
                         </td>
                         <td class="action-btns">
                             ${b.status === 'REQUESTED' && !b.assignedStartTime ? `
-                                <button class="btn btn-sm btn-primary booking-assign-btn" data-booking-id="${b.id}" title="Assign Time">? Assign</button>
+                                <button class="btn btn-sm btn-primary booking-assign-btn" data-booking-id="${b.id}" title="Assign Time">&#128197; Assign</button>
                             ` : `
-                                <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}" title="Edit booking">??</button>
+                                <button class="btn btn-sm booking-edit-btn" data-booking-id="${b.id}" title="Edit booking">&#9998;</button>
                             `}
                             ${b.status === 'CONFIRMED' ? `
-                                <button class="btn btn-sm booking-complete-btn" data-booking-id="${b.id}" title="Complete">?</button>
+                                <button class="btn btn-sm booking-complete-btn" data-booking-id="${b.id}" title="Complete">&#10004;</button>
                             ` : ''}
                             ${(b.status === 'REQUESTED' || b.status === 'CONFIRMED') ? `
-                                <button class="btn btn-sm btn-outline booking-cancel-btn" data-booking-id="${b.id}" title="Cancel">?</button>
+                                <button class="btn btn-sm btn-outline booking-cancel-btn" data-booking-id="${b.id}" title="Cancel">&#10060;</button>
                             ` : ''}
                         </td>
                     </tr>
@@ -10172,11 +10172,11 @@
         function attachBookingActionListeners() {
             // Assign Time buttons (for REQUESTED bookings)
             const assignBtns = document.querySelectorAll('.booking-assign-btn');
-            console.log('?? Attaching event listeners to', assignBtns.length, 'assign buttons');
+            console.log('[Bookings] Attaching event listeners to', assignBtns.length, 'assign buttons');
             assignBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
                     const bookingId = this.getAttribute('data-booking-id');
-                    console.log('??? Assign button clicked for booking:', bookingId);
+                    console.log('[Bookings] Assign button clicked for booking:', bookingId);
                     openAssignTimeModal(bookingId);
                 });
             });
@@ -11867,7 +11867,7 @@
             // Populate permissions grid
             renderPermissionsGrid({});
 
-            document.getElementById('staff-modal').style.display = 'flex';
+            document.getElementById('staff-modal').classList.add('show');
         }
 
         function editStaff(staffId) {
@@ -11895,7 +11895,7 @@
             // Populate permissions grid
             renderPermissionsGrid(staff.permissions || {});
 
-            document.getElementById('staff-modal').style.display = 'flex';
+            document.getElementById('staff-modal').classList.add('show');
         }
 
         function generateStaffPassword() {
@@ -12037,7 +12037,7 @@
         }
 
         function closeStaffModal() {
-            document.getElementById('staff-modal').style.display = 'none';
+            document.getElementById('staff-modal').classList.remove('show');
             // Reset to step 1 for next open
             showStaffStep(1);
         }
