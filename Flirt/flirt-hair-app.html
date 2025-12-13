@@ -15046,8 +15046,8 @@ async function showNotifications() {
             if (payBtn) {
                 if (isFloatPayment) {
                     // Show Float-specific loading immediately
-                    payBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span>Connecting to Float...</span>';
-                    showToast({ type: 'info', title: 'Float Pay', message: 'Setting up your pay-in-4 payment...', duration: 5000 });
+                    payBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span>Connecting to Float, this may take a few seconds...</span>';
+                    showToast({ type: 'info', title: 'Float Pay', message: 'Setting up your pay-in-4 payment, please wait...', duration: 8000 });
                 } else {
                     payBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span>Processing...</span>';
                 }
