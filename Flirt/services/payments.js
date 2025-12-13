@@ -84,13 +84,17 @@ function generatePayFastPayment(order, customer, options = {}) {
     const itemName = options.itemName || `Flirt Order #${order.id.substring(0, 8)}`;
     const itemDescription = options.itemDescription || `${order.items.length} item(s) from Flirt Hair & Beauty`;
 
+    // Build URLs - ensure no double /api/ prefix
+    const baseAppUrl = config.appUrl.replace(/\/$/, ''); // Remove trailing slash
+    const baseApiUrl = config.apiBaseUrl.replace(/\/$/, '').replace(/\/api$/, ''); // Remove trailing slash and /api suffix
+
     const data = {
         // Merchant details
         merchant_id: config.payfast.merchantId,
         merchant_key: config.payfast.merchantKey,
-        return_url: `${config.appUrl}/payment/success?ref=${paymentId}`,
-        cancel_url: `${config.appUrl}/payment/cancel?ref=${paymentId}`,
-        notify_url: `${config.apiBaseUrl}/api/payments/webhook/payfast`,
+        return_url: `${baseAppUrl}/app?payment=success&ref=${paymentId}`,
+        cancel_url: `${baseAppUrl}/app?payment=cancelled&ref=${paymentId}`,
+        notify_url: `${baseApiUrl}/api/payments/webhook/payfast`,
 
         // Customer details
         name_first: customer.name.split(' ')[0],
@@ -207,12 +211,15 @@ async function createYocoCheckout(order, customer) {
     const config = getEffectiveConfig();
     const paymentId = `FLT-${uuidv4().substring(0, 8).toUpperCase()}`;
 
+    // Build clean app URL
+    const baseAppUrl = config.appUrl.replace(/\/$/, '');
+
     const payload = {
         amount: Math.round(order.total * 100), // Amount in cents
         currency: 'ZAR',
-        successUrl: `${config.appUrl}/payment/success?ref=${paymentId}`,
-        cancelUrl: `${config.appUrl}/payment/cancel?ref=${paymentId}`,
-        failureUrl: `${config.appUrl}/payment/failed?ref=${paymentId}`,
+        successUrl: `${baseAppUrl}/app?payment=success&ref=${paymentId}`,
+        cancelUrl: `${baseAppUrl}/app?payment=cancelled&ref=${paymentId}`,
+        failureUrl: `${baseAppUrl}/app?payment=failed&ref=${paymentId}`,
         metadata: {
             orderId: order.id,
             customerId: customer.id,
@@ -446,6 +453,10 @@ function getPaymentConfigStatus() {
 
     const yocoConfigured = yocoMissing.length === 0;
 
+    // Build clean URLs for display
+    const baseAppUrl = config.appUrl.replace(/\/$/, '');
+    const baseApiUrl = config.apiBaseUrl.replace(/\/$/, '').replace(/\/api$/, '');
+
     return {
         appUrl: config.appUrl,
         apiBaseUrl: config.apiBaseUrl,
@@ -453,16 +464,16 @@ function getPaymentConfigStatus() {
             configured: payfastConfigured,
             mode: payfastMode,
             baseUrl: config.payfast.baseUrl,
-            notifyUrl: `${config.apiBaseUrl}/api/payments/webhook/payfast`,
-            returnUrl: `${config.appUrl}/payment/success`,
-            cancelUrl: `${config.appUrl}/payment/cancel`,
+            notifyUrl: `${baseApiUrl}/api/payments/webhook/payfast`,
+            returnUrl: `${baseAppUrl}/app?payment=success`,
+            cancelUrl: `${baseAppUrl}/app?payment=cancelled`,
             hasPassphrase: !!config.payfast.passphrase,
             missingEnvVars: payfastMissing
         },
         yoco: {
             configured: yocoConfigured,
             baseUrl: config.yoco.baseUrl,
-            webhookUrl: `${config.apiBaseUrl}/api/payments/webhook/yoco`,
+            webhookUrl: `${baseApiUrl}/api/payments/webhook/yoco`,
             hasWebhookSecret: !!config.yoco.webhookSecret,
             hasPublicKey: !!config.yoco.publicKey,
             publicKey: config.yoco.publicKey ? `${config.yoco.publicKey.substring(0, 20)}...` : null,
