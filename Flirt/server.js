@@ -10680,7 +10680,7 @@ app.post('/api/invoices/:id/pay', authenticateToken, async (req, res) => {
                 },
                 {
                     itemName: `Invoice: ${invoice.invoice_number}`,
-                    itemDescription: `Payment for Invoice ${invoice.invoice_number} from Flirt Hair & Beauty`
+                    itemDescription: `Hair Salon Services`
                 }
             );
 
@@ -10734,7 +10734,7 @@ app.get('/api/admin/invoices/:id/payment-link', authenticateToken, adminOrStaff,
             },
             {
                 itemName: `Invoice: ${invoice.invoice_number}`,
-                itemDescription: `Payment for Invoice ${invoice.invoice_number} from Flirt Hair & Beauty`
+                itemDescription: `Hair Salon Services`
             }
         );
 
@@ -10785,7 +10785,7 @@ app.get('/api/invoices/:id/payment-url', async (req, res) => {
             },
             {
                 itemName: `Invoice: ${invoice.invoice_number}`,
-                itemDescription: `Payment for Invoice ${invoice.invoice_number} from Flirt Hair & Beauty`
+                itemDescription: `Hair Salon Services`
             }
         );
 
