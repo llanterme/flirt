@@ -238,37 +238,41 @@ async function seedAdminUser() {
         }
 
         // Load persisted payment configuration into runtime (if any)
-        // If no config exists, seed PayFast sandbox credentials for testing
+        // Load payment config from database, seed defaults only if truly empty
         try {
             let storedPaymentConfig = await PaymentSettingsRepository.getConfig();
 
-            // Seed PayFast sandbox config if not configured, URLs are missing, or passphrase is missing
-            const needsUpdate = !storedPaymentConfig ||
-                                !storedPaymentConfig.payfast?.merchantId ||
-                                !storedPaymentConfig.payfast?.passphrase ||
-                                !storedPaymentConfig.appUrl ||
-                                storedPaymentConfig.appUrl === '';
+            // Only seed if no config exists at all (first run)
+            // Don't overwrite user-saved URLs or settings
+            const needsSeeding = !storedPaymentConfig || !storedPaymentConfig.payfast?.merchantId;
 
-            if (needsUpdate) {
-                console.log('Seeding/updating PayFast sandbox configuration for testing...');
+            if (needsSeeding) {
+                console.log('Seeding initial PayFast sandbox configuration for testing...');
                 const sandboxConfig = {
-                    appUrl: process.env.APP_URL || 'https://flirt.hair',
-                    apiBaseUrl: process.env.API_BASE_URL || 'https://flirt.hair/api',
+                    appUrl: storedPaymentConfig?.appUrl || process.env.APP_URL || 'https://flirt.hair',
+                    apiBaseUrl: storedPaymentConfig?.apiBaseUrl || process.env.API_BASE_URL || process.env.APP_URL || 'https://flirt.hair',
                     payfast: {
-                        merchantId: storedPaymentConfig?.payfast?.merchantId || '10000100',      // PayFast sandbox merchant ID
-                        merchantKey: storedPaymentConfig?.payfast?.merchantKey || '46f0cd694581a', // PayFast sandbox merchant key
-                        passphrase: storedPaymentConfig?.payfast?.passphrase || 'jt7NOE43FZPn',   // PayFast sandbox passphrase (required for signature)
-                        sandbox: storedPaymentConfig?.payfast?.sandbox !== false                  // Enable sandbox mode by default
+                        merchantId: storedPaymentConfig?.payfast?.merchantId || '10000100',
+                        merchantKey: storedPaymentConfig?.payfast?.merchantKey || '46f0cd694581a',
+                        passphrase: storedPaymentConfig?.payfast?.passphrase || 'jt7NOE43FZPn',
+                        sandbox: storedPaymentConfig?.payfast?.sandbox !== false
                     },
                     yoco: {
                         secretKey: storedPaymentConfig?.yoco?.secretKey || '',
                         publicKey: storedPaymentConfig?.yoco?.publicKey || '',
                         webhookSecret: storedPaymentConfig?.yoco?.webhookSecret || ''
+                    },
+                    float: {
+                        merchantId: storedPaymentConfig?.float?.merchantId || '',
+                        clientId: storedPaymentConfig?.float?.clientId || '',
+                        clientSecret: storedPaymentConfig?.float?.clientSecret || '',
+                        webhookSecret: storedPaymentConfig?.float?.webhookSecret || '',
+                        uatMode: storedPaymentConfig?.float?.uatMode !== false
                     }
                 };
                 await PaymentSettingsRepository.saveConfig(sandboxConfig);
                 storedPaymentConfig = sandboxConfig;
-                console.log('✅ PayFast sandbox configuration seeded/updated');
+                console.log('✅ PayFast sandbox configuration seeded');
                 console.log('   App URL:', sandboxConfig.appUrl);
                 console.log('   API Base URL:', sandboxConfig.apiBaseUrl);
             }
@@ -276,6 +280,8 @@ async function seedAdminUser() {
             if (storedPaymentConfig) {
                 PaymentService.setRuntimeConfig(storedPaymentConfig);
                 console.log('Loaded payment configuration from database');
+                console.log('   App URL:', storedPaymentConfig.appUrl);
+                console.log('   Float configured:', !!storedPaymentConfig.float?.merchantId);
             }
         } catch (err) {
             console.error('Warning: failed to load payment config from DB:', err.message);

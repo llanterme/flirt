@@ -2735,20 +2735,29 @@ const PaymentSettingsRepository = {
             appUrl: null,
             apiBaseUrl: null,
             payfast: {},
-            yoco: {}
+            yoco: {},
+            float: {}
         };
 
         for (const row of rows) {
             switch (row.key) {
                 case 'app_url': config.appUrl = row.value; break;
                 case 'api_base_url': config.apiBaseUrl = row.value; break;
+                // PayFast settings
                 case 'payfast_merchant_id': config.payfast.merchantId = row.value; break;
                 case 'payfast_merchant_key': config.payfast.merchantKey = row.value; break;
                 case 'payfast_passphrase': config.payfast.passphrase = row.value; break;
                 case 'payfast_sandbox': config.payfast.sandbox = row.value === 'true'; break;
+                // Yoco settings
                 case 'yoco_secret_key': config.yoco.secretKey = row.value; break;
                 case 'yoco_public_key': config.yoco.publicKey = row.value; break;
                 case 'yoco_webhook_secret': config.yoco.webhookSecret = row.value; break;
+                // Float settings
+                case 'float_merchant_id': config.float.merchantId = row.value; break;
+                case 'float_client_id': config.float.clientId = row.value; break;
+                case 'float_client_secret': config.float.clientSecret = row.value; break;
+                case 'float_webhook_secret': config.float.webhookSecret = row.value; break;
+                case 'float_uat_mode': config.float.uatMode = row.value === 'true'; break;
                 default: break;
             }
         }
@@ -2771,6 +2780,14 @@ const PaymentSettingsRepository = {
             if (config.yoco.secretKey !== undefined) entries.push(['yoco_secret_key', config.yoco.secretKey]);
             if (config.yoco.publicKey !== undefined) entries.push(['yoco_public_key', config.yoco.publicKey]);
             if (config.yoco.webhookSecret !== undefined) entries.push(['yoco_webhook_secret', config.yoco.webhookSecret]);
+        }
+
+        if (config.float) {
+            if (config.float.merchantId !== undefined) entries.push(['float_merchant_id', config.float.merchantId]);
+            if (config.float.clientId !== undefined) entries.push(['float_client_id', config.float.clientId]);
+            if (config.float.clientSecret !== undefined) entries.push(['float_client_secret', config.float.clientSecret]);
+            if (config.float.webhookSecret !== undefined) entries.push(['float_webhook_secret', config.float.webhookSecret]);
+            if (config.float.uatMode !== undefined) entries.push(['float_uat_mode', String(!!config.float.uatMode)]);
         }
 
         for (const [key, value] of entries) {
