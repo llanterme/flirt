@@ -205,6 +205,13 @@ async function seedAdminUser() {
             console.error('Warning: Failed to seed services:', err.message);
         }
 
+        // Set default commission rates on services that don't have them
+        try {
+            await setDefaultCommissionRates();
+        } catch (err) {
+            console.error('Warning: Failed to set default commission rates:', err.message);
+        }
+
         try {
             await seedHairTipsDefaults();
         } catch (err) {
@@ -8690,6 +8697,41 @@ async function seedServicesDefaults() {
         console.log('Seeded default services');
     } catch (err) {
         console.error('Failed to seed services:', err.message);
+    }
+}
+
+// Set default commission rates on services that don't have them
+async function setDefaultCommissionRates() {
+    try {
+        // Default commission rate: 30% for services
+        const DEFAULT_SERVICE_COMMISSION = 0.30;
+
+        // Update services that have NULL commission_rate
+        const result = await db.dbRun(`
+            UPDATE services
+            SET commission_rate = ?
+            WHERE commission_rate IS NULL
+        `, [DEFAULT_SERVICE_COMMISSION]);
+
+        // Check how many were updated
+        const updatedCount = await db.dbGet(`
+            SELECT changes() as count
+        `);
+
+        if (updatedCount && updatedCount.count > 0) {
+            console.log(`✅ Set default commission rate (${DEFAULT_SERVICE_COMMISSION * 100}%) on ${updatedCount.count} services`);
+        }
+
+        // Also update products without commission rates (default 10%)
+        const DEFAULT_PRODUCT_COMMISSION = 0.10;
+        await db.dbRun(`
+            UPDATE products
+            SET commission_rate = ?
+            WHERE commission_rate IS NULL
+        `, [DEFAULT_PRODUCT_COMMISSION]);
+
+    } catch (err) {
+        console.error('Failed to set default commission rates:', err.message);
     }
 }
 
