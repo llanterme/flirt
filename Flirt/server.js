@@ -6596,15 +6596,23 @@ app.post('/api/admin/orders/:id/mark-paid', authenticateAdmin, async (req, res) 
         // Check if invoice already exists for this order
         const existingInvoice = await InvoiceRepository.findByOrderId(orderId);
         if (existingInvoice) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invoice already exists for this order',
+            // Invoice exists - just ensure order status is 'paid' and return success
+            if (order.status !== 'paid') {
+                await OrderRepository.updateStatus(orderId, 'paid');
+            }
+            if (order.payment_status !== 'paid') {
+                await OrderRepository.updatePaymentStatus(orderId, 'paid');
+            }
+            return res.json({
+                success: true,
+                message: 'Order already has an invoice - status updated to paid',
                 invoice: existingInvoice
             });
         }
 
         // Update order status to 'paid'
         await OrderRepository.updateStatus(orderId, 'paid');
+        await OrderRepository.updatePaymentStatus(orderId, 'paid');
 
         // Create invoice from order
         const invoice = await InvoiceRepository.createFromOrder(order, paymentMethod);
