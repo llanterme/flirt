@@ -499,13 +499,20 @@ async function getFloatAuthToken(forceRefresh = false) {
         }
 
         console.log('[Float] Login response keys:', Object.keys(data));
+        console.log('[Float] Full login response:', JSON.stringify(data));
+
+        // Check if Float returned an error in the response body
+        if (data.error || data.message || data.code) {
+            console.error('[Float] Login returned error in response:', data);
+            throw new Error(`Float login error: ${data.message || data.error || JSON.stringify(data)}`);
+        }
 
         // Extract token - Float returns 'token' key
-        const token = data.token || data.access_token;
+        const token = data.token || data.access_token || data.Token || data.accessToken;
 
         if (!token) {
-            console.error('[Float] No token in response! Response data:', JSON.stringify(data));
-            throw new Error('Float login succeeded but no token returned');
+            console.error('[Float] No token in response! Full response:', JSON.stringify(data));
+            throw new Error(`Float login succeeded but no token returned. Response: ${JSON.stringify(data)}`);
         }
 
         // Cache token - Float tokens typically expire in 1 hour
