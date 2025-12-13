@@ -7803,6 +7803,51 @@ app.post('/api/admin/loyalty/reset', authenticateAdmin, (req, res) => {
 });
 
 // ============================================
+// ADMIN DATA CLEANUP (for testing)
+// ============================================
+
+// Clear all orders, invoices, and related data
+app.post('/api/admin/cleanup/orders-invoices', authenticateAdmin, async (req, res) => {
+    try {
+        const { confirm } = req.body;
+
+        if (confirm !== 'DELETE_ALL_TEST_DATA') {
+            return res.status(400).json({
+                success: false,
+                message: 'Confirmation required. Send { "confirm": "DELETE_ALL_TEST_DATA" } to proceed.'
+            });
+        }
+
+        const results = {};
+
+        // Delete in order to respect foreign key constraints
+        results.invoice_payments = (await dbRun('DELETE FROM invoice_payments')).changes;
+        results.invoice_commissions = (await dbRun('DELETE FROM invoice_commissions')).changes;
+        results.invoice_services = (await dbRun('DELETE FROM invoice_services')).changes;
+        results.invoice_products = (await dbRun('DELETE FROM invoice_products')).changes;
+        results.invoices = (await dbRun('DELETE FROM invoices')).changes;
+        results.order_items = (await dbRun('DELETE FROM order_items')).changes;
+        results.orders = (await dbRun('DELETE FROM orders')).changes;
+        results.payroll_records = (await dbRun('DELETE FROM payroll_records')).changes;
+
+        // Reset invoice number counter
+        await dbRun('UPDATE invoice_settings SET next_invoice_number = 1 WHERE id = 1');
+        results.invoice_counter_reset = true;
+
+        console.log('🧹 Admin cleanup completed:', results);
+
+        res.json({
+            success: true,
+            message: 'All orders, invoices, and related data cleared',
+            deleted: results
+        });
+    } catch (error) {
+        console.error('Cleanup error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// ============================================
 // ADMIN REWARDS PROGRAMME SETTINGS
 // ============================================
 
