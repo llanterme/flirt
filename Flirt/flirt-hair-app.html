@@ -15095,8 +15095,15 @@ async function showNotifications() {
                 } else if (paymentInit.payment?.provider === 'yoco' && paymentInit.payment.redirectUrl) {
                     window.location.href = paymentInit.payment.redirectUrl;
                 } else if (paymentInit.payment?.provider === 'float' && paymentInit.payment.redirectUrl) {
-                    // Float redirect
-                    window.location.href = paymentInit.payment.redirectUrl;
+                    // Float redirect - use direct navigation to avoid CSP issues
+                    console.log('[Float] Redirecting to:', paymentInit.payment.redirectUrl);
+                    // Close modal first to avoid any framing issues
+                    closeModal('checkoutModal');
+                    // Small delay to ensure modal is closed before redirect
+                    setTimeout(() => {
+                        window.location.replace(paymentInit.payment.redirectUrl);
+                    }, 100);
+                    return; // Exit early since we're handling the modal close and redirect
                 } else {
                     // Reset button state if no redirect
                     if (payBtn) {
