@@ -11549,6 +11549,8 @@ async function showNotifications() {
                     modal.style.display = 'none';
                 }
             }
+            // Restore body scroll when modal is closed
+            document.body.style.overflow = '';
         }
 
         // ========== LOYALTY CONFIG ==========
@@ -13998,11 +14000,13 @@ async function showNotifications() {
             document.getElementById('cartModal').classList.add('open');
             document.getElementById('cartOverlay').classList.add('show');
             updateCartDisplay();
+            document.body.style.overflow = 'hidden'; // Prevent background scroll
         }
 
         function closeCart() {
             document.getElementById('cartModal').classList.remove('open');
             document.getElementById('cartOverlay').classList.remove('show');
+            document.body.style.overflow = ''; // Restore background scroll
         }
 
         // ========== PRODUCT LOADING & FILTERING ==========
@@ -14739,6 +14743,7 @@ async function showNotifications() {
             renderCheckoutItems();
             updateCheckoutTotal();
             document.getElementById('checkoutModal').classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent background scroll
         }
 
         function renderCheckoutItems() {
