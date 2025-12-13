@@ -798,14 +798,14 @@ async function migrateHairServiceCategories() {
     }
 }
 
-// Migration to add 'eft' to payment_provider CHECK constraint
+// Migration to add 'float' (and 'eft') to payment_provider CHECK constraint
 async function migratePaymentTransactionsTable() {
     try {
-        // Check if the table needs migration by trying to insert an 'eft' value
+        // Check if the table needs migration by trying to insert a 'float' value
         // If it fails with constraint error, we need to migrate
         const testId = '__migration_test__';
         try {
-            await dbRun(`INSERT INTO payment_transactions (id, user_id, amount, payment_provider, status) VALUES (?, 'test', 0, 'eft', 'pending')`, [testId]);
+            await dbRun(`INSERT INTO payment_transactions (id, user_id, amount, payment_provider, status) VALUES (?, 'test', 0, 'float', 'pending')`, [testId]);
             // If successful, delete the test row and return - no migration needed
             await dbRun(`DELETE FROM payment_transactions WHERE id = ?`, [testId]);
             return;
@@ -814,13 +814,13 @@ async function migratePaymentTransactionsTable() {
                 // Different error, might be foreign key - try another approach
                 // Check table schema directly
                 const tableInfo = await dbGet(`SELECT sql FROM sqlite_master WHERE type='table' AND name='payment_transactions'`);
-                if (tableInfo && tableInfo.sql && tableInfo.sql.includes("'eft'")) {
-                    return; // Already has 'eft', no migration needed
+                if (tableInfo && tableInfo.sql && tableInfo.sql.includes("'float'")) {
+                    return; // Already has 'float', no migration needed
                 }
             }
         }
 
-        console.log('Migrating payment_transactions table to add eft payment provider...');
+        console.log('Migrating payment_transactions table to add float payment provider...');
 
         // Backup existing data
         const existingData = await dbAll('SELECT * FROM payment_transactions');
@@ -835,7 +835,7 @@ async function migratePaymentTransactionsTable() {
                 user_id TEXT NOT NULL REFERENCES users(id),
                 amount REAL NOT NULL,
                 currency TEXT DEFAULT 'ZAR',
-                payment_provider TEXT NOT NULL CHECK(payment_provider IN ('payfast', 'yoco', 'cash', 'card_on_site', 'eft')),
+                payment_provider TEXT NOT NULL CHECK(payment_provider IN ('payfast', 'yoco', 'float', 'cash', 'card_on_site', 'eft')),
                 provider_transaction_id TEXT,
                 status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'processing', 'completed', 'failed', 'refunded')),
                 metadata TEXT,
