@@ -412,7 +412,7 @@ let floatTokenExpiry = null;
 
 /**
  * Get Float authentication token
- * Uses client credentials OAuth flow
+ * Uses form-urlencoded POST to /login endpoint (per WooCommerce plugin reference)
  */
 async function getFloatAuthToken() {
     const config = getEffectiveConfig();
@@ -422,7 +422,8 @@ async function getFloatAuthToken() {
         return floatAuthToken;
     }
 
-    const authUrl = `${config.float.baseUrl}/api/auth/login`;
+    // Float uses /login endpoint (NOT /api/auth/login)
+    const authUrl = `${config.float.baseUrl}/login`;
 
     console.log('[Float] Authenticating with:', {
         url: authUrl,
@@ -430,18 +431,21 @@ async function getFloatAuthToken() {
         clientIdLength: config.float.clientId?.length || 0
     });
 
+    // Build form-urlencoded body (Float expects this format, not JSON)
+    const formBody = new URLSearchParams({
+        merchant_id: config.float.merchantId,
+        client_id: config.float.clientId,
+        client_secret: config.float.clientSecret
+    }).toString();
+
     try {
         const response = await fetch(authUrl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({
-                merchant_id: config.float.merchantId,
-                client_id: config.float.clientId,
-                client_secret: config.float.clientSecret
-            })
+            body: formBody
         });
 
         if (!response.ok) {
@@ -520,7 +524,8 @@ async function createFloatCheckout(order, customer) {
     });
 
     try {
-        const response = await fetch(`${config.float.baseUrl}/api/checkout`, {
+        // Float uses /payment/checkout endpoint (NOT /api/checkout)
+        const response = await fetch(`${config.float.baseUrl}/payment/checkout`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -543,10 +548,16 @@ async function createFloatCheckout(order, customer) {
             redirect_url: data.redirect_url
         });
 
+        // Build the credit card screen redirect URL
+        // Float redirects to /payment/credit_card_screen?transaction_id=XXX
+        const transactionId = data.transaction_id || data.id;
+        const redirectUrl = data.redirect_url || data.checkout_url ||
+            `${config.float.baseUrl}/payment/credit_card_screen?transaction_id=${transactionId}`;
+
         return {
             paymentId,
-            transactionId: data.transaction_id,
-            redirectUrl: data.redirect_url || data.checkout_url,
+            transactionId: transactionId,
+            redirectUrl: redirectUrl,
             expiresAt: data.expires_at
         };
     } catch (error) {
