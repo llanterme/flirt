@@ -470,6 +470,7 @@ async function getFloatAuthToken() {
 
 /**
  * Create Float checkout session
+ * Payload structure matches official Float WooCommerce plugin specification
  * @param {Object} order - Order details
  * @param {Object} customer - Customer details
  * @returns {Promise<Object>} Checkout details with redirect URL
@@ -485,42 +486,55 @@ async function createFloatCheckout(order, customer) {
     const baseAppUrl = (config.appUrl || 'https://flirt.hair').replace(/\/$/, '');
     const baseApiUrl = (config.apiBaseUrl || config.appUrl || 'https://flirt.hair').replace(/\/$/, '').replace(/\/api$/, '');
 
-    // Build line items for Float
-    const lineItems = order.items.map(item => ({
-        name: item.productName || item.name,
-        quantity: item.quantity,
-        unit_price: Math.round(item.unitPrice * 100), // Float expects cents
-        total: Math.round(item.unitPrice * item.quantity * 100)
+    // Build product items list for Float (must be JSON stringified in purchase.items)
+    const productList = order.items.map(item => ({
+        description: item.productId || item.id || '',
+        sku: item.sku || '',
+        price: Math.round((item.unitPrice || 0) * 100), // Price in cents
+        qty: item.quantity || 1
     }));
 
+    // Determine mode based on UAT setting
+    const mode = config.float.uatMode ? 'UAT' : 'LIVE';
+
+    // Parse customer name
+    const firstName = customer.name?.split(' ')[0] || '';
+    const lastName = customer.name?.split(' ').slice(1).join(' ') || '';
+
+    // Float expects this exact payload structure (per WooCommerce plugin)
     const payload = {
-        merchant_id: config.float.merchantId,
-        amount: Math.round(order.total * 100), // Amount in cents
+        purchaseAmount: Math.round(order.total * 100), // Amount in cents as integer
         currency: 'ZAR',
-        reference: paymentId,
-        description: `Flirt Hair & Beauty Order`,
+        numberOfPayments: 4, // Standard Float "Pay in 4" installments
         customer: {
-            first_name: customer.name.split(' ')[0],
-            last_name: customer.name.split(' ').slice(1).join(' ') || '',
-            email: customer.email,
-            phone: customer.phone || ''
+            sourceService: 'Flirt Hair & Beauty',
+            customerReference: customer.id || '',
+            name: firstName,
+            lastName: lastName,
+            telephoneNumber: customer.phone || '',
+            emailAddress: customer.email || '',
+            billingAddress: customer.address || ''
         },
-        items: lineItems,
-        return_url: `${baseAppUrl}/app?payment=success&ref=${paymentId}&provider=float`,
-        cancel_url: `${baseAppUrl}/app?payment=cancelled&ref=${paymentId}&provider=float`,
-        callback_url: `${baseApiUrl}/api/payments/webhook/float`,
-        metadata: {
+        merchant: {
+            merchantReference: config.float.merchantId,
+            name: 'Flirt Hair & Beauty',
+            mode: mode,
+            return_url: `${baseAppUrl}/app?payment=success&ref=${paymentId}&provider=float`,
+            notify_url: `${baseApiUrl}/api/payments/webhook/float`
+        },
+        purchase: {
             order_id: order.id,
-            customer_id: customer.id,
-            payment_id: paymentId
+            purchaseDate: new Date().toISOString().replace('T', ' ').substring(0, 19),
+            items: JSON.stringify(productList) // Must be JSON stringified
         }
     };
 
     console.log('[Float] Creating checkout:', {
-        amount: payload.amount,
-        reference: payload.reference,
-        return_url: payload.return_url,
-        callback_url: payload.callback_url
+        purchaseAmount: payload.purchaseAmount,
+        currency: payload.currency,
+        mode: mode,
+        return_url: payload.merchant.return_url,
+        notify_url: payload.merchant.notify_url
     });
 
     try {
