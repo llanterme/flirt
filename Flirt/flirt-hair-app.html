@@ -7865,17 +7865,12 @@
             <div class="checkout-section">
                 <div class="checkout-section-title">🧾 Order Summary</div>
                 <div class="invoice-preview">
-                    <div class="invoice-row">
-                        <span>Angel.Wash x 1</span>
-                        <span>R385</span>
+                    <div id="checkoutItemsList">
+                        <!-- Cart items will be rendered here dynamically -->
                     </div>
-                    <div class="invoice-row">
-                        <span>Bedroom.Hair x 1</span>
-                        <span>R420</span>
-                    </div>
-                    <div class="invoice-row">
+                    <div class="invoice-row" style="border-top: 1px dashed #ddd; padding-top: 10px; margin-top: 10px;">
                         <span>Subtotal</span>
-                        <span>R805</span>
+                        <span id="invoiceSubtotal">R0</span>
                     </div>
                     <div class="invoice-row">
                         <span>Delivery</span>
@@ -7885,14 +7880,14 @@
                         <span>Discount</span>
                         <span id="invoiceDiscount">-R0</span>
                     </div>
-                    <div class="invoice-row">
+                    <div class="invoice-row" style="font-weight: 600; border-top: 1px dashed #ddd; padding-top: 10px; margin-top: 10px;">
                         <span>Total</span>
-                        <span id="invoiceTotal">R805</span>
+                        <span id="invoiceTotal">R0</span>
                     </div>
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="processPayment()">Pay Now - R<span id="payAmount">805</span></button>
+            <button class="btn btn-primary" onclick="processPayment()">Pay Now - R<span id="payAmount">0</span></button>
         </div>
     </div>
 
@@ -14741,7 +14736,26 @@ async function showNotifications() {
         // ========== CHECKOUT FUNCTIONALITY ==========
         function openCheckout() {
             closeCart();
+            renderCheckoutItems();
+            updateCheckoutTotal();
             document.getElementById('checkoutModal').classList.add('show');
+        }
+
+        function renderCheckoutItems() {
+            const container = document.getElementById('checkoutItemsList');
+            if (!container) return;
+
+            if (cart.length === 0) {
+                container.innerHTML = '<div style="color: var(--gray-medium); text-align: center; padding: 20px;">Your cart is empty</div>';
+                return;
+            }
+
+            container.innerHTML = cart.map(item => `
+                <div class="invoice-row">
+                    <span>${item.name} x ${item.qty}</span>
+                    <span>R${item.price * item.qty}</span>
+                </div>
+            `).join('');
         }
 
         function selectDelivery(element, method, fee) {
@@ -14805,6 +14819,7 @@ async function showNotifications() {
         function updateCheckoutTotal() {
             const subtotal = getSubtotal();
             const total = subtotal + deliveryFee - discount;
+            document.getElementById('invoiceSubtotal').textContent = `R${subtotal}`;
             document.getElementById('invoiceTotal').textContent = `R${total}`;
             document.getElementById('payAmount').textContent = total;
         }
