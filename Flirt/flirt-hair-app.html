@@ -3615,10 +3615,18 @@
             justify-content: center;
             padding: 20px;
             backdrop-filter: blur(2px);
+            overflow: hidden;
         }
 
         .modal.show {
             display: flex;
+        }
+
+        /* Prevent body scroll when modal is open */
+        body.modal-open {
+            overflow: hidden !important;
+            position: fixed;
+            width: 100%;
         }
 
         .modal-content {
@@ -11550,6 +11558,7 @@ async function showNotifications() {
                 }
             }
             // Restore body scroll when modal is closed
+            document.body.classList.remove('modal-open');
             document.body.style.overflow = '';
         }
 
@@ -14743,7 +14752,7 @@ async function showNotifications() {
             renderCheckoutItems();
             updateCheckoutTotal();
             document.getElementById('checkoutModal').classList.add('show');
-            document.body.style.overflow = 'hidden'; // Prevent background scroll
+            document.body.classList.add('modal-open'); // Prevent background scroll
         }
 
         function renderCheckoutItems() {
