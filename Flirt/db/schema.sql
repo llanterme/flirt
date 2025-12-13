@@ -780,13 +780,8 @@ CREATE TABLE IF NOT EXISTS invoices (
     updated_at TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_invoices_booking ON invoices(booking_id);
-CREATE INDEX IF NOT EXISTS idx_invoices_order ON invoices(order_id);
-CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id);
-CREATE INDEX IF NOT EXISTS idx_invoices_stylist ON invoices(stylist_id);
-CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
-CREATE INDEX IF NOT EXISTS idx_invoices_payment_status ON invoices(payment_status);
-CREATE INDEX IF NOT EXISTS idx_invoices_service_date ON invoices(service_date);
+-- NOTE: Invoice indexes are created via ensureIndex in database.js after migrations
+-- to handle cases where columns may not exist on older databases
 
 -- ============================================
 -- INVOICE_SERVICES TABLE (Service line items)
