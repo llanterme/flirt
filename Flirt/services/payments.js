@@ -125,18 +125,32 @@ function generatePayFastPayment(order, customer, options = {}) {
 
     // Build the direct payment URL parameters
     // Using the MINIMAL cmd=_paynow format (like EasyNotary invoices)
-    // Keeping only essential parameters for fastest load time
-    const params = new URLSearchParams();
+    // IMPORTANT: Use simple encoding (spaces as %20, keep : and @ as-is) for fastest PayFast loading
+    // URLSearchParams uses application/x-www-form-urlencoded which encodes : as %3A and @ as %40
+    // PayFast seems to process simpler encoding faster
 
-    // Required parameters (same as EasyNotary)
-    params.append('cmd', '_paynow');
-    params.append('receiver', config.payfast.merchantId);
-    params.append('m_payment_id', paymentId);
-    params.append('item_name', itemName);
-    params.append('amount', order.total.toFixed(2));
-    params.append('email_confirmation', '1');
-    params.append('confirmation_address', customer.email || 'bookings@flirt.hair');
-    params.append('item_description', itemDescription);
+    const confirmEmail = customer.email || 'bookings@flirt.hair';
+
+    // Simple encode function - only encode spaces and special chars that MUST be encoded
+    const simpleEncode = (str) => {
+        return str
+            .replace(/ /g, '%20')      // spaces
+            .replace(/&/g, '%26')      // ampersand (would break URL params)
+            .replace(/=/g, '%3D')      // equals (would break URL params)
+            .replace(/#/g, '%23');     // hash (would break URL)
+    };
+
+    // Build URL manually like EasyNotary does (faster PayFast processing)
+    const queryParams = [
+        `cmd=_paynow`,
+        `receiver=${config.payfast.merchantId}`,
+        `m_payment_id=${paymentId}`,
+        `item_name=${simpleEncode(itemName)}`,
+        `amount=${order.total.toFixed(2)}`,
+        `email_confirmation=1`,
+        `confirmation_address=${confirmEmail}`,
+        `item_description=${simpleEncode(itemDescription)}`
+    ].join('&');
 
     // Build the payment URL
     // Use payment.payfast.io for the direct URL approach
@@ -144,7 +158,18 @@ function generatePayFastPayment(order, customer, options = {}) {
         ? 'https://sandbox.payfast.co.za'  // Sandbox still uses sandbox URL
         : 'https://payment.payfast.io';     // Live uses payment.payfast.io
 
-    const redirectUrl = `${paymentBaseUrl}/eng/process?${params.toString()}`;
+    const redirectUrl = `${paymentBaseUrl}/eng/process?${queryParams}`;
+
+    // Also build URLSearchParams for formData (backwards compat)
+    const params = new URLSearchParams();
+    params.append('cmd', '_paynow');
+    params.append('receiver', config.payfast.merchantId);
+    params.append('m_payment_id', paymentId);
+    params.append('item_name', itemName);
+    params.append('amount', order.total.toFixed(2));
+    params.append('email_confirmation', '1');
+    params.append('confirmation_address', confirmEmail);
+    params.append('item_description', itemDescription);
 
     console.log('[PayFast] Direct payment URL generated:', redirectUrl.substring(0, 150) + '...');
 
