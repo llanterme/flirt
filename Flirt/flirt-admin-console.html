@@ -17869,6 +17869,42 @@
             const sandboxDefault = config.payfast.mode === 'sandbox';
             document.getElementById('payfastSandbox').checked = stored.payfast?.sandbox ?? sandboxDefault;
 
+            // CRITICAL: Detect sandbox passphrase with live mode
+            const SANDBOX_PASSPHRASE = 'jt7NOE43FZPn';
+            const SANDBOX_MERCHANT_ID = '10000100';
+            const isLiveMode = config.payfast?.mode === 'live' || (!stored.payfast?.sandbox && stored.payfast?.merchantId !== SANDBOX_MERCHANT_ID);
+            const hasSandboxPassphrase = stored.payfast?.passphrase === SANDBOX_PASSPHRASE;
+
+            // Show/hide warning for sandbox passphrase in live mode
+            let warningDiv = document.getElementById('payfastPassphraseWarning');
+            if (!warningDiv) {
+                warningDiv = document.createElement('div');
+                warningDiv.id = 'payfastPassphraseWarning';
+                warningDiv.style.cssText = 'background: #FFF3CD; border: 2px solid #FF6B6B; border-radius: 8px; padding: 15px; margin: 15px 0; color: #856404;';
+                const passphraseInput = document.getElementById('payfastPassphrase');
+                if (passphraseInput && passphraseInput.parentNode) {
+                    passphraseInput.parentNode.insertBefore(warningDiv, passphraseInput.nextSibling);
+                }
+            }
+
+            if (isLiveMode && hasSandboxPassphrase) {
+                warningDiv.innerHTML = `
+                    <strong style="color: #FF6B6B; font-size: 14px;">WARNING: SANDBOX PASSPHRASE DETECTED!</strong><br><br>
+                    You are using the <strong>sandbox passphrase</strong> (jt7NOE43FZPn) with <strong>LIVE credentials</strong>.<br>
+                    This will cause "Invalid merchant key" errors!<br><br>
+                    <strong>TO FIX:</strong><br>
+                    1. Go to your PayFast dashboard > Settings > Integration > Security<br>
+                    2. Check if you have a passphrase set there<br>
+                    3. Either:<br>
+                    &nbsp;&nbsp;&nbsp;a) <strong>CLEAR this field</strong> if you have no passphrase in PayFast, OR<br>
+                    &nbsp;&nbsp;&nbsp;b) <strong>Enter your LIVE passphrase</strong> from PayFast dashboard<br>
+                    4. Click "Save Payment Settings"
+                `;
+                warningDiv.style.display = 'block';
+            } else {
+                warningDiv.style.display = 'none';
+            }
+
             document.getElementById('yocoSecretKey').value = stored.yoco?.secretKey || '';
             document.getElementById('yocoPublicKey').value = stored.yoco?.publicKey || '';
             document.getElementById('yocoWebhookSecret').value = stored.yoco?.webhookSecret || '';

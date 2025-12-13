@@ -121,6 +121,33 @@ function generatePayFastPayment(order, customer, options = {}) {
         notify_url: `${baseApiUrl}/api/payments/webhook/payfast`
     });
 
+    // CRITICAL: Detect sandbox passphrase used with live credentials
+    const SANDBOX_PASSPHRASE = 'jt7NOE43FZPn';
+    const SANDBOX_MERCHANT_ID = '10000100';
+    const isLiveMode = !config.payfast.sandbox && config.payfast.merchantId !== SANDBOX_MERCHANT_ID;
+
+    if (isLiveMode && config.payfast.passphrase === SANDBOX_PASSPHRASE) {
+        console.error('');
+        console.error('╔════════════════════════════════════════════════════════════════════╗');
+        console.error('║  ⚠️  PAYFAST CONFIGURATION ERROR DETECTED!                          ║');
+        console.error('╠════════════════════════════════════════════════════════════════════╣');
+        console.error('║  You are using SANDBOX PASSPHRASE with LIVE credentials!           ║');
+        console.error('║                                                                    ║');
+        console.error('║  Current passphrase: jt7NOE43FZPn (SANDBOX - WRONG!)               ║');
+        console.error('║  Current mode: LIVE                                                ║');
+        console.error('║                                                                    ║');
+        console.error('║  TO FIX:                                                           ║');
+        console.error('║  1. Go to Admin Console > Settings > Payments                      ║');
+        console.error('║  2. Either:                                                        ║');
+        console.error('║     a) CLEAR the passphrase field (if you have no passphrase       ║');
+        console.error('║        set in your PayFast dashboard), OR                          ║');
+        console.error('║     b) Enter your LIVE PayFast passphrase (from PayFast            ║');
+        console.error('║        dashboard > Settings > Integration > Security passphrase)   ║');
+        console.error('║  3. Save the settings                                              ║');
+        console.error('╚════════════════════════════════════════════════════════════════════╝');
+        console.error('');
+    }
+
     // CRITICAL: Validate merchant credentials format
     if (config.payfast.merchantId && !/^\d{8}$/.test(config.payfast.merchantId)) {
         console.error('[PayFast] WARNING: Merchant ID should be exactly 8 digits! Got:', config.payfast.merchantId);
