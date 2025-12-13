@@ -15160,12 +15160,32 @@ async function showNotifications() {
         }
 
         // Check for payment success on page load and clear cart
-        function checkPaymentSuccess() {
+        async function checkPaymentSuccess() {
             const urlParams = new URLSearchParams(window.location.search);
             const paymentStatus = urlParams.get('payment');
+            const paymentRef = urlParams.get('ref');
+            const paymentProvider = urlParams.get('provider');
             const pendingOrderId = localStorage.getItem('flirt_pending_order_id');
 
             if (paymentStatus === 'success' && pendingOrderId) {
+                // If this is a Float payment, confirm it with the server
+                if (paymentProvider === 'float' && currentUser) {
+                    try {
+                        console.log('[Float] Confirming payment with server...');
+                        await apiCall('/payments/float/confirm', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                paymentId: paymentRef,
+                                orderId: pendingOrderId
+                            })
+                        });
+                        console.log('[Float] Payment confirmed successfully');
+                    } catch (e) {
+                        console.error('[Float] Error confirming payment:', e);
+                        // Continue anyway - webhook may have already processed it
+                    }
+                }
+
                 // Payment was successful - clear cart
                 cart = [];
                 clearCartStorage();

@@ -2338,6 +2338,97 @@ app.post('/api/payments/float/preauth', authenticateToken, async (req, res) => {
     }
 });
 
+// Confirm Float payment when user returns (backup for webhook)
+app.post('/api/payments/float/confirm', authenticateToken, async (req, res) => {
+    const { paymentId, orderId } = req.body;
+
+    try {
+        // Find the payment record
+        let payment = null;
+        if (paymentId) {
+            payment = await PaymentRepository.findById(paymentId);
+        }
+
+        // Find the order
+        let order = null;
+        if (orderId) {
+            order = await OrderRepository.findById(orderId);
+        } else if (payment?.order_id) {
+            order = await OrderRepository.findById(payment.order_id);
+        }
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        // Verify user owns this order
+        if (order.user_id !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Unauthorized' });
+        }
+
+        // If order is already paid, just return success
+        if (order.payment_status === 'paid' || order.status === 'paid') {
+            console.log(`[Float] Order ${order.id} already marked as paid`);
+            return res.json({ success: true, message: 'Order already confirmed', order });
+        }
+
+        // Mark order as paid (Float user has returned with success)
+        console.log(`[Float] Confirming payment for order ${order.id} (user returned from Float)`);
+
+        await OrderRepository.updatePaymentStatus(order.id, 'paid');
+        await OrderRepository.updateStatus(order.id, 'paid');
+
+        // Update payment record if exists
+        if (payment) {
+            await PaymentRepository.updateStatus(payment.id, 'completed', null, { confirmedByReturn: true });
+        }
+
+        // Process stock deduction and loyalty points
+        try {
+            if (order.items) {
+                // Deduct stock for each item
+                for (const item of order.items) {
+                    await ProductRepository.updateStock(item.product_id || item.productId, -(item.quantity || 1));
+                }
+                console.log(`✅ Stock deducted for Float order ${order.id}`);
+
+                // Award loyalty points
+                const loyaltySettings = await LoyaltyRepository.getSettings();
+                const spendRand = loyaltySettings.pointsRules?.spendRand || 0;
+                if (spendRand > 0 && order.total && order.user_id) {
+                    const pointsToAdd = Math.floor(order.total / spendRand);
+                    if (pointsToAdd > 0) {
+                        await UserRepository.addPoints(order.user_id, pointsToAdd);
+                        await LoyaltyRepository.addTransaction({
+                            id: uuidv4(),
+                            userId: order.user_id,
+                            points: pointsToAdd,
+                            type: 'earned',
+                            description: `Order #${order.id.substring(0, 8)}`
+                        });
+                        console.log(`✅ ${pointsToAdd} loyalty points awarded for Float order ${order.id}`);
+                    }
+                }
+
+                // Generate invoice from order
+                try {
+                    const invoice = await InvoiceRepository.createFromOrder(order, 'float');
+                    console.log(`✅ Invoice ${invoice.invoice_number} created for Float order ${order.id}`);
+                } catch (invoiceError) {
+                    console.error('Error creating invoice for Float order:', invoiceError);
+                }
+            }
+        } catch (stockError) {
+            console.error('Error processing stock/loyalty for Float order:', stockError);
+        }
+
+        res.json({ success: true, message: 'Payment confirmed', order });
+    } catch (error) {
+        console.error('[Float] Confirm payment error:', error);
+        res.status(500).json({ success: false, message: 'Failed to confirm payment' });
+    }
+});
+
 // Check payment status
 app.get('/api/payments/:id/status', authenticateToken, async (req, res) => {
     try {
