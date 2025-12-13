@@ -2283,6 +2283,9 @@ app.post('/api/payments/initiate', authenticateToken, async (req, res) => {
         if (provider === 'yoco' && !configStatus.yoco.configured) {
             return res.status(400).json({ success: false, message: 'Yoco is not configured' });
         }
+        if (provider === 'float' && !configStatus.float.configured) {
+            return res.status(400).json({ success: false, message: 'Float is not configured' });
+        }
 
         const paymentInit = await PaymentService.initializePayment(
             provider,
@@ -2508,6 +2511,108 @@ app.post('/api/payments/webhook/yoco', async (req, res) => {
         return res.send('OK');
     } catch (error) {
         console.error('Yoco webhook error:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+// Float webhook (Buy Now Pay Later)
+app.post('/api/payments/webhook/float', async (req, res) => {
+    try {
+        console.log('[Float] Webhook received:', JSON.stringify(req.body).substring(0, 500));
+
+        const result = PaymentService.processWebhook('float', req.body, req.headers);
+
+        if (result.valid === false) {
+            console.error('[Float] Invalid webhook:', result.reason);
+            return res.status(400).json({ success: false, message: result.reason || 'Invalid webhook' });
+        }
+
+        const paymentStatus = result.completed ? 'paid' : (result.status || 'pending').toLowerCase();
+        const providerStatus = result.completed ? 'completed' : (result.status || 'processing').toLowerCase();
+
+        if (result.paymentId) {
+            await PaymentRepository.updateStatus(result.paymentId, providerStatus, result.floatTransactionId, { event: result });
+
+            // Check if this is a booking payment and update booking status
+            const payment = await PaymentRepository.findById(result.paymentId);
+            if (payment && payment.booking_id) {
+                console.log(`💳 Float booking payment received for ${payment.booking_id}: ${paymentStatus}`);
+                await BookingRepository.recordPayment(payment.booking_id, {
+                    status: paymentStatus,
+                    method: 'float',
+                    amount: payment.amount,
+                    reference: result.floatTransactionId,
+                    date: new Date().toISOString()
+                });
+
+                // Process rewards for paid bookings via Float
+                if (result.completed) {
+                    try {
+                        const booking = await BookingRepository.findById(payment.booking_id);
+                        if (booking && booking.user_id) {
+                            const user = await UserRepository.findById(booking.user_id);
+                            if (user) {
+                                const bookingWithPayment = { ...booking, paid: true, final_amount: payment.amount };
+                                const rewardsResult = await RewardsService.processCompletedBooking(bookingWithPayment, user, true);
+                                console.log('💎 Rewards processed for Float payment:', rewardsResult);
+                            }
+                        }
+                    } catch (rewardError) {
+                        console.error('Error processing rewards for Float payment:', rewardError);
+                    }
+                }
+            }
+        }
+        if (result.orderId) {
+            await OrderRepository.updatePaymentStatus(result.orderId, paymentStatus);
+            if (paymentStatus === 'paid') {
+                await OrderRepository.updateStatus(result.orderId, 'paid');
+
+                // Process stock deduction and loyalty points on successful payment
+                try {
+                    const order = await OrderRepository.findById(result.orderId);
+                    if (order && order.items) {
+                        // Deduct stock for each item
+                        for (const item of order.items) {
+                            await ProductRepository.updateStock(item.product_id || item.productId, -(item.quantity || 1));
+                        }
+                        console.log(`✅ Stock deducted for Float order ${result.orderId}`);
+
+                        // Award loyalty points
+                        const loyaltySettings = await LoyaltyRepository.getSettings();
+                        const spendRand = loyaltySettings.pointsRules?.spendRand || 0;
+                        if (spendRand > 0 && order.total && order.user_id) {
+                            const pointsToAdd = Math.floor(order.total / spendRand);
+                            if (pointsToAdd > 0) {
+                                await UserRepository.addPoints(order.user_id, pointsToAdd);
+                                await LoyaltyRepository.addTransaction({
+                                    id: uuidv4(),
+                                    userId: order.user_id,
+                                    points: pointsToAdd,
+                                    type: 'earned',
+                                    description: `Order #${order.id.substring(0, 8)}`
+                                });
+                                console.log(`✅ ${pointsToAdd} loyalty points awarded for Float order ${result.orderId}`);
+                            }
+                        }
+
+                        // Generate invoice from order
+                        try {
+                            const invoice = await InvoiceRepository.createFromOrder(order, 'float');
+                            console.log(`✅ Invoice ${invoice.invoice_number} created for Float order ${result.orderId}`);
+                        } catch (invoiceError) {
+                            console.error('Error creating invoice for Float order:', invoiceError);
+                        }
+                    }
+                } catch (stockError) {
+                    console.error('Error processing stock/loyalty for Float order:', stockError);
+                }
+            }
+        }
+
+        return res.send('OK');
+    } catch (error) {
+        console.error('Float webhook error:', error);
         return res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });
@@ -5095,7 +5200,7 @@ app.get('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
 // Update payment configuration (admin)
 app.put('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
     try {
-        const { appUrl, apiBaseUrl, payfast = {}, yoco = {} } = req.body;
+        const { appUrl, apiBaseUrl, payfast = {}, yoco = {}, float = {} } = req.body;
 
         const newConfig = {
             appUrl,
@@ -5110,6 +5215,13 @@ app.put('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
                 secretKey: yoco.secretKey,
                 publicKey: yoco.publicKey,
                 webhookSecret: yoco.webhookSecret
+            },
+            float: {
+                merchantId: float.merchantId,
+                clientId: float.clientId,
+                clientSecret: float.clientSecret,
+                webhookSecret: float.webhookSecret,
+                uatMode: float.uatMode
             }
         };
 
@@ -5141,10 +5253,14 @@ app.get('/api/payments/config', async (req, res) => {
             success: true,
             payfast: {
                 configured: configStatus.payfast?.configured || false,
-                sandbox: configStatus.payfast?.sandbox || false
+                sandbox: configStatus.payfast?.mode === 'sandbox'
             },
             yoco: {
                 configured: configStatus.yoco?.configured || false
+            },
+            float: {
+                configured: configStatus.float?.configured || false,
+                uatMode: configStatus.float?.mode === 'UAT (test)'
             }
         });
     } catch (error) {
@@ -5152,7 +5268,8 @@ app.get('/api/payments/config', async (req, res) => {
         res.json({
             success: true,
             payfast: { configured: false, sandbox: false },
-            yoco: { configured: false }
+            yoco: { configured: false },
+            float: { configured: false, uatMode: false }
         });
     }
 });

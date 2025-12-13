@@ -7334,6 +7334,32 @@
                                 <input type="text" id="yocoWebhookSecret" class="form-input" placeholder="Webhook signing secret">
                             </div>
 
+                            <h4 style="font-size: 14px; font-weight: 600; margin: 25px 0 15px 0; padding-top: 15px; border-top: 1px solid var(--gray-light); color: var(--primary);">Float (Buy Now Pay Later)</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Float Merchant ID</label>
+                                    <input type="text" id="floatMerchantId" class="form-input" placeholder="Your Float merchant ID">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Float Client ID</label>
+                                    <input type="text" id="floatClientId" class="form-input" placeholder="Your Float client ID">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Float Client Secret</label>
+                                    <input type="password" id="floatClientSecret" class="form-input" placeholder="Your Float client secret">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Float Webhook Secret (optional)</label>
+                                    <input type="text" id="floatWebhookSecret" class="form-input" placeholder="Webhook signing secret">
+                                </div>
+                            </div>
+                            <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="floatUatMode" style="width: 18px; height: 18px;">
+                                <label for="floatUatMode" class="form-label" style="margin: 0;">Use UAT Mode (Testing)</label>
+                            </div>
+
                             <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
                                 <button class="btn btn-primary" onclick="savePaymentSettings()">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="margin-right: 8px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
@@ -7447,6 +7473,54 @@
                         </div>
                     </div>
 
+                    <!-- Float Configuration -->
+                    <div class="data-card">
+                        <div class="data-card-header">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <h3 class="data-card-title">Float Configuration (Buy Now Pay Later)</h3>
+                                <span id="floatStatusBadge" class="status-badge" style="display: none;"></span>
+                            </div>
+                        </div>
+                        <div style="padding: 25px;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Mode</label>
+                                    <input type="text" id="floatMode" class="form-input" readonly style="background: var(--gray-light);">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Base URL</label>
+                                    <input type="text" id="floatBaseUrl" class="form-input" readonly style="background: var(--gray-light);">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Webhook URL (Callback)</label>
+                                <input type="text" id="floatWebhookUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Configure this URL in your Float merchant dashboard</p>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Return URL</label>
+                                    <input type="text" id="floatReturnUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Cancel URL</label>
+                                    <input type="text" id="floatCancelUrl" class="form-input" readonly style="background: var(--gray-light); font-family: monospace; font-size: 13px;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="display: flex; align-items: center; gap: 8px;">
+                                    Webhook Secret Configured
+                                    <span id="floatWebhookSecretIcon"></span>
+                                </label>
+                                <p style="font-size: 12px; color: var(--gray-medium); margin-top: 5px;">Set via FLOAT_WEBHOOK_SECRET environment variable (optional for webhook verification)</p>
+                            </div>
+                            <div id="floatMissingVars" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255,152,0,0.1); border-radius: 8px; border-left: 4px solid var(--warning);">
+                                <strong style="color: var(--warning);">Missing Configuration:</strong>
+                                <ul id="floatMissingVarsList" style="margin: 10px 0 0 20px; color: var(--gray-dark);"></ul>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Configuration Guide -->
                     <div class="data-card" style="background: var(--primary-light); border: 1px solid var(--primary);">
                         <div class="data-card-header">
@@ -7463,6 +7537,10 @@
                                 <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">YOCO_SECRET_KEY</code> - Your Yoco secret key</li>
                                 <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">YOCO_PUBLIC_KEY</code> - Your Yoco public key</li>
                                 <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">YOCO_WEBHOOK_SECRET</code> - Your Yoco webhook secret</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">FLOAT_MERCHANT_ID</code> - Your Float merchant ID</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">FLOAT_CLIENT_ID</code> - Your Float client ID</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">FLOAT_CLIENT_SECRET</code> - Your Float client secret</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">FLOAT_UAT_MODE</code> - Set to 'true' for UAT (testing) mode</li>
                             </ul>
                         </div>
                     </div>
@@ -17770,6 +17848,11 @@
                 // Update Yoco configuration
                 updateYocoUI(config.yoco);
 
+                // Update Float configuration
+                if (config.float) {
+                    updateFloatUI(config.float);
+                }
+
             } catch (error) {
                 console.error('Error loading payment config:', error);
                 alert('Failed to load payment configuration: ' + error.message);
@@ -17789,6 +17872,14 @@
             document.getElementById('yocoSecretKey').value = stored.yoco?.secretKey || '';
             document.getElementById('yocoPublicKey').value = stored.yoco?.publicKey || '';
             document.getElementById('yocoWebhookSecret').value = stored.yoco?.webhookSecret || '';
+
+            // Float fields
+            document.getElementById('floatMerchantId').value = stored.float?.merchantId || '';
+            document.getElementById('floatClientId').value = stored.float?.clientId || '';
+            document.getElementById('floatClientSecret').value = stored.float?.clientSecret || '';
+            document.getElementById('floatWebhookSecret').value = stored.float?.webhookSecret || '';
+            const floatUatDefault = config.float?.mode === 'UAT (test)';
+            document.getElementById('floatUatMode').checked = stored.float?.uatMode ?? floatUatDefault;
         }
 
         async function savePaymentSettings() {
@@ -17805,6 +17896,13 @@
                     secretKey: document.getElementById('yocoSecretKey').value.trim(),
                     publicKey: document.getElementById('yocoPublicKey').value.trim(),
                     webhookSecret: document.getElementById('yocoWebhookSecret').value.trim()
+                },
+                float: {
+                    merchantId: document.getElementById('floatMerchantId').value.trim(),
+                    clientId: document.getElementById('floatClientId').value.trim(),
+                    clientSecret: document.getElementById('floatClientSecret').value.trim(),
+                    webhookSecret: document.getElementById('floatWebhookSecret').value.trim(),
+                    uatMode: document.getElementById('floatUatMode').checked
                 }
             };
 
@@ -17905,6 +18003,48 @@
             if (yoco.missingEnvVars && yoco.missingEnvVars.length > 0) {
                 missingVarsDiv.style.display = 'block';
                 missingVarsList.innerHTML = yoco.missingEnvVars
+                    .map(v => `<li><code style="background: white; padding: 2px 6px; border-radius: 4px;">${v}</code></li>`)
+                    .join('');
+            } else {
+                missingVarsDiv.style.display = 'none';
+            }
+        }
+
+        function updateFloatUI(float) {
+            // Status badge
+            const statusBadge = document.getElementById('floatStatusBadge');
+            if (float.configured) {
+                statusBadge.innerHTML = '&#10004; Configured';
+                statusBadge.style.background = 'var(--success)';
+                statusBadge.style.display = 'inline-block';
+            } else {
+                statusBadge.innerHTML = '&#9888; Not Configured';
+                statusBadge.style.background = 'var(--warning)';
+                statusBadge.style.display = 'inline-block';
+            }
+
+            // Mode and URLs
+            document.getElementById('floatMode').value = float.mode || 'live';
+            document.getElementById('floatBaseUrl').value = float.baseUrl || '';
+            document.getElementById('floatWebhookUrl').value = float.webhookUrl || '';
+            document.getElementById('floatReturnUrl').value = float.returnUrl || '';
+            document.getElementById('floatCancelUrl').value = float.cancelUrl || '';
+
+            // Webhook secret indicator
+            const webhookSecretIcon = document.getElementById('floatWebhookSecretIcon');
+            if (float.hasWebhookSecret) {
+                webhookSecretIcon.innerHTML = '<span style="color: var(--success);">&#10004;</span>';
+            } else {
+                webhookSecretIcon.innerHTML = '<span style="color: var(--gray-medium);">&#10006;</span>';
+            }
+
+            // Missing vars
+            const missingVarsDiv = document.getElementById('floatMissingVars');
+            const missingVarsList = document.getElementById('floatMissingVarsList');
+
+            if (float.missingEnvVars && float.missingEnvVars.length > 0) {
+                missingVarsDiv.style.display = 'block';
+                missingVarsList.innerHTML = float.missingEnvVars
                     .map(v => `<li><code style="background: white; padding: 2px 6px; border-radius: 4px;">${v}</code></li>`)
                     .join('');
             } else {

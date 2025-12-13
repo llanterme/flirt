@@ -4796,6 +4796,26 @@
             background: rgba(231, 84, 128, 0.05);
         }
 
+        /* Payment method option styling */
+        .payment-option:hover {
+            border-color: var(--brand-pink) !important;
+        }
+
+        .payment-option input[type="radio"]:checked + div + div,
+        .payment-option:has(input:checked) {
+            border-color: var(--brand-pink);
+        }
+
+        .payment-option:has(input:checked) {
+            border-color: var(--brand-pink) !important;
+            background: rgba(231, 84, 128, 0.05) !important;
+        }
+
+        .float-option:has(input:checked) {
+            border-color: #00a86b !important;
+            background: linear-gradient(135deg, #e6fff4 0%, #d6fff0 100%) !important;
+        }
+
         .delivery-info h4 {
             margin-bottom: 5px;
         }
@@ -7892,6 +7912,37 @@
                         <span>Total</span>
                         <span id="invoiceTotal">R0</span>
                     </div>
+                </div>
+            </div>
+
+            <!-- Payment Method Selection (shows Float if configured) -->
+            <div class="checkout-section" id="paymentMethodSection" style="display: none;">
+                <div class="checkout-section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align: middle; margin-right: 6px;">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    Payment Method
+                </div>
+                <div class="payment-method-options" style="display: flex; flex-direction: column; gap: 10px;">
+                    <label class="payment-option" style="display: flex; align-items: center; padding: 15px; border: 2px solid #eee; border-radius: 10px; cursor: pointer; transition: all 0.2s;">
+                        <input type="radio" name="paymentMethod" value="card" checked style="width: 18px; height: 18px; margin-right: 12px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #333;">Pay with Card</div>
+                            <div style="font-size: 12px; color: #888;">Credit/debit card via secure payment</div>
+                        </div>
+                        <div style="display: flex; gap: 4px;">
+                            <span style="font-size: 20px;">💳</span>
+                        </div>
+                    </label>
+                    <label class="payment-option float-option" id="floatPaymentOption" style="display: none; align-items: center; padding: 15px; border: 2px solid #eee; border-radius: 10px; cursor: pointer; transition: all 0.2s; background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);">
+                        <input type="radio" name="paymentMethod" value="float" style="width: 18px; height: 18px; margin-right: 12px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #00a86b;">Pay with Float</div>
+                            <div style="font-size: 12px; color: #666;">Buy now, pay later - 4 interest-free installments</div>
+                        </div>
+                        <div style="font-weight: 700; color: #00a86b; font-size: 14px;">Float</div>
+                    </label>
                 </div>
             </div>
 
@@ -14751,6 +14802,20 @@ async function showNotifications() {
             closeCart();
             renderCheckoutItems();
             updateCheckoutTotal();
+
+            // Show payment method section if Float is configured
+            const floatConfigured = window.paymentConfig?.float?.configured;
+            const paymentMethodSection = document.getElementById('paymentMethodSection');
+            const floatPaymentOption = document.getElementById('floatPaymentOption');
+
+            if (floatConfigured) {
+                paymentMethodSection.style.display = 'block';
+                floatPaymentOption.style.display = 'flex';
+            } else {
+                paymentMethodSection.style.display = 'none';
+                floatPaymentOption.style.display = 'none';
+            }
+
             document.getElementById('checkoutModal').classList.add('show');
             document.body.classList.add('modal-open'); // Prevent background scroll
         }
@@ -14947,8 +15012,9 @@ async function showNotifications() {
                 // Check if any payment provider is configured
                 const payfastConfigured = window.paymentConfig?.payfast?.configured;
                 const yocoConfigured = window.paymentConfig?.yoco?.configured;
+                const floatConfigured = window.paymentConfig?.float?.configured;
 
-                if (!payfastConfigured && !yocoConfigured) {
+                if (!payfastConfigured && !yocoConfigured && !floatConfigured) {
                     // No payment provider configured
                     if (payBtn) {
                         payBtn.innerHTML = originalBtnText;
@@ -14959,8 +15025,16 @@ async function showNotifications() {
                     return;
                 }
 
-                // Choose provider: prefer PayFast if configured, else Yoco
-                const preferredProvider = payfastConfigured ? 'payfast' : 'yoco';
+                // Check if user selected Float (buy now pay later)
+                const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+                let preferredProvider;
+
+                if (selectedPaymentMethod === 'float' && floatConfigured) {
+                    preferredProvider = 'float';
+                } else {
+                    // Choose provider: prefer PayFast if configured, else Yoco
+                    preferredProvider = payfastConfigured ? 'payfast' : 'yoco';
+                }
 
                 const paymentInit = await apiCall('/payments/initiate', {
                     method: 'POST',
@@ -14987,6 +15061,9 @@ async function showNotifications() {
                     document.body.appendChild(form);
                     form.submit();
                 } else if (paymentInit.payment?.provider === 'yoco' && paymentInit.payment.redirectUrl) {
+                    window.location.href = paymentInit.payment.redirectUrl;
+                } else if (paymentInit.payment?.provider === 'float' && paymentInit.payment.redirectUrl) {
+                    // Float redirect
                     window.location.href = paymentInit.payment.redirectUrl;
                 } else {
                     // Reset button state if no redirect
@@ -15816,7 +15893,7 @@ async function showNotifications() {
                 console.log('✅ Payment config loaded:', paymentConfig);
             } catch (e) {
                 console.warn('Failed to load payment config:', e);
-                window.paymentConfig = { payfast: { configured: false }, yoco: { configured: false } };
+                window.paymentConfig = { payfast: { configured: false }, yoco: { configured: false }, float: { configured: false } };
             }
 
             // Check for payment success/failure (cart clearing logic)
