@@ -4594,7 +4594,7 @@
                                         </tbody>
                                     </table>
                                     <div id="noBookingsMessage" class="empty-state" style="display: none;">
-                                        <div class="empty-icon">??</div>
+                                        <div class="empty-icon">&#128197;</div>
                                         <p>No bookings yet</p>
                                     </div>
                                 </div>
@@ -4618,7 +4618,7 @@
                                         </tbody>
                                     </table>
                                     <div id="noOrdersMessage" class="empty-state" style="display: none;">
-                                        <div class="empty-icon">??</div>
+                                        <div class="empty-icon">&#128722;</div>
                                         <p>No shop orders yet</p>
                                     </div>
                                 </div>
@@ -4643,7 +4643,7 @@
                                         </tbody>
                                     </table>
                                     <div id="noInvoicesMessage" class="empty-state" style="display: none;">
-                                        <div class="empty-icon">??</div>
+                                        <div class="empty-icon">&#128196;</div>
                                         <p>No invoices yet</p>
                                     </div>
                                 </div>
@@ -4669,7 +4669,7 @@
                                                 </tbody>
                                             </table>
                                             <div id="noLoyaltyMessage" class="empty-state" style="display: none;">
-                                                <div class="empty-icon">?</div>
+                                                <div class="empty-icon">&#11088;</div>
                                                 <p>No points history yet</p>
                                             </div>
                                         </div>
@@ -4683,7 +4683,7 @@
                                     <!-- Populated dynamically -->
                                 </div>
                                 <div id="noInspoMessage" class="empty-state" style="display: none;">
-                                    <div class="empty-icon">??</div>
+                                    <div class="empty-icon">&#128247;</div>
                                     <p>No inspiration photos uploaded</p>
                                 </div>
                             </div>
@@ -4708,7 +4708,7 @@
                                         <!-- Populated dynamically -->
                                     </div>
                                     <div id="noChatMessage" class="empty-state" style="display: none;">
-                                        <div class="empty-icon">??</div>
+                                        <div class="empty-icon">&#128172;</div>
                                         <p>No chat history with this customer</p>
                                         <p style="font-size: 13px; color: var(--text-subtle);">Send a message to start a conversation</p>
                                     </div>
@@ -9119,7 +9119,7 @@
             const alert = document.getElementById('dashboardAlert');
             if (alert) {
                 alert.className = `dashboard-alert ${type}`;
-                alert.innerHTML = `<span>${type === 'error' ? '??' : type === 'warning' ? '?' : '??'}</span> ${message}`;
+                alert.innerHTML = `<span>${type === 'error' ? '&#10060;' : type === 'warning' ? '&#9888;' : '&#10004;'}</span> ${message}`;
                 alert.style.display = 'flex';
             }
         }
@@ -10752,13 +10752,13 @@
                     if (b.status === 'REQUESTED') {
                         quickActions = `
                             <div class="day-view-quick-actions" style="position: absolute; bottom: 3px; right: 3px; display: flex; gap: 3px;">
-                                <button class="quick-confirm-btn" data-booking-id="${b.id}" title="Confirm" style="background: #28a745; color: white; border: none; border-radius: 3px; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">?</button>
+                                <button class="quick-confirm-btn" data-booking-id="${b.id}" title="Confirm" style="background: #28a745; color: white; border: none; border-radius: 3px; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&#10004;</button>
                             </div>
                         `;
                     } else if (b.status === 'CONFIRMED') {
                         quickActions = `
                             <div class="day-view-quick-actions" style="position: absolute; bottom: 3px; right: 3px; display: flex; gap: 3px;">
-                                <button class="quick-complete-btn" data-booking-id="${b.id}" title="Complete" style="background: #17a2b8; color: white; border: none; border-radius: 3px; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">?</button>
+                                <button class="quick-complete-btn" data-booking-id="${b.id}" title="Complete" style="background: #17a2b8; color: white; border: none; border-radius: 3px; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&#9989;</button>
                             </div>
                         `;
                     }
@@ -12430,10 +12430,10 @@
                 : '';
 
             // Tier badge
-            const tierIcons = { bronze: '??', silver: '??', gold: '??', platinum: '??' };
+            const tierIcons = { bronze: '&#129353;', silver: '&#129352;', gold: '&#129351;', platinum: '&#128142;' };
             const tier = profile.tier || 'bronze';
             document.getElementById('profileTierBadge').innerHTML = `
-                <span class="tier-icon">${tierIcons[tier] || '??'}</span>
+                <span class="tier-icon">${tierIcons[tier] || '&#11088;'}</span>
                 <span class="tier-name">${tier.charAt(0).toUpperCase() + tier.slice(1)} Member</span>
             `;
 
