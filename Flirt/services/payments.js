@@ -194,23 +194,33 @@ function generatePayFastPayment(order, customer, options = {}) {
 /**
  * Generate PayFast MD5 signature
  * Per PayFast docs: https://developers.payfast.co.za/docs#step_2_signature
- * - Parameters must be in the order they appear in the form (not sorted alphabetically for generation)
- * - Values must be URL-encoded
+ * - Parameters must be in the EXACT order specified by PayFast (not alphabetical)
+ * - Values must be URL-encoded using encodeURIComponent
  * - Spaces should be encoded as + (not %20)
+ * - Empty values must be excluded
+ * - Passphrase is appended at the end (if configured in PayFast dashboard)
  */
 function generatePayFastSignature(data, useOriginalOrder = false) {
     const config = getEffectiveConfig();
 
-    // PayFast expects parameters in a specific order for signature generation
-    // The order is: merchant details, customer details, transaction details, then custom fields
+    // CRITICAL: PayFast expects parameters in this EXACT order for signature generation
+    // Source: https://developers.payfast.co.za/docs#step_2_signature
     const orderedKeys = [
+        // Merchant Details
         'merchant_id', 'merchant_key', 'return_url', 'cancel_url', 'notify_url',
+        // Buyer Details
         'name_first', 'name_last', 'email_address', 'cell_number',
+        // Transaction Details
         'm_payment_id', 'amount', 'item_name', 'item_description',
+        // Custom Fields
         'custom_int1', 'custom_int2', 'custom_int3', 'custom_int4', 'custom_int5',
         'custom_str1', 'custom_str2', 'custom_str3', 'custom_str4', 'custom_str5',
-        'email_confirmation', 'confirmation_address', 'payment_method', 'subscription_type',
-        'billing_date', 'recurring_amount', 'frequency', 'cycles'
+        // Transaction Options
+        'email_confirmation', 'confirmation_address',
+        // Payment Method
+        'payment_method',
+        // Recurring Billing
+        'subscription_type', 'billing_date', 'recurring_amount', 'frequency', 'cycles'
     ];
 
     // Build parameter string
@@ -227,7 +237,7 @@ function generatePayFastSignature(data, useOriginalOrder = false) {
             }
         });
     } else {
-        // For generation, use the defined order
+        // For generation, use the defined order (CRITICAL: order matters!)
         orderedKeys.forEach(key => {
             if (data[key] !== '' && data[key] !== null && data[key] !== undefined && key !== 'signature') {
                 const value = String(data[key]).trim();
@@ -237,7 +247,7 @@ function generatePayFastSignature(data, useOriginalOrder = false) {
             }
         });
 
-        // Add any extra keys not in the ordered list
+        // Add any extra keys not in the ordered list (at the end)
         Object.keys(data).forEach(key => {
             if (!orderedKeys.includes(key) && data[key] !== '' && data[key] !== null && data[key] !== undefined && key !== 'signature') {
                 const value = String(data[key]).trim();
@@ -249,15 +259,37 @@ function generatePayFastSignature(data, useOriginalOrder = false) {
 
     let paramString = params.join('&');
 
-    // Add passphrase if configured (must also be URL encoded)
-    if (config.payfast.passphrase) {
-        const encodedPassphrase = encodeURIComponent(config.payfast.passphrase.trim()).replace(/%20/g, '+');
+    // CRITICAL: Passphrase handling
+    // - Only add passphrase if it's configured in YOUR PayFast dashboard
+    // - If you DON'T have a passphrase set in PayFast, DON'T include it here
+    // - Using sandbox passphrase (jt7NOE43FZPn) with live credentials WILL FAIL
+    const SANDBOX_PASSPHRASE = 'jt7NOE43FZPn';
+    const passphrase = config.payfast.passphrase?.trim();
+
+    if (passphrase && passphrase.length > 0) {
+        // Check if using sandbox passphrase with live mode
+        if (!config.payfast.sandbox && passphrase === SANDBOX_PASSPHRASE) {
+            console.error('[PayFast] ⚠️ WARNING: You are using SANDBOX passphrase with LIVE mode!');
+            console.error('[PayFast] This WILL cause "Invalid merchant key" errors!');
+            console.error('[PayFast] Either clear the passphrase or set your LIVE passphrase from PayFast dashboard.');
+        }
+
+        const encodedPassphrase = encodeURIComponent(passphrase).replace(/%20/g, '+');
         paramString += `&passphrase=${encodedPassphrase}`;
+        console.log('[PayFast] Passphrase included in signature (length:', passphrase.length, ')');
+    } else {
+        console.log('[PayFast] No passphrase configured - signature generated without passphrase');
     }
 
-    console.log('[PayFast] Signature string (first 200 chars):', paramString.substring(0, 200) + '...');
+    console.log('[PayFast] Signature parameter string:');
+    console.log('[PayFast]   Total params:', params.length);
+    console.log('[PayFast]   String length:', paramString.length);
+    console.log('[PayFast]   First 300 chars:', paramString.substring(0, 300));
 
-    return crypto.createHash('md5').update(paramString).digest('hex');
+    const signature = crypto.createHash('md5').update(paramString).digest('hex');
+    console.log('[PayFast] Generated signature:', signature);
+
+    return signature;
 }
 
 /**
