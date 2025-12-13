@@ -8703,8 +8703,8 @@ async function seedServicesDefaults() {
 // Set default commission rates on services that don't have them
 async function setDefaultCommissionRates() {
     try {
-        // Default commission rate: 30% for services
-        const DEFAULT_SERVICE_COMMISSION = 0.30;
+        // Default commission rate: 50% for services (each service can have its own rate)
+        const DEFAULT_SERVICE_COMMISSION = 0.50;
 
         // Update services that have NULL commission_rate
         const result = await db.dbRun(`
@@ -8722,13 +8722,8 @@ async function setDefaultCommissionRates() {
             console.log(`✅ Set default commission rate (${DEFAULT_SERVICE_COMMISSION * 100}%) on ${updatedCount.count} services`);
         }
 
-        // Also update products without commission rates (default 10%)
-        const DEFAULT_PRODUCT_COMMISSION = 0.10;
-        await db.dbRun(`
-            UPDATE products
-            SET commission_rate = ?
-            WHERE commission_rate IS NULL
-        `, [DEFAULT_PRODUCT_COMMISSION]);
+        // Products don't have commission - stylists only earn commission on services
+        // (Removing product commission update as per business rules)
 
     } catch (err) {
         console.error('Failed to set default commission rates:', err.message);
