@@ -3373,7 +3373,12 @@
                                     <div class="stat-value" id="statMonthRevenue">Loading...</div>
                                     <div class="stat-label">Revenue This Month</div>
                                 </div>
-                                <div class="stat-icon pink">??</div>
+                                <div class="stat-icon pink">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                    </svg>
+                                </div>
                             </div>
                             <div class="stat-change" id="statRevenueChange"></div>
                         </div>
@@ -3383,7 +3388,14 @@
                                     <div class="stat-value" id="statMonthBookings">Loading...</div>
                                     <div class="stat-label">Bookings This Month</div>
                                 </div>
-                                <div class="stat-icon gold">??</div>
+                                <div class="stat-icon gold">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                </div>
                             </div>
                             <div class="stat-change" id="statBookingsChange"></div>
                         </div>
@@ -3393,7 +3405,13 @@
                                     <div class="stat-value" id="statMonthOrders">Loading...</div>
                                     <div class="stat-label">Product Orders This Month</div>
                                 </div>
-                                <div class="stat-icon green">??</div>
+                                <div class="stat-icon green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <circle cx="9" cy="21" r="1"></circle>
+                                        <circle cx="20" cy="21" r="1"></circle>
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                    </svg>
+                                </div>
                             </div>
                             <div class="stat-change" id="statOrdersChange"></div>
                         </div>
@@ -3403,7 +3421,14 @@
                                     <div class="stat-value" id="statActiveCustomers">Loading...</div>
                                     <div class="stat-label">Active Customers</div>
                                 </div>
-                                <div class="stat-icon blue">??</div>
+                                <div class="stat-icon blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                    </svg>
+                                </div>
                             </div>
                             <div class="stat-change" id="statCustomersChange"></div>
                         </div>
@@ -3413,19 +3438,47 @@
                     <h3 style="margin-bottom: 15px;">Quick Actions</h3>
                     <div class="quick-actions">
                         <button class="quick-action-btn" onclick="openAdminBookingModal()">
-                            <div class="quick-action-icon">?</div>
+                            <div class="quick-action-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    <line x1="12" y1="14" x2="12" y2="18"></line>
+                                    <line x1="10" y1="16" x2="14" y2="16"></line>
+                                </svg>
+                            </div>
                             <div class="quick-action-text">New Booking</div>
                         </button>
                         <button class="quick-action-btn" onclick="openAddProductModal()">
-                            <div class="quick-action-icon">??</div>
+                            <div class="quick-action-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                                    <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                </svg>
+                            </div>
                             <div class="quick-action-text">Add Product</div>
                         </button>
                         <button class="quick-action-btn" onclick="openModal('addPromoModal')">
-                            <div class="quick-action-icon">???</div>
+                            <div class="quick-action-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                                    <polyline points="20 12 20 22 4 22 4 12"></polyline>
+                                    <rect x="2" y="7" width="20" height="5"></rect>
+                                    <line x1="12" y1="22" x2="12" y2="7"></line>
+                                    <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
+                                    <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+                                </svg>
+                            </div>
                             <div class="quick-action-text">Create Promo</div>
                         </button>
                         <button class="quick-action-btn" onclick="showSection('chat')">
-                            <div class="quick-action-icon">??</div>
+                            <div class="quick-action-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            </div>
                             <div class="quick-action-text">View Messages</div>
                         </button>
                     </div>
@@ -4016,7 +4069,14 @@
                                     <div class="stat-value" id="teamActiveCount">0</div>
                                     <div class="stat-label">Active Stylists</div>
                                 </div>
-                                <div class="stat-icon pink">?????</div>
+                                <div class="stat-icon pink">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4093,7 +4153,12 @@
                                     <div class="stat-value" id="payrollTotalBasic">R0</div>
                                     <div class="stat-label">Total Basic Pay</div>
                                 </div>
-                                <div class="stat-icon blue">??</div>
+                                <div class="stat-icon blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -4102,7 +4167,12 @@
                                     <div class="stat-value" id="payrollTotalCommission">R0</div>
                                     <div class="stat-label">Total Commission</div>
                                 </div>
-                                <div class="stat-icon green">??</div>
+                                <div class="stat-icon green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                        <polyline points="17 6 23 6 23 12"></polyline>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -4111,7 +4181,12 @@
                                     <div class="stat-value" id="payrollTotalGross">R0</div>
                                     <div class="stat-label">Total Gross Pay</div>
                                 </div>
-                                <div class="stat-icon pink">??</div>
+                                <div class="stat-icon pink">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -4120,7 +4195,14 @@
                                     <div class="stat-value" id="payrollStylistCount">0</div>
                                     <div class="stat-label">Stylists</div>
                                 </div>
-                                <div class="stat-icon gold">?????</div>
+                                <div class="stat-icon gold">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -5262,7 +5344,14 @@
                                     <div class="stat-value" id="productsTotalCount">0</div>
                                     <div class="stat-label">Total Products</div>
                                 </div>
-                                <div class="stat-icon pink">??</div>
+                                <div class="stat-icon pink">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -5271,7 +5360,13 @@
                                     <div class="stat-value" id="productsLowStockCount">0</div>
                                     <div class="stat-label">Low Stock Alerts</div>
                                 </div>
-                                <div class="stat-icon" style="background: rgba(244, 67, 54, 0.1); color: var(--danger);">??</div>
+                                <div class="stat-icon" style="background: rgba(244, 67, 54, 0.1); color: var(--danger);">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -5280,7 +5375,12 @@
                                     <div class="stat-value" id="productsInventoryValue">R0</div>
                                     <div class="stat-label">Inventory Value</div>
                                 </div>
-                                <div class="stat-icon green">??</div>
+                                <div class="stat-icon green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -6160,7 +6260,11 @@
                                     <div class="stat-value" id="promoActiveCount">0</div>
                                     <div class="stat-label">Active Promos</div>
                                 </div>
-                                <div class="stat-icon pink">???</div>
+                                <div class="stat-icon pink">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -6169,7 +6273,15 @@
                                     <div class="stat-value" id="promoCodesUsed">0</div>
                                     <div class="stat-label">Codes Used</div>
                                 </div>
-                                <div class="stat-icon gold">???</div>
+                                <div class="stat-icon gold">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <polyline points="20 12 20 22 4 22 4 12"></polyline>
+                                        <rect x="2" y="7" width="20" height="5"></rect>
+                                        <line x1="12" y1="22" x2="12" y2="7"></line>
+                                        <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path>
+                                        <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -6178,7 +6290,12 @@
                                     <div class="stat-value" id="promoDiscountsGiven">R0</div>
                                     <div class="stat-label">Discounts Given</div>
                                 </div>
-                                <div class="stat-icon green">??</div>
+                                <div class="stat-icon green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                     </div>
