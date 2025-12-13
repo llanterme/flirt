@@ -7962,7 +7962,7 @@
                         </div>
                     </label>
                     <label class="payment-option float-option" id="floatPaymentOption" style="display: none; align-items: center; padding: 15px; border: 2px solid #eee; border-radius: 10px; cursor: pointer; transition: all 0.2s; background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);">
-                        <input type="radio" name="paymentMethod" value="float" style="width: 18px; height: 18px; margin-right: 12px;">
+                        <input type="radio" name="paymentMethod" value="float" style="width: 18px; height: 18px; margin-right: 12px;" onchange="preAuthFloat()">
                         <div style="flex: 1;">
                             <div style="font-weight: 600; color: #00a86b;">Pay with Float</div>
                             <div style="font-size: 12px; color: #666;">Buy now, pay later - 4 interest-free installments</div>
@@ -15033,12 +15033,24 @@ async function showNotifications() {
                 return;
             }
 
-            // Set processing state and update button
+            // Set processing state and update button IMMEDIATELY
             isProcessingPayment = true;
             const payBtn = document.querySelector('#checkoutModal .btn-primary');
             const originalBtnText = payBtn ? payBtn.innerHTML : '';
+
+            // Check payment method selection NOW to show appropriate loading state
+            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+            const floatConfigured = window.paymentConfig?.float?.configured;
+            const isFloatPayment = selectedPaymentMethod === 'float' && floatConfigured;
+
             if (payBtn) {
-                payBtn.innerHTML = 'Processing...';
+                if (isFloatPayment) {
+                    // Show Float-specific loading immediately
+                    payBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span>Connecting to Float...</span>';
+                    showToast({ type: 'info', title: 'Float Pay', message: 'Setting up your pay-in-4 payment...', duration: 5000 });
+                } else {
+                    payBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span style="width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;display:inline-block;"></span>Processing...</span>';
+                }
                 payBtn.disabled = true;
             }
 
@@ -15077,17 +15089,10 @@ async function showNotifications() {
                     return;
                 }
 
-                // Check if user selected Float (buy now pay later)
-                const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+                // Determine payment provider (isFloatPayment already set at top of function)
                 let preferredProvider;
-
-                if (selectedPaymentMethod === 'float' && floatConfigured) {
+                if (isFloatPayment) {
                     preferredProvider = 'float';
-                    // Update button text for Float to show specific loading state
-                    if (payBtn) {
-                        payBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span class="spinner" style="width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></span>Connecting to Float...</span>';
-                    }
-                    showToast({ type: 'info', title: 'Float Pay', message: 'Setting up your pay-in-4 payment...', duration: 3000 });
                 } else {
                     // Choose provider: prefer PayFast if configured, else Yoco
                     preferredProvider = payfastConfigured ? 'payfast' : 'yoco';
