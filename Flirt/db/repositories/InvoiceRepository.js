@@ -640,9 +640,21 @@ class InvoiceRepository {
         const total = order.total;
 
         // For online orders, we don't have a stylist - use a system/shop identifier
-        // First, check if we have a "Shop" stylist, if not we'll use null
+        // First, check if we have a "Shop" or "Online" stylist
         let shopStylist = await dbGet(this.db, "SELECT id FROM stylists WHERE name LIKE '%Shop%' OR name LIKE '%Online%' LIMIT 1");
-        const stylist_id = shopStylist?.id || null;
+
+        // If no shop stylist exists, create one
+        if (!shopStylist) {
+            const shopStylistId = uuidv4();
+            await dbRun(this.db, `
+                INSERT INTO stylists (id, name, email, phone, role, specialties, active, created_at)
+                VALUES (?, 'Online Shop', 'shop@flirt.hair', '', 'junior', '["Online Sales"]', 1, datetime('now'))
+            `, [shopStylistId]);
+            shopStylist = { id: shopStylistId };
+            console.log('✅ Created "Online Shop" stylist for website orders');
+        }
+
+        const stylist_id = shopStylist.id;
 
         // Insert invoice header - already finalized and paid
         await dbRun(this.db, `
