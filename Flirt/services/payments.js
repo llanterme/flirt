@@ -124,41 +124,19 @@ function generatePayFastPayment(order, customer, options = {}) {
     });
 
     // Build the direct payment URL parameters
-    // Using the simpler cmd=_paynow format (like EasyNotary invoices)
+    // Using the MINIMAL cmd=_paynow format (like EasyNotary invoices)
+    // Keeping only essential parameters for fastest load time
     const params = new URLSearchParams();
 
-    // Required parameters
+    // Required parameters (same as EasyNotary)
     params.append('cmd', '_paynow');
     params.append('receiver', config.payfast.merchantId);
     params.append('m_payment_id', paymentId);
-    params.append('amount', order.total.toFixed(2));
     params.append('item_name', itemName);
-
-    // Optional but recommended
-    params.append('item_description', itemDescription);
-    params.append('return_url', `${baseAppUrl}/app?payment=success&ref=${paymentId}`);
-    params.append('cancel_url', `${baseAppUrl}/app?payment=cancelled&ref=${paymentId}`);
-    params.append('notify_url', `${baseApiUrl}/api/payments/webhook/payfast`);
-
-    // Customer details
-    if (customer.email) {
-        params.append('email_address', customer.email);
-    }
-    if (customer.name) {
-        const nameParts = customer.name.split(' ');
-        params.append('name_first', nameParts[0]);
-        if (nameParts.length > 1) {
-            params.append('name_last', nameParts.slice(1).join(' '));
-        }
-    }
-
-    // Email confirmation
+    params.append('amount', order.total.toFixed(2));
     params.append('email_confirmation', '1');
     params.append('confirmation_address', customer.email || 'bookings@flirt.hair');
-
-    // Custom tracking fields
-    params.append('custom_str1', order.id);
-    params.append('custom_str2', customer.id || '');
+    params.append('item_description', itemDescription);
 
     // Build the payment URL
     // Use payment.payfast.io for the direct URL approach

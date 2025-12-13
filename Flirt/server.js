@@ -10663,17 +10663,140 @@ app.post('/api/invoices/:id/pay', authenticateToken, async (req, res) => {
         }
 
         const { payment_method } = req.body;
+        const customer = await UserRepository.findById(invoice.user_id);
 
-        // For now, return payment URL (integration with PayFast/Yoco would go here)
-        // This would use the existing PaymentService logic
+        // Generate PayFast payment URL using the direct URL method
+        if (payment_method === 'payfast') {
+            const paymentData = PaymentService.generatePayFastPayment(
+                {
+                    id: invoice.id,
+                    total: invoice.amount_due || invoice.total,
+                    items: [] // Invoice doesn't have items array like orders
+                },
+                {
+                    id: customer?.id || '',
+                    name: customer?.name || 'Customer',
+                    email: customer?.email || ''
+                },
+                {
+                    itemName: `Invoice: ${invoice.invoice_number}`,
+                    itemDescription: `Payment for Invoice ${invoice.invoice_number} from Flirt Hair & Beauty`
+                }
+            );
 
+            return res.json({
+                success: true,
+                payment_url: paymentData.redirectUrl,
+                payment_id: paymentData.paymentId,
+                amount: invoice.amount_due || invoice.total
+            });
+        }
+
+        // Fallback for other payment methods
         res.json({
             success: true,
             payment_url: `/payment/invoice/${invoice.id}?method=${payment_method}`,
-            amount: invoice.amount_due
+            amount: invoice.amount_due || invoice.total
         });
     } catch (error) {
         console.error('Initiate payment error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Generate PayFast payment link for invoice (admin use - shareable link)
+app.get('/api/admin/invoices/:id/payment-link', authenticateToken, adminOrStaff, async (req, res) => {
+    try {
+        const invoice = await InvoiceRepository.getById(req.params.id);
+
+        if (!invoice) {
+            return res.status(404).json({ error: 'Invoice not found' });
+        }
+
+        if (invoice.payment_status === 'paid') {
+            return res.status(400).json({ error: 'Invoice already paid' });
+        }
+
+        // Get customer details
+        const customer = invoice.user_id ? await UserRepository.findById(invoice.user_id) : null;
+
+        // Generate PayFast payment URL
+        const paymentData = PaymentService.generatePayFastPayment(
+            {
+                id: invoice.id,
+                total: invoice.amount_due || invoice.total,
+                items: []
+            },
+            {
+                id: customer?.id || '',
+                name: customer?.name || invoice.client_name || 'Customer',
+                email: customer?.email || invoice.client_email || ''
+            },
+            {
+                itemName: `Invoice: ${invoice.invoice_number}`,
+                itemDescription: `Payment for Invoice ${invoice.invoice_number} from Flirt Hair & Beauty`
+            }
+        );
+
+        res.json({
+            success: true,
+            payment_url: paymentData.redirectUrl,
+            payment_id: paymentData.paymentId,
+            invoice_number: invoice.invoice_number,
+            amount: invoice.amount_due || invoice.total
+        });
+    } catch (error) {
+        console.error('Generate payment link error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Public endpoint to get invoice payment URL (for email links)
+app.get('/api/invoices/:id/payment-url', async (req, res) => {
+    try {
+        const invoice = await InvoiceRepository.getById(req.params.id);
+
+        if (!invoice) {
+            return res.status(404).json({ error: 'Invoice not found' });
+        }
+
+        if (invoice.status !== 'finalized') {
+            return res.status(400).json({ error: 'Invoice is not finalized' });
+        }
+
+        if (invoice.payment_status === 'paid') {
+            return res.status(400).json({ error: 'Invoice already paid' });
+        }
+
+        // Get customer details
+        const customer = invoice.user_id ? await UserRepository.findById(invoice.user_id) : null;
+
+        // Generate PayFast payment URL
+        const paymentData = PaymentService.generatePayFastPayment(
+            {
+                id: invoice.id,
+                total: invoice.amount_due || invoice.total,
+                items: []
+            },
+            {
+                id: customer?.id || '',
+                name: customer?.name || invoice.client_name || 'Customer',
+                email: customer?.email || invoice.client_email || ''
+            },
+            {
+                itemName: `Invoice: ${invoice.invoice_number}`,
+                itemDescription: `Payment for Invoice ${invoice.invoice_number} from Flirt Hair & Beauty`
+            }
+        );
+
+        res.json({
+            success: true,
+            payment_url: paymentData.redirectUrl,
+            invoice_number: invoice.invoice_number,
+            amount: invoice.amount_due || invoice.total
+        });
+    } catch (error) {
+        console.error('Get payment URL error:', error);
         res.status(500).json({ error: error.message });
     }
 });

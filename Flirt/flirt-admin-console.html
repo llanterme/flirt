@@ -6085,6 +6085,13 @@
                                 </svg>
                                 Print
                             </button>
+                            <button id="view-invoice-payment-link-btn" class="btn btn-outline" onclick="copyInvoicePaymentLink()" style="display: none;">
+                                <svg style="width:16px;height:16px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                </svg>
+                                Copy Payment Link
+                            </button>
                             <button id="view-invoice-record-payment-btn" class="btn btn-primary" onclick="recordPaymentFromView()" style="display: none;">
                                 Record Payment
                             </button>
@@ -18756,6 +18763,12 @@
                                                     <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                                                 </svg>
                                             </button>
+                                            <button class="invoice-action-btn" onclick="copyPaymentLinkById('${inv.id}')" title="Copy Payment Link" style="color:var(--brand-pink);">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                                </svg>
+                                            </button>
                                         ` : ''}
                                         ${inv.status === 'draft' ? `
                                             <button class="invoice-action-btn" onclick="editInvoice('${inv.id}')" title="Edit">
@@ -18989,6 +19002,14 @@
                     recordPaymentBtn.style.display = 'none';
                 }
 
+                // Show/hide payment link button (only for finalized invoices that are not fully paid)
+                const paymentLinkBtn = document.getElementById('view-invoice-payment-link-btn');
+                if (invoice.status === 'finalized' && invoice.payment_status !== 'paid') {
+                    paymentLinkBtn.style.display = 'inline-flex';
+                } else {
+                    paymentLinkBtn.style.display = 'none';
+                }
+
                 // Notes section
                 const notesSection = document.getElementById('view-invoice-notes-section');
                 const notesDiv = document.getElementById('view-invoice-notes');
@@ -19028,6 +19049,38 @@
             if (currentViewInvoiceId) {
                 closeViewInvoiceModal();
                 showPaymentModal(currentViewInvoiceId);
+            }
+        }
+
+        // Copy PayFast payment link to clipboard (from view modal)
+        async function copyInvoicePaymentLink() {
+            if (!currentViewInvoiceId) return;
+            await copyPaymentLinkById(currentViewInvoiceId);
+        }
+
+        // Copy PayFast payment link by invoice ID (can be used from list or modal)
+        async function copyPaymentLinkById(invoiceId) {
+            try {
+                const response = await fetch(`${API_BASE}/admin/invoices/${invoiceId}/payment-link`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Failed to generate payment link');
+                }
+
+                const data = await response.json();
+
+                if (data.payment_url) {
+                    await navigator.clipboard.writeText(data.payment_url);
+                    showAdminToast('Payment link copied to clipboard! Share with customer to collect payment.', 'success');
+                } else {
+                    throw new Error('Payment URL not available');
+                }
+            } catch (error) {
+                console.error('Copy payment link error:', error);
+                showAdminToast(error.message || 'Failed to generate payment link', 'error');
             }
         }
 
