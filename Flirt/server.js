@@ -7820,6 +7820,9 @@ app.post('/api/admin/cleanup/orders-invoices', authenticateAdmin, async (req, re
 
         const results = {};
 
+        // First, clear invoice references from bookings (to avoid FK constraint)
+        results.bookings_cleared = (await db.dbRun('UPDATE bookings SET invoice_id = NULL, invoiced = 0 WHERE invoice_id IS NOT NULL')).changes;
+
         // Delete in order to respect foreign key constraints
         results.invoice_payments = (await db.dbRun('DELETE FROM invoice_payments')).changes;
         results.invoice_commissions = (await db.dbRun('DELETE FROM invoice_commissions')).changes;
