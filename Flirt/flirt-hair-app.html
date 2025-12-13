@@ -6089,7 +6089,7 @@
                         <circle cx="20" cy="21" r="1"></circle>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                     </svg>
-                    <span class="badge" id="cartCount">2</span>
+                    <span class="badge" id="cartCount">0</span>
                 </button>
                 <button class="icon-btn profile-btn" onclick="switchTab('profile')" title="My Profile">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -7787,37 +7787,12 @@
         </div>
         <div class="cart-items" id="cartItems">
             <!-- Cart items will be added dynamically -->
-            <div class="cart-item">
-                <img src="/images/products/KEVIN-MURPHY-Angel-300x300.png" class="cart-item-image" alt="Angel Wash">
-                <div class="cart-item-details">
-                    <div class="cart-item-name">Angel.Wash</div>
-                    <div class="cart-item-price">R385</div>
-                    <div class="quantity-control">
-                        <button class="qty-btn" onclick="updateQty('angel-wash', -1)">-</button>
-                        <span id="qty-angel-wash">1</span>
-                        <button class="qty-btn" onclick="updateQty('angel-wash', 1)">+</button>
-                        <button style="background: none; border: none; color: var(--brand-pink); cursor: pointer; margin-left: 10px;" onclick="removeFromCart('angel-wash')">Remove</button>
-                    </div>
-                </div>
-            </div>
-            <div class="cart-item">
-                <img src="/images/products/KEVIN-MURPHY-09-300x300.png" class="cart-item-image" alt="Bedroom Hair">
-                <div class="cart-item-details">
-                    <div class="cart-item-name">Bedroom.Hair</div>
-                    <div class="cart-item-price">R420</div>
-                    <div class="quantity-control">
-                        <button class="qty-btn" onclick="updateQty('bedroom-hair', -1)">-</button>
-                        <span id="qty-bedroom-hair">1</span>
-                        <button class="qty-btn" onclick="updateQty('bedroom-hair', 1)">+</button>
-                        <button style="background: none; border: none; color: var(--brand-pink); cursor: pointer; margin-left: 10px;" onclick="removeFromCart('bedroom-hair')">Remove</button>
-                    </div>
-                </div>
-            </div>
+            <p style="text-align: center; color: var(--gray-medium); padding: 40px;">Your cart is empty</p>
         </div>
         <div class="cart-footer">
             <div class="cart-subtotal">
                 <span>Subtotal</span>
-                <span id="cartSubtotal">R805</span>
+                <span id="cartSubtotal">R0</span>
             </div>
             <div class="cart-subtotal">
                 <span>Delivery</span>
@@ -7825,7 +7800,7 @@
             </div>
             <div class="cart-total">
                 <span>Total</span>
-                <span id="cartTotal">R805</span>
+                <span id="cartTotal">R0</span>
             </div>
             <button class="btn btn-primary" onclick="openCheckout()">Proceed to Checkout</button>
             <button class="btn btn-outline" onclick="closeCart()">Continue Shopping</button>
@@ -15199,6 +15174,7 @@ async function showNotifications() {
                 discount = 0;
                 appliedPromoCode = null;
                 updateCartCount();
+                updateCartDisplay();
                 localStorage.removeItem('flirt_pending_order_id');
 
                 // Show success message
@@ -16067,8 +16043,9 @@ async function showNotifications() {
             }
 
             // Initialize cart from localStorage (cart is already loaded at declaration)
-            // Just update the display
+            // Update both the count badge and cart items display
             updateCartCount();
+            updateCartDisplay();
 
             // Check for admin-triggered notifications after a short delay
             setTimeout(() => {
