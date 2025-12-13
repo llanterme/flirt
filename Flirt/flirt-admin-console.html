@@ -20480,6 +20480,7 @@ Would you like to perform an action on this quote?
                             <th>Invoice Total</th>
                             <th>Commission</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -20498,6 +20499,15 @@ Would you like to perform an action on this quote?
                                     <span class="badge badge-${comm.payment_status === 'paid' ? 'success' : 'warning'}">
                                         ${(comm.payment_status || 'pending').toUpperCase()}
                                     </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline" onclick="viewInvoice('${comm.invoice_id || ''}')" title="View Invoice" ${!comm.invoice_id ? 'disabled' : ''}>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        View
+                                    </button>
                                 </td>
                             </tr>
                         `).join('')}
