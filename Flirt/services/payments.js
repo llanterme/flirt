@@ -109,14 +109,25 @@ function generatePayFastPayment(order, customer, options = {}) {
     // Log configuration for debugging
     console.log('[PayFast] Payment Config:', {
         merchantId: config.payfast.merchantId,
+        merchantKey: config.payfast.merchantKey ? `${config.payfast.merchantKey.substring(0, 3)}...${config.payfast.merchantKey.substring(config.payfast.merchantKey.length - 3)}` : 'NOT SET',
         merchantKeyLength: config.payfast.merchantKey?.length || 0,
+        merchantKeyFirstChar: config.payfast.merchantKey?.charCodeAt(0) || 'N/A',
         hasPassphrase: !!config.payfast.passphrase,
         passphraseLength: config.payfast.passphrase?.length || 0,
+        passphrasePreview: config.payfast.passphrase ? `${config.payfast.passphrase.substring(0, 3)}...` : 'NOT SET',
         sandbox: config.payfast.sandbox,
         baseUrl: config.payfast.baseUrl,
         return_url: `${baseAppUrl}/app?payment=success&ref=${paymentId}`,
         notify_url: `${baseApiUrl}/api/payments/webhook/payfast`
     });
+
+    // CRITICAL: Validate merchant credentials format
+    if (config.payfast.merchantId && !/^\d{8}$/.test(config.payfast.merchantId)) {
+        console.error('[PayFast] WARNING: Merchant ID should be exactly 8 digits! Got:', config.payfast.merchantId);
+    }
+    if (config.payfast.merchantKey && config.payfast.merchantKey.length !== 13) {
+        console.error('[PayFast] WARNING: Merchant Key should be exactly 13 characters! Got length:', config.payfast.merchantKey.length);
+    }
 
     const data = {
         // Merchant details
