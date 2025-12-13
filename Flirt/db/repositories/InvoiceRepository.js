@@ -647,8 +647,8 @@ class InvoiceRepository {
         if (!shopStylist) {
             const shopStylistId = uuidv4();
             await dbRun(this.db, `
-                INSERT INTO stylists (id, name, email, phone, role, specialties, active, created_at)
-                VALUES (?, 'Online Shop', 'shop@flirt.hair', '', 'junior', '["Online Sales"]', 1, datetime('now'))
+                INSERT INTO stylists (id, name, specialty, tagline, available, created_at)
+                VALUES (?, 'Online Shop', 'Online Sales', 'Website product orders', 1, datetime('now'))
             `, [shopStylistId]);
             shopStylist = { id: shopStylistId };
             console.log('✅ Created "Online Shop" stylist for website orders');
