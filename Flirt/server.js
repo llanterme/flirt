@@ -235,27 +235,34 @@ async function seedAdminUser() {
         try {
             let storedPaymentConfig = await PaymentSettingsRepository.getConfig();
 
-            // Seed PayFast sandbox config if not configured
-            if (!storedPaymentConfig || !storedPaymentConfig.payfast?.merchantId) {
-                console.log('Seeding PayFast sandbox configuration for testing...');
+            // Seed PayFast sandbox config if not configured or URLs are missing
+            const needsUpdate = !storedPaymentConfig ||
+                                !storedPaymentConfig.payfast?.merchantId ||
+                                !storedPaymentConfig.appUrl ||
+                                storedPaymentConfig.appUrl === '';
+
+            if (needsUpdate) {
+                console.log('Seeding/updating PayFast sandbox configuration for testing...');
                 const sandboxConfig = {
                     appUrl: process.env.APP_URL || 'https://flirt.hair',
                     apiBaseUrl: process.env.API_BASE_URL || 'https://flirt.hair/api',
                     payfast: {
-                        merchantId: '10000100',      // PayFast sandbox merchant ID
-                        merchantKey: '46f0cd694581a', // PayFast sandbox merchant key
-                        passphrase: '',               // Empty for sandbox
-                        sandbox: true                 // Enable sandbox mode
+                        merchantId: storedPaymentConfig?.payfast?.merchantId || '10000100',      // PayFast sandbox merchant ID
+                        merchantKey: storedPaymentConfig?.payfast?.merchantKey || '46f0cd694581a', // PayFast sandbox merchant key
+                        passphrase: storedPaymentConfig?.payfast?.passphrase || '',               // Empty for sandbox
+                        sandbox: storedPaymentConfig?.payfast?.sandbox !== false                  // Enable sandbox mode by default
                     },
                     yoco: {
-                        secretKey: '',
-                        publicKey: '',
-                        webhookSecret: ''
+                        secretKey: storedPaymentConfig?.yoco?.secretKey || '',
+                        publicKey: storedPaymentConfig?.yoco?.publicKey || '',
+                        webhookSecret: storedPaymentConfig?.yoco?.webhookSecret || ''
                     }
                 };
                 await PaymentSettingsRepository.saveConfig(sandboxConfig);
                 storedPaymentConfig = sandboxConfig;
-                console.log('✅ PayFast sandbox configuration seeded');
+                console.log('✅ PayFast sandbox configuration seeded/updated');
+                console.log('   App URL:', sandboxConfig.appUrl);
+                console.log('   API Base URL:', sandboxConfig.apiBaseUrl);
             }
 
             if (storedPaymentConfig) {

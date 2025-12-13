@@ -85,8 +85,19 @@ function generatePayFastPayment(order, customer, options = {}) {
     const itemDescription = options.itemDescription || `${order.items.length} item(s) from Flirt Hair & Beauty`;
 
     // Build URLs - ensure no double /api/ prefix
-    const baseAppUrl = config.appUrl.replace(/\/$/, ''); // Remove trailing slash
-    const baseApiUrl = config.apiBaseUrl.replace(/\/$/, '').replace(/\/api$/, ''); // Remove trailing slash and /api suffix
+    const baseAppUrl = (config.appUrl || 'https://flirt.hair').replace(/\/$/, ''); // Remove trailing slash
+    const baseApiUrl = (config.apiBaseUrl || config.appUrl || 'https://flirt.hair').replace(/\/$/, '').replace(/\/api$/, ''); // Remove trailing slash and /api suffix
+
+    // Log URLs for debugging
+    console.log('PayFast URL Config:', {
+        configAppUrl: config.appUrl,
+        configApiBaseUrl: config.apiBaseUrl,
+        baseAppUrl,
+        baseApiUrl,
+        return_url: `${baseAppUrl}/app?payment=success&ref=${paymentId}`,
+        cancel_url: `${baseAppUrl}/app?payment=cancelled&ref=${paymentId}`,
+        notify_url: `${baseApiUrl}/api/payments/webhook/payfast`
+    });
 
     const data = {
         // Merchant details
