@@ -11702,7 +11702,7 @@
         function showStaffStep(step) {
             currentStaffStep = step;
 
-            // Update step tabs
+            // Update step tabs (if they exist - legacy multi-step wizard)
             document.querySelectorAll('.staff-step-tab').forEach(tab => {
                 const tabStep = parseInt(tab.dataset.step);
                 tab.classList.remove('active', 'completed');
@@ -11713,9 +11713,12 @@
                 }
             });
 
-            // Show/hide step content
-            document.getElementById('staff-step-1').style.display = step === 1 ? 'block' : 'none';
-            document.getElementById('staff-step-2').style.display = step === 2 ? 'block' : 'none';
+            // Show/hide step content (if they exist - legacy multi-step wizard)
+            // Current modal uses single-page two-column layout, so these may not exist
+            const step1 = document.getElementById('staff-step-1');
+            const step2 = document.getElementById('staff-step-2');
+            if (step1) step1.style.display = step === 1 ? 'block' : 'none';
+            if (step2) step2.style.display = step === 2 ? 'block' : 'none';
         }
 
         function showAddStaffModal() {
