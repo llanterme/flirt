@@ -15107,21 +15107,28 @@ async function showNotifications() {
                 });
 
                 if (paymentInit.payment?.provider === 'payfast') {
-                    const form = document.createElement('form');
-                    form.action = paymentInit.payment.formAction;
-                    form.method = 'POST';
-                    form.style.display = 'none';
+                    // Use direct GET redirect instead of form POST for faster PayFast loading
+                    // Form POST adds ~2-3 seconds of overhead compared to direct URL redirect
+                    if (paymentInit.payment.redirectUrl) {
+                        window.location.href = paymentInit.payment.redirectUrl;
+                    } else {
+                        // Fallback to form POST if no redirectUrl (legacy support)
+                        const form = document.createElement('form');
+                        form.action = paymentInit.payment.formAction;
+                        form.method = 'POST';
+                        form.style.display = 'none';
 
-                    Object.entries(paymentInit.payment.formData || {}).forEach(([name, value]) => {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = name;
-                        input.value = value;
-                        form.appendChild(input);
-                    });
+                        Object.entries(paymentInit.payment.formData || {}).forEach(([name, value]) => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = name;
+                            input.value = value;
+                            form.appendChild(input);
+                        });
 
-                    document.body.appendChild(form);
-                    form.submit();
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
                 } else if (paymentInit.payment?.provider === 'yoco' && paymentInit.payment.redirectUrl) {
                     window.location.href = paymentInit.payment.redirectUrl;
                 } else if (paymentInit.payment?.provider === 'float' && paymentInit.payment.redirectUrl) {
