@@ -231,8 +231,33 @@ async function seedAdminUser() {
         }
 
         // Load persisted payment configuration into runtime (if any)
+        // If no config exists, seed PayFast sandbox credentials for testing
         try {
-            const storedPaymentConfig = await PaymentSettingsRepository.getConfig();
+            let storedPaymentConfig = await PaymentSettingsRepository.getConfig();
+
+            // Seed PayFast sandbox config if not configured
+            if (!storedPaymentConfig || !storedPaymentConfig.payfast?.merchantId) {
+                console.log('Seeding PayFast sandbox configuration for testing...');
+                const sandboxConfig = {
+                    appUrl: process.env.APP_URL || 'https://flirt.hair',
+                    apiBaseUrl: process.env.API_BASE_URL || 'https://flirt.hair/api',
+                    payfast: {
+                        merchantId: '10000100',      // PayFast sandbox merchant ID
+                        merchantKey: '46f0cd694581a', // PayFast sandbox merchant key
+                        passphrase: '',               // Empty for sandbox
+                        sandbox: true                 // Enable sandbox mode
+                    },
+                    yoco: {
+                        secretKey: '',
+                        publicKey: '',
+                        webhookSecret: ''
+                    }
+                };
+                await PaymentSettingsRepository.saveConfig(sandboxConfig);
+                storedPaymentConfig = sandboxConfig;
+                console.log('✅ PayFast sandbox configuration seeded');
+            }
+
             if (storedPaymentConfig) {
                 PaymentService.setRuntimeConfig(storedPaymentConfig);
                 console.log('Loaded payment configuration from database');
@@ -247,7 +272,7 @@ async function seedAdminUser() {
             const passwordHash = await bcrypt.hash(ADMIN_SEED_PASSWORD, 10);
             await UserRepository.create({
                 id: 'admin-001',
-                email: 'admin@flirt.co.za',
+                email: 'admin@flirt.hair',
                 passwordHash,
                 name: 'Flirt Admin',
                 phone: '+27 11 123 4567',
@@ -258,7 +283,7 @@ async function seedAdminUser() {
                 referralCode: 'FLIRTADMIN',
                 referredBy: null
             });
-            console.log(`✅ Admin user created in SQLite: admin@flirt.co.za`);
+            console.log(`✅ Admin user created in SQLite: admin@flirt.hair`);
             console.log('⚠️  Admin must change password on first login');
         }
     } catch (error) {
