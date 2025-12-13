@@ -348,18 +348,27 @@
 
         /* Home Dashboard - Clean elegant style matching landing page */
         .home-hero {
-            background: var(--brand-white);
+            background: linear-gradient(135deg, rgba(246, 117, 153, 0.15) 0%, rgba(255, 255, 255, 0.95) 50%),
+                        url('/images/hero-banner.jpg') left center / cover no-repeat;
             color: var(--brand-charcoal);
-            padding: 30px 24px;
+            padding: 50px 24px 40px;
             border-radius: 0;
             margin-bottom: 0;
             position: relative;
             overflow: hidden;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            min-height: 280px;
         }
 
         .home-hero::before {
-            display: none;
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to right, rgba(255,255,255,0.98) 40%, rgba(255,255,255,0.7) 100%);
+            z-index: 0;
         }
 
         .home-hero::after {
@@ -840,6 +849,94 @@
         .offer-description {
             font-size: 14px;
             opacity: 0.9;
+        }
+
+        /* Inspiration Gallery Section */
+        .inspiration-gallery {
+            padding: 15px 0;
+        }
+
+        .inspiration-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .inspiration-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .inspiration-item:hover {
+            transform: scale(1.03);
+        }
+
+        .inspiration-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .inspiration-item::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .inspiration-item:hover::after {
+            opacity: 1;
+        }
+
+        /* Brand Partners Section */
+        .partners-section {
+            padding: 20px 0;
+            margin-top: 10px;
+        }
+
+        .partners-scroll {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            padding: 15px 0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .partners-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .partner-logo {
+            height: 35px;
+            width: auto;
+            opacity: 0.7;
+            filter: grayscale(100%);
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .partner-logo:hover {
+            opacity: 1;
+            filter: grayscale(0%);
+        }
+
+        .partners-title {
+            text-align: center;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--gray-medium);
+            margin-bottom: 10px;
         }
 
         /* Booking Section */
@@ -3837,9 +3934,15 @@
 
             /* Home hero mobile */
             .home-hero {
-                padding: 20px 16px;
-                border-radius: 16px;
-                margin-bottom: 16px;
+                padding: 30px 16px 25px;
+                border-radius: 0;
+                margin-bottom: 0;
+                min-height: 220px;
+                background-position: left center;
+            }
+
+            .home-hero::before {
+                background: linear-gradient(to right, rgba(255,255,255,0.95) 30%, rgba(255,255,255,0.85) 100%);
             }
 
             .home-hero-headline {
@@ -6305,6 +6408,34 @@
                     Loading...
                 </p>
             </div>
+
+            <!-- Hair Inspiration Gallery -->
+            <section class="inspiration-gallery">
+                <div class="section-header">
+                    <h2 class="section-title">Hair Inspiration</h2>
+                </div>
+                <div class="inspiration-grid">
+                    <div class="inspiration-item" onclick="switchTab('team')">
+                        <img src="/images/home-footer-images1-300x300.jpg" alt="Hair inspiration - blonde waves" loading="lazy">
+                    </div>
+                    <div class="inspiration-item" onclick="switchTab('team')">
+                        <img src="/images/home-footer-images2-300x300.jpg" alt="Hair inspiration - curly hair" loading="lazy">
+                    </div>
+                    <div class="inspiration-item" onclick="switchTab('team')">
+                        <img src="/images/home-footer-images3-300x300.jpg" alt="Hair inspiration - red hair" loading="lazy">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Brand Partners -->
+            <section class="partners-section">
+                <div class="partners-title">Trusted Product Partners</div>
+                <div class="partners-scroll">
+                    <img src="/images/logo-kevin-murphy.png" alt="Kevin Murphy" class="partner-logo">
+                    <img src="/images/logo-davines.png" alt="Davines" class="partner-logo">
+                    <img src="/images/logo-ehp.png" alt="EHP" class="partner-logo">
+                </div>
+            </section>
         </div>
 
         <!-- Booking Content -->
@@ -6343,7 +6474,7 @@
                     <div class="service-type-grid">
                         <div class="service-type-card" onclick="selectServiceType('hair', this)">
                             <div class="selected-check">✓</div>
-                            <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=400&fit=crop" alt="Hair Extensions" class="card-image" onerror="this.style.display='none'">
+                            <img src="/images/categories/categories1-450x450.jpg" alt="Hair Extensions" class="card-image" onerror="this.style.display='none'">
                             <div class="card-content">
                                 <div class="card-title">Hair Extensions</div>
                                 <div class="card-subtitle">Tape, Weft, Keratin & more</div>
@@ -6351,7 +6482,7 @@
                         </div>
                         <div class="service-type-card" onclick="selectServiceType('beauty', this)">
                             <div class="selected-check">✓</div>
-                            <img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&h=400&fit=crop" alt="Nail Services" class="card-image" onerror="this.style.display='none'">
+                            <img src="/images/about-image1.jpg" alt="Nail Services" class="card-image" onerror="this.style.display='none'">
                             <div class="card-content">
                                 <div class="card-title">Nails</div>
                                 <div class="card-subtitle">Manicures, Pedicures & more</div>
