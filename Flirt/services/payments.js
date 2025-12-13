@@ -88,11 +88,16 @@ function setRuntimeConfig(config) {
 // ============================================
 
 /**
- * Generate PayFast payment form data
+ * Generate PayFast payment using DIRECT URL method
+ * This is a simpler approach that uses PayFast's payment.payfast.io URL
+ * No signature required - just URL parameters
+ *
+ * Format: https://payment.payfast.io/eng/process?cmd=_paynow&receiver=MERCHANT_ID&...
+ *
  * @param {Object} order - Order details
  * @param {Object} customer - Customer details
  * @param {Object} options - Optional settings (itemName, itemDescription)
- * @returns {Object} Form data for PayFast redirect
+ * @returns {Object} Payment data with redirect URL
  */
 function generatePayFastPayment(order, customer, options = {}) {
     const config = getEffectiveConfig();
@@ -102,69 +107,104 @@ function generatePayFastPayment(order, customer, options = {}) {
     const itemName = options.itemName || `Flirt Order #${order.id.substring(0, 8)}`;
     const itemDescription = options.itemDescription || `${order.items.length} item(s) from Flirt Hair & Beauty`;
 
-    // Build URLs - ensure no double /api/ prefix
-    const baseAppUrl = (config.appUrl || 'https://flirt.hair').replace(/\/$/, ''); // Remove trailing slash
-    const baseApiUrl = (config.apiBaseUrl || config.appUrl || 'https://flirt.hair').replace(/\/$/, '').replace(/\/api$/, ''); // Remove trailing slash and /api suffix
+    // Build URLs
+    const baseAppUrl = (config.appUrl || 'https://flirt.hair').replace(/\/$/, '');
+    const baseApiUrl = (config.apiBaseUrl || config.appUrl || 'https://flirt.hair').replace(/\/$/, '').replace(/\/api$/, '');
 
-    // Log configuration for debugging
-    console.log('[PayFast] Payment Config:', {
+    // Validate merchant ID
+    if (!config.payfast.merchantId) {
+        throw new Error('PayFast Merchant ID is not configured');
+    }
+
+    console.log('[PayFast] Generating DIRECT URL payment:', {
         merchantId: config.payfast.merchantId,
-        merchantKey: config.payfast.merchantKey ? `${config.payfast.merchantKey.substring(0, 3)}...${config.payfast.merchantKey.substring(config.payfast.merchantKey.length - 3)}` : 'NOT SET',
-        merchantKeyLength: config.payfast.merchantKey?.length || 0,
-        merchantKeyFirstChar: config.payfast.merchantKey?.charCodeAt(0) || 'N/A',
-        hasPassphrase: !!config.payfast.passphrase,
-        passphraseLength: config.payfast.passphrase?.length || 0,
-        passphrasePreview: config.payfast.passphrase ? `${config.payfast.passphrase.substring(0, 3)}...` : 'NOT SET',
         sandbox: config.payfast.sandbox,
-        baseUrl: config.payfast.baseUrl,
-        return_url: `${baseAppUrl}/app?payment=success&ref=${paymentId}`,
-        notify_url: `${baseApiUrl}/api/payments/webhook/payfast`
+        amount: order.total,
+        paymentId: paymentId
     });
 
-    // CRITICAL: Detect sandbox passphrase used with live credentials
-    const SANDBOX_PASSPHRASE = 'jt7NOE43FZPn';
-    const SANDBOX_MERCHANT_ID = '10000100';
-    const isLiveMode = !config.payfast.sandbox && config.payfast.merchantId !== SANDBOX_MERCHANT_ID;
+    // Build the direct payment URL parameters
+    // Using the simpler cmd=_paynow format (like EasyNotary invoices)
+    const params = new URLSearchParams();
 
-    if (isLiveMode && config.payfast.passphrase === SANDBOX_PASSPHRASE) {
-        console.error('');
-        console.error('╔════════════════════════════════════════════════════════════════════╗');
-        console.error('║  ⚠️  PAYFAST CONFIGURATION ERROR DETECTED!                          ║');
-        console.error('╠════════════════════════════════════════════════════════════════════╣');
-        console.error('║  You are using SANDBOX PASSPHRASE with LIVE credentials!           ║');
-        console.error('║                                                                    ║');
-        console.error('║  Current passphrase: jt7NOE43FZPn (SANDBOX - WRONG!)               ║');
-        console.error('║  Current mode: LIVE                                                ║');
-        console.error('║                                                                    ║');
-        console.error('║  TO FIX:                                                           ║');
-        console.error('║  1. Go to Admin Console > Settings > Payments                      ║');
-        console.error('║  2. Either:                                                        ║');
-        console.error('║     a) CLEAR the passphrase field (if you have no passphrase       ║');
-        console.error('║        set in your PayFast dashboard), OR                          ║');
-        console.error('║     b) Enter your LIVE PayFast passphrase (from PayFast            ║');
-        console.error('║        dashboard > Settings > Integration > Security passphrase)   ║');
-        console.error('║  3. Save the settings                                              ║');
-        console.error('╚════════════════════════════════════════════════════════════════════╝');
-        console.error('');
+    // Required parameters
+    params.append('cmd', '_paynow');
+    params.append('receiver', config.payfast.merchantId);
+    params.append('m_payment_id', paymentId);
+    params.append('amount', order.total.toFixed(2));
+    params.append('item_name', itemName);
+
+    // Optional but recommended
+    params.append('item_description', itemDescription);
+    params.append('return_url', `${baseAppUrl}/app?payment=success&ref=${paymentId}`);
+    params.append('cancel_url', `${baseAppUrl}/app?payment=cancelled&ref=${paymentId}`);
+    params.append('notify_url', `${baseApiUrl}/api/payments/webhook/payfast`);
+
+    // Customer details
+    if (customer.email) {
+        params.append('email_address', customer.email);
+    }
+    if (customer.name) {
+        const nameParts = customer.name.split(' ');
+        params.append('name_first', nameParts[0]);
+        if (nameParts.length > 1) {
+            params.append('name_last', nameParts.slice(1).join(' '));
+        }
     }
 
-    // CRITICAL: Validate merchant credentials format
-    if (config.payfast.merchantId && !/^\d{8}$/.test(config.payfast.merchantId)) {
-        console.error('[PayFast] WARNING: Merchant ID should be exactly 8 digits! Got:', config.payfast.merchantId);
-    }
-    if (config.payfast.merchantKey && config.payfast.merchantKey.length !== 13) {
-        console.error('[PayFast] WARNING: Merchant Key should be exactly 13 characters! Got length:', config.payfast.merchantKey.length);
-    }
+    // Email confirmation
+    params.append('email_confirmation', '1');
+    params.append('confirmation_address', customer.email || 'bookings@flirt.hair');
+
+    // Custom tracking fields
+    params.append('custom_str1', order.id);
+    params.append('custom_str2', customer.id || '');
+
+    // Build the payment URL
+    // Use payment.payfast.io for the direct URL approach
+    const paymentBaseUrl = config.payfast.sandbox
+        ? 'https://sandbox.payfast.co.za'  // Sandbox still uses sandbox URL
+        : 'https://payment.payfast.io';     // Live uses payment.payfast.io
+
+    const redirectUrl = `${paymentBaseUrl}/eng/process?${params.toString()}`;
+
+    console.log('[PayFast] Direct payment URL generated:', redirectUrl.substring(0, 150) + '...');
+
+    return {
+        paymentId,
+        redirectUrl,
+        // Also provide form data for backwards compatibility
+        formAction: `${paymentBaseUrl}/eng/process`,
+        formData: Object.fromEntries(params)
+    };
+}
+
+/**
+ * LEGACY: Generate PayFast payment with signature (form POST method)
+ * Keep this for reference but use generatePayFastPayment for new payments
+ */
+function generatePayFastPaymentWithSignature(order, customer, options = {}) {
+    const config = getEffectiveConfig();
+    const paymentId = `FLT-${uuidv4().substring(0, 8).toUpperCase()}`;
+
+    const itemName = options.itemName || `Flirt Order #${order.id.substring(0, 8)}`;
+    const itemDescription = options.itemDescription || `${order.items.length} item(s) from Flirt Hair & Beauty`;
+
+    const baseAppUrl = (config.appUrl || 'https://flirt.hair').replace(/\/$/, '');
+    const baseApiUrl = (config.apiBaseUrl || config.appUrl || 'https://flirt.hair').replace(/\/$/, '').replace(/\/api$/, '');
+
+    console.log('[PayFast] Legacy Payment Config:', {
+        merchantId: config.payfast.merchantId,
+        hasPassphrase: !!config.payfast.passphrase,
+        sandbox: config.payfast.sandbox
+    });
 
     const data = {
-        // Merchant details
         merchant_id: config.payfast.merchantId,
         merchant_key: config.payfast.merchantKey,
         return_url: `${baseAppUrl}/app?payment=success&ref=${paymentId}`,
         cancel_url: `${baseAppUrl}/app?payment=cancelled&ref=${paymentId}`,
         notify_url: `${baseApiUrl}/api/payments/webhook/payfast`,
-
-        // Customer details
         name_first: customer.name.split(' ')[0],
         name_last: customer.name.split(' ').slice(1).join(' ') || '',
         email_address: customer.email,
@@ -903,10 +943,43 @@ function processWebhook(provider, data, headers = {}) {
 }
 
 /**
- * Generate HTML for PayFast redirect form
+ * Generate HTML for PayFast redirect
+ * Now uses direct URL redirect instead of form POST
  */
 function generatePayFastRedirectHtml(paymentData) {
-    const inputs = Object.entries(paymentData.formData)
+    // If we have a direct redirect URL, use simple redirect
+    if (paymentData.redirectUrl) {
+        return `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Redirecting to PayFast...</title>
+                <meta http-equiv="refresh" content="0;url=${paymentData.redirectUrl}">
+                <style>
+                    body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #f8f8f8; }
+                    .container { text-align: center; padding: 40px; background: white; border-radius: 10px; box-shadow: 0 2px 20px rgba(0,0,0,0.1); }
+                    .spinner { width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #F67599; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                    h2 { color: #414042; margin-bottom: 10px; }
+                    p { color: #6d6e70; }
+                    a { color: #F67599; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="spinner"></div>
+                    <h2>Redirecting to PayFast</h2>
+                    <p>Please wait while we redirect you to complete your payment...</p>
+                    <p style="margin-top: 20px; font-size: 12px;">If you are not redirected, <a href="${paymentData.redirectUrl}">click here</a>.</p>
+                </div>
+                <script>window.location.href = "${paymentData.redirectUrl}";</script>
+            </body>
+            </html>
+        `;
+    }
+
+    // Fallback to form POST for legacy/signature-based payments
+    const inputs = Object.entries(paymentData.formData || {})
         .map(([name, value]) => `<input type="hidden" name="${name}" value="${value}">`)
         .join('\n');
 
@@ -1025,6 +1098,7 @@ function getPaymentConfigStatus() {
 module.exports = {
     // PayFast
     generatePayFastPayment,
+    generatePayFastPaymentWithSignature, // Legacy method with signature
     verifyPayFastNotification,
     generatePayFastRedirectHtml,
 
