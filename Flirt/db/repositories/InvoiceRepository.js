@@ -741,6 +741,30 @@ class InvoiceRepository {
 
         return this.getById(invoice_id);
     }
+
+    /**
+     * Find invoice by order ID
+     * Returns the invoice if one exists for the given order, null otherwise
+     */
+    async findByOrderId(orderId) {
+        const row = await dbGet(this.db, `
+            SELECT * FROM invoices WHERE order_id = ?
+        `, [orderId]);
+
+        if (!row) return null;
+
+        // Get line items
+        const services = await dbAll(this.db, `SELECT * FROM invoice_services WHERE invoice_id = ?`, [row.id]);
+        const products = await dbAll(this.db, `SELECT * FROM invoice_products WHERE invoice_id = ?`, [row.id]);
+        const payments = await dbAll(this.db, `SELECT * FROM invoice_payments WHERE invoice_id = ?`, [row.id]);
+
+        return {
+            ...row,
+            services,
+            products,
+            payments
+        };
+    }
 }
 
 module.exports = InvoiceRepository;
