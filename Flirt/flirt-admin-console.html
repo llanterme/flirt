@@ -13909,6 +13909,10 @@
                         : '<span style="color: var(--gray-medium); font-size: 11px;">—</span>';
 
                     const actions = [];
+                    // Mark as Paid button - show if no invoice exists yet
+                    if (!o.invoice && statusKey !== 'cancelled') {
+                        actions.push(`<button class="btn btn-sm" style="background: var(--success); color: white;" onclick="markOrderAsPaid('${o.id}')">💳 Mark as Paid</button>`);
+                    }
                     if (statusKey !== 'processing' && statusKey !== 'cancelled' && statusKey !== 'delivered') {
                         actions.push(`<button class="btn btn-sm" onclick="updateOrderStatus('${o.id}', 'processing')">Process</button>`);
                     }
@@ -13968,6 +13972,32 @@
                 loadOrders();
             } catch (error) {
                 showAdminToast('Error updating order: ' + (error.message || ''), 'error');
+            }
+        }
+
+        async function markOrderAsPaid(orderId) {
+            const proceed = await openConfirmDialog({
+                title: 'Mark Order as Paid?',
+                message: 'This will mark the order as paid, create an invoice, send the invoice email to the customer, update stock levels, and award loyalty points.',
+                confirmText: 'Mark as Paid',
+                tone: 'neutral'
+            });
+            if (!proceed) return;
+
+            try {
+                const result = await apiCall(`/admin/orders/${orderId}/mark-paid`, {
+                    method: 'POST',
+                    body: JSON.stringify({ paymentMethod: 'cash' })
+                });
+
+                if (result.success) {
+                    showAdminToast(`Order marked as paid. Invoice ${result.invoice?.invoice_number || ''} created!`, 'success');
+                    loadOrders();
+                } else {
+                    showAdminToast(result.message || 'Failed to mark order as paid', 'error');
+                }
+            } catch (error) {
+                showAdminToast('Error: ' + (error.message || 'Failed to mark order as paid'), 'error');
             }
         }
 

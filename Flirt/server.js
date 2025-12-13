@@ -6494,6 +6494,80 @@ app.patch('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
     }
 });
 
+// Mark order as paid and create invoice (admin)
+app.post('/api/admin/orders/:id/mark-paid', authenticateAdmin, async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const { paymentMethod = 'cash' } = req.body;
+
+        const order = await OrderRepository.findById(orderId);
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        // Check if invoice already exists for this order
+        const existingInvoice = await InvoiceRepository.findByOrderId(orderId);
+        if (existingInvoice) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invoice already exists for this order',
+                invoice: existingInvoice
+            });
+        }
+
+        // Update order status to 'paid'
+        await OrderRepository.updateStatus(orderId, 'paid');
+
+        // Create invoice from order
+        const invoice = await InvoiceRepository.createFromOrder(order, paymentMethod);
+        console.log(`✅ Invoice ${invoice.invoice_number} created for order ${orderId} (marked as paid by admin)`);
+
+        // Send invoice email to customer (async, don't block response)
+        if (order.user_id) {
+            UserRepository.findById(order.user_id).then(user => {
+                if (user && user.email) {
+                    emailService.sendInvoiceEmail(invoice, user)
+                        .then(() => console.log(`✅ Invoice email sent to ${user.email}`))
+                        .catch(err => console.error('Failed to send invoice email:', err.message));
+                }
+            }).catch(err => console.error('Failed to find user for invoice email:', err.message));
+        }
+
+        // Update stock for each item in the order
+        if (order.items && Array.isArray(order.items)) {
+            for (const item of order.items) {
+                try {
+                    await ProductRepository.decrementStock(item.product_id || item.productId, item.quantity || 1);
+                } catch (stockError) {
+                    console.error(`Failed to update stock for product ${item.product_id}:`, stockError.message);
+                }
+            }
+        }
+
+        // Award loyalty points if customer exists
+        if (order.user_id) {
+            try {
+                const pointsEarned = Math.floor(parseFloat(order.total || 0));
+                if (pointsEarned > 0) {
+                    await LoyaltyRepository.addPoints(order.user_id, pointsEarned, 'purchase', orderId);
+                    console.log(`✅ Awarded ${pointsEarned} loyalty points to user ${order.user_id}`);
+                }
+            } catch (loyaltyError) {
+                console.error('Failed to award loyalty points:', loyaltyError.message);
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Order marked as paid and invoice created',
+            invoice: invoice
+        });
+    } catch (error) {
+        console.error('Error marking order as paid:', error.message);
+        return res.status(500).json({ success: false, message: error.message || 'Failed to mark order as paid' });
+    }
+});
+
 // ============================================
 // PAYROLL ROUTES (Admin)
 // ============================================
