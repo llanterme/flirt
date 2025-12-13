@@ -899,32 +899,33 @@
             color: var(--brand-charcoal);
         }
 
-        /* Staff Panel - Full Width Slide-Over */
+        /* Staff Panel - Centered Popup */
         #staff-modal.modal {
-            align-items: stretch;
-            justify-content: flex-end;
-            padding: 0;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
 
         #staff-modal .modal-content {
-            max-width: none !important;
-            width: 100% !important;
-            max-height: 100vh;
-            height: 100vh;
+            max-width: 900px !important;
+            width: 95% !important;
+            max-height: 90vh;
+            height: auto;
             margin: 0;
-            border-radius: 0;
+            border-radius: 16px;
             display: flex;
             flex-direction: column;
-            animation: slideInRight 0.3s ease;
+            animation: popupFadeIn 0.3s ease;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
         }
 
-        @keyframes slideInRight {
+        @keyframes popupFadeIn {
             from {
-                transform: translateX(100%);
+                transform: scale(0.95);
                 opacity: 0;
             }
             to {
-                transform: translateX(0);
+                transform: scale(1);
                 opacity: 1;
             }
         }
@@ -934,6 +935,7 @@
             border-bottom: 1px solid var(--border-soft);
             background: white;
             flex-shrink: 0;
+            border-radius: 16px 16px 0 0;
         }
 
         #staff-modal .modal-body {
@@ -949,7 +951,7 @@
             display: grid;
             grid-template-columns: 1fr 1.2fr;
             width: 100%;
-            min-height: 100%;
+            min-height: auto;
         }
 
         .staff-modal-left {
@@ -957,12 +959,16 @@
             background: #fafbfc;
             border-right: 1px solid var(--border-soft);
             overflow-y: auto;
+            max-height: 70vh;
+            border-radius: 0 0 0 16px;
         }
 
         .staff-modal-right {
             padding: 30px;
             overflow-y: auto;
             background: white;
+            max-height: 70vh;
+            border-radius: 0 0 16px 0;
         }
 
         .staff-section-title {
