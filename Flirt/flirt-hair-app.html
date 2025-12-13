@@ -2956,42 +2956,83 @@
         /* Profile Section - Elegant Minimal */
         .profile-header {
             text-align: center;
-            padding: 40px 30px;
-            background: var(--brand-charcoal);
-            color: var(--brand-white);
+            padding: 50px 30px 45px;
+            background: linear-gradient(135deg, #fdf2f4 0%, #fce8ec 50%, #f9d5dc 100%);
+            color: var(--brand-charcoal);
             border-radius: 0;
             margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(246, 117, 153, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .profile-header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(246, 117, 153, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
         }
 
         .profile-avatar {
-            width: 90px;
-            height: 90px;
-            border-radius: 0;
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
             background: var(--brand-pink);
             color: var(--brand-white);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 36px;
-            margin: 0 auto 20px;
-            border: none;
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 32px;
+            font-weight: 400;
+            margin: 0 auto 18px;
+            border: 4px solid var(--brand-white);
+            box-shadow: 0 8px 25px rgba(246, 117, 153, 0.3);
+            position: relative;
+            z-index: 1;
         }
 
         .profile-name {
             font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 26px;
-            font-weight: 400;
-            letter-spacing: 0.05em;
-            margin-bottom: 8px;
+            font-size: 28px;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            margin-bottom: 10px;
+            color: var(--brand-charcoal);
+            position: relative;
+            z-index: 1;
         }
 
         .profile-tier {
             font-family: 'Montserrat', sans-serif;
             font-size: 11px;
-            font-weight: 500;
+            font-weight: 600;
             letter-spacing: 0.15em;
             text-transform: uppercase;
             color: var(--brand-pink);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--brand-white);
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+            position: relative;
+            z-index: 1;
         }
 
         .menu-list {
