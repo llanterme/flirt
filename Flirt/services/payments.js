@@ -15,8 +15,8 @@ let runtimeConfig = {
 // Compute effective configuration (env vars as baseline, runtime overrides layered on)
 function getEffectiveConfig() {
     const envConfig = {
-        appUrl: process.env.APP_URL || 'https://flirthair.co.za',
-        apiBaseUrl: process.env.API_BASE_URL || process.env.APP_URL || 'https://flirthair.co.za',
+        appUrl: process.env.APP_URL || 'https://flirt.hair',
+        apiBaseUrl: process.env.API_BASE_URL || process.env.APP_URL || 'https://flirt.hair',
         payfast: {
             merchantId: process.env.PAYFAST_MERCHANT_ID || '',
             merchantKey: process.env.PAYFAST_MERCHANT_KEY || '',

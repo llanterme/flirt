@@ -6230,7 +6230,7 @@
                             <h3 class="data-card-title">Gallery Management</h3>
                             <div style="display:flex; gap:10px; align-items:center;">
                                 <button class="btn btn-outline btn-small" onclick="openInstagramModal()">Instagram Feed</button>
-                                <button class="btn btn-outline btn-small" onclick="importFlirthairGallery()">Import from flirthair.co.za</button>
+                                <button class="btn btn-outline btn-small" onclick="importFlirthairGallery()">Import Default Gallery</button>
                                 <button class="btn btn-primary btn-small" onclick="showGalleryModal()">+ Add Image</button>
                             </div>
                         </div>
@@ -6452,7 +6452,7 @@
                                                 Email Address
                                                 <span style="color: var(--danger);">*</span>
                                             </label>
-                                            <input type="email" class="form-input" id="staff-email" placeholder="sarah@flirt.co.za">
+                                            <input type="email" class="form-input" id="staff-email" placeholder="sarah@flirt.hair">
                                             <small style="color: var(--text-subtle); font-size: 11px; margin-top: 4px; display: block;">Used for login</small>
                                         </div>
                                         <div class="form-group">
@@ -7131,11 +7131,11 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">App URL (used for return/cancel pages)</label>
-                                    <input type="text" id="paymentAppUrl" class="form-input" placeholder="https://flirthair.co.za">
+                                    <input type="text" id="paymentAppUrl" class="form-input" placeholder="https://flirt.hair">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">API Base URL (used for webhooks)</label>
-                                    <input type="text" id="paymentApiBaseUrl" class="form-input" placeholder="https://api.flirthair.co.za">
+                                    <input type="text" id="paymentApiBaseUrl" class="form-input" placeholder="https://flirt.hair/api">
                                 </div>
                             </div>
 
@@ -7296,7 +7296,7 @@
                         <div style="padding: 25px; color: var(--gray-dark);">
                             <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 10px;">Environment Variables Required:</h4>
                             <ul style="margin-left: 20px; line-height: 1.8;">
-                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">APP_URL</code> - Your application's base URL (e.g., https://flirthair.co.za)</li>
+                                <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">APP_URL</code> - Your application's base URL (e.g., https://flirt.hair)</li>
                                 <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">PAYFAST_MERCHANT_ID</code> - Your PayFast merchant ID</li>
                                 <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">PAYFAST_MERCHANT_KEY</code> - Your PayFast merchant key</li>
                                 <li><code style="background: white; padding: 2px 6px; border-radius: 4px; font-size: 12px;">PAYFAST_PASSPHRASE</code> - (Optional) PayFast security passphrase</li>
@@ -7384,14 +7384,14 @@
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Email Address</label>
-                                    <input type="email" id="bizEmail" class="form-input" placeholder="info@flirthair.co.za">
+                                    <input type="email" id="bizEmail" class="form-input" placeholder="info@flirt.hair">
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
                                     <label class="form-label">Website</label>
-                                    <input type="text" id="bizWebsite" class="form-input" placeholder="www.flirthair.co.za">
+                                    <input type="text" id="bizWebsite" class="form-input" placeholder="www.flirt.hair">
                                 </div>
                             </div>
 
@@ -17137,7 +17137,7 @@
 
         async function importFlirthairGallery() {
             if (galleryImporting) return;
-            const confirmed = confirm('Import the latest images from flirthair.co.za into the gallery? Existing Flirt images will be updated.');
+            const confirmed = confirm('Import the default gallery images? Existing images will be updated.');
             if (!confirmed) return;
 
             galleryImporting = true;

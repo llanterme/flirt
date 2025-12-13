@@ -14,7 +14,7 @@ const EMAIL_CONFIG = {
     }
 };
 
-const FROM_EMAIL = process.env.FROM_EMAIL || 'bookings@flirthair.co.za';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'bookings@flirt.hair';
 const FROM_NAME = process.env.FROM_NAME || 'Flirt Hair & Beauty';
 const SALON_PHONE = process.env.SALON_PHONE || '+27 11 123 4567';
 const SALON_ADDRESS = process.env.SALON_ADDRESS || 'Shop 12, Mall of the South, Johannesburg';

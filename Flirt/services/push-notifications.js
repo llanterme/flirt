@@ -7,7 +7,7 @@ const webpush = require('web-push');
 // Generate keys with: npx web-push generate-vapid-keys
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '';
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:bookings@flirthair.co.za';
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:bookings@flirt.hair';
 
 // Configure web-push with VAPID details
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
