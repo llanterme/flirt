@@ -624,8 +624,37 @@ class InvoiceRepository {
         const invoice_id = uuidv4();
         const invoice_number = await this.generateInvoiceNumber();
 
-        // Get user details
-        const user = await dbGet(this.db, 'SELECT * FROM users WHERE id = ?', [order.user_id || order.userId]);
+        // Get user details - verify user exists (required for foreign key constraint)
+        let user_id = order.user_id || order.userId;
+        let user = user_id ? await dbGet(this.db, 'SELECT * FROM users WHERE id = ?', [user_id]) : null;
+
+        // If user doesn't exist, create a guest user from order info
+        if (!user && (order.customerEmail || order.customer_email || order.customerName || order.customer_name)) {
+            const guestUserId = uuidv4();
+            const guestEmail = order.customerEmail || order.customer_email || `guest-${guestUserId.substring(0, 8)}@flirt.hair`;
+            const guestName = order.customerName || order.customer_name || 'Guest Customer';
+
+            await dbRun(this.db, `
+                INSERT INTO users (id, email, name, phone, password_hash, role, loyalty_points, loyalty_tier, created_at)
+                VALUES (?, ?, ?, ?, 'GUEST_NO_LOGIN', 'customer', 0, 'bronze', datetime('now'))
+            `, [guestUserId, guestEmail, guestName, order.customerPhone || order.customer_phone || '']);
+
+            user = { id: guestUserId, email: guestEmail, name: guestName };
+            user_id = guestUserId;
+            console.log(`✅ Created guest user ${guestEmail} for order invoice`);
+        } else if (!user) {
+            // Last resort: use admin user for invoice
+            const adminUser = await dbGet(this.db, "SELECT id FROM users WHERE role = 'admin' LIMIT 1");
+            if (adminUser) {
+                user_id = adminUser.id;
+                user = adminUser;
+                console.log('⚠️ Using admin user for order invoice (no customer info available)');
+            } else {
+                throw new Error('Cannot create invoice: no valid user found and no customer info in order');
+            }
+        } else {
+            user_id = user.id;
+        }
 
         // Calculate values (order already has discount applied)
         const subtotal = order.subtotal || order.total;
@@ -673,7 +702,7 @@ class InvoiceRepository {
             invoice_id,
             invoice_number,
             order.id,
-            order.user_id || order.userId,
+            user_id,
             stylist_id,
             0, // services_subtotal (no services for product orders)
             subtotal, // products_subtotal
