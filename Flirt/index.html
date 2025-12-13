@@ -1915,154 +1915,6 @@
             }
         }
 
-        /* Booking Popup Modal with iframe */
-        .booking-popup-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 10000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .booking-popup-overlay.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 1;
-        }
-
-        .booking-popup {
-            background: var(--white);
-            width: 95%;
-            max-width: 1000px;
-            height: 90vh;
-            max-height: 900px;
-            border-radius: 16px;
-            overflow: hidden;
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
-        }
-
-        /* Extra wide popup for large desktops */
-        @media (min-width: 1200px) {
-            .booking-popup {
-                max-width: 1100px;
-                max-height: 920px;
-            }
-        }
-
-        .booking-popup-overlay.active .booking-popup {
-            transform: scale(1);
-        }
-
-        .booking-popup-header {
-            background: linear-gradient(135deg, var(--pink) 0%, var(--pink-dark) 100%);
-            padding: 15px 20px;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .booking-popup-header h2 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 20px;
-            font-weight: 400;
-            color: var(--white);
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
-            margin: 0;
-        }
-
-        .booking-popup-close {
-            position: absolute;
-            top: 50%;
-            right: 15px;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            font-size: 24px;
-            color: var(--white);
-            cursor: pointer;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: background 0.2s;
-        }
-
-        .booking-popup-close:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .booking-popup-content {
-            flex: 1;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .booking-popup-content iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        .booking-popup-loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            color: var(--gray-medium);
-        }
-
-        .booking-popup-loading .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #f0f0f0;
-            border-top-color: var(--pink);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        @media (max-width: 768px) {
-            .booking-popup {
-                width: 100%;
-                height: 100%;
-                max-height: none;
-                border-radius: 0;
-            }
-
-            .booking-popup-header {
-                padding: 12px 15px;
-            }
-
-            .booking-popup-header h2 {
-                font-size: 16px;
-            }
-
-            .booking-popup-close {
-                width: 32px;
-                height: 32px;
-                font-size: 20px;
-            }
-        }
     </style>
 
     <!-- Schema.org Structured Data (JSON-LD) -->
@@ -2734,59 +2586,23 @@
             }
         }
 
-        // Handle auth link click
+        // Handle auth link click - opens in new tab
         function handleAuthClick(event) {
             event.preventDefault();
             if (isLoggedIn()) {
-                window.location.href = '/app?tab=profile';
+                window.open('/app?tab=profile', '_blank');
             } else {
-                window.location.href = '/app?showLogin=true';
+                window.open('/app?showLogin=true', '_blank');
             }
         }
 
-        // Handle Book Now click - redirect to app
+        // Handle Book Now click - opens app in new tab
         function handleBookNowClick(category) {
             let url = '/app?tab=booking';
             if (category) {
                 url += '&category=' + category;
             }
-            window.location.href = url;
-        }
-
-        // Booking Popup Functions
-        function openBookingPopup(url) {
-            const overlay = document.getElementById('bookingPopupOverlay');
-            const iframe = document.getElementById('bookingIframe');
-            const loading = document.getElementById('bookingLoading');
-
-            // Set iframe URL
-            url = url || '/app?tab=booking&embedded=true';
-            iframe.src = url;
-
-            // Show loading
-            loading.style.display = 'block';
-
-            // Show popup
-            overlay.style.display = 'flex';
-            setTimeout(() => overlay.classList.add('active'), 10);
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeBookingPopup() {
-            const overlay = document.getElementById('bookingPopupOverlay');
-            const iframe = document.getElementById('bookingIframe');
-
-            overlay.classList.remove('active');
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                iframe.src = ''; // Clear iframe
-                document.body.style.overflow = '';
-            }, 300);
-        }
-
-        function hideBookingLoading() {
-            const loading = document.getElementById('bookingLoading');
-            loading.style.display = 'none';
+            window.open(url, '_blank');
         }
 
         // Initialize
@@ -2815,12 +2631,8 @@
         // Close popup when clicking outside
         document.addEventListener('click', function(e) {
             const priceOverlay = document.getElementById('pricePopupOverlay');
-            const bookingOverlay = document.getElementById('bookingPopupOverlay');
             if (e.target === priceOverlay) {
                 closePricePopup();
-            }
-            if (e.target === bookingOverlay) {
-                closeBookingPopup();
             }
         });
 
@@ -2828,7 +2640,6 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closePricePopup();
-                closeBookingPopup();
             }
         });
     </script>
@@ -2943,21 +2754,5 @@
         </div>
     </div>
 
-    <!-- Booking Popup Modal -->
-    <div class="booking-popup-overlay" id="bookingPopupOverlay">
-        <div class="booking-popup">
-            <div class="booking-popup-header">
-                <h2>Book Appointment</h2>
-                <button class="booking-popup-close" onclick="closeBookingPopup()">&times;</button>
-            </div>
-            <div class="booking-popup-content">
-                <div class="booking-popup-loading" id="bookingLoading">
-                    <div class="spinner"></div>
-                    <p>Loading...</p>
-                </div>
-                <iframe id="bookingIframe" src="" onload="hideBookingLoading()"></iframe>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
