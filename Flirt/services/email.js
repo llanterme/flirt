@@ -499,6 +499,124 @@ async function sendPaymentLink(booking, customer, paymentUrl) {
     return sendEmail(customer.email, subject, html);
 }
 
+// ============================================
+// INVOICE EMAILS
+// ============================================
+
+// Invoice email after payment (for product orders)
+async function sendInvoiceEmail(invoice, customer) {
+    const subject = `Invoice #${invoice.invoice_number} - Payment Confirmed`;
+
+    // Build line items HTML
+    let itemsHtml = '';
+
+    // Add service items if any
+    if (invoice.services && invoice.services.length > 0) {
+        itemsHtml += invoice.services.map(item => `
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.service_name || item.serviceName}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">1</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">R${parseFloat(item.total || item.unit_price || 0).toFixed(2)}</td>
+            </tr>
+        `).join('');
+    }
+
+    // Add product items if any
+    if (invoice.products && invoice.products.length > 0) {
+        itemsHtml += invoice.products.map(item => `
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.product_name || item.productName}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity || 1}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">R${parseFloat(item.total || 0).toFixed(2)}</td>
+            </tr>
+        `).join('');
+    }
+
+    // Fallback if no itemized products/services
+    if (!itemsHtml) {
+        itemsHtml = `
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">Products/Services</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">-</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">R${parseFloat(invoice.subtotal || invoice.total || 0).toFixed(2)}</td>
+            </tr>
+        `;
+    }
+
+    const html = `
+        ${emailHeader('Invoice')}
+        <div class="content">
+            <p class="greeting">Hi ${customer.name},</p>
+            <p>Thank you for your payment! Please find your invoice details below.</p>
+
+            <div class="details-box">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                    <div>
+                        <h3 style="margin: 0; color: #F67599;">Invoice #${invoice.invoice_number}</h3>
+                        <p style="margin: 5px 0; color: #6d6e70; font-size: 14px;">Date: ${formatEmailDate(invoice.invoice_date || invoice.created_at)}</p>
+                    </div>
+                    <div style="background: #4CAF50; color: white; padding: 8px 16px; border-radius: 4px; font-weight: 600; height: fit-content;">
+                        PAID
+                    </div>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                    <thead>
+                        <tr style="background: #f8f8f8;">
+                            <th style="padding: 12px; text-align: left; font-weight: 600; color: #414042;">Description</th>
+                            <th style="padding: 12px; text-align: center; font-weight: 600; color: #414042;">Qty</th>
+                            <th style="padding: 12px; text-align: right; font-weight: 600; color: #414042;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsHtml}
+                    </tbody>
+                </table>
+
+                <div style="border-top: 2px solid #eee; padding-top: 15px;">
+                    <div class="detail-row">
+                        <span class="detail-label">Subtotal</span>
+                        <span class="detail-value">R${parseFloat(invoice.subtotal || invoice.total || 0).toFixed(2)}</span>
+                    </div>
+                    ${invoice.discount_amount > 0 ? `
+                    <div class="detail-row" style="color: #4CAF50;">
+                        <span class="detail-label">Discount</span>
+                        <span class="detail-value">-R${parseFloat(invoice.discount_amount).toFixed(2)}</span>
+                    </div>
+                    ` : ''}
+                    ${invoice.tax_amount > 0 ? `
+                    <div class="detail-row">
+                        <span class="detail-label">VAT (${(invoice.tax_rate * 100).toFixed(0)}%)</span>
+                        <span class="detail-value">Included</span>
+                    </div>
+                    ` : ''}
+                    <div class="detail-row total-row" style="font-size: 20px; margin-top: 10px;">
+                        <span class="detail-label">Total Paid</span>
+                        <span class="detail-value">R${parseFloat(invoice.total || invoice.amount_paid || 0).toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+
+            ${invoice.client_notes ? `
+            <div style="background: #f8f8f8; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <strong>Notes:</strong><br>
+                ${invoice.client_notes}
+            </div>
+            ` : ''}
+
+            <div class="divider"></div>
+
+            <p style="font-size: 14px; color: #6d6e70; text-align: center;">
+                This invoice has been paid in full. Thank you for your business!<br>
+                You can view this invoice anytime in your account under "My Invoices".
+            </p>
+        </div>
+        ${emailFooter()}
+    `;
+
+    return sendEmail(customer.email, subject, html);
+}
+
 // Loyalty tier upgrade email
 async function sendTierUpgrade(customer, newTier) {
     const tierBenefits = {
@@ -542,5 +660,6 @@ module.exports = {
     sendOrderShipped,
     sendOrderReady,
     sendWelcomeEmail,
-    sendTierUpgrade
+    sendTierUpgrade,
+    sendInvoiceEmail
 };

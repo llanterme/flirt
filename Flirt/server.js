@@ -2528,6 +2528,17 @@ app.post('/api/payments/webhook/payfast', async (req, res) => {
                         try {
                             const invoice = await InvoiceRepository.createFromOrder(order, 'payfast');
                             console.log(`✅ Invoice ${invoice.invoice_number} created for PayFast order ${orderId}`);
+
+                            // Send invoice email to customer (async, don't block webhook)
+                            if (order.user_id) {
+                                UserRepository.findById(order.user_id).then(user => {
+                                    if (user && user.email) {
+                                        emailService.sendInvoiceEmail(invoice, user)
+                                            .then(() => console.log(`✅ Invoice email sent to ${user.email}`))
+                                            .catch(err => console.error('Failed to send invoice email:', err.message));
+                                    }
+                                }).catch(err => console.error('Failed to find user for invoice email:', err.message));
+                            }
                         } catch (invoiceError) {
                             console.error('Error creating invoice for PayFast order:', invoiceError);
                         }
@@ -2620,6 +2631,17 @@ app.post('/api/payments/webhook/yoco', async (req, res) => {
                         try {
                             const invoice = await InvoiceRepository.createFromOrder(order, 'yoco');
                             console.log(`✅ Invoice ${invoice.invoice_number} created for Yoco order ${orderId}`);
+
+                            // Send invoice email to customer (async, don't block webhook)
+                            if (order.user_id) {
+                                UserRepository.findById(order.user_id).then(user => {
+                                    if (user && user.email) {
+                                        emailService.sendInvoiceEmail(invoice, user)
+                                            .then(() => console.log(`✅ Invoice email sent to ${user.email}`))
+                                            .catch(err => console.error('Failed to send invoice email:', err.message));
+                                    }
+                                }).catch(err => console.error('Failed to find user for invoice email:', err.message));
+                            }
                         } catch (invoiceError) {
                             console.error('Error creating invoice for Yoco order:', invoiceError);
                         }
@@ -2727,6 +2749,17 @@ app.post('/api/payments/webhook/float', async (req, res) => {
                         try {
                             const invoice = await InvoiceRepository.createFromOrder(order, 'float');
                             console.log(`✅ Invoice ${invoice.invoice_number} created for Float order ${orderId}`);
+
+                            // Send invoice email to customer (async, don't block webhook)
+                            if (order.user_id) {
+                                UserRepository.findById(order.user_id).then(user => {
+                                    if (user && user.email) {
+                                        emailService.sendInvoiceEmail(invoice, user)
+                                            .then(() => console.log(`✅ Invoice email sent to ${user.email}`))
+                                            .catch(err => console.error('Failed to send invoice email:', err.message));
+                                    }
+                                }).catch(err => console.error('Failed to find user for invoice email:', err.message));
+                            }
                         } catch (invoiceError) {
                             console.error('Error creating invoice for Float order:', invoiceError);
                         }
