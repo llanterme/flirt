@@ -2744,13 +2744,13 @@
             }
         }
 
-        // Handle Book Now click - open popup
+        // Handle Book Now click - redirect to app
         function handleBookNowClick(category) {
-            let url = '/app?tab=booking&embedded=true';
+            let url = '/app?tab=booking';
             if (category) {
                 url += '&category=' + category;
             }
-            openBookingPopup(url);
+            window.location.href = url;
         }
 
         // Booking Popup Functions
@@ -2938,7 +2938,7 @@
                 </div>
             </div>
             <div class="price-popup-footer">
-                <a href="javascript:void(0)" onclick="closePricePopup(); openBookingPopup();">Book Appointment</a>
+                <a href="/app?tab=booking">Book Appointment</a>
             </div>
         </div>
     </div>
