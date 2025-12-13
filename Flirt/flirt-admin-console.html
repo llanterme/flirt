@@ -13417,8 +13417,8 @@
                 const data = await apiCall(`/admin/orders${params.toString() ? `?${params.toString()}` : ''}`);
                 const orders = data.orders || [];
 
-                // Update pending orders badge (always fetch unfiltered pending count)
-                updatePendingOrdersBadge(orders, !params.toString());
+                // Update pending orders badge to match filtered list
+                updatePendingOrdersBadge(orders);
 
                 if (countText) {
                     countText.textContent = orders.length
@@ -17890,8 +17890,8 @@
             const isAuthed = await checkAdminAuth();
             if (isAuthed) {
                 initDashboard();
-                // Load pending orders count for nav badge
-                updatePendingOrdersBadge([], false);
+                // Load pending orders count for nav badge (fetch all pending/processing)
+                loadInitialOrdersBadge();
             }
         });
 
@@ -19409,25 +19409,12 @@ Would you like to perform an action on this quote?
             }
         }
 
-        // Update pending orders badge in nav
-        async function updatePendingOrdersBadge(orders, isUnfiltered) {
-            let pendingCount;
-
-            if (isUnfiltered) {
-                // If we already have unfiltered data, count from it
-                pendingCount = orders.filter(o =>
-                    ['pending', 'processing'].includes((o.status || '').toLowerCase())
-                ).length;
-            } else {
-                // Fetch unfiltered count from API
-                try {
-                    const data = await apiCall('/admin/orders?status=pending');
-                    const processingData = await apiCall('/admin/orders?status=processing');
-                    pendingCount = (data.orders?.length || 0) + (processingData.orders?.length || 0);
-                } catch (e) {
-                    pendingCount = 0;
-                }
-            }
+        // Update pending orders badge in nav to match filtered list
+        function updatePendingOrdersBadge(orders) {
+            // Count pending/processing orders from the currently displayed list
+            const pendingCount = orders.filter(o =>
+                ['pending', 'processing'].includes((o.status || '').toLowerCase())
+            ).length;
 
             const badge = document.getElementById('pending-orders-count');
             if (badge) {
@@ -19437,6 +19424,17 @@ Would you like to perform an action on this quote?
                 } else {
                     badge.style.display = 'none';
                 }
+            }
+        }
+
+        // Load initial orders badge on page load (all pending/processing orders)
+        async function loadInitialOrdersBadge() {
+            try {
+                const data = await apiCall('/admin/orders');
+                const orders = data.orders || [];
+                updatePendingOrdersBadge(orders);
+            } catch (e) {
+                console.error('Failed to load initial orders badge:', e);
             }
         }
 
