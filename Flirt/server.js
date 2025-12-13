@@ -3411,7 +3411,7 @@ app.get('/api/admin/staff', authenticateAdmin, async (req, res) => {
     }
 });
 
-// Create new staff member
+// Create new staff member (or upgrade existing customer to staff)
 app.post('/api/admin/staff', authenticateAdmin, async (req, res) => {
     try {
         // Only admin can create staff
@@ -3427,11 +3427,38 @@ app.post('/api/admin/staff', authenticateAdmin, async (req, res) => {
 
         // Check if email already exists
         const existing = await UserRepository.findByEmail(email);
+
         if (existing) {
-            return res.status(400).json({ success: false, message: 'Email already in use' });
+            // If user already has staff/admin role, reject
+            if (existing.role === 'staff' || existing.role === 'admin') {
+                return res.status(400).json({ success: false, message: 'This email already has staff access' });
+            }
+
+            // Upgrade existing customer to staff
+            const updatedUser = await UserRepository.upgradeToStaff(existing.id, {
+                name: name || existing.name,
+                phone: phone || existing.phone,
+                permissions: permissions || {},
+                stylistId
+            });
+
+            return res.json({
+                success: true,
+                staff: {
+                    id: updatedUser.id,
+                    email: updatedUser.email,
+                    name: updatedUser.name,
+                    phone: updatedUser.phone,
+                    role: updatedUser.role,
+                    permissions: updatedUser.permissions ? JSON.parse(updatedUser.permissions) : {},
+                    stylistId: updatedUser.stylist_id
+                },
+                upgraded: true,
+                message: 'Existing customer upgraded to staff. They can use their existing password to login.'
+            });
         }
 
-        // Generate temporary password if not provided
+        // Create new staff member
         const tempPassword = password || Math.random().toString(36).slice(-8) + 'A1!';
         const passwordHash = await bcrypt.hash(tempPassword, 10);
 
@@ -6242,6 +6269,47 @@ app.get('/api/admin/payroll/calculate/:stylistId', authenticateAdmin, async (req
     }
 });
 
+// Preview payroll for all stylists (calculate without saving)
+app.get('/api/admin/payroll/preview', authenticateAdmin, async (req, res) => {
+    try {
+        const year = parseInt(req.query.year) || new Date().getFullYear();
+        const month = parseInt(req.query.month) || new Date().getMonth() + 1;
+
+        const stylists = await StylistRepository.findAll();
+        const calculations = [];
+        let totalBasicPay = 0;
+        let totalCommission = 0;
+        let totalGrossPay = 0;
+
+        for (const stylist of stylists) {
+            try {
+                const calc = await PayrollRepository.calculatePayroll(stylist.id, year, month);
+                calculations.push(calc);
+                totalBasicPay += calc.basicPay || 0;
+                totalCommission += calc.commissionAmount || 0;
+                totalGrossPay += calc.grossPay || 0;
+            } catch (err) {
+                console.error(`Error calculating for ${stylist.name}:`, err.message);
+            }
+        }
+
+        res.json({
+            success: true,
+            preview: {
+                period: { year, month },
+                totalBasicPay,
+                totalCommission,
+                totalGrossPay,
+                stylistCount: calculations.filter(c => c.commissionAmount > 0 || c.basicPay > 0).length,
+                calculations
+            }
+        });
+    } catch (error) {
+        console.error('Error previewing payroll:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to preview payroll' });
+    }
+});
+
 // Calculate and save payroll for all stylists for a period
 app.post('/api/admin/payroll/generate', authenticateAdmin, async (req, res) => {
     try {
@@ -6450,6 +6518,36 @@ app.delete('/api/admin/payroll/:id', authenticateAdmin, async (req, res) => {
     } catch (error) {
         console.error('Error deleting payroll:', error.message);
         res.status(500).json({ success: false, message: error.message || 'Failed to delete payroll' });
+    }
+});
+
+// Delete all draft payroll records for a period
+app.delete('/api/admin/payroll/period/:year/:month', authenticateAdmin, async (req, res) => {
+    try {
+        const year = parseInt(req.params.year);
+        const month = parseInt(req.params.month);
+        const result = await PayrollRepository.deleteAllDraftForPeriod(year, month);
+        res.json({ success: true, ...result, message: `Deleted ${result.deleted} draft payroll records` });
+    } catch (error) {
+        console.error('Error deleting payroll period:', error.message);
+        res.status(500).json({ success: false, message: error.message || 'Failed to delete payroll records' });
+    }
+});
+
+// Repair missing invoice_commissions records
+app.post('/api/admin/payroll/repair-commissions', authenticateAdmin, async (req, res) => {
+    try {
+        console.log('🔧 Starting invoice_commissions repair...');
+        const results = await PayrollRepository.repairInvoiceCommissions();
+        console.log(`✅ Repair complete: ${results.checked} checked, ${results.missing} missing, ${results.repaired} repaired`);
+        res.json({
+            success: true,
+            message: `Checked ${results.checked} invoices. Found ${results.missing} missing commission records. Repaired ${results.repaired}.`,
+            ...results
+        });
+    } catch (error) {
+        console.error('Error repairing commissions:', error.message);
+        res.status(500).json({ success: false, message: error.message || 'Failed to repair commissions' });
     }
 });
 

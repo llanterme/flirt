@@ -4125,8 +4125,21 @@
                 <section id="payroll" class="page-section">
                     <div class="section-header">
                         <h2>Payroll Management</h2>
-                        <div style="display: flex; gap: 10px;">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <button class="btn btn-outline" onclick="exportPayrollCSV()">Export CSV</button>
+                            <button class="btn btn-outline" onclick="repairCommissions()" title="Check and repair missing commission records">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="vertical-align: middle; margin-right: 4px;">
+                                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                                </svg>
+                                Repair Commissions
+                            </button>
+                            <button class="btn btn-outline" onclick="resetPayrollPeriod()" style="color: var(--danger);" title="Delete all draft records for this period">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="vertical-align: middle; margin-right: 4px;">
+                                    <polyline points="1 4 1 10 7 10"></polyline>
+                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                                </svg>
+                                Reset Period
+                            </button>
                             <button class="btn btn-primary" onclick="generatePayroll()">Generate Payroll</button>
                         </div>
                     </div>
@@ -12102,9 +12115,13 @@
                         method: 'POST',
                         body: JSON.stringify({ email, name, phone, permissions, stylistId, password: password || undefined })
                     });
-                    if (result.temporaryPassword) {
+                    if (result.upgraded) {
+                        // Existing customer was upgraded to staff
+                        showAdminToast('Customer upgraded to staff! They can use their existing password.', 'success');
+                        alert(`Customer upgraded to staff!\n\n${name} (${email}) already had a customer account.\n\nThey can use their existing password to access the admin console.`);
+                    } else if (result.temporaryPassword) {
                         showAdminToast(`Staff created! Temporary password: ${result.temporaryPassword}`, 'success');
-                        alert(`Staff member created!\\n\\nTemporary password: ${result.temporaryPassword}\\n\\nPlease share this with the staff member. They will be required to change it on first login.`);
+                        alert(`Staff member created!\n\nTemporary password: ${result.temporaryPassword}\n\nPlease share this with the staff member. They will be required to change it on first login.`);
                     } else {
                         showAdminToast('Staff member created successfully', 'success');
                     }
@@ -13509,6 +13526,67 @@
             } catch (error) {
                 console.error('Error recalculating payroll:', error);
                 showAdminToast(error.message || 'Failed to recalculate', 'error');
+            }
+        }
+
+        // Repair missing invoice_commissions records
+        async function repairCommissions() {
+            const proceed = await openConfirmDialog({
+                title: 'Repair Commission Records?',
+                message: 'This will check all finalized invoices and create any missing commission records. This is safe to run multiple times.',
+                confirmText: 'Repair',
+                tone: 'neutral'
+            });
+
+            if (!proceed) return;
+
+            try {
+                showAdminToast('Checking invoice commissions...', 'info');
+                const data = await apiCall('/admin/payroll/repair-commissions', { method: 'POST' });
+
+                if (data.repaired > 0) {
+                    showAdminToast(`Repaired ${data.repaired} missing commission records`, 'success');
+                } else if (data.missing === 0) {
+                    showAdminToast('All commission records are intact', 'success');
+                } else {
+                    showAdminToast(data.message, 'info');
+                }
+
+                // Reload payroll to show updated data
+                await loadPayroll();
+            } catch (error) {
+                console.error('Error repairing commissions:', error);
+                showAdminToast(error.message || 'Failed to repair commissions', 'error');
+            }
+        }
+
+        // Reset payroll for the current period (delete all draft records)
+        async function resetPayrollPeriod() {
+            const year = parseInt(document.getElementById('payrollYear')?.value);
+            const month = parseInt(document.getElementById('payrollMonth')?.value);
+
+            if (!year || !month) {
+                showAdminToast('Please select a year and month', 'error');
+                return;
+            }
+
+            const monthName = document.getElementById('payrollMonth')?.options[month - 1]?.text || month;
+            const proceed = await openConfirmDialog({
+                title: 'Reset Payroll Period?',
+                message: `This will delete all DRAFT payroll records for ${monthName} ${year}. Finalized and paid records will not be affected. You can then regenerate with updated data.`,
+                confirmText: 'Reset',
+                tone: 'danger'
+            });
+
+            if (!proceed) return;
+
+            try {
+                const data = await apiCall(`/admin/payroll/period/${year}/${month}`, { method: 'DELETE' });
+                showAdminToast(data.message || 'Payroll records reset', 'success');
+                await loadPayroll();
+            } catch (error) {
+                console.error('Error resetting payroll:', error);
+                showAdminToast(error.message || 'Failed to reset payroll', 'error');
             }
         }
 

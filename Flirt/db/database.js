@@ -1512,6 +1512,28 @@ const UserRepository = {
         return this.findById(id);
     },
 
+    // Upgrade an existing customer to staff role
+    async upgradeToStaff(userId, staffData) {
+        const sql = `
+            UPDATE users SET
+                role = 'staff',
+                name = COALESCE(?, name),
+                phone = COALESCE(?, phone),
+                permissions = ?,
+                stylist_id = ?,
+                updated_at = datetime('now')
+            WHERE id = ?
+        `;
+        await dbRun(sql, [
+            staffData.name || null,
+            staffData.phone || null,
+            JSON.stringify(staffData.permissions || {}),
+            staffData.stylistId || null,
+            userId
+        ]);
+        return this.findById(userId);
+    },
+
     // Get staff permissions (parses JSON)
     async getPermissions(userId) {
         const user = await this.findById(userId);
@@ -3085,6 +3107,7 @@ const PayrollRepository = {
     },
 
     // Calculate payroll for a stylist for a given month
+    // Combines: completed bookings + finalized invoice commissions
     // Commission priority: booking.commission_rate > service.commission_rate (no stylist default)
     async calculatePayroll(stylistId, year, month) {
         // Get stylist info
@@ -3100,10 +3123,8 @@ const PayrollRepository = {
             : `${year}-${String(month + 1).padStart(2, '0')}-01`;
 
         // Join with services to get service-level commission rate
-        // Include payment status for tracking (bookings are included regardless of payment status)
         const bookings = await dbAll(`
-            SELECT b.*, s.commission_rate as service_commission_rate,
-                   b.payment_status, b.payment_method, b.payment_date, b.payment_amount
+            SELECT b.*, s.commission_rate as service_commission_rate
             FROM bookings b
             LEFT JOIN services s ON b.service_id = s.id
             WHERE b.stylist_id = ?
@@ -3116,11 +3137,11 @@ const PayrollRepository = {
 
         // Calculate totals with per-booking commission
         const totalBookings = bookings.length;
-        const totalServiceRevenue = bookings.reduce((sum, b) => sum + (b.service_price || 0), 0);
-        const totalServiceRevenueExVat = totalServiceRevenue / (1 + this.VAT_RATE);
+        let bookingServiceRevenue = bookings.reduce((sum, b) => sum + (b.service_price || 0), 0);
+        let bookingServiceRevenueExVat = bookingServiceRevenue / (1 + this.VAT_RATE);
 
         // Calculate commission for each booking based on priority
-        let totalCommission = 0;
+        let bookingCommissionTotal = 0;
         const bookingDetails = bookings.map(b => {
             const priceExVat = (b.service_price || 0) / (1 + this.VAT_RATE);
 
@@ -3140,34 +3161,86 @@ const PayrollRepository = {
             }
 
             const bookingCommission = priceExVat * effectiveRate;
-            totalCommission += bookingCommission;
+            bookingCommissionTotal += bookingCommission;
 
             return {
                 id: b.id,
+                type: 'booking',
                 serviceName: b.service_name,
                 servicePrice: b.service_price,
                 priceExVat: priceExVat,
                 date: b.requested_date || b.date,
                 commissionRate: effectiveRate,
                 commissionAmount: bookingCommission,
-                rateSource: rateSource,
-                // Payment tracking
-                paymentStatus: b.payment_status || 'unpaid',
-                paymentMethod: b.payment_method,
-                paymentDate: b.payment_date,
-                paymentAmount: b.payment_amount
+                rateSource: rateSource
             };
         });
 
-        // Calculate payment statistics
-        const paidBookings = bookingDetails.filter(b => b.paymentStatus === 'paid').length;
-        const unpaidBookings = bookingDetails.filter(b => b.paymentStatus !== 'paid').length;
-        const paidRevenue = bookingDetails
-            .filter(b => b.paymentStatus === 'paid')
-            .reduce((sum, b) => sum + b.servicePrice, 0);
-        const unpaidRevenue = bookingDetails
-            .filter(b => b.paymentStatus !== 'paid')
-            .reduce((sum, b) => sum + b.servicePrice, 0);
+        // Also get finalized invoice commissions for this stylist in the period
+        // Only include invoices NOT linked to bookings (to avoid double counting)
+        const invoiceCommissions = await dbAll(`
+            SELECT
+                ic.id as commission_id,
+                ic.invoice_id,
+                ic.services_commission,
+                ic.products_commission,
+                ic.total_commission,
+                ic.payment_status as commission_payment_status,
+                i.invoice_number,
+                i.service_date,
+                i.total as invoice_total,
+                i.services_subtotal,
+                i.products_subtotal,
+                i.payment_status,
+                i.booking_id,
+                u.name as customer_name
+            FROM invoice_commissions ic
+            JOIN invoices i ON ic.invoice_id = i.id
+            LEFT JOIN users u ON i.user_id = u.id
+            WHERE ic.stylist_id = ?
+            AND i.status = 'finalized'
+            AND date(i.service_date) >= date(?)
+            AND date(i.service_date) < date(?)
+            AND (i.booking_id IS NULL OR i.booking_id = '')
+        `, [stylistId, startDate, endDate]);
+
+        // Calculate invoice-based totals
+        let invoiceServiceRevenue = invoiceCommissions.reduce((sum, ic) => sum + (ic.services_subtotal || 0), 0);
+        let invoiceProductRevenue = invoiceCommissions.reduce((sum, ic) => sum + (ic.products_subtotal || 0), 0);
+        let invoiceCommissionTotal = invoiceCommissions.reduce((sum, ic) => sum + (ic.total_commission || 0), 0);
+
+        const invoiceDetails = invoiceCommissions.map(ic => ({
+            id: ic.invoice_id,
+            type: 'invoice',
+            invoiceNumber: ic.invoice_number,
+            customerName: ic.customer_name,
+            servicePrice: ic.services_subtotal + ic.products_subtotal,
+            servicesSubtotal: ic.services_subtotal,
+            productsSubtotal: ic.products_subtotal,
+            date: ic.service_date,
+            commissionAmount: ic.total_commission,
+            servicesCommission: ic.services_commission,
+            productsCommission: ic.products_commission,
+            rateSource: 'invoice',
+            paymentStatus: ic.payment_status || 'unpaid',
+            commissionPaymentStatus: ic.commission_payment_status
+        }));
+
+        // Combine totals
+        const totalServiceRevenue = bookingServiceRevenue + invoiceServiceRevenue + invoiceProductRevenue;
+        const totalServiceRevenueExVat = totalServiceRevenue / (1 + this.VAT_RATE);
+        const totalCommission = bookingCommissionTotal + invoiceCommissionTotal;
+        const totalInvoices = invoiceCommissions.length;
+
+        // Invoice payment statistics
+        const paidInvoices = invoiceDetails.filter(i => i.paymentStatus === 'paid').length;
+        const unpaidInvoices = invoiceDetails.filter(i => i.paymentStatus !== 'paid').length;
+        const paidInvoiceRevenue = invoiceDetails
+            .filter(i => i.paymentStatus === 'paid')
+            .reduce((sum, i) => sum + i.servicePrice, 0);
+        const unpaidInvoiceRevenue = invoiceDetails
+            .filter(i => i.paymentStatus !== 'paid')
+            .reduce((sum, i) => sum + i.servicePrice, 0);
 
         const basicPay = stylist.basic_monthly_pay || 0;
         const grossPay = basicPay + totalCommission;
@@ -3185,18 +3258,44 @@ const PayrollRepository = {
             basicPay,
             commissionRate: avgCommissionRate, // weighted average for display
             totalBookings,
+            totalInvoices,
             totalServiceRevenue,
             totalServiceRevenueExVat,
             commissionAmount: totalCommission,
             grossPay,
+            // Separate booking and invoice details
             bookings: bookingDetails,
+            invoices: invoiceDetails,
+            // Combined details for display
+            allItems: [...bookingDetails, ...invoiceDetails].sort((a, b) =>
+                new Date(b.date) - new Date(a.date)
+            ),
             // Payment statistics
             paymentStats: {
-                paidBookings,
-                unpaidBookings,
-                paidRevenue,
-                unpaidRevenue,
-                percentPaid: totalBookings > 0 ? Math.round((paidBookings / totalBookings) * 100) : 0
+                paidInvoices,
+                unpaidInvoices,
+                paidInvoiceRevenue,
+                unpaidInvoiceRevenue,
+                totalPaidRevenue: paidInvoiceRevenue,
+                totalUnpaidRevenue: unpaidInvoiceRevenue,
+                percentPaid: totalInvoices > 0
+                    ? Math.round((paidInvoices / totalInvoices) * 100)
+                    : 0
+            },
+            // Breakdown by source
+            breakdown: {
+                bookings: {
+                    count: totalBookings,
+                    revenue: bookingServiceRevenue,
+                    commission: bookingCommissionTotal
+                },
+                invoices: {
+                    count: totalInvoices,
+                    revenue: invoiceServiceRevenue + invoiceProductRevenue,
+                    servicesRevenue: invoiceServiceRevenue,
+                    productsRevenue: invoiceProductRevenue,
+                    commission: invoiceCommissionTotal
+                }
             }
         };
     },
@@ -3320,6 +3419,114 @@ const PayrollRepository = {
 
         await dbRun('DELETE FROM payroll_records WHERE id = ?', [id]);
         return { success: true };
+    },
+
+    // Repair missing invoice_commissions records
+    // This checks all finalized invoices and creates missing commission records
+    async repairInvoiceCommissions() {
+        const results = {
+            checked: 0,
+            missing: 0,
+            repaired: 0,
+            errors: [],
+            details: []
+        };
+
+        // Get all finalized invoices
+        const invoices = await dbAll(`
+            SELECT
+                i.id,
+                i.invoice_number,
+                i.stylist_id,
+                i.commission_total,
+                i.status,
+                i.services_subtotal,
+                i.products_subtotal
+            FROM invoices i
+            WHERE i.status = 'finalized'
+            ORDER BY i.created_at DESC
+        `);
+
+        results.checked = invoices.length;
+
+        for (const invoice of invoices) {
+            // Check if commission record exists
+            const existing = await dbGet(
+                'SELECT id FROM invoice_commissions WHERE invoice_id = ?',
+                [invoice.id]
+            );
+
+            if (!existing) {
+                results.missing++;
+
+                // Get service commission totals
+                const serviceCommissions = await dbAll(
+                    'SELECT SUM(commission_amount) as total FROM invoice_services WHERE invoice_id = ?',
+                    [invoice.id]
+                );
+                const servicesCommission = serviceCommissions[0]?.total || 0;
+
+                // Get product commission totals
+                const productCommissions = await dbAll(
+                    'SELECT SUM(commission_amount) as total FROM invoice_products WHERE invoice_id = ?',
+                    [invoice.id]
+                );
+                const productsCommission = productCommissions[0]?.total || 0;
+
+                const totalCommission = servicesCommission + productsCommission;
+
+                // Create missing commission record
+                try {
+                    const { v4: uuidv4 } = require('uuid');
+                    await dbRun(`
+                        INSERT INTO invoice_commissions (
+                            id, invoice_id, stylist_id,
+                            services_commission, products_commission, total_commission,
+                            payment_status, created_at
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                    `, [
+                        uuidv4(),
+                        invoice.id,
+                        invoice.stylist_id,
+                        servicesCommission,
+                        productsCommission,
+                        totalCommission,
+                        'pending'
+                    ]);
+
+                    results.repaired++;
+                    results.details.push({
+                        invoiceNumber: invoice.invoice_number,
+                        stylistId: invoice.stylist_id,
+                        servicesCommission,
+                        productsCommission,
+                        totalCommission,
+                        status: 'repaired'
+                    });
+                } catch (err) {
+                    results.errors.push({
+                        invoiceNumber: invoice.invoice_number,
+                        error: err.message
+                    });
+                }
+            } else {
+                results.details.push({
+                    invoiceNumber: invoice.invoice_number,
+                    status: 'exists'
+                });
+            }
+        }
+
+        return results;
+    },
+
+    // Delete all draft payroll records for a period (for regeneration)
+    async deleteAllDraftForPeriod(year, month) {
+        const result = await dbRun(`
+            DELETE FROM payroll_records
+            WHERE period_year = ? AND period_month = ? AND status = 'draft'
+        `, [year, month]);
+        return { deleted: result.changes };
     },
 
     // Get summary for a period (all stylists)
