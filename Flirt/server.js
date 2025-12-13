@@ -2500,6 +2500,21 @@ app.post('/api/payments/webhook/payfast', async (req, res) => {
                 try {
                     const order = await OrderRepository.findById(orderId);
                     if (order && order.items) {
+                        // Re-validate promo code if one was used (log warning if invalid)
+                        if (order.promo_code || order.promoCode) {
+                            const usedPromoCode = order.promo_code || order.promoCode;
+                            const promo = await PromoRepository.findByCode(usedPromoCode);
+                            if (!promo) {
+                                console.warn(`⚠️ PayFast order ${orderId}: Promo code ${usedPromoCode} no longer exists`);
+                            } else if (!promo.active) {
+                                console.warn(`⚠️ PayFast order ${orderId}: Promo code ${usedPromoCode} is no longer active`);
+                            } else if (new Date(promo.expires_at) < new Date()) {
+                                console.warn(`⚠️ PayFast order ${orderId}: Promo code ${usedPromoCode} has expired`);
+                            } else if (promo.usage_limit && promo.times_used > promo.usage_limit) {
+                                console.warn(`⚠️ PayFast order ${orderId}: Promo code ${usedPromoCode} exceeded usage limit`);
+                            }
+                        }
+
                         // Deduct stock for each item
                         for (const item of order.items) {
                             await ProductRepository.updateStock(item.product_id || item.productId, -(item.quantity || 1));
@@ -2524,20 +2539,25 @@ app.post('/api/payments/webhook/payfast', async (req, res) => {
                             }
                         }
 
-                        // Generate invoice from order
+                        // Generate invoice from order (check for duplicates first)
                         try {
-                            const invoice = await InvoiceRepository.createFromOrder(order, 'payfast');
-                            console.log(`✅ Invoice ${invoice.invoice_number} created for PayFast order ${orderId}`);
+                            const existingInvoice = await InvoiceRepository.findByOrderId(orderId);
+                            if (existingInvoice) {
+                                console.log(`⚠️ Invoice already exists for PayFast order ${orderId}, skipping creation`);
+                            } else {
+                                const invoice = await InvoiceRepository.createFromOrder(order, 'payfast');
+                                console.log(`✅ Invoice ${invoice.invoice_number} created for PayFast order ${orderId}`);
 
-                            // Send invoice email to customer (async, don't block webhook)
-                            if (order.user_id) {
-                                UserRepository.findById(order.user_id).then(user => {
-                                    if (user && user.email) {
-                                        emailService.sendInvoiceEmail(invoice, user)
-                                            .then(() => console.log(`✅ Invoice email sent to ${user.email}`))
-                                            .catch(err => console.error('Failed to send invoice email:', err.message));
-                                    }
-                                }).catch(err => console.error('Failed to find user for invoice email:', err.message));
+                                // Send invoice email to customer (async, don't block webhook)
+                                if (order.user_id) {
+                                    UserRepository.findById(order.user_id).then(user => {
+                                        if (user && user.email) {
+                                            emailService.sendInvoiceEmail(invoice, user)
+                                                .then(() => console.log(`✅ Invoice email sent to ${user.email}`))
+                                                .catch(err => console.error('Failed to send invoice email:', err.message));
+                                        }
+                                    }).catch(err => console.error('Failed to find user for invoice email:', err.message));
+                                }
                             }
                         } catch (invoiceError) {
                             console.error('Error creating invoice for PayFast order:', invoiceError);
@@ -2603,6 +2623,21 @@ app.post('/api/payments/webhook/yoco', async (req, res) => {
                 try {
                     const order = await OrderRepository.findById(orderId);
                     if (order && order.items) {
+                        // Re-validate promo code if one was used (log warning if invalid)
+                        if (order.promo_code || order.promoCode) {
+                            const usedPromoCode = order.promo_code || order.promoCode;
+                            const promo = await PromoRepository.findByCode(usedPromoCode);
+                            if (!promo) {
+                                console.warn(`⚠️ Yoco order ${orderId}: Promo code ${usedPromoCode} no longer exists`);
+                            } else if (!promo.active) {
+                                console.warn(`⚠️ Yoco order ${orderId}: Promo code ${usedPromoCode} is no longer active`);
+                            } else if (new Date(promo.expires_at) < new Date()) {
+                                console.warn(`⚠️ Yoco order ${orderId}: Promo code ${usedPromoCode} has expired`);
+                            } else if (promo.usage_limit && promo.times_used > promo.usage_limit) {
+                                console.warn(`⚠️ Yoco order ${orderId}: Promo code ${usedPromoCode} exceeded usage limit`);
+                            }
+                        }
+
                         // Deduct stock for each item
                         for (const item of order.items) {
                             await ProductRepository.updateStock(item.product_id || item.productId, -(item.quantity || 1));
@@ -2627,20 +2662,25 @@ app.post('/api/payments/webhook/yoco', async (req, res) => {
                             }
                         }
 
-                        // Generate invoice from order
+                        // Generate invoice from order (check for duplicates first)
                         try {
-                            const invoice = await InvoiceRepository.createFromOrder(order, 'yoco');
-                            console.log(`✅ Invoice ${invoice.invoice_number} created for Yoco order ${orderId}`);
+                            const existingInvoice = await InvoiceRepository.findByOrderId(orderId);
+                            if (existingInvoice) {
+                                console.log(`⚠️ Invoice already exists for Yoco order ${orderId}, skipping creation`);
+                            } else {
+                                const invoice = await InvoiceRepository.createFromOrder(order, 'yoco');
+                                console.log(`✅ Invoice ${invoice.invoice_number} created for Yoco order ${orderId}`);
 
-                            // Send invoice email to customer (async, don't block webhook)
-                            if (order.user_id) {
-                                UserRepository.findById(order.user_id).then(user => {
-                                    if (user && user.email) {
-                                        emailService.sendInvoiceEmail(invoice, user)
-                                            .then(() => console.log(`✅ Invoice email sent to ${user.email}`))
-                                            .catch(err => console.error('Failed to send invoice email:', err.message));
-                                    }
-                                }).catch(err => console.error('Failed to find user for invoice email:', err.message));
+                                // Send invoice email to customer (async, don't block webhook)
+                                if (order.user_id) {
+                                    UserRepository.findById(order.user_id).then(user => {
+                                        if (user && user.email) {
+                                            emailService.sendInvoiceEmail(invoice, user)
+                                                .then(() => console.log(`✅ Invoice email sent to ${user.email}`))
+                                                .catch(err => console.error('Failed to send invoice email:', err.message));
+                                        }
+                                    }).catch(err => console.error('Failed to find user for invoice email:', err.message));
+                                }
                             }
                         } catch (invoiceError) {
                             console.error('Error creating invoice for Yoco order:', invoiceError);
@@ -2721,6 +2761,21 @@ app.post('/api/payments/webhook/float', async (req, res) => {
                 try {
                     const order = await OrderRepository.findById(orderId);
                     if (order && order.items) {
+                        // Re-validate promo code if one was used (log warning if invalid)
+                        if (order.promo_code || order.promoCode) {
+                            const usedPromoCode = order.promo_code || order.promoCode;
+                            const promo = await PromoRepository.findByCode(usedPromoCode);
+                            if (!promo) {
+                                console.warn(`⚠️ Float order ${orderId}: Promo code ${usedPromoCode} no longer exists`);
+                            } else if (!promo.active) {
+                                console.warn(`⚠️ Float order ${orderId}: Promo code ${usedPromoCode} is no longer active`);
+                            } else if (new Date(promo.expires_at) < new Date()) {
+                                console.warn(`⚠️ Float order ${orderId}: Promo code ${usedPromoCode} has expired`);
+                            } else if (promo.usage_limit && promo.times_used > promo.usage_limit) {
+                                console.warn(`⚠️ Float order ${orderId}: Promo code ${usedPromoCode} exceeded usage limit`);
+                            }
+                        }
+
                         // Deduct stock for each item
                         for (const item of order.items) {
                             await ProductRepository.updateStock(item.product_id || item.productId, -(item.quantity || 1));
@@ -2745,20 +2800,25 @@ app.post('/api/payments/webhook/float', async (req, res) => {
                             }
                         }
 
-                        // Generate invoice from order
+                        // Generate invoice from order (check for duplicates first)
                         try {
-                            const invoice = await InvoiceRepository.createFromOrder(order, 'float');
-                            console.log(`✅ Invoice ${invoice.invoice_number} created for Float order ${orderId}`);
+                            const existingInvoice = await InvoiceRepository.findByOrderId(orderId);
+                            if (existingInvoice) {
+                                console.log(`⚠️ Invoice already exists for Float order ${orderId}, skipping creation`);
+                            } else {
+                                const invoice = await InvoiceRepository.createFromOrder(order, 'float');
+                                console.log(`✅ Invoice ${invoice.invoice_number} created for Float order ${orderId}`);
 
-                            // Send invoice email to customer (async, don't block webhook)
-                            if (order.user_id) {
-                                UserRepository.findById(order.user_id).then(user => {
-                                    if (user && user.email) {
-                                        emailService.sendInvoiceEmail(invoice, user)
-                                            .then(() => console.log(`✅ Invoice email sent to ${user.email}`))
-                                            .catch(err => console.error('Failed to send invoice email:', err.message));
-                                    }
-                                }).catch(err => console.error('Failed to find user for invoice email:', err.message));
+                                // Send invoice email to customer (async, don't block webhook)
+                                if (order.user_id) {
+                                    UserRepository.findById(order.user_id).then(user => {
+                                        if (user && user.email) {
+                                            emailService.sendInvoiceEmail(invoice, user)
+                                                .then(() => console.log(`✅ Invoice email sent to ${user.email}`))
+                                                .catch(err => console.error('Failed to send invoice email:', err.message));
+                                        }
+                                    }).catch(err => console.error('Failed to find user for invoice email:', err.message));
+                                }
                             }
                         } catch (invoiceError) {
                             console.error('Error creating invoice for Float order:', invoiceError);
@@ -6478,14 +6538,42 @@ app.get('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
 // Update order status (admin)
 app.patch('/api/admin/orders/:id', authenticateAdmin, async (req, res) => {
     try {
-        const { status } = req.body;
+        const { status, trackingNumber } = req.body;
 
         const order = await OrderRepository.findById(req.params.id);
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
 
+        const previousStatus = order.status;
         const updatedOrder = await OrderRepository.updateStatus(req.params.id, status);
+
+        // Send email notifications for status changes (async, don't block response)
+        if (order.user_id && previousStatus !== status) {
+            UserRepository.findById(order.user_id).then(user => {
+                if (user && user.email) {
+                    // Determine delivery method from order
+                    const deliveryMethod = order.delivery_method || order.deliveryMethod || 'delivery';
+
+                    if (status === 'shipped') {
+                        emailService.sendOrderShipped(order, user, trackingNumber)
+                            .then(() => console.log(`✅ Order shipped email sent to ${user.email}`))
+                            .catch(err => console.error('Failed to send shipped email:', err.message));
+                    } else if (status === 'delivered' || status === 'ready') {
+                        // Use ready-for-pickup for collection orders, or generic for delivery
+                        if (deliveryMethod === 'collection' || deliveryMethod === 'pickup') {
+                            emailService.sendOrderReady(order, user)
+                                .then(() => console.log(`✅ Order ready for pickup email sent to ${user.email}`))
+                                .catch(err => console.error('Failed to send ready email:', err.message));
+                        } else {
+                            // For delivery orders marked as delivered, send shipped email if not already sent
+                            // or we could create a delivered confirmation - for now log it
+                            console.log(`📦 Order ${order.id} marked as delivered for ${user.email}`);
+                        }
+                    }
+                }
+            }).catch(err => console.error('Failed to find user for status email:', err.message));
+        }
 
         res.json({ success: true, order: updatedOrder });
     } catch (error) {
