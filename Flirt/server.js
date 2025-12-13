@@ -5065,6 +5065,31 @@ app.put('/api/admin/payment-config', authenticateAdmin, async (req, res) => {
     }
 });
 
+// Get payment configuration status (public - for client checkout)
+app.get('/api/payments/config', async (req, res) => {
+    try {
+        const configStatus = PaymentService.getPaymentConfigStatus();
+        // Only return whether providers are configured, not the actual credentials
+        res.json({
+            success: true,
+            payfast: {
+                configured: configStatus.payfast?.configured || false,
+                sandbox: configStatus.payfast?.sandbox || false
+            },
+            yoco: {
+                configured: configStatus.yoco?.configured || false
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching payment config status:', error.message);
+        res.json({
+            success: true,
+            payfast: { configured: false, sandbox: false },
+            yoco: { configured: false }
+        });
+    }
+});
+
 // ============================================
 // BUSINESS SETTINGS API
 // ============================================

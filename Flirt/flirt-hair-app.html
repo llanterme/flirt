@@ -14935,8 +14935,23 @@ async function showNotifications() {
                 // Store pending order ID so we can clear cart only on successful payment
                 localStorage.setItem('flirt_pending_order_id', data.order.id);
 
+                // Check if any payment provider is configured
+                const payfastConfigured = window.paymentConfig?.payfast?.configured;
+                const yocoConfigured = window.paymentConfig?.yoco?.configured;
+
+                if (!payfastConfigured && !yocoConfigured) {
+                    // No payment provider configured
+                    if (payBtn) {
+                        payBtn.innerHTML = originalBtnText;
+                        payBtn.disabled = false;
+                    }
+                    isProcessingPayment = false;
+                    alert('Online payments are not currently available. Please contact the salon directly to complete your order.');
+                    return;
+                }
+
                 // Choose provider: prefer PayFast if configured, else Yoco
-                const preferredProvider = window.paymentConfig?.payfast?.configured ? 'payfast' : 'yoco';
+                const preferredProvider = payfastConfigured ? 'payfast' : 'yoco';
 
                 const paymentInit = await apiCall('/payments/initiate', {
                     method: 'POST',
@@ -15784,6 +15799,16 @@ async function showNotifications() {
         async function initApp() {
             console.log('🚀 Initializing Flirt Hair & Beauty App...');
             console.log('API_BASE:', API_BASE);
+
+            // Load payment config for checkout
+            try {
+                const paymentConfig = await fetch(`${API_BASE}/payments/config`).then(r => r.json());
+                window.paymentConfig = paymentConfig;
+                console.log('✅ Payment config loaded:', paymentConfig);
+            } catch (e) {
+                console.warn('Failed to load payment config:', e);
+                window.paymentConfig = { payfast: { configured: false }, yoco: { configured: false } };
+            }
 
             // Check for payment success/failure (cart clearing logic)
             checkPaymentSuccess();
