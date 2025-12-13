@@ -2453,11 +2453,13 @@ app.post('/api/payments/webhook/payfast', async (req, res) => {
         const paymentStatus = result.completed ? 'paid' : (result.status || 'pending').toLowerCase();
         const providerStatus = result.completed ? 'completed' : (result.status || 'processing').toLowerCase();
 
+        // Look up payment record to get order_id (direct URL method doesn't include custom_str1)
+        let payment = null;
         if (result.paymentId) {
             await PaymentRepository.updateStatus(result.paymentId, providerStatus, result.pfPaymentId, { itn: result });
+            payment = await PaymentRepository.findById(result.paymentId);
 
             // Check if this is a booking payment and update booking status
-            const payment = await PaymentRepository.findById(result.paymentId);
             if (payment && payment.booking_id) {
                 console.log(`💳 Booking payment received for ${payment.booking_id}: ${paymentStatus}`);
                 await BookingRepository.recordPayment(payment.booking_id, {
@@ -2486,20 +2488,23 @@ app.post('/api/payments/webhook/payfast', async (req, res) => {
                 }
             }
         }
-        if (result.orderId) {
-            await OrderRepository.updatePaymentStatus(result.orderId, paymentStatus);
+
+        // Get orderId from webhook result OR from payment record (for direct URL payments)
+        const orderId = result.orderId || payment?.order_id;
+        if (orderId) {
+            await OrderRepository.updatePaymentStatus(orderId, paymentStatus);
             if (paymentStatus === 'paid') {
-                await OrderRepository.updateStatus(result.orderId, 'paid');
+                await OrderRepository.updateStatus(orderId, 'paid');
 
                 // Process stock deduction and loyalty points on successful payment
                 try {
-                    const order = await OrderRepository.findById(result.orderId);
+                    const order = await OrderRepository.findById(orderId);
                     if (order && order.items) {
                         // Deduct stock for each item
                         for (const item of order.items) {
                             await ProductRepository.updateStock(item.product_id || item.productId, -(item.quantity || 1));
                         }
-                        console.log(`✅ Stock deducted for PayFast order ${result.orderId}`);
+                        console.log(`✅ Stock deducted for PayFast order ${orderId}`);
 
                         // Award loyalty points
                         const loyaltySettings = await LoyaltyRepository.getSettings();
@@ -2515,14 +2520,14 @@ app.post('/api/payments/webhook/payfast', async (req, res) => {
                                     type: 'earned',
                                     description: `Order #${order.id.substring(0, 8)}`
                                 });
-                                console.log(`✅ ${pointsToAdd} loyalty points awarded for PayFast order ${result.orderId}`);
+                                console.log(`✅ ${pointsToAdd} loyalty points awarded for PayFast order ${orderId}`);
                             }
                         }
 
                         // Generate invoice from order
                         try {
                             const invoice = await InvoiceRepository.createFromOrder(order, 'payfast');
-                            console.log(`✅ Invoice ${invoice.invoice_number} created for PayFast order ${result.orderId}`);
+                            console.log(`✅ Invoice ${invoice.invoice_number} created for PayFast order ${orderId}`);
                         } catch (invoiceError) {
                             console.error('Error creating invoice for PayFast order:', invoiceError);
                         }
@@ -2552,22 +2557,22 @@ app.post('/api/payments/webhook/yoco', async (req, res) => {
         const paymentStatus = result.completed ? 'paid' : (result.status || 'pending').toLowerCase();
         const providerStatus = result.completed ? 'completed' : (result.status || result.type || 'processing').toLowerCase();
 
+        // Look up payment record to get order_id
+        let payment = null;
         if (result.paymentId) {
             await PaymentRepository.updateStatus(result.paymentId, providerStatus, result.yocoPaymentId, { event: result });
+            payment = await PaymentRepository.findById(result.paymentId);
 
             // Process rewards for paid bookings via Yoco
-            if (result.completed) {
+            if (result.completed && payment && payment.booking_id) {
                 try {
-                    const payment = await PaymentRepository.findById(result.paymentId);
-                    if (payment && payment.booking_id) {
-                        const booking = await BookingRepository.findById(payment.booking_id);
-                        if (booking && booking.user_id) {
-                            const user = await UserRepository.findById(booking.user_id);
-                            if (user) {
-                                const bookingWithPayment = { ...booking, paid: true, final_amount: payment.amount };
-                                const rewardsResult = await RewardsService.processCompletedBooking(bookingWithPayment, user, true);
-                                console.log('💎 Rewards processed for Yoco payment:', rewardsResult);
-                            }
+                    const booking = await BookingRepository.findById(payment.booking_id);
+                    if (booking && booking.user_id) {
+                        const user = await UserRepository.findById(booking.user_id);
+                        if (user) {
+                            const bookingWithPayment = { ...booking, paid: true, final_amount: payment.amount };
+                            const rewardsResult = await RewardsService.processCompletedBooking(bookingWithPayment, user, true);
+                            console.log('💎 Rewards processed for Yoco payment:', rewardsResult);
                         }
                     }
                 } catch (rewardError) {
@@ -2575,20 +2580,23 @@ app.post('/api/payments/webhook/yoco', async (req, res) => {
                 }
             }
         }
-        if (result.orderId) {
-            await OrderRepository.updatePaymentStatus(result.orderId, paymentStatus);
+
+        // Get orderId from webhook result OR from payment record
+        const orderId = result.orderId || payment?.order_id;
+        if (orderId) {
+            await OrderRepository.updatePaymentStatus(orderId, paymentStatus);
             if (paymentStatus === 'paid') {
-                await OrderRepository.updateStatus(result.orderId, 'paid');
+                await OrderRepository.updateStatus(orderId, 'paid');
 
                 // Process stock deduction and loyalty points on successful payment
                 try {
-                    const order = await OrderRepository.findById(result.orderId);
+                    const order = await OrderRepository.findById(orderId);
                     if (order && order.items) {
                         // Deduct stock for each item
                         for (const item of order.items) {
                             await ProductRepository.updateStock(item.product_id || item.productId, -(item.quantity || 1));
                         }
-                        console.log(`✅ Stock deducted for Yoco order ${result.orderId}`);
+                        console.log(`✅ Stock deducted for Yoco order ${orderId}`);
 
                         // Award loyalty points
                         const loyaltySettings = await LoyaltyRepository.getSettings();
@@ -2604,14 +2612,14 @@ app.post('/api/payments/webhook/yoco', async (req, res) => {
                                     type: 'earned',
                                     description: `Order #${order.id.substring(0, 8)}`
                                 });
-                                console.log(`✅ ${pointsToAdd} loyalty points awarded for Yoco order ${result.orderId}`);
+                                console.log(`✅ ${pointsToAdd} loyalty points awarded for Yoco order ${orderId}`);
                             }
                         }
 
                         // Generate invoice from order
                         try {
                             const invoice = await InvoiceRepository.createFromOrder(order, 'yoco');
-                            console.log(`✅ Invoice ${invoice.invoice_number} created for Yoco order ${result.orderId}`);
+                            console.log(`✅ Invoice ${invoice.invoice_number} created for Yoco order ${orderId}`);
                         } catch (invoiceError) {
                             console.error('Error creating invoice for Yoco order:', invoiceError);
                         }
@@ -2644,11 +2652,13 @@ app.post('/api/payments/webhook/float', async (req, res) => {
         const paymentStatus = result.completed ? 'paid' : (result.status || 'pending').toLowerCase();
         const providerStatus = result.completed ? 'completed' : (result.status || 'processing').toLowerCase();
 
+        // Look up payment record to get order_id (webhook may not include it in metadata)
+        let payment = null;
         if (result.paymentId) {
             await PaymentRepository.updateStatus(result.paymentId, providerStatus, result.floatTransactionId, { event: result });
+            payment = await PaymentRepository.findById(result.paymentId);
 
             // Check if this is a booking payment and update booking status
-            const payment = await PaymentRepository.findById(result.paymentId);
             if (payment && payment.booking_id) {
                 console.log(`💳 Float booking payment received for ${payment.booking_id}: ${paymentStatus}`);
                 await BookingRepository.recordPayment(payment.booking_id, {
@@ -2677,20 +2687,23 @@ app.post('/api/payments/webhook/float', async (req, res) => {
                 }
             }
         }
-        if (result.orderId) {
-            await OrderRepository.updatePaymentStatus(result.orderId, paymentStatus);
+
+        // Get orderId from webhook result OR from payment record
+        const orderId = result.orderId || payment?.order_id;
+        if (orderId) {
+            await OrderRepository.updatePaymentStatus(orderId, paymentStatus);
             if (paymentStatus === 'paid') {
-                await OrderRepository.updateStatus(result.orderId, 'paid');
+                await OrderRepository.updateStatus(orderId, 'paid');
 
                 // Process stock deduction and loyalty points on successful payment
                 try {
-                    const order = await OrderRepository.findById(result.orderId);
+                    const order = await OrderRepository.findById(orderId);
                     if (order && order.items) {
                         // Deduct stock for each item
                         for (const item of order.items) {
                             await ProductRepository.updateStock(item.product_id || item.productId, -(item.quantity || 1));
                         }
-                        console.log(`✅ Stock deducted for Float order ${result.orderId}`);
+                        console.log(`✅ Stock deducted for Float order ${orderId}`);
 
                         // Award loyalty points
                         const loyaltySettings = await LoyaltyRepository.getSettings();
@@ -2706,14 +2719,14 @@ app.post('/api/payments/webhook/float', async (req, res) => {
                                     type: 'earned',
                                     description: `Order #${order.id.substring(0, 8)}`
                                 });
-                                console.log(`✅ ${pointsToAdd} loyalty points awarded for Float order ${result.orderId}`);
+                                console.log(`✅ ${pointsToAdd} loyalty points awarded for Float order ${orderId}`);
                             }
                         }
 
                         // Generate invoice from order
                         try {
                             const invoice = await InvoiceRepository.createFromOrder(order, 'float');
-                            console.log(`✅ Invoice ${invoice.invoice_number} created for Float order ${result.orderId}`);
+                            console.log(`✅ Invoice ${invoice.invoice_number} created for Float order ${orderId}`);
                         } catch (invoiceError) {
                             console.error('Error creating invoice for Float order:', invoiceError);
                         }
