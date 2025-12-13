@@ -959,7 +959,7 @@
             background: #fafbfc;
             border-right: 1px solid var(--border-soft);
             overflow-y: auto;
-            max-height: 70vh;
+            max-height: calc(90vh - 140px);
             border-radius: 0 0 0 16px;
         }
 
@@ -967,7 +967,7 @@
             padding: 30px;
             overflow-y: auto;
             background: white;
-            max-height: 70vh;
+            max-height: calc(90vh - 140px);
             border-radius: 0 0 16px 0;
         }
 
@@ -6478,8 +6478,8 @@
                                     <div class="form-group" id="staff-password-group">
                                         <label class="form-label">Initial Password</label>
                                         <div style="position: relative;">
-                                            <input type="text" class="form-input" id="staff-password" placeholder="Leave blank to auto-generate">
-                                            <button type="button" onclick="generateStaffPassword()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--primary-light); color: var(--primary); border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">Generate</button>
+                                            <input type="text" class="form-input" id="staff-password" placeholder="Leave blank to auto-generate" style="padding-right: 90px;">
+                                            <button type="button" onclick="generateStaffPassword()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: var(--primary-light); color: var(--primary); border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600; white-space: nowrap;">Generate</button>
                                         </div>
                                         <small style="color: var(--text-subtle); font-size: 11px; margin-top: 4px; display: block;">Staff will change password on first login</small>
                                     </div>
