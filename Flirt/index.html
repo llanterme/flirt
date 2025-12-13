@@ -2563,7 +2563,55 @@
             <p class="instagram-subtitle">See the latest hair transformations and behind-the-scenes moments</p>
         </div>
         <div class="instagram-grid" id="instagramGrid">
-            <!-- Gallery items will be loaded dynamically -->
+            <!-- Static fallback images - will be replaced by API if available -->
+            <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                <img src="/images/home-footer-images1.jpg" alt="Hair Extensions Gallery" loading="lazy">
+                <div class="instagram-item-overlay">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="white" stroke-width="1.5"></path></svg>
+                </div>
+            </a>
+            <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                <img src="/images/home-footer-images2.jpg" alt="Hair Extensions Gallery" loading="lazy">
+                <div class="instagram-item-overlay">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="white" stroke-width="1.5"></path></svg>
+                </div>
+            </a>
+            <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                <img src="/images/home-footer-images3.jpg" alt="Hair Extensions Gallery" loading="lazy">
+                <div class="instagram-item-overlay">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="white" stroke-width="1.5"></path></svg>
+                </div>
+            </a>
+            <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                <img src="/images/about-image1.jpg" alt="Hair Extensions Gallery" loading="lazy">
+                <div class="instagram-item-overlay">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="white" stroke-width="1.5"></path></svg>
+                </div>
+            </a>
+            <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                <img src="/images/categories/categories1.jpg" alt="Tape Extensions" loading="lazy">
+                <div class="instagram-item-overlay">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="white" stroke-width="1.5"></path></svg>
+                </div>
+            </a>
+            <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                <img src="/images/categories/categories3.jpg" alt="Weft Extensions" loading="lazy">
+                <div class="instagram-item-overlay">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="white" stroke-width="1.5"></path></svg>
+                </div>
+            </a>
+            <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                <img src="/images/categories/categories5.jpg" alt="Colour Matching" loading="lazy">
+                <div class="instagram-item-overlay">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="white" stroke-width="1.5"></path></svg>
+                </div>
+            </a>
+            <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                <img src="/images/categories/categories7.jpg" alt="Hair Maintenance" loading="lazy">
+                <div class="instagram-item-overlay">
+                    <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="white" stroke-width="1.5"></path></svg>
+                </div>
+            </a>
         </div>
         <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-cta reveal">
             <div class="instagram-cta-icon">
@@ -2730,7 +2778,7 @@
             }
         }
 
-        // Load Instagram Gallery
+        // Load Instagram Gallery from API (enhances static fallback if available)
         async function loadInstagramGallery() {
             const grid = document.getElementById('instagramGrid');
             const handleEl = document.getElementById('instagramHandle');
@@ -2738,6 +2786,8 @@
 
             try {
                 const response = await fetch('/api/gallery');
+                if (!response.ok) return; // Keep static fallback on error
+
                 const data = await response.json();
 
                 // Update Instagram handle if available
@@ -2747,71 +2797,25 @@
                     ctaLink.href = `https://www.instagram.com/${data.instagram.username}/`;
                 }
 
-                // Display gallery items (limit to 8 for grid)
-                if (data.items && data.items.length > 0) {
+                // Only replace grid if API returns valid items
+                if (data.items && data.items.length >= 4) {
                     const items = data.items.slice(0, 8);
                     grid.innerHTML = items.map(item => `
-                        <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                        <a href="${ctaLink.href}" target="_blank" class="instagram-item stagger-item">
                             <img src="${item.imageUrl}" alt="${item.altText || 'Flirt Hair Gallery'}" loading="lazy">
                             <div class="instagram-item-overlay">
                                 <svg viewBox="0 0 24 24">
                                     <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect>
                                     <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="white" stroke-width="1.5"></path>
-                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="white" stroke-width="2"></line>
                                 </svg>
                             </div>
                         </a>
                     `).join('');
-                } else {
-                    // Fallback to static images if no gallery items
-                    grid.innerHTML = `
-                        <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
-                            <img src="/images/home-footer-images1.jpg" alt="Hair Extensions Gallery" loading="lazy">
-                            <div class="instagram-item-overlay">
-                                <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect></svg>
-                            </div>
-                        </a>
-                        <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
-                            <img src="/images/home-footer-images2.jpg" alt="Hair Extensions Gallery" loading="lazy">
-                            <div class="instagram-item-overlay">
-                                <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect></svg>
-                            </div>
-                        </a>
-                        <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
-                            <img src="/images/home-footer-images3.jpg" alt="Hair Extensions Gallery" loading="lazy">
-                            <div class="instagram-item-overlay">
-                                <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect></svg>
-                            </div>
-                        </a>
-                        <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
-                            <img src="/images/about-image1.jpg" alt="Hair Extensions Gallery" loading="lazy">
-                            <div class="instagram-item-overlay">
-                                <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect></svg>
-                            </div>
-                        </a>
-                    `;
                 }
+                // If less than 4 items, keep the static HTML fallback
             } catch (error) {
-                console.error('Error loading gallery:', error);
-                // Use fallback images on error
-                grid.innerHTML = `
-                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item">
-                        <img src="/images/home-footer-images1.jpg" alt="Hair Extensions Gallery">
-                        <div class="instagram-item-overlay"></div>
-                    </a>
-                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item">
-                        <img src="/images/home-footer-images2.jpg" alt="Hair Extensions Gallery">
-                        <div class="instagram-item-overlay"></div>
-                    </a>
-                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item">
-                        <img src="/images/home-footer-images3.jpg" alt="Hair Extensions Gallery">
-                        <div class="instagram-item-overlay"></div>
-                    </a>
-                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item">
-                        <img src="/images/about-image1.jpg" alt="Hair Extensions Gallery">
-                        <div class="instagram-item-overlay"></div>
-                    </a>
-                `;
+                // Silently fail - static HTML fallback is already in place
+                console.log('Gallery API unavailable, using static images');
             }
         }
 
