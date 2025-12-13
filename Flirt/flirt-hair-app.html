@@ -14847,7 +14847,7 @@ async function showNotifications() {
                 floatPaymentOption.style.display = 'flex';
 
                 // Pre-authenticate with Float in background for faster checkout
-                if (!floatPreAuthDone && authToken) {
+                if (!floatPreAuthDone && currentUser) {
                     floatPreAuthDone = true;
                     preAuthFloat();
                 }
