@@ -14830,6 +14830,8 @@ async function showNotifications() {
         }
 
         // ========== CHECKOUT FUNCTIONALITY ==========
+        let floatPreAuthDone = false; // Track if Float pre-auth has been done this session
+
         function openCheckout() {
             closeCart();
             renderCheckoutItems();
@@ -14843,6 +14845,12 @@ async function showNotifications() {
             if (floatConfigured) {
                 paymentMethodSection.style.display = 'block';
                 floatPaymentOption.style.display = 'flex';
+
+                // Pre-authenticate with Float in background for faster checkout
+                if (!floatPreAuthDone && authToken) {
+                    floatPreAuthDone = true;
+                    preAuthFloat();
+                }
             } else {
                 paymentMethodSection.style.display = 'none';
                 floatPaymentOption.style.display = 'none';
@@ -14850,6 +14858,18 @@ async function showNotifications() {
 
             document.getElementById('checkoutModal').classList.add('show');
             document.body.classList.add('modal-open'); // Prevent background scroll
+        }
+
+        // Pre-authenticate with Float to cache token (makes checkout faster)
+        async function preAuthFloat() {
+            try {
+                console.log('[Float] Pre-authenticating in background...');
+                await apiCall('/payments/float/preauth', { method: 'POST' });
+                console.log('[Float] Pre-auth completed successfully');
+            } catch (e) {
+                // Silent fail - pre-auth is optional optimization
+                console.log('[Float] Pre-auth failed (will retry at checkout):', e.message);
+            }
         }
 
         function renderCheckoutItems() {
@@ -15063,6 +15083,11 @@ async function showNotifications() {
 
                 if (selectedPaymentMethod === 'float' && floatConfigured) {
                     preferredProvider = 'float';
+                    // Update button text for Float to show specific loading state
+                    if (payBtn) {
+                        payBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span class="spinner" style="width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></span>Connecting to Float...</span>';
+                    }
+                    showToast({ type: 'info', title: 'Float Pay', message: 'Setting up your pay-in-4 payment...', duration: 3000 });
                 } else {
                     // Choose provider: prefer PayFast if configured, else Yoco
                     preferredProvider = payfastConfigured ? 'payfast' : 'yoco';

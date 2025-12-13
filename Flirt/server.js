@@ -2319,6 +2319,25 @@ app.post('/api/payments/initiate', authenticateToken, async (req, res) => {
     }
 });
 
+// Pre-authenticate with Float (caches token for faster checkout)
+app.post('/api/payments/float/preauth', authenticateToken, async (req, res) => {
+    try {
+        const configStatus = PaymentService.getPaymentConfigStatus();
+        if (!configStatus.float.configured) {
+            return res.status(400).json({ success: false, message: 'Float is not configured' });
+        }
+
+        // This will fetch and cache the token (or return cached if valid)
+        await PaymentService.getFloatAuthToken(false);
+
+        res.json({ success: true, message: 'Float pre-authenticated successfully' });
+    } catch (error) {
+        console.error('[Float] Pre-auth error:', error.message);
+        // Don't fail the request - pre-auth is optional optimization
+        res.json({ success: false, message: 'Float pre-auth failed, will retry at checkout' });
+    }
+});
+
 // Check payment status
 app.get('/api/payments/:id/status', authenticateToken, async (req, res) => {
     try {

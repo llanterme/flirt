@@ -542,8 +542,8 @@ async function createFloatCheckout(order, customer) {
     const config = getEffectiveConfig();
     const paymentId = `FLT-${uuidv4().substring(0, 8).toUpperCase()}`;
 
-    // Get fresh auth token (force refresh to ensure we have a valid token)
-    const token = await getFloatAuthToken(true);
+    // Use cached token when available (don't force refresh - speeds up checkout)
+    const token = await getFloatAuthToken(false);
 
     console.log('[Float] Using token for checkout, length:', token?.length || 0);
 
@@ -979,6 +979,8 @@ module.exports = {
     verifyFloatWebhook,
     processFloatWebhook,
     generateFloatRedirectHtml,
+    getFloatAuthToken,        // Export for pre-authentication
+    clearFloatTokenCache,     // Export for debugging
 
     // Unified interface
     initializePayment,
