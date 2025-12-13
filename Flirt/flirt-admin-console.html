@@ -20477,10 +20477,8 @@ Would you like to perform an action on this quote?
                             <th>Invoice</th>
                             <th>Date</th>
                             <th>Customer</th>
-                            <th>Total</th>
-                            <th>Services Comm.</th>
-                            <th>Products Comm.</th>
-                            <th>Total Comm.</th>
+                            <th>Invoice Total</th>
+                            <th>Commission</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -20495,9 +20493,7 @@ Would you like to perform an action on this quote?
                                 <td>${comm.service_date ? new Date(comm.service_date).toLocaleDateString('en-ZA') : 'N/A'}</td>
                                 <td>${comm.customer_name || comm.customer?.name || 'Unknown'}</td>
                                 <td>R${(comm.invoice_total || 0).toFixed(2)}</td>
-                                <td>R${(comm.services_commission || 0).toFixed(2)}</td>
-                                <td>R${(comm.products_commission || 0).toFixed(2)}</td>
-                                <td><strong>R${(comm.total_commission || 0).toFixed(2)}</strong></td>
+                                <td><strong>R${(comm.services_commission || 0).toFixed(2)}</strong></td>
                                 <td>
                                     <span class="badge badge-${comm.payment_status === 'paid' ? 'success' : 'warning'}">
                                         ${(comm.payment_status || 'pending').toUpperCase()}

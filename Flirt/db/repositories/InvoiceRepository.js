@@ -175,21 +175,14 @@ class InvoiceRepository {
             services_commission += total * rate;
         }
 
-        // Calculate products subtotal and commission
+        // Calculate products subtotal (NO commission on products - only services earn commission)
         let products_subtotal = 0;
-        let products_commission = 0;
+        let products_commission = 0; // Always 0 - stylists don't earn commission on product sales
 
         for (let product of products) {
             const total = (product.unit_price * product.quantity) - (product.discount || 0);
             products_subtotal += total;
-
-            const rate = await this.getCommissionRate(
-                product.product_id,
-                'product',
-                stylist_id,
-                product.commission_rate
-            );
-            products_commission += total * rate;
+            // No commission calculated for products
         }
 
         const subtotal = services_subtotal + products_subtotal;

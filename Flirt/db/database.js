@@ -3466,14 +3466,10 @@ const PayrollRepository = {
                 );
                 const servicesCommission = serviceCommissions[0]?.total || 0;
 
-                // Get product commission totals
-                const productCommissions = await dbAll(
-                    'SELECT SUM(commission_amount) as total FROM invoice_products WHERE invoice_id = ?',
-                    [invoice.id]
-                );
-                const productsCommission = productCommissions[0]?.total || 0;
+                // No commission on products - only services earn commission
+                const productsCommission = 0;
 
-                const totalCommission = servicesCommission + productsCommission;
+                const totalCommission = servicesCommission; // Only services commission
 
                 // Create missing commission record
                 try {
