@@ -2361,6 +2361,14 @@ app.post('/api/payments/webhook/payfast', async (req, res) => {
                                 console.log(`✅ ${pointsToAdd} loyalty points awarded for PayFast order ${result.orderId}`);
                             }
                         }
+
+                        // Generate invoice from order
+                        try {
+                            const invoice = await InvoiceRepository.createFromOrder(order, 'payfast');
+                            console.log(`✅ Invoice ${invoice.invoice_number} created for PayFast order ${result.orderId}`);
+                        } catch (invoiceError) {
+                            console.error('Error creating invoice for PayFast order:', invoiceError);
+                        }
                     }
                 } catch (stockError) {
                     console.error('Error processing stock/loyalty for PayFast order:', stockError);
@@ -2441,6 +2449,14 @@ app.post('/api/payments/webhook/yoco', async (req, res) => {
                                 });
                                 console.log(`✅ ${pointsToAdd} loyalty points awarded for Yoco order ${result.orderId}`);
                             }
+                        }
+
+                        // Generate invoice from order
+                        try {
+                            const invoice = await InvoiceRepository.createFromOrder(order, 'yoco');
+                            console.log(`✅ Invoice ${invoice.invoice_number} created for Yoco order ${result.orderId}`);
+                        } catch (invoiceError) {
+                            console.error('Error creating invoice for Yoco order:', invoiceError);
                         }
                     }
                 } catch (stockError) {
@@ -6024,15 +6040,28 @@ app.get('/api/admin/orders', authenticateAdmin, async (req, res) => {
         };
         let orders = await OrderRepository.findAll(filters);
 
-        // Add customer info
+        // Add customer info and invoice info
         const ordersWithCustomers = await Promise.all(orders.map(async (o) => {
             try {
                 const user = await UserRepository.findById(o.userId);
+                // Check if there's an invoice linked to this order
+                let invoice = null;
+                try {
+                    const invoices = await InvoiceRepository.list({ limit: 1 });
+                    // Find invoice with matching order_id
+                    const allInvoices = await db.dbAll('SELECT id, invoice_number, total, payment_status FROM invoices WHERE order_id = ?', [o.id]);
+                    if (allInvoices && allInvoices.length > 0) {
+                        invoice = allInvoices[0];
+                    }
+                } catch (invErr) {
+                    // Ignore invoice lookup errors
+                }
                 return {
                     ...o,
                     customerName: user ? user.name : 'Unknown',
                     customerPhone: user ? user.phone : null,
-                    customerEmail: user ? user.email : null
+                    customerEmail: user ? user.email : null,
+                    invoice: invoice
                 };
             } catch (error) {
                 console.error(`Error fetching user ${o.userId} for order ${o.id}:`, error.message);
@@ -6040,7 +6069,8 @@ app.get('/api/admin/orders', authenticateAdmin, async (req, res) => {
                     ...o,
                     customerName: 'Unknown',
                     customerPhone: null,
-                    customerEmail: null
+                    customerEmail: null,
+                    invoice: null
                 };
             }
         }));

@@ -486,7 +486,10 @@ async function initializeDatabase() {
     await dbRun(`ALTER TABLE invoices ADD COLUMN business_address TEXT`).catch(() => {});
     await dbRun(`ALTER TABLE invoices ADD COLUMN vat_number TEXT`).catch(() => {});
     await dbRun(`ALTER TABLE invoices ADD COLUMN company_reg TEXT`).catch(() => {});
+    // Add order_id column to link invoices to product orders
+    await dbRun(`ALTER TABLE invoices ADD COLUMN order_id TEXT REFERENCES orders(id)`).catch(() => {});
     await ensureIndex('idx_invoices_booking', 'invoices', 'booking_id');
+    await ensureIndex('idx_invoices_order', 'invoices', 'order_id');
     await ensureIndex('idx_invoices_user', 'invoices', 'user_id');
     await ensureIndex('idx_invoices_stylist', 'invoices', 'stylist_id');
     await ensureIndex('idx_invoices_status', 'invoices', 'status');

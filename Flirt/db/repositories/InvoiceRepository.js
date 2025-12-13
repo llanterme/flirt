@@ -620,6 +620,134 @@ class InvoiceRepository {
 
         return true;
     }
+
+    /**
+     * Create invoice from a paid product order
+     * This handles the case where there's no stylist (online shop orders)
+     * The invoice is created as finalized and paid since payment already confirmed
+     */
+    async createFromOrder(order, paymentMethod = 'online') {
+        const settings = await this.getSettings();
+        const invoice_id = uuidv4();
+        const invoice_number = await this.generateInvoiceNumber();
+
+        // Get user details
+        const user = await dbGet(this.db, 'SELECT * FROM users WHERE id = ?', [order.user_id || order.userId]);
+
+        // Calculate values (order already has discount applied)
+        const subtotal = order.subtotal || order.total;
+        const discount_amount = order.discount || 0;
+        const taxable_amount = (order.total || subtotal) - (order.delivery_fee || order.deliveryFee || 0);
+
+        // Calculate tax (VAT is typically included in SA prices, but we track it)
+        const tax_rate = settings.tax_rate || 0.15;
+        // For VAT-inclusive prices: tax = total - (total / 1.15)
+        const tax_amount = settings.tax_enabled ? (taxable_amount - (taxable_amount / (1 + tax_rate))) : 0;
+
+        const total = order.total;
+
+        // For online orders, we don't have a stylist - use a system/shop identifier
+        // First, check if we have a "Shop" stylist, if not we'll use null
+        let shopStylist = await dbGet(this.db, "SELECT id FROM stylists WHERE name LIKE '%Shop%' OR name LIKE '%Online%' LIMIT 1");
+        const stylist_id = shopStylist?.id || null;
+
+        // Insert invoice header - already finalized and paid
+        await dbRun(this.db, `
+            INSERT INTO invoices (
+                id, invoice_number, order_id, user_id, stylist_id,
+                services_subtotal, products_subtotal, subtotal,
+                discount_type, discount_value, discount_amount, discount_reason,
+                tax_rate, tax_amount, total,
+                payment_status, amount_paid, amount_due,
+                commission_total,
+                status, service_date, invoice_date, finalized_at,
+                client_notes, internal_notes,
+                customer_type, created_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            invoice_id,
+            invoice_number,
+            order.id,
+            order.user_id || order.userId,
+            stylist_id,
+            0, // services_subtotal (no services for product orders)
+            subtotal, // products_subtotal
+            subtotal,
+            discount_amount > 0 ? 'fixed' : null,
+            discount_amount,
+            discount_amount,
+            order.promo_code || order.promoCode ? `Promo: ${order.promo_code || order.promoCode}` : null,
+            tax_rate,
+            tax_amount,
+            total,
+            'paid', // already paid
+            total, // amount_paid
+            0, // amount_due
+            0, // commission_total (no stylist commission for online orders)
+            'finalized', // status
+            new Date().toISOString().split('T')[0], // service_date (today)
+            new Date().toISOString().split('T')[0], // invoice_date
+            new Date().toISOString(), // finalized_at
+            order.delivery_address ? `Delivery: ${typeof order.delivery_address === 'string' ? order.delivery_address : JSON.stringify(order.delivery_address)}` : 'Store pickup',
+            `Auto-generated from Order #${order.id.substring(0, 8)}`,
+            'individual',
+            'system'
+        ]);
+
+        // Insert product line items from order items
+        const orderItems = order.items || [];
+        for (let item of orderItems) {
+            const product_line_id = uuidv4();
+            const unit_price = item.unit_price || item.unitPrice || item.price || 0;
+            const quantity = item.quantity || 1;
+            const line_total = unit_price * quantity;
+
+            await dbRun(this.db, `
+                INSERT INTO invoice_products (
+                    id, invoice_id, product_id,
+                    product_name, product_category, product_type,
+                    unit_price, quantity, discount, total,
+                    commission_rate, commission_amount,
+                    notes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                product_line_id,
+                invoice_id,
+                item.product_id || item.productId,
+                item.product_name || item.productName || item.name || 'Product',
+                item.category || 'Shop',
+                'retail',
+                unit_price,
+                quantity,
+                0, // discount per line (already in order total)
+                line_total,
+                0, // commission_rate
+                0, // commission_amount
+                null // notes
+            ]);
+        }
+
+        // Record the payment
+        const payment_id = uuidv4();
+        await dbRun(this.db, `
+            INSERT INTO invoice_payments (
+                id, invoice_id, amount, payment_method,
+                payment_reference, notes, processed_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [
+            payment_id,
+            invoice_id,
+            total,
+            paymentMethod,
+            order.id, // Use order ID as payment reference
+            'Payment received via online checkout',
+            'system'
+        ]);
+
+        console.log(`✅ Invoice ${invoice_number} created from Order ${order.id}`);
+
+        return this.getById(invoice_id);
+    }
 }
 
 module.exports = InvoiceRepository;

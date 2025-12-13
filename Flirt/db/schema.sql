@@ -744,8 +744,9 @@ CREATE TABLE IF NOT EXISTS invoices (
     id TEXT PRIMARY KEY,
     invoice_number TEXT UNIQUE,
     booking_id TEXT REFERENCES bookings(id),
+    order_id TEXT REFERENCES orders(id),
     user_id TEXT NOT NULL REFERENCES users(id),
-    stylist_id TEXT NOT NULL REFERENCES stylists(id),
+    stylist_id TEXT REFERENCES stylists(id),
     services_subtotal REAL DEFAULT 0,
     products_subtotal REAL DEFAULT 0,
     subtotal REAL NOT NULL,
@@ -780,6 +781,7 @@ CREATE TABLE IF NOT EXISTS invoices (
 );
 
 CREATE INDEX IF NOT EXISTS idx_invoices_booking ON invoices(booking_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_order ON invoices(order_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_user ON invoices(user_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_stylist ON invoices(stylist_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);

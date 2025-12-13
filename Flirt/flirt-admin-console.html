@@ -3124,7 +3124,7 @@
     <div class="admin-layout">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
-            <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close menu">×</button>
+            <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close menu">ï¿½</button>
             <div class="sidebar-header">
                 <div class="sidebar-logo"><img src="/images/logo-white.png" alt="FL!RT Hair & Beauty Bar"></div>
                 <div class="sidebar-subtitle">Admin Console</div>
@@ -4333,9 +4333,9 @@
                                     <h2 id="profileName">Customer Name</h2>
                                     <div class="customer-profile-meta">
                                         <span id="profileEmail">email@example.com</span>
-                                        <span class="meta-divider">•</span>
+                                        <span class="meta-divider">ï¿½</span>
                                         <span id="profilePhone">+27 00 000 0000</span>
-                                        <span class="meta-divider">•</span>
+                                        <span class="meta-divider">ï¿½</span>
                                         <span id="profileMemberSince">Member since Jan 2024</span>
                                     </div>
                                     <div class="customer-tier-badge" id="profileTierBadge">
@@ -5339,12 +5339,13 @@
                                     <th>Total</th>
                                     <th>Delivery</th>
                                     <th>Status</th>
+                                    <th>Invoice</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="ordersTableBody">
                                 <tr>
-                                    <td colspan="7" style="text-align: center; color: var(--gray-medium); padding: 20px;">Loading orders...</td>
+                                    <td colspan="8" style="text-align: center; color: var(--gray-medium); padding: 20px;">Loading orders...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -12694,7 +12695,7 @@
                         <div class="chat-conversation-header">
                             <span class="chat-conversation-date">
                                 ${conv.source === 'admin_initiated' ? '?? Started by admin' : '?? Started by customer'}
-                                · ${formatDate(conv.createdAt)}
+                                ï¿½ ${formatDate(conv.createdAt)}
                             </span>
                             <span class="chat-conversation-status ${statusClass}">${statusLabel}</span>
                         </div>
@@ -13419,7 +13420,7 @@
                 if (!container) return;
 
                 if (!orders.length) {
-                    container.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--gray-medium);">No orders found for these filters.</td></tr>`;
+                    container.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--gray-medium);">No orders found for these filters.</td></tr>`;
                     return;
                 }
 
@@ -13433,7 +13434,12 @@
                     const total = formatCurrencyZAR(o.total || 0);
                     const delivery = formatDeliveryLabel(o.deliveryMethod || o.delivery_method || 'pickup');
                     const createdAt = formatDateDisplay(o.createdAt || o.created_at);
-                    const idShort = o.id ? `#${o.id.substring(0, 8)}` : '—';
+                    const idShort = o.id ? `#${o.id.substring(0, 8)}` : 'â€”';
+
+                    // Invoice link if available
+                    const invoiceLink = o.invoice
+                        ? `<a href="#" onclick="viewInvoice('${o.invoice.id}'); return false;" style="color: var(--brand-pink); text-decoration: none; font-size: 12px;" title="View Invoice ${o.invoice.invoice_number}">ðŸ“„ ${o.invoice.invoice_number}</a>`
+                        : '<span style="color: var(--gray-medium); font-size: 11px;">â€”</span>';
 
                     const actions = [];
                     if (statusKey !== 'processing' && statusKey !== 'cancelled' && statusKey !== 'delivered') {
@@ -13460,6 +13466,7 @@
                             <td>${total}</td>
                             <td>${delivery}${createdAt ? `<div style="color: var(--gray-medium); font-size: 12px;">${createdAt}</div>` : ''}</td>
                             <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                            <td>${invoiceLink}</td>
                             <td class="action-btns" style="gap: 6px;">${actions.join(' ') || '<span style="color: var(--gray-medium); font-size: 12px;">No actions</span>'}</td>
                         </tr>
                     `;
@@ -13467,7 +13474,7 @@
             } catch (error) {
                 console.log('Orders load error:', error);
                 if (container) {
-                    container.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--danger);">Error Loading orders... Please try again.</td></tr>`;
+                    container.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--danger);">Error Loading orders... Please try again.</td></tr>`;
                 }
                 if (countText) {
                     countText.textContent = 'Error loading orders';
@@ -14075,7 +14082,7 @@
                                 '<span style="font-size: 32px;">' + (track.icon || '??') + '</span>' +
                                 '<div>' +
                                     '<h4 style="margin: 0; font-size: 18px;">' + track.display_name + '</h4>' +
-                                    '<p style="margin: 5px 0 0; font-size: 13px; color: var(--gray-medium);">' + trackTypeIcon + ' ' + trackTypeLabel + ' • ' + (track.reward_expiry_days || 90) + ' days expiry</p>' +
+                                    '<p style="margin: 5px 0 0; font-size: 13px; color: var(--gray-medium);">' + trackTypeIcon + ' ' + trackTypeLabel + ' ï¿½ ' + (track.reward_expiry_days || 90) + ' days expiry</p>' +
                                 '</div>' +
                             '</div>' +
                             '<div style="display: flex; align-items: center; gap: 10px;">' +
@@ -14255,14 +14262,14 @@
                     '<div style="flex: 1;">' +
                         '<div style="font-weight: 600;">' + track.display_name + '</div>' +
                         '<div style="font-size: 12px; color: var(--gray-medium);">' +
-                            (track.track_type === 'visit_count' ? 'Visit-based' : 'Spend-based') + ' • ' +
-                            (milestonesText || 'No milestones') + ' • ' +
+                            (track.track_type === 'visit_count' ? 'Visit-based' : 'Spend-based') + ' ï¿½ ' +
+                            (milestonesText || 'No milestones') + ' ï¿½ ' +
                             'Expires in ' + (track.reward_expiry_days || 90) + ' days' +
                         '</div>' +
                     '</div>' +
                     '<div style="display: flex; gap: 5px;">' +
                         '<button class="btn btn-sm btn-outline" onclick="editTrack(\'' + track.id + '\')" title="Edit">Edit</button>' +
-                        '<button class="btn btn-sm btn-danger" onclick="deleteTrack(\'' + track.id + '\')" title="Delete">×</button>' +
+                        '<button class="btn btn-sm btn-danger" onclick="deleteTrack(\'' + track.id + '\')" title="Delete">ï¿½</button>' +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -14280,7 +14287,7 @@
                     '<span style="font-weight: 500;">' + mapping.category_name + '</span>' +
                     '<span style="color: var(--gray-medium);">?</span>' +
                     '<span>' + mapping.track_name + '</span>' +
-                    '<button onclick="deleteCategoryMapping(\'' + mapping.id + '\')" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0 4px;" title="Remove">×</button>' +
+                    '<button onclick="deleteCategoryMapping(\'' + mapping.id + '\')" style="background: none; border: none; color: var(--danger); cursor: pointer; padding: 0 4px;" title="Remove">ï¿½</button>' +
                 '</div>'
             ).join('');
         }
@@ -14309,7 +14316,7 @@
                     '<td style="padding: 8px;">' + (m.track_name || m.track_id) + '</td>' +
                     '<td style="padding: 8px;">' + (m.points_multiplier || 1.0) + 'x</td>' +
                     '<td style="padding: 8px;">' +
-                        '<button onclick="deleteServiceMapping(\'' + m.id + '\')" class="btn btn-sm btn-danger">×</button>' +
+                        '<button onclick="deleteServiceMapping(\'' + m.id + '\')" class="btn btn-sm btn-danger">ï¿½</button>' +
                     '</td>' +
                 '</tr>';
             });
@@ -14543,7 +14550,7 @@
                             '<input type="checkbox" class="milestone-repeating"' + (m.repeating ? ' checked' : '') + ' onchange="updateMilestoneData(' + idx + ')">' +
                             '<span>Repeat</span>' +
                         '</label>' +
-                        '<button type="button" class="btn btn-sm" style="background: var(--danger); color: white; padding: 4px 8px;" onclick="removeMilestoneRow(' + idx + ')">×</button>' +
+                        '<button type="button" class="btn btn-sm" style="background: var(--danger); color: white; padding: 4px 8px;" onclick="removeMilestoneRow(' + idx + ')">ï¿½</button>' +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -14706,7 +14713,7 @@
                     <input type="text" class="form-input ext-id" value="${et.id || ''}" placeholder="ID (e.g. tapes)" style="flex: 1;">
                     <input type="text" class="form-input ext-label" value="${et.label || ''}" placeholder="Label (e.g. Tape Extensions)" style="flex: 2;">
                     <input type="number" class="form-input ext-days" value="${et.maintenanceDays || 0}" placeholder="Days" min="0" style="width: 100px;">
-                    <button class="btn btn-outline" onclick="removeExtensionType(${index})" style="padding: 8px 12px;">×</button>
+                    <button class="btn btn-outline" onclick="removeExtensionType(${index})" style="padding: 8px 12px;">ï¿½</button>
                 </div>
             `).join('');
 
@@ -14747,7 +14754,7 @@
             container.innerHTML = tips.map((tip, index) => `
                 <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;" data-tip-index="${index}">
                     <input type="text" class="form-input tip-text" value="${tip}" placeholder="Enter care tip..." style="flex: 1;">
-                    <button class="btn btn-outline" onclick="removeTrackerTip(${index})" style="padding: 8px 12px;">×</button>
+                    <button class="btn btn-outline" onclick="removeTrackerTip(${index})" style="padding: 8px 12px;">ï¿½</button>
                 </div>
             `).join('');
         }
@@ -14990,7 +14997,7 @@
             toast.className = `admin-toast ${tone === 'error' ? 'error' : tone === 'success' ? 'success' : ''}`;
             toast.innerHTML = `
                 <span>${message}</span>
-                <button class="toast-close" aria-label="Close" onclick="this.closest('.admin-toast').remove()">×</button>
+                <button class="toast-close" aria-label="Close" onclick="this.closest('.admin-toast').remove()">ï¿½</button>
             `;
             container.appendChild(toast);
             setTimeout(() => {
@@ -15433,7 +15440,7 @@
                 <div class="service-item">
                     <div class="service-item-info">
                         <div class="service-item-name">${service.name}</div>
-                        <div class="service-item-meta">${service.category} • R${service.price} • ${service.duration || '–'}min</div>
+                        <div class="service-item-meta">${service.category} ï¿½ R${service.price} ï¿½ ${service.duration || 'ï¿½'}min</div>
                     </div>
                     <button class="btn btn-sm btn-primary" onclick="addServiceToStaff('${service.id}')">Add</button>
                 </div>
@@ -15481,7 +15488,7 @@
                                 <div class="service-item-info">
                                     <div class="service-item-name">${ss.service_name}</div>
                                     <div class="service-item-meta">
-                                        R${ss.custom_price || ss.default_price} • ${ss.custom_duration || ss.default_duration || '–'}min
+                                        R${ss.custom_price || ss.default_price} ï¿½ ${ss.custom_duration || ss.default_duration || 'ï¿½'}min
                                         ${ss.custom_price || ss.custom_duration ? ' <span style="color: var(--primary);">(custom)</span>' : ''}
                                     </div>
                                 </div>
@@ -17936,7 +17943,7 @@
 
             // Add close button
             const closeBtn = document.createElement('button');
-            closeBtn.innerHTML = '×';
+            closeBtn.innerHTML = 'ï¿½';
             closeBtn.style.cssText = `
                 background: none;
                 border: none;
@@ -18406,7 +18413,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-soft);">
                             <div>
                                 <div style="font-weight: 500;">R${parseFloat(p.amount).toFixed(2)}</div>
-                                <div style="font-size: 12px; color: var(--text-muted);">${p.payment_method} ${p.reference ? `• ${p.reference}` : ''}</div>
+                                <div style="font-size: 12px; color: var(--text-muted);">${p.payment_method} ${p.reference ? `ï¿½ ${p.reference}` : ''}</div>
                             </div>
                             <div style="font-size: 13px; color: var(--text-muted);">${formatDate(p.payment_date)}</div>
                         </div>
@@ -19608,7 +19615,7 @@ Would you like to perform an action on this quote?
                 <div class="picker-item" onclick="addServiceToInvoice('${service.id}')">
                     <div class="picker-item-info">
                         <h5>${service.name}</h5>
-                        <span>${service.category || 'General'} • ${service.duration || 60} min</span>
+                        <span>${service.category || 'General'} ï¿½ ${service.duration || 60} min</span>
                     </div>
                     <div class="picker-item-price">R${(service.price || 0).toFixed(2)}</div>
                 </div>
@@ -19810,7 +19817,7 @@ Would you like to perform an action on this quote?
                 <div class="invoice-line-item">
                     <div class="invoice-line-item-info">
                         <h5>${product.product_name}</h5>
-                        <span>${product.product_category} • ${product.product_type === 'retail' ? '??? Retail' : '?? Service'}</span>
+                        <span>${product.product_category} ï¿½ ${product.product_type === 'retail' ? '??? Retail' : '?? Service'}</span>
                     </div>
                     <div class="invoice-line-item-qty">
                         <span>Qty:</span>
