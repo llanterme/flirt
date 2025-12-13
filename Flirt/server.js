@@ -10706,8 +10706,13 @@ app.post('/api/invoices/:id/pay', authenticateToken, async (req, res) => {
 
 // Generate PayFast payment link for invoice (admin use - shareable link)
 app.get('/api/admin/invoices/:id/payment-link', authenticateToken, adminOrStaff, async (req, res) => {
+    const startTime = Date.now();
+    const timings = [];
+
     try {
+        const dbStart = Date.now();
         const invoice = await InvoiceRepository.getById(req.params.id);
+        timings.push(`db;dur=${Date.now() - dbStart};desc="Invoice lookup"`);
 
         if (!invoice) {
             return res.status(404).json({ error: 'Invoice not found' });
@@ -10718,9 +10723,12 @@ app.get('/api/admin/invoices/:id/payment-link', authenticateToken, adminOrStaff,
         }
 
         // Get customer details
+        const customerStart = Date.now();
         const customer = invoice.user_id ? await UserRepository.findById(invoice.user_id) : null;
+        timings.push(`customer;dur=${Date.now() - customerStart};desc="Customer lookup"`);
 
         // Generate PayFast payment URL
+        const urlStart = Date.now();
         const paymentData = PaymentService.generatePayFastPayment(
             {
                 id: invoice.id,
@@ -10737,6 +10745,13 @@ app.get('/api/admin/invoices/:id/payment-link', authenticateToken, adminOrStaff,
                 itemDescription: `Hair Salon Services`
             }
         );
+        timings.push(`urlgen;dur=${Date.now() - urlStart};desc="URL generation"`);
+
+        // Add total time
+        timings.push(`total;dur=${Date.now() - startTime};desc="Total server time"`);
+
+        // Set Server-Timing header for debugging
+        res.setHeader('Server-Timing', timings.join(', '));
 
         res.json({
             success: true,
