@@ -949,72 +949,72 @@
         /* Two-column layout for staff modal */
         .staff-modal-columns {
             display: grid;
-            grid-template-columns: 1fr 1.2fr;
+            grid-template-columns: 340px 1fr;
             width: 100%;
             min-height: auto;
         }
 
         .staff-modal-left {
-            padding: 30px;
-            background: #fafbfc;
+            padding: 24px;
+            background: linear-gradient(180deg, #fafbfc 0%, #f5f6f8 100%);
             border-right: 1px solid var(--border-soft);
             overflow-y: auto;
-            max-height: calc(90vh - 140px);
-            border-radius: 0 0 0 16px;
+            max-height: calc(85vh - 130px);
         }
 
         .staff-modal-right {
-            padding: 30px;
+            padding: 24px;
             overflow-y: auto;
             background: white;
-            max-height: calc(90vh - 140px);
-            border-radius: 0 0 16px 0;
+            max-height: calc(85vh - 130px);
         }
 
         .staff-section-title {
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
+            letter-spacing: 1px;
+            color: var(--gray-medium);
             margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-soft);
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
         .staff-section-title svg {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             color: var(--brand-pink);
         }
 
         .staff-form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 12px;
         }
 
         .staff-form-row.full {
             grid-template-columns: 1fr;
         }
 
-        /* Role Cards Grid */
+        /* Role Cards Grid - Compact horizontal layout */
         .role-cards-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
         .role-card {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px 16px;
+            padding: 14px 8px;
             background: #f8f9fa;
             border: 2px solid transparent;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s ease;
             text-align: center;
@@ -1023,21 +1023,28 @@
         .role-card:hover {
             background: #fff0f3;
             border-color: var(--brand-pink);
+            transform: translateY(-2px);
         }
 
         .role-card.active {
             background: #fff0f3;
             border-color: var(--brand-pink);
+            box-shadow: 0 4px 12px rgba(199, 21, 133, 0.15);
         }
 
         .role-card-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
+        }
+
+        .role-card-icon svg {
+            width: 20px;
+            height: 20px;
         }
 
         .role-card-icon.receptionist { background: #e3f2fd; color: #1976d2; }
@@ -1047,14 +1054,15 @@
 
         .role-card-name {
             font-weight: 600;
-            font-size: 14px;
+            font-size: 12px;
             color: var(--brand-charcoal);
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .role-card-desc {
-            font-size: 12px;
+            font-size: 10px;
             color: var(--text-muted);
+            line-height: 1.3;
         }
 
         /* Permissions Section */
@@ -1069,11 +1077,8 @@
 
         .permissions-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            max-height: calc(100vh - 450px);
-            overflow-y: auto;
-            padding-right: 8px;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
         }
 
         /* Staff Modal Footer */
@@ -1095,11 +1100,15 @@
             .staff-modal-left {
                 border-right: none;
                 border-bottom: 1px solid var(--border-soft);
+                max-height: none;
+            }
+
+            .staff-modal-right {
+                max-height: none;
             }
 
             .permissions-grid {
-                grid-template-columns: 1fr;
-                max-height: none;
+                grid-template-columns: 1fr 1fr;
             }
 
             .role-cards-grid {
@@ -1113,6 +1122,10 @@
             }
 
             .staff-form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .permissions-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -1141,18 +1154,19 @@
         /* Permission Category */
         .perm-category {
             background: #fafafa;
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
+            border: 1px solid #eee;
         }
 
         .perm-category-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 12px 16px;
-            background: #f0f0f0;
+            gap: 8px;
+            padding: 10px 14px;
+            background: linear-gradient(180deg, #f5f5f5 0%, #ebebeb 100%);
             font-weight: 600;
-            font-size: 13px;
+            font-size: 11px;
             color: var(--brand-charcoal);
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -1160,29 +1174,32 @@
 
         .perm-category-header svg {
             color: var(--brand-pink);
+            width: 14px;
+            height: 14px;
         }
 
         .perm-category-items {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            padding: 12px;
+            gap: 6px;
+            padding: 10px;
         }
 
         .perm-item {
             display: flex;
             align-items: flex-start;
-            gap: 10px;
-            padding: 12px;
+            gap: 8px;
+            padding: 10px;
             background: white;
             border: 1px solid #e5e7eb;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.15s ease;
         }
 
         .perm-item:hover {
             border-color: var(--brand-pink);
+            background: #fff9fb;
             background: rgba(246, 117, 153, 0.02);
         }
 
@@ -1192,11 +1209,12 @@
         }
 
         .perm-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             margin-top: 1px;
             accent-color: #22c55e;
             cursor: pointer;
+            flex-shrink: 0;
         }
 
         .perm-item-content {
@@ -1206,13 +1224,13 @@
 
         .perm-item-label {
             font-weight: 600;
-            font-size: 13px;
+            font-size: 12px;
             color: #1f2937;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
 
         .perm-item-desc {
-            font-size: 11px;
+            font-size: 10px;
             color: #6b7280;
             line-height: 1.3;
         }
@@ -6541,7 +6559,7 @@
 
                 <!-- Add/Edit Staff Modal - Full Width Slide-Over -->
                 <div id="staff-modal" class="modal-overlay">
-                    <div class="modal-content" style="max-width: 800px; width: 95%;">
+                    <div class="modal-content" style="max-width: 920px; width: 95%;">
                         <div class="modal-header">
                             <h3 id="staff-modal-title">Add Staff Member</h3>
                             <button class="modal-close" onclick="closeStaffModal()">&times;</button>
@@ -13261,7 +13279,7 @@
                 const data = await apiCall(`/admin/payroll?${params.toString()}`);
                 payrollRecords = data.records || [];
 
-                // Update summary cards
+                // Update summary cards from saved records
                 let totalBasic = 0, totalCommission = 0, totalGross = 0;
                 payrollRecords.forEach(r => {
                     totalBasic += r.basic_pay || 0;
@@ -13269,10 +13287,31 @@
                     totalGross += r.gross_pay || 0;
                 });
 
+                // If no saved records, fetch live preview to show calculated totals
+                let previewCalculations = [];
+                if (payrollRecords.length === 0) {
+                    try {
+                        const previewData = await apiCall(`/admin/payroll/preview?year=${year}&month=${month}`);
+                        if (previewData.preview) {
+                            totalBasic = previewData.preview.totalBasicPay || 0;
+                            totalCommission = previewData.preview.totalCommission || 0;
+                            totalGross = previewData.preview.totalGrossPay || 0;
+                            previewCalculations = previewData.preview.calculations || [];
+                        }
+                    } catch (previewErr) {
+                        console.warn('Could not fetch payroll preview:', previewErr);
+                    }
+                }
+
                 document.getElementById('payrollTotalBasic').textContent = formatCurrencyZAR(totalBasic);
                 document.getElementById('payrollTotalCommission').textContent = formatCurrencyZAR(totalCommission);
                 document.getElementById('payrollTotalGross').textContent = formatCurrencyZAR(totalGross);
-                document.getElementById('payrollStylistCount').textContent = payrollRecords.length;
+
+                // Show stylist count based on who has commission
+                const stylistsWithPay = payrollRecords.length > 0
+                    ? payrollRecords.length
+                    : previewCalculations.filter(c => c.commissionAmount > 0 || c.basicPay > 0).length;
+                document.getElementById('payrollStylistCount').textContent = stylistsWithPay;
 
                 if (countEl) {
                     countEl.textContent = `${payrollRecords.length} record${payrollRecords.length !== 1 ? 's' : ''}`;
@@ -13281,7 +13320,33 @@
                 if (!tbody) return;
 
                 if (payrollRecords.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--gray-medium);">No payroll records for this period. Click "Generate Payroll" to calculate.</td></tr>';
+                    // Show preview data if available
+                    const hasPreviewData = previewCalculations.some(c => c.commissionAmount > 0 || c.basicPay > 0);
+
+                    if (hasPreviewData) {
+                        tbody.innerHTML = previewCalculations
+                            .filter(c => c.commissionAmount > 0 || c.basicPay > 0)
+                            .map(c => `
+                                <tr style="opacity: 0.8;">
+                                    <td><strong>${c.stylistName || 'Unknown'}</strong></td>
+                                    <td>${formatCurrencyZAR(c.basicPay)}</td>
+                                    <td>${((c.commissionRate || 0) * 100).toFixed(0)}%</td>
+                                    <td>${(c.totalBookings || 0) + (c.totalInvoices || 0)}</td>
+                                    <td>${formatCurrencyZAR(c.totalServiceRevenueExVat)}</td>
+                                    <td>${formatCurrencyZAR(c.commissionAmount)}</td>
+                                    <td><strong>${formatCurrencyZAR(c.grossPay)}</strong></td>
+                                    <td><span class="status-badge status-draft">Preview</span></td>
+                                    <td></td>
+                                </tr>
+                            `).join('') + `
+                            <tr>
+                                <td colspan="9" style="text-align: center; padding: 15px; color: var(--gray-medium); background: var(--gray-lightest);">
+                                    <em>This is a preview based on invoices. Click "Generate Payroll" to save these records.</em>
+                                </td>
+                            </tr>`;
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: var(--gray-medium);">No payroll records for this period. Click "Generate Payroll" to calculate.</td></tr>';
+                    }
                     return;
                 }
 
@@ -13292,7 +13357,12 @@
 
                     const actions = [];
                     if (r.status !== 'paid') {
-                        actions.push(`<button class="btn btn-sm btn-outline" onclick="recalculatePayroll('${r.id}')" title="Recalculate">??</button>`);
+                        actions.push(`<button class="btn btn-sm btn-outline" onclick="recalculatePayroll('${r.id}')" title="Recalculate">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                            </svg>
+                        </button>`);
                     }
                     if (r.status === 'draft') {
                         actions.push(`<button class="btn btn-sm" onclick="finalizePayroll('${r.id}')">Finalize</button>`);
@@ -13301,7 +13371,12 @@
                         actions.push(`<button class="btn btn-sm btn-primary" onclick="markPayrollPaid('${r.id}')">Mark Paid</button>`);
                     }
                     if (r.status !== 'paid') {
-                        actions.push(`<button class="btn btn-sm btn-outline" onclick="deletePayroll('${r.id}')" style="color: var(--danger);" title="Delete">???</button>`);
+                        actions.push(`<button class="btn btn-sm btn-outline" onclick="deletePayroll('${r.id}')" style="color: var(--danger);" title="Delete">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>`);
                     }
 
                     return `
