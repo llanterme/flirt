@@ -119,16 +119,14 @@
         }
 
         .logo {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 28px;
-            font-weight: 500;
-            letter-spacing: 0.3em;
-            color: var(--gray-dark);
             text-decoration: none;
+            display: flex;
+            align-items: center;
         }
 
-        .logo span {
-            color: var(--pink);
+        .logo img {
+            height: 40px;
+            width: auto;
         }
 
         .main-nav {
@@ -1437,9 +1435,8 @@
 
         /* Extra small screens (phones in portrait) */
         @media (max-width: 480px) {
-            .logo {
-                font-size: 22px;
-                letter-spacing: 0.2em;
+            .logo img {
+                height: 30px;
             }
 
             .hero {
@@ -2256,7 +2253,7 @@
     <!-- Header -->
     <header class="site-header" id="siteHeader">
         <div class="header-container">
-            <a href="/" class="logo">FL<span>!</span>RT</a>
+            <a href="/" class="logo"><img src="/images/flirt-logo.png" alt="Flirt Hair Extensions"></a>
             <nav class="main-nav">
                 <a href="#services" class="nav-link">Services</a>
                 <a href="#about" class="nav-link">About</a>
