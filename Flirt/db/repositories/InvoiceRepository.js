@@ -685,6 +685,10 @@ class InvoiceRepository {
 
         const stylist_id = shopStylist.id;
 
+        // Get admin user for created_by field (foreign key constraint)
+        const adminUser = await dbGet(this.db, "SELECT id FROM users WHERE role = 'admin' LIMIT 1");
+        const created_by = adminUser?.id || null;
+
         // Insert invoice header - already finalized and paid
         await dbRun(this.db, `
             INSERT INTO invoices (
@@ -725,7 +729,7 @@ class InvoiceRepository {
             order.delivery_address ? `Delivery: ${typeof order.delivery_address === 'string' ? order.delivery_address : JSON.stringify(order.delivery_address)}` : 'Store pickup',
             `Auto-generated from Order #${order.id.substring(0, 8)}`,
             'individual',
-            'system'
+            created_by
         ]);
 
         // Insert product line items from order items
