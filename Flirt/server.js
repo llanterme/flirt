@@ -2206,17 +2206,15 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
         // This ensures inventory isn't decremented for failed/cancelled payments
         // See: /api/payments/webhook/payfast and /api/payments/webhook/yoco
 
-        // Send order confirmation email (order placed, awaiting payment)
-        try {
-            const user = await UserRepository.findById(req.user.id);
+        // Send order confirmation email asynchronously (fire-and-forget)
+        // Don't await - email sending can take 5-15+ seconds and blocks checkout flow
+        UserRepository.findById(req.user.id).then(user => {
             if (user && user.email) {
-                await emailService.sendOrderConfirmation(newOrder, user);
-                console.log(`✅ Order confirmation email sent to ${user.email}`);
+                emailService.sendOrderConfirmation(newOrder, user)
+                    .then(() => console.log(`✅ Order confirmation email sent to ${user.email}`))
+                    .catch(err => console.error('Failed to send order confirmation email:', err.message));
             }
-        } catch (emailError) {
-            console.error('Failed to send order confirmation email:', emailError.message);
-            // Don't fail the request if email fails
-        }
+        }).catch(err => console.error('Failed to find user for email:', err.message));
 
         res.status(201).json({
             success: true,
