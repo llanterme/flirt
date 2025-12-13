@@ -749,6 +749,19 @@
             color: var(--gray-dark);
         }
 
+        .review-date {
+            font-size: 11px;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        /* Elfsight Widget Container */
+        .elfsight-widget-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: 300px;
+        }
+
         /* FAQ Section */
         .faq-section {
             padding: 100px 50px;
@@ -2216,32 +2229,22 @@
         </div>
     </section>
 
-    <!-- Reviews Section -->
+    <!-- Reviews Section - Google Reviews Widget -->
     <section class="reviews-section">
-        <h2 class="reviews-title reveal">CUSTOMER REVIEWS</h2>
-        <div class="reviews-grid">
-            <div class="review-card stagger-item">
-                <div class="review-stars">
-                    <img src="/images/stars.png" alt="5 Stars">
-                </div>
-                <p class="review-text">"Stunning salon! Amazing service and such kind ladies. Inge made my hair so beautiful and I loved the experience."</p>
-                <div class="review-author">Cassie Quiterres</div>
-            </div>
-            <div class="review-card stagger-item">
-                <div class="review-stars">
-                    <img src="/images/stars.png" alt="5 Stars">
-                </div>
-                <p class="review-text">"What a pleasant experience, from the look and feel of the salon to the friendly staff, not to mention the highly competitive rates! Loving my new look and will most certainly be back!"</p>
-                <div class="review-author">Claudia vd Merwe</div>
-            </div>
-            <div class="review-card stagger-item">
-                <div class="review-stars">
-                    <img src="/images/stars.png" alt="5 Stars">
-                </div>
-                <p class="review-text">"Absolutely in love with my flirt hair! Inge is the absolute best at what she does! They definitely made a client for life!"</p>
-                <div class="review-author">Jen Lee</div>
-            </div>
+        <h2 class="reviews-title reveal">WHAT OUR CLIENTS SAY</h2>
+
+        <!-- Elfsight Google Reviews Widget -->
+        <div class="elfsight-widget-container">
+            <script src="https://elfsightcdn.com/platform.js" async></script>
+            <div class="elfsight-app-20cfac23-425c-4a2d-ad1e-3f2c74fd376e" data-elfsight-app-lazy></div>
         </div>
+
+        <!-- Fallback message while widget loads or if not configured -->
+        <noscript>
+            <div style="text-align: center; padding: 40px;">
+                <p>Please enable JavaScript to view our Google Reviews</p>
+            </div>
+        </noscript>
     </section>
 
     <!-- FAQ Section -->
