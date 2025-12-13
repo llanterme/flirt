@@ -7821,17 +7821,17 @@ app.post('/api/admin/cleanup/orders-invoices', authenticateAdmin, async (req, re
         const results = {};
 
         // Delete in order to respect foreign key constraints
-        results.invoice_payments = (await dbRun('DELETE FROM invoice_payments')).changes;
-        results.invoice_commissions = (await dbRun('DELETE FROM invoice_commissions')).changes;
-        results.invoice_services = (await dbRun('DELETE FROM invoice_services')).changes;
-        results.invoice_products = (await dbRun('DELETE FROM invoice_products')).changes;
-        results.invoices = (await dbRun('DELETE FROM invoices')).changes;
-        results.order_items = (await dbRun('DELETE FROM order_items')).changes;
-        results.orders = (await dbRun('DELETE FROM orders')).changes;
-        results.payroll_records = (await dbRun('DELETE FROM payroll_records')).changes;
+        results.invoice_payments = (await db.dbRun('DELETE FROM invoice_payments')).changes;
+        results.invoice_commissions = (await db.dbRun('DELETE FROM invoice_commissions')).changes;
+        results.invoice_services = (await db.dbRun('DELETE FROM invoice_services')).changes;
+        results.invoice_products = (await db.dbRun('DELETE FROM invoice_products')).changes;
+        results.invoices = (await db.dbRun('DELETE FROM invoices')).changes;
+        results.order_items = (await db.dbRun('DELETE FROM order_items')).changes;
+        results.orders = (await db.dbRun('DELETE FROM orders')).changes;
+        results.payroll_records = (await db.dbRun('DELETE FROM payroll_records')).changes;
 
         // Reset invoice number counter
-        await dbRun('UPDATE invoice_settings SET next_invoice_number = 1 WHERE id = 1');
+        await db.dbRun('UPDATE invoice_settings SET next_invoice_number = 1 WHERE id = 1');
         results.invoice_counter_reset = true;
 
         console.log('🧹 Admin cleanup completed:', results);
