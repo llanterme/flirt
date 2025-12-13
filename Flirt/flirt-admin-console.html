@@ -4297,7 +4297,7 @@
                             <!-- Basic Pay Section -->
                             <div style="background: var(--gray-lightest); border-radius: 12px; padding: 20px;">
                                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                                    <span style="font-size: 18px;">??</span>
+                                    <span style="font-size: 18px;">&#128176;</span>
                                     <span style="font-weight: 600; color: var(--gray-dark);">Basic Monthly Salary</span>
                                 </div>
                                 <div style="position: relative;">
@@ -4321,7 +4321,7 @@
                         <div class="modal-footer" style="padding: 16px 24px 24px; border-top: none; gap: 12px;">
                             <button class="btn btn-outline" onclick="closeModal('stylistPayModal')" style="flex: 1;">Cancel</button>
                             <button class="btn btn-primary" onclick="saveStylistPay()" style="flex: 2;">
-                                <span style="margin-right: 6px;">?</span> Save Salary
+                                <span style="margin-right: 6px;">&#128190;</span> Save Salary
                             </button>
                         </div>
                     </div>
@@ -9011,7 +9011,7 @@
                             <div class="search-result-group-title">Customers</div>
                             ${customers.slice(0, 5).map(c => `
                                 <div class="search-result-item" onclick="selectSearchResult('customers', '${c.id}')">
-                                    <span class="icon">??</span>
+                                    <span class="icon">&#128100;</span>
                                     <div class="details">
                                         <div class="name">${c.name || 'Unknown'}</div>
                                         <div class="meta">${c.email || ''}</div>
@@ -9034,7 +9034,7 @@
                             <div class="search-result-group-title">Bookings</div>
                             ${bookings.slice(0, 5).map(b => `
                                 <div class="search-result-item" onclick="selectSearchResult('bookings', '${b.id}')">
-                                    <span class="icon">??</span>
+                                    <span class="icon">&#128197;</span>
                                     <div class="details">
                                         <div class="name">${b.customerName || b.customer_name || 'Guest'}</div>
                                         <div class="meta">${b.serviceName || b.service_name || 'Service'} - ${b.date || ''}</div>
@@ -9049,7 +9049,7 @@
                 html += `<div class="search-result-group">
                     <div class="search-result-group-title">Quick Navigation</div>
                     <div class="search-result-item" onclick="selectSearchResult('customers'); filterCustomersByQuery('${query.replace(/'/g, "\\'")}')">
-                        <span class="icon">??</span>
+                        <span class="icon">&#128269;</span>
                         <div class="details">
                             <div class="name">Search all customers for "${query}"</div>
                         </div>
@@ -11627,8 +11627,8 @@
                             <td>${s.specialty || 'Stylist'}</td>
                             <td><span class="status-badge status-${s.available !== false ? 'confirmed' : 'cancelled'}">${s.available !== false ? 'Active' : 'Inactive'}</span></td>
                             <td>
-                                <button class="btn btn-sm btn-outline" onclick="editTeamMember('${s.id}')" title="Edit">??</button>
-                                <button class="btn btn-sm btn-outline" onclick="deleteTeamMember('${s.id}')" style="margin-left:6px; color: var(--danger);" title="Delete">???</button>
+                                <button class="btn btn-sm btn-outline" onclick="editTeamMember('${s.id}')" title="Edit">&#9998;</button>
+                                <button class="btn btn-sm btn-outline" onclick="deleteTeamMember('${s.id}')" style="margin-left:6px; color: var(--danger);" title="Delete">&#128465;</button>
                             </td>
                         </tr>
                     `).join('');
@@ -17588,9 +17588,9 @@
             // Passphrase indicator
             const passphraseIcon = document.getElementById('payfastPassphraseIcon');
             if (payfast.hasPassphrase) {
-                passphraseIcon.innerHTML = '<span style="color: var(--success);">?</span>';
+                passphraseIcon.innerHTML = '<span style="color: var(--success);">&#10004;</span>';
             } else {
-                passphraseIcon.innerHTML = '<span style="color: var(--gray-medium);">?</span>';
+                passphraseIcon.innerHTML = '<span style="color: var(--gray-medium);">&#10006;</span>';
             }
 
             // Missing vars
@@ -17611,11 +17611,11 @@
             // Status badge
             const statusBadge = document.getElementById('yocoStatusBadge');
             if (yoco.configured) {
-                statusBadge.textContent = '? Configured';
+                statusBadge.innerHTML = '&#10004; Configured';
                 statusBadge.style.background = 'var(--success)';
                 statusBadge.style.display = 'inline-block';
             } else {
-                statusBadge.textContent = '? Not Configured';
+                statusBadge.innerHTML = '&#9888; Not Configured';
                 statusBadge.style.background = 'var(--warning)';
                 statusBadge.style.display = 'inline-block';
             }
@@ -17630,16 +17630,16 @@
             // Icons for configured items
             const publicKeyIcon = document.getElementById('yocoPublicKeyIcon');
             if (yoco.hasPublicKey) {
-                publicKeyIcon.innerHTML = '<span style="color: var(--success);">?</span>';
+                publicKeyIcon.innerHTML = '<span style="color: var(--success);">&#10004;</span>';
             } else {
-                publicKeyIcon.innerHTML = '<span style="color: var(--gray-medium);">?</span>';
+                publicKeyIcon.innerHTML = '<span style="color: var(--gray-medium);">&#10006;</span>';
             }
 
             const webhookSecretIcon = document.getElementById('yocoWebhookSecretIcon');
             if (yoco.hasWebhookSecret) {
-                webhookSecretIcon.innerHTML = '<span style="color: var(--success);">?</span>';
+                webhookSecretIcon.innerHTML = '<span style="color: var(--success);">&#10004;</span>';
             } else {
-                webhookSecretIcon.innerHTML = '<span style="color: var(--warning);">?</span>';
+                webhookSecretIcon.innerHTML = '<span style="color: var(--warning);">&#9888;</span>';
             }
 
             // Missing vars
