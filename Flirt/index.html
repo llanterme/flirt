@@ -864,6 +864,128 @@
             max-height: 300px;
         }
 
+        /* Instagram Section */
+        .instagram-section {
+            padding: 100px 50px;
+            background: var(--gray-light);
+        }
+
+        .instagram-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .instagram-title {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+
+        .instagram-subtitle {
+            font-size: 14px;
+            color: var(--gray-medium);
+        }
+
+        .instagram-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            max-width: 1200px;
+            margin: 0 auto 40px;
+        }
+
+        .instagram-item {
+            aspect-ratio: 1;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .instagram-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .instagram-item:hover img {
+            transform: scale(1.08);
+        }
+
+        .instagram-item-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(246, 117, 153, 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+
+        .instagram-item:hover .instagram-item-overlay {
+            background: rgba(246, 117, 153, 0.4);
+        }
+
+        .instagram-item-overlay svg {
+            width: 32px;
+            height: 32px;
+            fill: white;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+        }
+
+        .instagram-item:hover .instagram-item-overlay svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .instagram-cta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            text-decoration: none;
+            color: var(--gray-dark);
+            transition: color 0.3s ease;
+        }
+
+        .instagram-cta:hover {
+            color: var(--pink);
+        }
+
+        .instagram-cta-icon {
+            width: 40px;
+            height: 40px;
+            border: 2px solid currentColor;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .instagram-cta-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+        }
+
+        .instagram-cta-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+        }
+
+        .instagram-handle {
+            color: var(--pink);
+            font-weight: 600;
+        }
+
         /* Partners Section */
         .partners-section {
             padding: 60px 50px;
@@ -1317,6 +1439,24 @@
 
             .faq-question h3 {
                 font-size: 14px;
+            }
+
+            .instagram-section {
+                padding: 60px 20px;
+            }
+
+            .instagram-title {
+                font-size: 26px;
+            }
+
+            .instagram-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .instagram-cta {
+                flex-direction: column;
+                gap: 10px;
             }
 
             .cta-section {
@@ -2416,6 +2556,27 @@
         </div>
     </section>
 
+    <!-- Instagram Section -->
+    <section class="instagram-section" id="instagram">
+        <div class="instagram-header reveal">
+            <h2 class="instagram-title">FOLLOW US ON INSTAGRAM</h2>
+            <p class="instagram-subtitle">See the latest hair transformations and behind-the-scenes moments</p>
+        </div>
+        <div class="instagram-grid" id="instagramGrid">
+            <!-- Gallery items will be loaded dynamically -->
+        </div>
+        <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-cta reveal">
+            <div class="instagram-cta-icon">
+                <svg viewBox="0 0 24 24" stroke-width="1.5">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                </svg>
+            </div>
+            <span class="instagram-cta-text">Follow <span class="instagram-handle" id="instagramHandle">@flirthairsa</span> for daily inspiration</span>
+        </a>
+    </section>
+
     <!-- Partners Section -->
     <section class="partners-section reveal-scale">
         <h3 class="partners-title">Our Partners</h3>
@@ -2568,6 +2729,94 @@
                 faqItem.classList.add('active');
             }
         }
+
+        // Load Instagram Gallery
+        async function loadInstagramGallery() {
+            const grid = document.getElementById('instagramGrid');
+            const handleEl = document.getElementById('instagramHandle');
+            const ctaLink = document.querySelector('.instagram-cta');
+
+            try {
+                const response = await fetch('/api/gallery');
+                const data = await response.json();
+
+                // Update Instagram handle if available
+                if (data.instagram && data.instagram.username) {
+                    const handle = '@' + data.instagram.username;
+                    handleEl.textContent = handle;
+                    ctaLink.href = `https://www.instagram.com/${data.instagram.username}/`;
+                }
+
+                // Display gallery items (limit to 8 for grid)
+                if (data.items && data.items.length > 0) {
+                    const items = data.items.slice(0, 8);
+                    grid.innerHTML = items.map(item => `
+                        <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                            <img src="${item.imageUrl}" alt="${item.altText || 'Flirt Hair Gallery'}" loading="lazy">
+                            <div class="instagram-item-overlay">
+                                <svg viewBox="0 0 24 24">
+                                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect>
+                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" fill="none" stroke="white" stroke-width="1.5"></path>
+                                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="white" stroke-width="2"></line>
+                                </svg>
+                            </div>
+                        </a>
+                    `).join('');
+                } else {
+                    // Fallback to static images if no gallery items
+                    grid.innerHTML = `
+                        <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                            <img src="/images/home-footer-images1.jpg" alt="Hair Extensions Gallery" loading="lazy">
+                            <div class="instagram-item-overlay">
+                                <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect></svg>
+                            </div>
+                        </a>
+                        <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                            <img src="/images/home-footer-images2.jpg" alt="Hair Extensions Gallery" loading="lazy">
+                            <div class="instagram-item-overlay">
+                                <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect></svg>
+                            </div>
+                        </a>
+                        <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                            <img src="/images/home-footer-images3.jpg" alt="Hair Extensions Gallery" loading="lazy">
+                            <div class="instagram-item-overlay">
+                                <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect></svg>
+                            </div>
+                        </a>
+                        <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item stagger-item">
+                            <img src="/images/about-image1.jpg" alt="Hair Extensions Gallery" loading="lazy">
+                            <div class="instagram-item-overlay">
+                                <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="white" stroke-width="1.5"></rect></svg>
+                            </div>
+                        </a>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading gallery:', error);
+                // Use fallback images on error
+                grid.innerHTML = `
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item">
+                        <img src="/images/home-footer-images1.jpg" alt="Hair Extensions Gallery">
+                        <div class="instagram-item-overlay"></div>
+                    </a>
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item">
+                        <img src="/images/home-footer-images2.jpg" alt="Hair Extensions Gallery">
+                        <div class="instagram-item-overlay"></div>
+                    </a>
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item">
+                        <img src="/images/home-footer-images3.jpg" alt="Hair Extensions Gallery">
+                        <div class="instagram-item-overlay"></div>
+                    </a>
+                    <a href="https://www.instagram.com/flirthairsa/" target="_blank" class="instagram-item">
+                        <img src="/images/about-image1.jpg" alt="Hair Extensions Gallery">
+                        <div class="instagram-item-overlay"></div>
+                    </a>
+                `;
+            }
+        }
+
+        // Load gallery on page load
+        document.addEventListener('DOMContentLoaded', loadInstagramGallery);
 
         // Header scroll effect and parallax
         window.addEventListener('scroll', function() {
