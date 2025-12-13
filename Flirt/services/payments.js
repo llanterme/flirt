@@ -455,11 +455,15 @@ async function getFloatAuthToken(forceRefresh = false) {
         url: authUrl,
         baseUrl: config.float.baseUrl,
         uatMode: config.float.uatMode,
+        environment: config.float.uatMode ? 'UAT (TEST)' : 'LIVE (PRODUCTION)',
         merchantId: config.float.merchantId,
         clientId: config.float.clientId ? `${config.float.clientId.substring(0, 4)}...` : 'NOT SET',
         clientIdLength: config.float.clientId?.length || 0,
         clientSecretLength: config.float.clientSecret?.length || 0
     });
+
+    console.log('[Float] ⚠️ IMPORTANT: If you get "Merchant not found", your credentials may be for the wrong environment.');
+    console.log(`[Float] Currently using ${config.float.uatMode ? 'UAT (test)' : 'LIVE (production)'} endpoint: ${config.float.baseUrl}`);
 
     // Build form-urlencoded body (Float expects this format, not JSON)
     const formBody = new URLSearchParams({
