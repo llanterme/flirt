@@ -422,14 +422,29 @@ let floatAuthToken = null;
 let floatTokenExpiry = null;
 
 /**
+ * Clear Float token cache (useful for debugging)
+ */
+function clearFloatTokenCache() {
+    floatAuthToken = null;
+    floatTokenExpiry = null;
+    console.log('[Float] Token cache cleared');
+}
+
+/**
  * Get Float authentication token
  * Uses form-urlencoded POST to /login endpoint (per WooCommerce plugin reference)
  */
-async function getFloatAuthToken() {
+async function getFloatAuthToken(forceRefresh = false) {
     const config = getEffectiveConfig();
+
+    // Clear cache if force refresh requested
+    if (forceRefresh) {
+        clearFloatTokenCache();
+    }
 
     // Return cached token if still valid (with 5 minute buffer)
     if (floatAuthToken && floatTokenExpiry && Date.now() < floatTokenExpiry - 300000) {
+        console.log('[Float] Using cached token');
         return floatAuthToken;
     }
 
@@ -438,8 +453,12 @@ async function getFloatAuthToken() {
 
     console.log('[Float] Authenticating with:', {
         url: authUrl,
+        baseUrl: config.float.baseUrl,
+        uatMode: config.float.uatMode,
         merchantId: config.float.merchantId,
-        clientIdLength: config.float.clientId?.length || 0
+        clientId: config.float.clientId ? `${config.float.clientId.substring(0, 4)}...` : 'NOT SET',
+        clientIdLength: config.float.clientId?.length || 0,
+        clientSecretLength: config.float.clientSecret?.length || 0
     });
 
     // Build form-urlencoded body (Float expects this format, not JSON)
@@ -449,32 +468,54 @@ async function getFloatAuthToken() {
         client_secret: config.float.clientSecret
     }).toString();
 
+    console.log('[Float] Login request body (masked):', formBody.replace(/client_secret=[^&]+/, 'client_secret=***'));
+
     try {
         const response = await fetch(authUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache'
             },
             body: formBody
         });
 
+        const responseText = await response.text();
+        console.log('[Float] Login response status:', response.status);
+        console.log('[Float] Login response body:', responseText.substring(0, 500));
+
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[Float] Auth failed:', response.status, errorText);
-            throw new Error(`Float authentication failed: ${response.status}`);
+            console.error('[Float] Auth failed:', response.status, responseText);
+            throw new Error(`Float authentication failed: ${response.status} - ${responseText}`);
         }
 
-        const data = await response.json();
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('[Float] Failed to parse login response as JSON:', responseText);
+            throw new Error('Float login response is not valid JSON');
+        }
+
+        console.log('[Float] Login response keys:', Object.keys(data));
+
+        // Extract token - Float returns 'token' key
+        const token = data.token || data.access_token;
+
+        if (!token) {
+            console.error('[Float] No token in response! Response data:', JSON.stringify(data));
+            throw new Error('Float login succeeded but no token returned');
+        }
 
         // Cache token - Float tokens typically expire in 1 hour
-        floatAuthToken = data.token || data.access_token;
+        floatAuthToken = token;
         floatTokenExpiry = Date.now() + (data.expires_in ? data.expires_in * 1000 : 3600000);
 
-        console.log('[Float] Authentication successful');
+        console.log('[Float] Authentication successful, token length:', token.length);
         return floatAuthToken;
     } catch (error) {
-        console.error('[Float] Auth error:', error);
+        console.error('[Float] Auth error:', error.message);
         throw error;
     }
 }
@@ -490,8 +531,10 @@ async function createFloatCheckout(order, customer) {
     const config = getEffectiveConfig();
     const paymentId = `FLT-${uuidv4().substring(0, 8).toUpperCase()}`;
 
-    // Get auth token
-    const token = await getFloatAuthToken();
+    // Get fresh auth token (force refresh to ensure we have a valid token)
+    const token = await getFloatAuthToken(true);
+
+    console.log('[Float] Using token for checkout, length:', token?.length || 0);
 
     // Build URLs
     const baseAppUrl = (config.appUrl || 'https://flirt.hair').replace(/\/$/, '');
@@ -549,25 +592,41 @@ async function createFloatCheckout(order, customer) {
     });
 
     try {
+        const checkoutUrl = `${config.float.baseUrl}/payment/checkout`;
+        console.log('[Float] Sending checkout request to:', checkoutUrl);
+        console.log('[Float] Checkout payload:', JSON.stringify(payload, null, 2));
+        console.log('[Float] Authorization header:', `Bearer ${token?.substring(0, 20)}...`);
+
         // Float uses /payment/checkout endpoint (NOT /api/checkout)
-        const response = await fetch(`${config.float.baseUrl}/payment/checkout`, {
+        const response = await fetch(checkoutUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Cache-Control': 'no-cache'
             },
             body: JSON.stringify(payload)
         });
 
+        const responseText = await response.text();
+        console.log('[Float] Checkout response status:', response.status);
+        console.log('[Float] Checkout response body:', responseText.substring(0, 1000));
+
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[Float] Checkout creation failed:', response.status, errorText);
-            throw new Error(`Float checkout failed: ${response.status} - ${errorText}`);
+            console.error('[Float] Checkout creation failed:', response.status, responseText);
+            throw new Error(`Float checkout failed: ${response.status} - ${responseText}`);
         }
 
-        const data = await response.json();
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error('[Float] Failed to parse checkout response as JSON');
+            throw new Error('Float checkout response is not valid JSON');
+        }
 
+        console.log('[Float] Checkout response keys:', Object.keys(data));
         console.log('[Float] Checkout created:', {
             transaction_id: data.transaction_id,
             redirect_url: data.redirect_url
